@@ -1,0 +1,504 @@
+import React from 'react';
+import {
+  ClipboardDocumentListIcon,
+  PlayIcon,
+  CheckCircleIcon,
+  CubeIcon,
+  DocumentPlusIcon,
+  ExclamationTriangleIcon,
+  ClockIcon,
+  XMarkIcon,
+  PhoneIcon,
+  ChatBubbleLeftRightIcon,
+  EyeIcon,
+  CreditCardIcon
+} from '@heroicons/react/24/outline';
+
+interface StatusActionProps {
+  appointmentId: string;
+  currentStatus: string;
+  userRole: 'customer' | 'staff' | 'technician' | 'admin';
+  onAction: (action: string, appointmentId: string) => void;
+  disabled?: boolean;
+  className?: string;
+  appointmentData?: any; // For additional context if needed
+}
+
+export interface StatusAction {
+  action: string;
+  label: string;
+  icon: React.ComponentType<any>;
+  variant: 'primary' | 'secondary' | 'success' | 'warning' | 'danger';
+  description?: string;
+  roles: ('customer' | 'staff' | 'technician' | 'admin')[];
+}
+
+const getStatusActions = (status: string): StatusAction[] => {
+  const actions: StatusAction[] = [];
+
+  switch (status) {
+    case 'pending':
+      actions.push(
+        {
+          action: 'confirm_appointment',
+          label: 'Xác nhận lịch hẹn',
+          icon: CheckCircleIcon,
+          variant: 'primary',
+          description: 'Xác nhận lịch hẹn với khách hàng',
+          roles: ['staff', 'admin']
+        },
+        {
+          action: 'cancel_appointment',
+          label: 'Hủy lịch hẹn',
+          icon: XMarkIcon,
+          variant: 'danger',
+          description: 'Hủy lịch hẹn',
+          roles: ['customer', 'staff', 'admin']
+        },
+        {
+          action: 'reschedule_appointment',
+          label: 'Dời lịch hẹn',
+          icon: ClockIcon,
+          variant: 'secondary',
+          description: 'Thay đổi thời gian lịch hẹn',
+          roles: ['customer', 'staff', 'admin']
+        },
+        {
+          action: 'contact_customer',
+          label: 'Liên hệ khách hàng',
+          icon: PhoneIcon,
+          variant: 'secondary',
+          description: 'Gọi điện xác nhận với khách hàng',
+          roles: ['staff', 'admin']
+        }
+      );
+      break;
+
+    case 'confirmed':
+      actions.push(
+        {
+          action: 'mark_customer_arrived',
+          label: 'Khách đã đến',
+          icon: CheckCircleIcon,
+          variant: 'primary',
+          description: 'Đánh dấu khách hàng đã đến',
+          roles: ['staff', 'technician', 'admin']
+        },
+        {
+          action: 'send_reminder',
+          label: 'Gửi nhắc nhở',
+          icon: ChatBubbleLeftRightIcon,
+          variant: 'secondary',
+          description: 'Gửi tin nhắn nhắc nhở khách hàng',
+          roles: ['staff', 'admin']
+        },
+        {
+          action: 'view_details',
+          label: 'Xem chi tiết',
+          icon: EyeIcon,
+          variant: 'secondary',
+          description: 'Xem thông tin chi tiết lịch hẹn',
+          roles: ['customer', 'staff', 'technician', 'admin']
+        },
+        {
+          action: 'cancel_appointment',
+          label: 'Hủy lịch hẹn',
+          icon: XMarkIcon,
+          variant: 'danger',
+          description: 'Hủy lịch hẹn',
+          roles: ['customer', 'staff', 'admin']
+        }
+      );
+      break;
+
+    case 'customer_arrived':
+      actions.push(
+        {
+          action: 'create_reception',
+          label: 'Tạo phiếu tiếp nhận',
+          icon: ClipboardDocumentListIcon,
+          variant: 'primary',
+          description: 'Tạo phiếu tiếp nhận dịch vụ',
+          roles: ['technician', 'staff', 'admin']
+        },
+        {
+          action: 'view_details',
+          label: 'Xem chi tiết',
+          icon: EyeIcon,
+          variant: 'secondary',
+          description: 'Xem thông tin lịch hẹn',
+          roles: ['customer', 'staff', 'technician', 'admin']
+        }
+      );
+      break;
+
+    case 'reception_created':
+      actions.push(
+        {
+          action: 'approve_reception',
+          label: 'Duyệt phiếu tiếp nhận',
+          icon: CheckCircleIcon,
+          variant: 'primary',
+          description: 'Duyệt phiếu tiếp nhận và phụ tùng',
+          roles: ['staff', 'admin']
+        },
+        {
+          action: 'view_reception',
+          label: 'Xem phiếu tiếp nhận',
+          icon: ClipboardDocumentListIcon,
+          variant: 'secondary',
+          description: 'Xem chi tiết phiếu tiếp nhận',
+          roles: ['customer', 'staff', 'technician', 'admin']
+        },
+        {
+          action: 'edit_reception',
+          label: 'Sửa phiếu tiếp nhận',
+          icon: DocumentPlusIcon,
+          variant: 'secondary',
+          description: 'Chỉnh sửa phiếu tiếp nhận',
+          roles: ['technician', 'staff', 'admin']
+        }
+      );
+      break;
+
+    case 'reception_approved':
+      actions.push(
+        {
+          action: 'start_work',
+          label: 'Bắt đầu làm việc',
+          icon: PlayIcon,
+          variant: 'success',
+          description: 'Bắt đầu thực hiện dịch vụ',
+          roles: ['technician']
+        },
+        {
+          action: 'request_parts',
+          label: 'Yêu cầu phụ tùng',
+          icon: CubeIcon,
+          variant: 'secondary',
+          description: 'Yêu cầu thêm phụ tùng',
+          roles: ['technician']
+        },
+        {
+          action: 'view_reception',
+          label: 'Xem phiếu tiếp nhận',
+          icon: ClipboardDocumentListIcon,
+          variant: 'secondary',
+          description: 'Xem phiếu tiếp nhận đã duyệt',
+          roles: ['customer', 'staff', 'technician', 'admin']
+        }
+      );
+      break;
+
+    case 'in_progress':
+      actions.push(
+        {
+          action: 'request_additional_parts',
+          label: 'Yêu cầu thêm phụ tùng',
+          icon: CubeIcon,
+          variant: 'warning',
+          description: 'Yêu cầu phụ tùng bổ sung',
+          roles: ['technician']
+        },
+        {
+          action: 'complete_work',
+          label: 'Hoàn thành',
+          icon: CheckCircleIcon,
+          variant: 'success',
+          description: 'Hoàn thành công việc',
+          roles: ['technician']
+        },
+        {
+          action: 'view_progress',
+          label: 'Xem tiến độ',
+          icon: EyeIcon,
+          variant: 'secondary',
+          description: 'Xem tiến độ thực hiện',
+          roles: ['customer', 'staff', 'admin']
+        },
+        {
+          action: 'contact_customer',
+          label: 'Liên hệ khách hàng',
+          icon: PhoneIcon,
+          variant: 'secondary',
+          description: 'Liên hệ cập nhật tình hình',
+          roles: ['staff', 'technician', 'admin']
+        }
+      );
+      break;
+
+    case 'parts_insufficient':
+      actions.push(
+        {
+          action: 'reschedule',
+          label: 'Dời lịch',
+          icon: ClockIcon,
+          variant: 'warning',
+          description: 'Dời lịch do thiếu phụ tùng',
+          roles: ['staff', 'admin']
+        },
+        {
+          action: 'wait_for_parts',
+          label: 'Chờ phụ tùng',
+          icon: ExclamationTriangleIcon,
+          variant: 'secondary',
+          description: 'Tiếp tục chờ phụ tùng',
+          roles: ['staff', 'admin']
+        },
+        {
+          action: 'contact_customer',
+          label: 'Báo khách hàng',
+          icon: PhoneIcon,
+          variant: 'primary',
+          description: 'Thông báo tình hình cho khách',
+          roles: ['staff', 'admin']
+        },
+        {
+          action: 'view_details',
+          label: 'Xem chi tiết',
+          icon: EyeIcon,
+          variant: 'secondary',
+          description: 'Xem thông tin chi tiết',
+          roles: ['customer']
+        }
+      );
+      break;
+
+    case 'parts_requested':
+      actions.push(
+        {
+          action: 'view_request_status',
+          label: 'Xem trạng thái yêu cầu',
+          icon: ClipboardDocumentListIcon,
+          variant: 'secondary',
+          description: 'Kiểm tra trạng thái phụ tùng',
+          roles: ['technician', 'staff', 'admin']
+        },
+        {
+          action: 'approve_parts_request',
+          label: 'Duyệt yêu cầu phụ tùng',
+          icon: CheckCircleIcon,
+          variant: 'primary',
+          description: 'Duyệt yêu cầu phụ tùng',
+          roles: ['staff', 'admin']
+        },
+        {
+          action: 'continue_work',
+          label: 'Tiếp tục công việc',
+          icon: PlayIcon,
+          variant: 'primary',
+          description: 'Tiếp tục các việc có thể làm',
+          roles: ['technician']
+        }
+      );
+      break;
+
+    case 'completed':
+      actions.push(
+        {
+          action: 'generate_invoice',
+          label: 'Tạo hóa đơn',
+          icon: DocumentPlusIcon,
+          variant: 'primary',
+          description: 'Tạo hóa đơn thanh toán',
+          roles: ['staff', 'admin']
+        },
+        {
+          action: 'final_inspection',
+          label: 'Kiểm tra cuối',
+          icon: CheckCircleIcon,
+          variant: 'secondary',
+          description: 'Kiểm tra chất lượng cuối cùng',
+          roles: ['technician', 'staff', 'admin']
+        },
+        {
+          action: 'notify_customer',
+          label: 'Thông báo khách hàng',
+          icon: ChatBubbleLeftRightIcon,
+          variant: 'success',
+          description: 'Thông báo xe đã sẵn sàng',
+          roles: ['staff', 'admin']
+        },
+        {
+          action: 'view_service_report',
+          label: 'Xem báo cáo dịch vụ',
+          icon: ClipboardDocumentListIcon,
+          variant: 'secondary',
+          description: 'Xem báo cáo chi tiết dịch vụ',
+          roles: ['customer', 'staff', 'technician', 'admin']
+        }
+      );
+      break;
+
+    case 'invoiced':
+      actions.push(
+        {
+          action: 'view_invoice',
+          label: 'Xem hóa đơn',
+          icon: DocumentPlusIcon,
+          variant: 'secondary',
+          description: 'Xem chi tiết hóa đơn',
+          roles: ['customer', 'staff', 'admin']
+        },
+        {
+          action: 'process_payment',
+          label: 'Xử lý thanh toán',
+          icon: CreditCardIcon,
+          variant: 'primary',
+          description: 'Thực hiện thanh toán',
+          roles: ['customer', 'staff', 'admin']
+        },
+        {
+          action: 'send_invoice',
+          label: 'Gửi hóa đơn',
+          icon: ChatBubbleLeftRightIcon,
+          variant: 'secondary',
+          description: 'Gửi hóa đơn cho khách hàng',
+          roles: ['staff', 'admin']
+        }
+      );
+      break;
+
+    case 'cancelled':
+    case 'no_show':
+      actions.push(
+        {
+          action: 'view_details',
+          label: 'Xem chi tiết',
+          icon: EyeIcon,
+          variant: 'secondary',
+          description: 'Xem thông tin chi tiết',
+          roles: ['customer', 'staff', 'technician', 'admin']
+        },
+        {
+          action: 'reschedule_appointment',
+          label: 'Đặt lại lịch hẹn',
+          icon: ClockIcon,
+          variant: 'primary',
+          description: 'Tạo lịch hẹn mới',
+          roles: ['customer', 'staff', 'admin']
+        }
+      );
+      break;
+
+    default:
+      actions.push(
+        {
+          action: 'view_details',
+          label: 'Xem chi tiết',
+          icon: EyeIcon,
+          variant: 'secondary',
+          description: 'Xem thông tin chi tiết',
+          roles: ['customer', 'staff', 'technician', 'admin']
+        }
+      );
+      break;
+  }
+
+  return actions;
+};
+
+const getButtonClasses = (variant: StatusAction['variant'], disabled: boolean = false) => {
+  const baseClasses = 'inline-flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
+
+  if (disabled) {
+    return `${baseClasses} bg-gray-100 text-gray-400 cursor-not-allowed`;
+  }
+
+  switch (variant) {
+    case 'primary':
+      return `${baseClasses} bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`;
+    case 'secondary':
+      return `${baseClasses} bg-gray-200 text-gray-700 hover:bg-gray-300 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2`;
+    case 'success':
+      return `${baseClasses} bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2`;
+    case 'warning':
+      return `${baseClasses} bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2`;
+    case 'danger':
+      return `${baseClasses} bg-red-600 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2`;
+    default:
+      return `${baseClasses} bg-gray-600 text-white hover:bg-gray-700`;
+  }
+};
+
+const StatusActionButton: React.FC<StatusActionProps> = ({
+  appointmentId,
+  currentStatus,
+  userRole,
+  onAction,
+  disabled = false,
+  className = '',
+  appointmentData
+}) => {
+  const allActions = getStatusActions(currentStatus);
+  const userActions = allActions.filter(action => action.roles.includes(userRole));
+
+  if (userActions.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={`flex flex-wrap gap-2 ${className}`}>
+      {userActions.map((action) => {
+        const Icon = action.icon;
+        return (
+          <button
+            key={action.action}
+            onClick={() => onAction(action.action, appointmentId)}
+            disabled={disabled}
+            className={getButtonClasses(action.variant, disabled)}
+            title={action.description}
+          >
+            <Icon className="h-4 w-4 mr-2" />
+            {action.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+export default StatusActionButton;
+
+// Helper functions for status display
+export const getVietnameseStatus = (status: string): string => {
+  const statusTranslations: Record<string, string> = {
+    'pending': 'Chờ xác nhận',
+    'confirmed': 'Đã xác nhận',
+    'customer_arrived': 'Khách đã đến',
+    'reception_created': 'Đã tạo phiếu tiếp nhận',
+    'reception_approved': 'Phiếu đã được duyệt',
+    'parts_insufficient': 'Thiếu phụ tùng',
+    'waiting_for_parts': 'Chờ phụ tùng',
+    'rescheduled': 'Đã dời lịch',
+    'in_progress': 'Đang thực hiện',
+    'parts_requested': 'Đã yêu cầu phụ tùng',
+    'completed': 'Đã hoàn thành',
+    'invoiced': 'Đã xuất hóa đơn',
+    'cancelled': 'Đã hủy',
+    'no_show': 'Khách không đến'
+  };
+
+  return statusTranslations[status] || status;
+};
+
+export const getStatusColorClass = (status: string): string => {
+  const statusColors: Record<string, string> = {
+    'pending': 'bg-yellow-100 text-yellow-800',
+    'confirmed': 'bg-blue-100 text-blue-800',
+    'customer_arrived': 'bg-indigo-100 text-indigo-800',
+    'reception_created': 'bg-purple-100 text-purple-800',
+    'reception_approved': 'bg-cyan-100 text-cyan-800',
+    'parts_insufficient': 'bg-red-100 text-red-800',
+    'waiting_for_parts': 'bg-orange-100 text-orange-800',
+    'rescheduled': 'bg-gray-100 text-gray-800',
+    'in_progress': 'bg-amber-100 text-amber-800',
+    'parts_requested': 'bg-pink-100 text-pink-800',
+    'completed': 'bg-green-100 text-green-800',
+    'invoiced': 'bg-emerald-100 text-emerald-800',
+    'cancelled': 'bg-red-100 text-red-800',
+    'no_show': 'bg-slate-100 text-slate-800'
+  };
+
+  return statusColors[status] || 'bg-gray-100 text-gray-800';
+};

@@ -1,0 +1,77 @@
+import express from 'express';
+import {
+  getAppointments,
+  getAppointment,
+  createAppointment,
+  updateAppointment,
+  cancelAppointment,
+  checkAvailability,
+  preValidateAvailability,
+  getAvailableTechnicians,
+  checkTechnicianAvailability,
+  assignTechnician,
+  getWorkQueue,
+  bulkUpdateAppointments,
+  // New Staff Confirmation APIs
+  getPendingStaffConfirmation,
+  staffConfirmAppointment,
+  staffRejectAppointment,
+  handleCustomerArrival,
+  rescheduleAppointment,
+  // New Service Reception APIs
+  submitServiceReception,
+  getPendingReceptionApprovals,
+  reviewServiceReception,
+  // New Workflow APIs
+  startAppointmentWork,
+  completeAppointment,
+  handlePartsDecision,
+  // Customer Actions API
+  getCustomerActions
+} from '../controllers/appointmentController.js';
+import { protect } from '../middleware/auth.js';
+
+const router = express.Router();
+
+// All routes require authentication
+router.use(protect);
+
+// Public appointment routes (all authenticated users) - specific routes first
+router.get('/availability', checkAvailability);
+router.get('/pre-validate', preValidateAvailability);
+router.get('/available-technicians', getAvailableTechnicians);
+router.get('/technician-availability', checkTechnicianAvailability);
+router.get('/work-queue', getWorkQueue);
+router.put('/bulk-update', bulkUpdateAppointments);
+router.get('/', getAppointments);
+
+// Appointment creation (all authenticated users)
+router.post('/', createAppointment);
+
+// Staff confirmation workflow routes (all authenticated users)
+router.get('/pending-staff-confirmation', getPendingStaffConfirmation);
+router.put('/:id/staff-confirm', staffConfirmAppointment);
+router.put('/:id/staff-reject', staffRejectAppointment);
+router.put('/:id/customer-arrived', handleCustomerArrival);
+router.put('/:id/reschedule', rescheduleAppointment);
+
+// Service Reception workflow routes (all authenticated users)
+router.get('/receptions/pending-approval', getPendingReceptionApprovals);
+router.put('/:id/submit-reception', submitServiceReception);
+router.put('/:id/review-reception', reviewServiceReception);
+
+// Workflow management routes (all authenticated users)
+router.put('/:id/start-work', startAppointmentWork);
+router.put('/:id/complete', completeAppointment);
+router.put('/:id/parts-decision', handlePartsDecision);
+
+// Customer actions route (all authenticated users)
+router.get('/:id/customer-actions', getCustomerActions);
+
+// Parameterized routes - must come after specific routes
+router.get('/:id', getAppointment);
+router.put('/:id', updateAppointment);
+router.delete('/:id', cancelAppointment);
+router.put('/:id/assign', assignTechnician);
+
+export default router;

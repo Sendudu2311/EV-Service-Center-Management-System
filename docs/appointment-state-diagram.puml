@@ -1,0 +1,177 @@
+@startuml Appointment State Diagram
+!theme plain
+skinparam state {
+  BackgroundColor<<initial>> LightGreen
+  BackgroundColor<<terminal>> LightPink
+  BackgroundColor<<processing>> LightBlue
+  BackgroundColor<<waiting>> LightYellow
+}
+
+title Enhanced EV Service Center - Appointment State Diagram
+note top
+  Vietnamese EV Service Center Management System
+  Complete 14-state appointment workflow
+  Role-based transitions and business rules
+end note
+
+[*] --> pending : Customer creates appointment
+
+state pending <<initial>> {
+  pending : Customer has created appointment
+  pending : Waiting for staff confirmation
+  pending : **Actions**: Staff can confirm/reject
+  pending : **Business Rule**: 24hr cancellation rule applies
+}
+
+state confirmed {
+  confirmed : Staff has confirmed appointment
+  confirmed : Customer notified and can prepare
+  confirmed : **Actions**: Customer arrival, cancellation
+  confirmed : **Business Rule**: Can reschedule before 24hrs
+}
+
+state customer_arrived {
+  customer_arrived : Customer has arrived at service center
+  customer_arrived : Ready for service reception
+  customer_arrived : **Actions**: Create reception form
+}
+
+state reception_created {
+  reception_created : Technician created service reception
+  reception_created : EV checklist and diagnostics completed
+  reception_created : **Actions**: Staff review and approval
+}
+
+state reception_approved <<processing>> {
+  reception_approved : Staff approved service reception
+  reception_approved : Ready to start work
+  reception_approved : **Actions**: Begin service work
+}
+
+state in_progress <<processing>> {
+  in_progress : Service work is actively ongoing
+  in_progress : Technician performing EV maintenance
+  in_progress : **Actions**: Complete work, request parts
+}
+
+state parts_requested <<waiting>> {
+  parts_requested : Additional parts needed during service
+  parts_requested : Waiting for parts approval/delivery
+  parts_requested : **Actions**: Continue work, wait for parts
+}
+
+state parts_insufficient <<waiting>> {
+  parts_insufficient : Required parts not available
+  parts_insufficient : Service cannot proceed normally
+  parts_insufficient : **Actions**: Wait for parts, reschedule
+}
+
+state waiting_for_parts <<waiting>> {
+  waiting_for_parts : Waiting for parts to arrive
+  waiting_for_parts : Service temporarily on hold
+  waiting_for_parts : **Actions**: Resume when parts available
+}
+
+state completed {
+  completed : Service work finished successfully
+  completed : Vehicle ready for customer pickup
+  completed : **Actions**: Generate invoice
+}
+
+state invoiced <<terminal>> {
+  invoiced : Invoice generated and sent to customer
+  invoiced : Payment processing
+  invoiced : **Final State**: Appointment lifecycle complete
+}
+
+state rescheduled {
+  rescheduled : Appointment moved to new date/time
+  rescheduled : Customer or staff initiated reschedule
+  rescheduled : **Actions**: Returns to confirmation flow
+}
+
+state cancelled <<terminal>> {
+  cancelled : Appointment cancelled by customer or staff
+  cancelled : **Final State**: No further processing
+  cancelled : **Business Rule**: Various cancellation reasons
+}
+
+state no_show <<terminal>> {
+  no_show : Customer did not arrive for appointment
+  no_show : **Final State**: Marked by staff
+  no_show : **Business Rule**: After grace period expires
+}
+
+' Main workflow transitions
+pending --> confirmed : Staff confirms\n[STAFF/ADMIN]
+pending --> cancelled : Customer/Staff cancels\n[CUSTOMER/STAFF]
+pending --> no_show : Customer no-show\n[STAFF]
+
+confirmed --> customer_arrived : Customer arrives\n[STAFF]
+confirmed --> cancelled : Customer/Staff cancels\n[CUSTOMER/STAFF]
+confirmed --> rescheduled : Reschedule request\n[CUSTOMER/STAFF]
+confirmed --> no_show : Customer no-show\n[STAFF]
+
+customer_arrived --> reception_created : Technician creates reception\n[TECHNICIAN]
+customer_arrived --> cancelled : Emergency cancellation\n[STAFF]
+
+reception_created --> reception_approved : Staff approves reception\n[STAFF]
+reception_created --> parts_insufficient : Parts not available\n[STAFF/TECHNICIAN]
+reception_created --> cancelled : Service cannot proceed\n[STAFF]
+
+reception_approved --> in_progress : Start service work\n[TECHNICIAN/STAFF]
+reception_approved --> cancelled : Customer cancels\n[STAFF]
+
+' Service progression flows
+in_progress --> parts_requested : Need additional parts\n[TECHNICIAN]
+in_progress --> parts_insufficient : Discover parts shortage\n[TECHNICIAN]
+in_progress --> completed : Service finished\n[TECHNICIAN]
+in_progress --> cancelled : Cannot complete service\n[STAFF]
+
+' Parts management flows
+parts_requested --> in_progress : Parts approved, continue\n[STAFF]
+parts_requested --> parts_insufficient : Parts not available\n[STAFF]
+parts_requested --> waiting_for_parts : Wait for delivery\n[STAFF]
+parts_requested --> cancelled : Cannot obtain parts\n[STAFF]
+
+parts_insufficient --> waiting_for_parts : Wait for parts\n[STAFF]
+parts_insufficient --> in_progress : Alternative solution\n[TECHNICIAN/STAFF]
+parts_insufficient --> rescheduled : Reschedule for later\n[STAFF]
+parts_insufficient --> cancelled : Cannot proceed\n[STAFF]
+
+waiting_for_parts --> reception_approved : Parts arrived, ready\n[STAFF]
+waiting_for_parts --> in_progress : Resume work with parts\n[TECHNICIAN]
+waiting_for_parts --> parts_insufficient : Parts still missing\n[STAFF]
+waiting_for_parts --> cancelled : Long delay, cancel\n[STAFF]
+waiting_for_parts --> rescheduled : Reschedule for parts\n[STAFF]
+
+' Completion flow
+completed --> invoiced : Generate invoice\n[STAFF/ADMIN]
+
+' Reschedule flow
+rescheduled --> confirmed : New date confirmed\n[STAFF]
+
+' Terminal states
+invoiced --> [*] : Appointment complete
+cancelled --> [*] : Appointment terminated
+no_show --> [*] : Appointment terminated
+
+' Role-based action legend
+note right of pending
+  **Role Permissions:**
+  🏠 **CUSTOMER**: Cancel (before 24hrs), reschedule
+  👨‍💼 **STAFF**: Confirm, reject, manage all transitions
+  🔧 **TECHNICIAN**: Create reception, update work status
+  👑 **ADMIN**: Full access to all transitions
+end note
+
+note left of parts_insufficient
+  **Vietnamese Business Rules:**
+  • Parts workflow supports EV-specific components
+  • 24-hour cancellation policy
+  • Flexible rescheduling (max 2 times)
+  • Vietnamese invoice standards (10% VAT)
+  • Service center capacity management
+end note
+
+@enduml
