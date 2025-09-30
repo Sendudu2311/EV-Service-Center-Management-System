@@ -171,7 +171,7 @@ describe('Safe Map Operations Fix Verification', () => {
       // Test with null
       const result1 = safeRenderArray(
         null,
-        (item) => <div key={item}>{item}</div>,
+        (item: string) => <div key={item}>{item}</div>,
         EmptyComponent
       );
 

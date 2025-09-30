@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
-import GoogleLoginButton from "../../components/Common/GoogleLoginButton";
 import toast from "react-hot-toast";
 import axios from "axios";
 
@@ -21,6 +20,7 @@ const Register: React.FC = () => {
   const [showOTPForm, setShowOTPForm] = useState(false);
   const [otp, setOtp] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [userId, setUserId] = useState("");
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -50,10 +50,11 @@ const Register: React.FC = () => {
     }
 
     try {
-      const { confirmPassword, ...registerData } = formData;
+      const { confirmPassword: _confirmPassword, ...registerData } = formData;
       const response = await axios.post("/api/auth/register", registerData);
 
       if (response.data.success) {
+        setUserId(response.data.data.userId);
         setShowOTPForm(true);
         toast.success(
           "Registration successful! Please check your email for verification code."
@@ -395,33 +396,6 @@ const Register: React.FC = () => {
                 "Create account"
               )}
             </button>
-          </div>
-
-          {/* Divider */}
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-50 text-gray-500">
-                  Or sign up with
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Google Sign Up */}
-          <div className="mt-6">
-            <GoogleLoginButton
-              onSuccess={() => {
-                // Navigation will be handled automatically after successful login
-              }}
-              onError={(error) => {
-                toast.error(error);
-              }}
-              disabled={isLoading}
-            />
           </div>
         </form>
       </div>
