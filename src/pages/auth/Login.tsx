@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
@@ -14,16 +14,16 @@ const Login: React.FC = () => {
 
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/dashboard';
+  // Always redirect to dashboard after login
+  const redirectTo = '/dashboard';
 
   // Auto-redirect when authentication succeeds
   React.useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      navigate(from, { replace: true });
+      navigate(redirectTo, { replace: true });
     }
-  }, [isAuthenticated, isLoading, navigate, from]);
+  }, [isAuthenticated, isLoading, navigate, redirectTo]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({

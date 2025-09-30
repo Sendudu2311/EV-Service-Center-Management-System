@@ -84,7 +84,7 @@ const AppointmentsPage: React.FC = () => {
   const [filters, setFilters] = useState<FiltersState>({
     statusFilter: '',
     priorityFilter: '',
-    sortBy: 'date',
+    sortBy: 'status', // Backend sorts by status priority automatically
     page: 1,
     limit: 10,
   });
@@ -116,23 +116,9 @@ const AppointmentsPage: React.FC = () => {
       const response = await appointmentsAPI.getAll(params);
       const data = response.data as unknown as AppointmentResponse;
 
-      let appointmentsList = data.data || [];
+      const appointmentsList = data.data || [];
 
-      // Apply client-side sorting
-      appointmentsList = appointmentsList.sort((a: Appointment, b: Appointment) => {
-        switch (filters.sortBy) {
-          case 'date':
-            return new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime();
-          case 'status':
-            return a.status.localeCompare(b.status);
-          case 'priority': {
-            const priorityOrder: Record<AppointmentPriority, number> = { urgent: 0, high: 1, normal: 2, low: 3 };
-            return (priorityOrder[a.priority] || 4) - (priorityOrder[b.priority] || 4);
-          }
-          default:
-            return 0;
-        }
-      });
+      // Backend already handles sorting by status priority, no client-side sorting needed
 
       setState(prev => ({
         ...prev,
@@ -340,7 +326,7 @@ const AppointmentsPage: React.FC = () => {
     setFilters({
       statusFilter: '',
       priorityFilter: '',
-      sortBy: 'date',
+      sortBy: 'status', // Keep status priority sorting
       page: 1,
       limit: 10,
     });
@@ -605,7 +591,7 @@ const AppointmentsPage: React.FC = () => {
         {/* Filters */}
         {showFilters && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div>
                 <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 mb-1">
                   Trạng thái
@@ -638,21 +624,6 @@ const AppointmentsPage: React.FC = () => {
                   ))}
                 </select>
               </div>
-              <div>
-                <label htmlFor="sort-by" className="block text-sm font-medium text-gray-700 mb-1">
-                  Sắp xếp theo
-                </label>
-                <select
-                  id="sort-by"
-                  value={filters.sortBy}
-                  onChange={(e) => handleFilterChange('sortBy', e.target.value as 'date' | 'status' | 'priority')}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                >
-                  <option value="date">Ngày tạo</option>
-                  <option value="status">Trạng thái</option>
-                  <option value="priority">Độ ưu tiên</option>
-                </select>
-              </div>
               <div className="flex items-end">
                 <button
                   onClick={clearFilters}
@@ -662,6 +633,9 @@ const AppointmentsPage: React.FC = () => {
                   Xóa bộ lọc
                 </button>
               </div>
+            </div>
+            <div className="mt-2 text-xs text-gray-500">
+              📋 Danh sách đã được sắp xếp theo thứ tự ưu tiên trạng thái
             </div>
           </div>
         )}

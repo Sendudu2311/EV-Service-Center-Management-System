@@ -13,13 +13,12 @@ import {
   ArrowPathIcon as RefreshCw,
   ClipboardDocumentCheckIcon as ClipboardCheck
 } from '@heroicons/react/24/outline';
-import { dashboardAPI, appointmentsAPI } from '../../services/api';
+import { dashboardAPI, appointmentsAPI, serviceReceptionAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import { useDebouncedFetch } from '../../hooks/useDebouncedFetch';
 import { format } from 'date-fns';
 import TechnicianSelection from '../Appointment/TechnicianSelection';
 import ServiceReceptionReview from '../ServiceReception/ServiceReceptionReview';
-import api from '../../services/api';
 
 interface DashboardData {
   stats: {
@@ -92,10 +91,10 @@ const StaffDashboard: React.FC = () => {
   const fetchPendingReceptions = async () => {
     try {
       setReceptionLoading(true);
-      const response = await api.get('/api/appointments?status=reception_created');
+      const response = await appointmentsAPI.getAll({ status: 'reception_created' });
 
       if (response.data.success) {
-        const receptions = response.data.data.map((appointment: any) => ({
+        const receptions = (response.data.data || []).map((appointment: any) => ({
           _id: `reception_${appointment._id}`,
           appointmentId: {
             _id: appointment._id,
@@ -166,8 +165,8 @@ const StaffDashboard: React.FC = () => {
     try {
       const appointmentId = receptionId.replace('reception_', '');
 
-      const response = await api.put(`/api/appointments/${appointmentId}/review-reception`, {
-        decision,
+      const response = await serviceReceptionAPI.review(appointmentId, {
+        decision: decision === 'approve' ? 'approved' : 'rejected',
         reviewNotes: notes,
         staffReviewStatus: decision === 'approve' ? 'approved' : 'rejected'
       });
@@ -399,7 +398,7 @@ const StaffDashboard: React.FC = () => {
                   </button>
                 </div>
 
-                {!dashboardData || dashboardData.recentAppointments.length === 0 ? (
+                {!dashboardData || !dashboardData.recentAppointments || dashboardData.recentAppointments.length === 0 ? (
                   <div className="text-center py-12">
                     <Calendar className="mx-auto h-12 w-12 text-gray-400" />
                     <h3 className="mt-2 text-sm font-medium text-gray-900">Không có lịch hẹn</h3>
@@ -410,7 +409,7 @@ const StaffDashboard: React.FC = () => {
                 ) : (
                   <div className="overflow-hidden">
                     <ul className="divide-y divide-gray-200">
-                      {dashboardData.recentAppointments.map((appointment: any) => (
+                      {(dashboardData.recentAppointments || []).map((appointment: any) => (
                         <li key={appointment._id} className="py-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-4">
@@ -460,7 +459,7 @@ const StaffDashboard: React.FC = () => {
                                         onChange={(e) => handleAssignTechnician(appointment._id, e.target.value)}
                                       >
                                         <option value="">Chọn kỹ thuật viên</option>
-                                        {dashboardData?.availableTechnicians?.map((tech: any) => (
+                                        {(dashboardData?.availableTechnicians || []).map((tech: any) => (
                                           <option key={tech._id} value={tech._id}>
                                             {tech.firstName} {tech.lastName}
                                           </option>

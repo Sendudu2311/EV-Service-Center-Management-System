@@ -631,7 +631,7 @@ appointmentSchema.statics.getCoreStatus = function(detailedStatus) {
     'confirmed': 'Scheduled',
     'customer_arrived': 'CheckedIn', 
     'reception_created': 'CheckedIn',
-    'reception_approved': 'CheckedIn',
+    'reception_approved': 'InService',  // Fixed: reception approved should move to InService
     'in_progress': 'InService',
     'parts_insufficient': 'OnHold',
     'waiting_for_parts': 'OnHold',
@@ -643,7 +643,7 @@ appointmentSchema.statics.getCoreStatus = function(detailedStatus) {
     'rescheduled': 'Closed'
   };
   return mapping[detailedStatus] || 'Scheduled';
-};
+};;
 
 // Static method để determine reason code
 appointmentSchema.statics.getReasonCode = function(detailedStatus, coreStatus) {

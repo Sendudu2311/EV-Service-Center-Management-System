@@ -39,15 +39,44 @@ export const getAppointments = async (req, res) => {
       filter.status = status;
     }
 
+    // Define status priority order for Vietnamese EV workflow
+    const statusPriority = {
+      'pending': 1,           // Highest priority - needs confirmation
+      'customer_arrived': 2,   // Customer is here - needs reception
+      'reception_created': 3,  // Needs staff approval
+      'confirmed': 4,         // Confirmed - waiting for customer
+      'reception_approved': 5, // Ready to start work
+      'in_progress': 6,       // Currently working
+      'parts_requested': 7,   // Waiting for parts
+      'parts_insufficient': 8, // Parts shortage
+      'quality_check': 9,     // Quality inspection
+      'ready_for_pickup': 10, // Ready for customer pickup
+      'completed': 11,        // Service completed
+      'cancelled': 12,        // Cancelled appointments
+      'no_show': 13          // Lowest priority - no shows
+    };
+
     appointments = await Appointment.find(filter)
       .populate('customerId', 'firstName lastName email phone')
       .populate('vehicleId', 'make model year vin')
       .populate('serviceCenterId', 'name address.city')
       .populate('services.serviceId', 'name category basePrice estimatedDuration')
       .populate('assignedTechnician', 'firstName lastName specializations')
-      .sort({ scheduledDate: -1 })
       .skip(skip)
       .limit(parseInt(limit));
+
+    // Sort by status priority first, then by scheduled date
+    appointments = appointments.sort((a, b) => {
+      const priorityA = statusPriority[a.status] || 99;
+      const priorityB = statusPriority[b.status] || 99;
+
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+
+      // If same status priority, sort by scheduled date (newest first)
+      return new Date(b.scheduledDate) - new Date(a.scheduledDate);
+    });
 
     const total = await Appointment.countDocuments(filter);
 
@@ -299,7 +328,7 @@ export const createAppointment = async (req, res) => {
       priority,
       estimatedCompletion,
       assignedTechnician: assignedTechnician,
-      status: assignedTechnician ? 'confirmed' : 'pending' // Auto-confirm if technician selected
+      status: 'pending' // Always pending, requires staff confirmation
     });
 
     // Calculate total
@@ -1157,6 +1186,7 @@ export const getWorkQueue = async (req, res) => {
       status = 'pending,confirmed', 
       priority, 
       serviceCenterId,
+      technicianId, // Add technician filter support
       dateRange = 'today',
       page = 1,
       limit = 20,
@@ -1198,6 +1228,14 @@ export const getWorkQueue = async (req, res) => {
       filter.priority = priority;
     }
 
+    // Technician filter - add support for filtering by assigned technician
+    if (technicianId) {
+      filter.assignedTechnician = technicianId;
+    } else if (req.user.role === 'technician') {
+      // For technician users, only show their assigned appointments
+      filter.assignedTechnician = req.user._id;
+    }
+
     // Service center filter
     if (serviceCenterId) {
       filter.serviceCenterId = serviceCenterId;
@@ -1226,10 +1264,16 @@ export const getWorkQueue = async (req, res) => {
 
     const skip = (page - 1) * limit;
 
+    // DEBUG: Log the filter being used
+    console.log('🔍 WorkQueue Debug - Filter:', JSON.stringify(filter, null, 2));
+    console.log('🔍 WorkQueue Debug - Query params:', req.query);
+    console.log('🔍 WorkQueue Debug - User role:', req.user.role);
+    console.log('🔍 WorkQueue Debug - User ID:', req.user._id);
+
     // Get appointments with full details
     const appointments = await Appointment.find(filter)
       .populate('customerId', 'firstName lastName phone email')
-      .populate('vehicleId', 'make model year vin color batteryType')
+      .populate('vehicleId', 'make model year vin color batteryType licensePlate')
       .populate('serviceCenterId', 'name code address')
       .populate('services.serviceId', 'name category basePrice estimatedDuration')
       .populate('assignedTechnician', 'firstName lastName specializations phone')
@@ -1239,66 +1283,69 @@ export const getWorkQueue = async (req, res) => {
 
     const total = await Appointment.countDocuments(filter);
 
-    // Get technician availability for unassigned appointments
+    // Get technician availability for unassigned appointments (only for staff/admin)
+    let enrichedAppointments = appointments.map(apt => apt.toObject());
     
-    const unassignedAppointments = appointments.filter(apt => !apt.assignedTechnician);
-    const availableTechnicians = await TechnicianProfile.find({
-      isActive: true,
-      'availability.status': { $in: ['available', 'busy'] }
-    })
-    .populate('technicianId', 'firstName lastName serviceCenterId')
-    .select('technicianId workload availability skillMatrix performance');
+    if (req.user.role !== 'technician') {
+      const unassignedAppointments = appointments.filter(apt => !apt.assignedTechnician);
+      const availableTechnicians = await TechnicianProfile.find({
+        isActive: true,
+        'availability.status': { $in: ['available', 'busy'] }
+      })
+      .populate('technicianId', 'firstName lastName serviceCenterId')
+      .select('technicianId workload availability skillMatrix performance');
 
-    // Add recommended technicians for unassigned appointments
-    const enrichedAppointments = appointments.map(appointment => {
-      const appointmentObj = appointment.toObject();
-      
-      if (!appointment.assignedTechnician) {
-        const serviceCategories = appointment.services.map(s => s.serviceId.category);
-        const estimatedDuration = appointment.services.reduce((total, s) => 
-          total + (s.estimatedDuration * s.quantity), 0);
+      // Add recommended technicians for unassigned appointments
+      enrichedAppointments = appointments.map(appointment => {
+        const appointmentObj = appointment.toObject();
+        
+        if (!appointment.assignedTechnician) {
+          const serviceCategories = appointment.services.map(s => s.serviceId.category);
+          const estimatedDuration = appointment.services.reduce((total, s) => 
+            total + (s.estimatedDuration * s.quantity), 0);
 
-        // Filter technicians by service center
-        const centerTechnicians = availableTechnicians.filter(profile => 
-          profile.technicianId.serviceCenterId && 
-          profile.technicianId.serviceCenterId.equals(appointment.serviceCenterId._id)
-        );
+          // Filter technicians by service center
+          const centerTechnicians = availableTechnicians.filter(profile => 
+            profile.technicianId.serviceCenterId && 
+            profile.technicianId.serviceCenterId.equals(appointment.serviceCenterId._id)
+          );
 
-        // Score and recommend technicians
-        const recommendations = centerTechnicians
-          .filter(profile => profile.isAvailableForAppointment(appointment.scheduledDate, estimatedDuration))
-          .map(profile => {
-            let score = 0;
-            const skillScore = calculateSkillMatch(profile.skillMatrix, serviceCategories);
-            const workloadScore = Math.max(0, 100 - profile.workloadPercentage);
-            const performanceScore = (profile.performance.efficiency + profile.performance.customerRating * 20) / 2;
-            const availabilityScore = profile.availability.status === 'available' ? 100 : 50;
-            
-            score = (skillScore * 0.4) + (workloadScore * 0.3) + (performanceScore * 0.2) + (availabilityScore * 0.1);
+          // Score and recommend technicians
+          const recommendations = centerTechnicians
+            .filter(profile => profile.isAvailableForAppointment && profile.isAvailableForAppointment(appointment.scheduledDate, estimatedDuration))
+            .map(profile => {
+              let score = 0;
+              const skillScore = calculateSkillMatch ? calculateSkillMatch(profile.skillMatrix, serviceCategories) : 50;
+              const workloadScore = Math.max(0, 100 - (profile.workloadPercentage || 0));
+              const performanceScore = profile.performance ? (profile.performance.efficiency + profile.performance.customerRating * 20) / 2 : 50;
+              const availabilityScore = profile.availability.status === 'available' ? 100 : 50;
+              
+              score = (skillScore * 0.4) + (workloadScore * 0.3) + (performanceScore * 0.2) + (availabilityScore * 0.1);
 
-            return {
-              technician: {
-                id: profile.technicianId._id,
-                name: `${profile.technicianId.firstName} ${profile.technicianId.lastName}`,
-                availability: profile.availability.status,
-                workloadPercentage: profile.workloadPercentage
-              },
-              score: Math.round(score),
-              matchReasons: {
-                skillMatch: Math.round(skillScore),
-                workloadScore: Math.round(workloadScore),
-                availability: profile.availability.status
-              }
-            };
-          })
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 3);
+              return {
+                technician: {
+                  id: profile.technicianId._id,
+                  name: `${profile.technicianId.firstName} ${profile.technicianId.lastName}`,
+                  availability: profile.availability.status,
+                  workloadPercentage: profile.workloadPercentage || 0
+                },
+                score: Math.round(score),
+                matchReasons: {
+                  skillMatch: Math.round(skillScore),
+                  workloadScore: Math.round(workloadScore),
+                  availability: profile.availability.status
+                }
+              };
+            })
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 3);
 
-        appointmentObj.recommendedTechnicians = recommendations;
-      }
-      
-      return appointmentObj;
-    });
+          appointmentObj.recommendedTechnicians = recommendations;
+        }
+        
+        return appointmentObj;
+      });
+    }
 
     // Calculate queue statistics
     const stats = {
@@ -1306,7 +1353,7 @@ export const getWorkQueue = async (req, res) => {
       pending: appointments.filter(a => a.status === 'pending').length,
       confirmed: appointments.filter(a => a.status === 'confirmed').length,
       inProgress: appointments.filter(a => a.status === 'in_progress').length,
-      unassigned: unassignedAppointments.length,
+      unassigned: appointments.filter(a => !a.assignedTechnician).length,
       urgent: appointments.filter(a => a.priority === 'urgent').length,
       high: appointments.filter(a => a.priority === 'high').length,
       overdue: appointments.filter(a => new Date(a.scheduledDate) < now && ['pending', 'confirmed'].includes(a.status)).length
@@ -1333,7 +1380,7 @@ export const getWorkQueue = async (req, res) => {
       message: 'Error fetching work queue'
     });
   }
-};
+};;
 
 // @desc    Bulk update appointments (for queue management)
 // @route   PUT /api/appointments/bulk-update
@@ -1992,7 +2039,7 @@ export const reviewServiceReception = async (req, res) => {
         statusMessage = 'Service reception reviewed';
     }
 
-    await appointment.updateStatus(newAppointmentStatus, req.user._id, statusMessage);
+    await appointment.updateStatus(newAppointmentStatus, req.user._id, req.user.role, statusMessage);
 
     // Handle parts availability check for approved receptions
     if (decision === 'approved' || decision === 'partially_approved') {

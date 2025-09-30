@@ -50,7 +50,7 @@ export const createServiceReception = async (req, res) => {
     }
 
     // Verify technician authorization
-    if (req.userRole !== 'admin' && appointment.assignedTechnicianId?.toString() !== req.userId) {
+    if (req.user.role !== 'admin' && appointment.assignedTechnician?.toString() !== req.user._id.toString()) {
       return sendError(res, 403, 'Only assigned technician can create service reception', null, 'UNAUTHORIZED_TECHNICIAN');
     }
 
@@ -88,13 +88,29 @@ export const createServiceReception = async (req, res) => {
       new Date(Date.now() + estimatedServiceTime * 60 * 1000) :
       estimatedCompletionTime || new Date(Date.now() + 2 * 60 * 60 * 1000);
 
+    // Generate reception number (format: REC-YYMMDD-XXX)
+    const today = new Date();
+    const dateStr = today.getFullYear().toString().slice(-2) +
+                   (today.getMonth() + 1).toString().padStart(2, '0') +
+                   today.getDate().toString().padStart(2, '0');
+
+    // Get count of receptions today for sequential number
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+    const todayCount = await ServiceReception.countDocuments({
+      createdAt: { $gte: todayStart, $lt: todayEnd }
+    });
+
+    const receptionNumber = `REC-${dateStr}-${(todayCount + 1).toString().padStart(3, '0')}`;
+
     // Create service reception
     const serviceReception = new ServiceReception({
+      receptionNumber,
       appointmentId,
       customerId: appointment.customerId._id,
       vehicleId: appointment.vehicleId._id,
       serviceCenterId: appointment.serviceCenterId._id,
-      receivedBy: req.userId,
+      receivedBy: req.user._id,
       notes: notes || specialInstructions?.fromCustomer || '',
       estimatedCompletionTime: completionTime,
       checklist: checklist || {},
@@ -120,7 +136,7 @@ export const createServiceReception = async (req, res) => {
     appointment.serviceReceptionId = serviceReception._id;
     appointment.workflowHistory.push({
       status: 'reception_created',
-      changedBy: req.userId,
+      changedBy: req.user._id,
       changedAt: new Date(),
       notes: 'Service reception created by technician'
     });
@@ -131,9 +147,9 @@ export const createServiceReception = async (req, res) => {
       .populate('customerId', 'firstName lastName email phone')
       .populate('vehicleId', 'make model year licensePlate')
       .populate('serviceCenterId', 'name address')
-      .populate('technicianId', 'firstName lastName email')
-      .populate('services.serviceId', 'name description basePrice')
-      .populate('parts.partId', 'name partNumber price');
+      .populate('receivedBy', 'firstName lastName email')
+      .populate('bookedServices.serviceId', 'name description basePrice')
+      .populate('requestedParts.partId', 'name partNumber price');
 
     return sendSuccess(res, 201, 'Service reception created successfully', populatedReception);
 
@@ -151,7 +167,7 @@ export const getServiceReception = async (req, res) => {
       .populate('customerId', 'firstName lastName email phone')
       .populate('vehicleId', 'make model year licensePlate')
       .populate('serviceCenterId', 'name address')
-      .populate('technicianId', 'firstName lastName email')
+      .populate('receivedBy', 'firstName lastName email')
       .populate('services.serviceId', 'name description basePrice')
       .populate('parts.partId', 'name partNumber price');
 
@@ -178,7 +194,7 @@ export const updateServiceReception = async (req, res) => {
     }
 
     // Verify authorization
-    if (req.userRole !== 'admin' && serviceReception.technicianId?.toString() !== req.userId) {
+    if (req.user.role !== 'admin' && serviceReception.receivedBy?.toString() !== req.user._id.toString()) {
       return sendError(res, 403, 'Only assigned technician can update service reception', null, 'UNAUTHORIZED_TECHNICIAN');
     }
 
@@ -196,7 +212,7 @@ export const updateServiceReception = async (req, res) => {
       .populate('customerId', 'firstName lastName email phone')
       .populate('vehicleId', 'make model year licensePlate')
       .populate('serviceCenterId', 'name address')
-      .populate('technicianId', 'firstName lastName email')
+      .populate('receivedBy', 'firstName lastName email')
       .populate('services.serviceId', 'name description basePrice')
       .populate('parts.partId', 'name partNumber price');
 
@@ -219,18 +235,16 @@ export const approveServiceReception = async (req, res) => {
     }
 
     // Only staff or admin can approve
-    if (!['staff', 'admin'].includes(req.userRole)) {
+    if (!['staff', 'admin'].includes(req.user.role)) {
       return sendError(res, 403, 'Only staff can approve service reception', null, 'UNAUTHORIZED_ROLE');
     }
 
     // Update status and approval info
     serviceReception.status = approved ? 'approved' : 'rejected';
-    serviceReception.staffApproval = {
-      approved,
-      approvedBy: req.userId,
-      approvedAt: new Date(),
-      notes: staffNotes || ''
-    };
+    serviceReception.submissionStatus.staffReviewStatus = approved ? 'approved' : 'rejected';
+    serviceReception.submissionStatus.reviewedBy = req.user._id;
+    serviceReception.submissionStatus.reviewedAt = new Date();
+    serviceReception.submissionStatus.reviewNotes = staffNotes || '';
     serviceReception.updatedAt = new Date();
 
     await serviceReception.save();
@@ -242,7 +256,7 @@ export const approveServiceReception = async (req, res) => {
       appointment.status = approved ? 'reception_approved' : 'reception_rejected';
       appointment.workflowHistory.push({
         status: approved ? 'reception_approved' : 'reception_rejected',
-        changedBy: req.userId,
+        changedBy: req.user._id,
         changedAt: new Date(),
         notes: `Service reception ${approved ? 'approved' : 'rejected'} by staff`
       });
@@ -253,8 +267,8 @@ export const approveServiceReception = async (req, res) => {
       .populate('customerId', 'firstName lastName email phone')
       .populate('vehicleId', 'make model year licensePlate')
       .populate('serviceCenterId', 'name address')
-      .populate('technicianId', 'firstName lastName email')
-      .populate('staffApproval.approvedBy', 'firstName lastName email')
+      .populate('receivedBy', 'firstName lastName email')
+      .populate('submissionStatus.reviewedBy', 'firstName lastName email')
       .populate('services.serviceId', 'name description basePrice')
       .populate('parts.partId', 'name partNumber price');
 

@@ -68,3 +68,10 @@ artifacts/
 .serena/
 .memory/
 .history/
+
+# MCP configuration (contains sensitive connection strings)
+.mcp.json
+
+# Server logs
+server.log
+*.log

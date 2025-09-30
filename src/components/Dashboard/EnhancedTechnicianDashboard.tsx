@@ -49,6 +49,12 @@ interface WorkQueueItem {
   priority: string;
   status: string;
   serviceReceptionId?: string;
+  workflowHistory?: Array<{
+    status: string;
+    changedAt: string;
+    changedBy: string;
+    notes?: string;
+  }>;
 }
 
 interface CurrentTask {
@@ -130,28 +136,36 @@ const EnhancedTechnicianDashboard: React.FC = () => {
       const statsResponse = await dashboardAPI.getStats('technician');
       setStats(statsResponse.data.data);
 
-      // Fetch work queue
-      const queueResponse = await dashboardAPI.getUpcomingAppointments({
+      // Fetch work queue - include confirmed appointments for technicians
+      const queueResponse = await appointmentsAPI.getWorkQueue({
         technicianId: user?._id,
+        status: 'confirmed,customer_arrived,reception_created,reception_approved,in_progress',
         limit: 10
       });
-      setWorkQueue(queueResponse.data.data || []);
+      const workQueueData = queueResponse.data.data?.appointments || queueResponse.data.data || [];
+      setWorkQueue(workQueueData);
 
-      // Check for current active task
-      const currentTasks = queueResponse.data.data?.filter((item: WorkQueueItem) =>
-        ['in_progress', 'reception_created', 'reception_approved'].includes(item.status)
-      ) || [];
+      // Check for current active task - ONLY in_progress appointments
+      const currentTasks = workQueueData.filter((item: WorkQueueItem) =>
+        item.status === 'in_progress'
+      );
 
       if (currentTasks.length > 0) {
         const task = currentTasks[0];
+        
+        // Find when work actually started from workflow history
+        const workStartTime = task.workflowHistory?.find((history: any) => 
+          history.status === 'in_progress'
+        )?.changedAt || new Date().toISOString();
+
         setCurrentTask({
           _id: task._id,
           appointmentNumber: task.appointmentNumber,
           status: task.status,
-          startedAt: new Date().toISOString(), // This should come from backend
+          startedAt: workStartTime, // Use actual start time from workflow history
           estimatedCompletion: combineDateTime(task.scheduledDate, task.scheduledTime),
-          customerName: `${task.customerId.firstName} ${task.customerId.lastName}`,
-          vehicleInfo: `${task.vehicleId.make} ${task.vehicleId.model} ${task.vehicleId.year}`,
+          customerName: `${task.customerId?.firstName || ''} ${task.customerId?.lastName || ''}`,
+          vehicleInfo: `${task.vehicleId?.make || ''} ${task.vehicleId?.model || ''} ${task.vehicleId?.year || ''}`,
           currentStep: appointmentStatusTranslations[task.status] || task.status,
           progress: getProgressPercentage(task.status),
         });
@@ -444,19 +458,19 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                               }`}>
                                 {appointmentStatusTranslations[item.status] || item.status}
                               </span>
-                              <ExclamationTriangleIcon className={`h-4 w-4 ${getPriorityColor(item.priority)}`} />
+                              <ExclamationTriangleIcon className={`h-4 w-4 ${getPriorityColor(item.priority || 'normal')}`} />
                             </div>
                             <p className="text-sm text-gray-600">
-                              {item.customerId.firstName} {item.customerId.lastName} - {item.customerId.phone}
+                              {item.customerId?.firstName || ''} {item.customerId?.lastName || ''} - {item.customerId?.phone || ''}
                             </p>
                             <p className="text-sm text-gray-500">
-                              {item.vehicleId.make} {item.vehicleId.model} - {item.vehicleId.licensePlate}
+                              {item.vehicleId?.make || ''} {item.vehicleId?.model || ''} - {item.vehicleId?.licensePlate || ''}
                             </p>
                             <p className="text-sm text-gray-500">
                               {formatVietnameseDateTime(combineDateTime(item.scheduledDate, item.scheduledTime))}
                             </p>
                             <p className="text-sm text-gray-500">
-                              Thời gian ước tính: {formatDuration(item.estimatedDuration)}
+                              Thời gian ước tính: {formatDuration(item.estimatedDuration || 60)}
                             </p>
                           </div>
                           <div className="flex items-center space-x-2 ml-4">

@@ -152,10 +152,10 @@ const ServiceReceptionPage: React.FC = () => {
 
       let response;
       if (serviceReception) {
-        response = await serviceReceptionAPI.update(serviceReception._id, receptionData);
+        response = await serviceReceptionAPI.update(appointmentId!, receptionData);
         toast.success('Đã cập nhật phiếu tiếp nhận dịch vụ');
       } else {
-        response = await serviceReceptionAPI.create(receptionData);
+        response = await serviceReceptionAPI.create(appointmentId!, receptionData);
         toast.success('Đã tạo phiếu tiếp nhận dịch vụ');
       }
 

@@ -120,9 +120,13 @@ const PartsPage: React.FC = () => {
   };
 
   const getStockStatus = (part: Part) => {
-    const available = part.inventory.currentStock - part.inventory.reservedStock;
+    const currentStock = part.inventory?.currentStock || 0;
+    const reservedStock = part.inventory?.reservedStock || 0;
+    const minimumStock = part.inventory?.minimumStock || 0;
+    
+    const available = currentStock - reservedStock;
     if (available <= 0) return { status: 'out', color: 'red', text: 'Hết hàng' };
-    if (available <= part.inventory.minimumStock) return { status: 'low', color: 'yellow', text: 'Sắp hết' };
+    if (available <= minimumStock) return { status: 'low', color: 'yellow', text: 'Sắp hết' };
     return { status: 'in', color: 'green', text: 'Còn hàng' };
   };
 
@@ -383,17 +387,17 @@ const PartsPage: React.FC = () => {
                               <div className="flex justify-between text-sm">
                                 <span className="text-gray-500">Tồn kho:</span>
                                 <span className="font-medium">
-                                  {part.inventory.currentStock - part.inventory.reservedStock} / {part.inventory.currentStock}
+                                  {(part.inventory?.currentStock || 0) - (part.inventory?.reservedStock || 0)} / {part.inventory?.currentStock || 0}
                                 </span>
                               </div>
                               <div className="flex justify-between text-sm">
                                 <span className="text-gray-500">Giá bán lẻ:</span>
-                                <span className="font-medium">{formatVND(part.pricing.retail)}</span>
+                                <span className="font-medium">{formatVND(part.pricing?.retail || 0)}</span>
                               </div>
                               <div className="flex justify-between text-sm">
                                 <span className="text-gray-500">Vị trí:</span>
                                 <span className="font-medium">
-                                  {part.inventory.location.warehouse} - {part.inventory.location.zone}
+                                  {part.inventory?.location?.warehouse || 'N/A'} - {part.inventory?.location?.zone || 'N/A'}
                                 </span>
                               </div>
                             </div>

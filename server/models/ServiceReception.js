@@ -630,6 +630,13 @@ serviceReceptionSchema.methods.submitToStaff = function(technicianId) {
 
 // Staff approve/reject reception
 serviceReceptionSchema.methods.staffReview = function(staffId, decision, notes = '', approvalDetails = {}) {
+  // Auto-set submittedToStaff if not already set
+  if (!this.submissionStatus.submittedToStaff) {
+    this.submissionStatus.submittedToStaff = true;
+    this.submissionStatus.submittedAt = new Date();
+    this.submissionStatus.submittedBy = staffId; // Staff is reviewing directly
+  }
+  
   this.submissionStatus.reviewedBy = staffId;
   this.submissionStatus.reviewedAt = new Date();
   this.submissionStatus.staffReviewStatus = decision;
@@ -650,7 +657,7 @@ serviceReceptionSchema.methods.staffReview = function(staffId, decision, notes =
   });
   
   return this.save();
-};
+};;
 
 // Add additional service
 serviceReceptionSchema.methods.addAdditionalService = function(serviceData, technicianId) {
@@ -715,9 +722,10 @@ serviceReceptionSchema.methods.updateChecklistProgress = function(completedItems
 
 // Check if reception can be approved
 serviceReceptionSchema.methods.canBeApproved = function() {
-  return this.submissionStatus.submittedToStaff && 
+  // Allow approval if status is 'received' and not already reviewed
+  return (this.status === 'received' || this.submissionStatus.submittedToStaff) && 
          this.submissionStatus.staffReviewStatus === 'pending';
-};
+};;
 
 // Check if work can start
 serviceReceptionSchema.methods.canStartWork = function() {
