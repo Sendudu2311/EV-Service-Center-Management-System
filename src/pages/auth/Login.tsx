@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import GoogleLoginButton from "../../components/Common/GoogleLoginButton";
+import toast from "react-hot-toast";
 
 const Login: React.FC = () => {
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -16,7 +17,7 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
 
   // Always redirect to dashboard after login
-  const redirectTo = '/dashboard';
+  const redirectTo = "/dashboard";
 
   // Auto-redirect when authentication succeeds
   React.useEffect(() => {
@@ -28,7 +29,7 @@ const Login: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -40,12 +41,12 @@ const Login: React.FC = () => {
       await login(formData.email, formData.password);
 
       // Login success - navigation will be handled by useEffect
-      toast.success('Login successful!');
+      toast.success("Login successful!");
     } catch (error) {
-      console.error('Login error:', error);
-      toast.error((error as Error).message || 'Login failed');
+      console.error("Login error:", error);
+      toast.error((error as Error).message || "Login failed");
       // Clear any invalid tokens
-      localStorage.removeItem('token');
+      localStorage.removeItem("token");
     } finally {
       setIsLoading(false);
     }
@@ -64,7 +65,7 @@ const Login: React.FC = () => {
             Sign in to your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
+            Or{" "}
             <Link
               to="/register"
               className="font-medium text-blue-600 hover:text-blue-500"
@@ -77,7 +78,10 @@ const Login: React.FC = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Email address
               </label>
               <input
@@ -94,14 +98,17 @@ const Login: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Password
               </label>
               <div className="mt-1 relative">
                 <input
                   id="password"
                   name="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   required
                   className="appearance-none relative block w-full px-3 py-3 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
@@ -125,18 +132,6 @@ const Login: React.FC = () => {
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Remember me
-              </label>
-            </div>
-
             <div className="text-sm">
               <Link
                 to="/forgot-password"
@@ -159,9 +154,37 @@ const Login: React.FC = () => {
                   Signing in...
                 </div>
               ) : (
-                'Sign in'
+                "Sign in"
               )}
             </button>
+          </div>
+
+          {/* Divider */}
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-gray-50 text-gray-500">
+                  Or continue with
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Google Login */}
+          <div className="mt-6">
+            <GoogleLoginButton
+              onSuccess={() => {
+                // Navigation will be handled by useEffect
+                toast.success("Google login successful!");
+              }}
+              onError={(error: string) => {
+                toast.error(error);
+              }}
+              disabled={isLoading}
+            />
           </div>
 
           {/* Demo accounts */}
@@ -171,35 +194,57 @@ const Login: React.FC = () => {
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-50 text-gray-500">Demo Accounts</span>
+                <span className="px-2 bg-gray-50 text-gray-500">
+                  Demo Accounts
+                </span>
               </div>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => setFormData({ email: 'customer1@gmail.com', password: 'Customer123!@#' })}
+                onClick={() =>
+                  setFormData({
+                    email: "customer1@gmail.com",
+                    password: "Customer123!@#",
+                  })
+                }
                 className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
               >
                 Customer
               </button>
               <button
                 type="button"
-                onClick={() => setFormData({ email: 'staff.central@evservice.com', password: 'Staff123!@#' })}
+                onClick={() =>
+                  setFormData({
+                    email: "staff.central@evservice.com",
+                    password: "Staff123!@#",
+                  })
+                }
                 className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
               >
                 Staff
               </button>
               <button
                 type="button"
-                onClick={() => setFormData({ email: 'tech1@evservice.com', password: 'Tech123!@#' })}
+                onClick={() =>
+                  setFormData({
+                    email: "tech1@evservice.com",
+                    password: "Tech123!@#",
+                  })
+                }
                 className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
               >
                 Technician
               </button>
               <button
                 type="button"
-                onClick={() => setFormData({ email: 'admin@evservice.com', password: 'Admin123!@#' })}
+                onClick={() =>
+                  setFormData({
+                    email: "admin@evservice.com",
+                    password: "Admin123!@#",
+                  })
+                }
                 className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
               >
                 Admin

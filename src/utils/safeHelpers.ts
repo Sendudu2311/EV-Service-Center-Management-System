@@ -224,7 +224,7 @@ export const safeRenderArray = <T>(
   array: T[] | undefined | null,
   renderItem: (item: T, index: number) => React.ReactNode,
   EmptyComponent?: React.ComponentType,
-  fallbackMessage: string = 'No items available'
+  fallbackMessage = 'No items available'
 ): React.ReactNode => {
   if (!Array.isArray(array) || array.length === 0) {
     if (EmptyComponent) {

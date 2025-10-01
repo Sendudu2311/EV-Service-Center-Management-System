@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { authAPI } from '../services/api';
+import React, { createContext, useContext, useReducer, useEffect } from "react";
+import { authAPI } from "../services/api";
 
 interface User {
   _id: string;
@@ -7,7 +7,7 @@ interface User {
   firstName: string;
   lastName: string;
   phone: string;
-  role: 'customer' | 'staff' | 'technician' | 'admin';
+  role: "customer" | "staff" | "technician" | "admin";
   avatar?: string;
   isActive: boolean;
   isEmailVerified: boolean;
@@ -57,17 +57,17 @@ interface AuthState {
 }
 
 type AuthAction =
-  | { type: 'LOGIN_START' }
-  | { type: 'LOGIN_SUCCESS'; payload: { user: User; token: string } }
-  | { type: 'LOGIN_FAILURE' }
-  | { type: 'LOGOUT' }
-  | { type: 'UPDATE_USER'; payload: User }
-  | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_READY'; payload: boolean };
+  | { type: "LOGIN_START" }
+  | { type: "LOGIN_SUCCESS"; payload: { user: User; token: string } }
+  | { type: "LOGIN_FAILURE" }
+  | { type: "LOGOUT" }
+  | { type: "UPDATE_USER"; payload: User }
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_READY"; payload: boolean };
 
 const initialState: AuthState = {
   user: null,
-  token: localStorage.getItem('token'),
+  token: localStorage.getItem("token"),
   isLoading: true,
   isAuthenticated: false,
   ready: false,
@@ -75,13 +75,13 @@ const initialState: AuthState = {
 
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
-    case 'LOGIN_START':
+    case "LOGIN_START":
       return {
         ...state,
         isLoading: true,
       };
-    case 'LOGIN_SUCCESS':
-      localStorage.setItem('token', action.payload.token);
+    case "LOGIN_SUCCESS":
+      localStorage.setItem("token", action.payload.token);
       return {
         ...state,
         user: action.payload.user,
@@ -90,8 +90,8 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         isAuthenticated: true,
         ready: true,
       };
-    case 'LOGIN_FAILURE':
-      localStorage.removeItem('token');
+    case "LOGIN_FAILURE":
+      localStorage.removeItem("token");
       return {
         ...state,
         user: null,
@@ -100,8 +100,8 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         isAuthenticated: false,
         ready: true, // Auth state is resolved, even if failed
       };
-    case 'LOGOUT':
-      localStorage.removeItem('token');
+    case "LOGOUT":
+      localStorage.removeItem("token");
       return {
         ...state,
         user: null,
@@ -110,17 +110,17 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         isAuthenticated: false,
         ready: false, // Reset ready state on logout
       };
-    case 'UPDATE_USER':
+    case "UPDATE_USER":
       return {
         ...state,
         user: action.payload,
       };
-    case 'SET_LOADING':
+    case "SET_LOADING":
       return {
         ...state,
         isLoading: action.payload,
       };
-    case 'SET_READY':
+    case "SET_READY":
       return {
         ...state,
         ready: action.payload,
@@ -131,11 +131,17 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 };
 
 interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
+  login: (
+    emailOrUser: string | User,
+    passwordOrToken?: string
+  ) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
   updateProfile: (userData: Partial<User>) => Promise<void>;
-  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  changePassword: (
+    currentPassword: string,
+    newPassword: string
+  ) => Promise<void>;
 }
 
 interface RegisterData {
@@ -144,92 +150,126 @@ interface RegisterData {
   firstName: string;
   lastName: string;
   phone: string;
-  role?: 'customer' | 'staff' | 'technician' | 'admin';
+  role?: "customer" | "staff" | "technician" | "admin";
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Note: API configuration is now handled in services/api.ts
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
   // Check if user is logged in on app start
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (token) {
         try {
           const response = await authAPI.getProfile();
           dispatch({
-            type: 'LOGIN_SUCCESS',
+            type: "LOGIN_SUCCESS",
             payload: {
-              user: response.data.data?.user || response.data.user,
+              user:
+                (response.data.data as any)?.user ||
+                (response.data as any).user,
               token,
             },
           });
         } catch (error) {
-          console.error('Auth check failed:', error);
-          localStorage.removeItem('token'); // Clear invalid token
-          dispatch({ type: 'LOGIN_FAILURE' });
+          console.error("Auth check failed:", error);
+          localStorage.removeItem("token"); // Clear invalid token
+          dispatch({ type: "LOGIN_FAILURE" });
         }
       } else {
         // No token, auth check complete
-        dispatch({ type: 'SET_LOADING', payload: false });
-        dispatch({ type: 'SET_READY', payload: true });
+        dispatch({ type: "SET_LOADING", payload: false });
+        dispatch({ type: "SET_READY", payload: true });
       }
     };
 
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    try {
-      dispatch({ type: 'LOGIN_START' });
+  const login = async (emailOrUser: string | User, password?: string) => {
+    console.log("🔵 AuthContext login called with:", typeof emailOrUser);
 
-      const response = await authAPI.login(email, password);
+    try {
+      dispatch({ type: "LOGIN_START" });
+
+      // Check if this is Google OAuth login (user object + token)
+      if (typeof emailOrUser === "object" && password) {
+        console.log("✅ Google OAuth login detected");
+        const user = emailOrUser as User;
+        const token = password; // In Google OAuth, second param is token
+
+        // Store token in localStorage
+        localStorage.setItem("token", token);
+
+        dispatch({
+          type: "LOGIN_SUCCESS",
+          payload: {
+            user,
+            token,
+          },
+        });
+        console.log("✅ Google OAuth login successful");
+        return;
+      }
+
+      // Regular email/password login
+      console.log("📝 Regular email/password login");
+      const email = emailOrUser as string;
+      const pass = password as string;
+
+      const response = await authAPI.login(email, pass);
+      console.log("📥 Login response:", response);
 
       // Validate response
       const userData = response.data.data || response.data;
-      if (!userData.token || !userData.user) {
-        throw new Error('Invalid response from server');
+      if (!(userData as any).token || !(userData as any).user) {
+        throw new Error("Invalid response from server");
       }
 
+      console.log("✅ Regular login successful");
       dispatch({
-        type: 'LOGIN_SUCCESS',
+        type: "LOGIN_SUCCESS",
         payload: {
-          user: userData.user,
-          token: userData.token,
+          user: (userData as any).user,
+          token: (userData as any).token,
         },
       });
     } catch (error: any) {
-      dispatch({ type: 'LOGIN_FAILURE' });
-      throw new Error(error.response?.data?.message || 'Login failed');
+      console.error("❌ Login error:", error);
+      dispatch({ type: "LOGIN_FAILURE" });
+      throw new Error(error.response?.data?.message || "Login failed");
     }
   };
 
   const register = async (userData: RegisterData) => {
     try {
-      dispatch({ type: 'LOGIN_START' });
+      dispatch({ type: "LOGIN_START" });
 
       const response = await authAPI.register(userData);
 
       const responseData = response.data.data || response.data;
       dispatch({
-        type: 'LOGIN_SUCCESS',
+        type: "LOGIN_SUCCESS",
         payload: {
-          user: responseData.user,
-          token: responseData.token,
+          user: (responseData as any).user,
+          token: (responseData as any).token,
         },
       });
     } catch (error: any) {
-      dispatch({ type: 'LOGIN_FAILURE' });
-      throw new Error(error.response?.data?.message || 'Registration failed');
+      dispatch({ type: "LOGIN_FAILURE" });
+      throw new Error(error.response?.data?.message || "Registration failed");
     }
   };
 
   const logout = () => {
-    dispatch({ type: 'LOGOUT' });
+    dispatch({ type: "LOGOUT" });
   };
 
   const updateProfile = async (userData: Partial<User>) => {
@@ -237,19 +277,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await authAPI.updateProfile(userData);
       const responseData = response.data.data || response.data;
       dispatch({
-        type: 'UPDATE_USER',
-        payload: responseData.user,
+        type: "UPDATE_USER",
+        payload: (responseData as any).user,
       });
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Profile update failed');
+      throw new Error(error.response?.data?.message || "Profile update failed");
     }
   };
 
-  const changePassword = async (currentPassword: string, newPassword: string) => {
+  const changePassword = async (
+    currentPassword: string,
+    newPassword: string
+  ) => {
     try {
       await authAPI.changePassword(currentPassword, newPassword);
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Password change failed');
+      throw new Error(
+        error.response?.data?.message || "Password change failed"
+      );
     }
   };
 
@@ -262,17 +307,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     changePassword,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
