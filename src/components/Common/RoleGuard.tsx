@@ -1,6 +1,5 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useRoleBasedBoot } from '../../hooks/useRoleBasedBoot';
 
 interface RoleGuardProps {
   children: React.ReactNode;
@@ -16,7 +15,6 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
   requireBootReady = false
 }) => {
   const { user, ready: authReady } = useAuth();
-  const bootState = useRoleBasedBoot();
 
   // Wait for auth to be ready
   if (!authReady) {
@@ -33,10 +31,8 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({
     return <>{fallback}</>;
   }
 
-  // If boot readiness is required, wait for it
-  if (requireBootReady && !bootState.ready) {
-    return null;
-  }
+  // Note: Boot logic moved to Dashboard components to prevent double boot
+  // requireBootReady param is ignored for now - boot happens in Dashboard
 
   return <>{children}</>;
 };

@@ -14,7 +14,6 @@ import { Link } from 'react-router-dom';
 import { dashboardAPI, appointmentsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import { formatVietnameseDateTime, appointmentStatusTranslations, combineDateTime } from '../../utils/vietnamese';
-import { useRoleBasedBoot } from '../../hooks/useRoleBasedBoot';
 import { useDebouncedFetch } from '../../hooks/useDebouncedFetch';
 
 interface TechnicianStats {
@@ -72,7 +71,6 @@ interface CurrentTask {
 const EnhancedTechnicianDashboard: React.FC = () => {
   const { user } = useAuth();
   const { socket: _socket, isConnected } = useSocket(); // socket reserved for real-time updates
-  const bootState = useRoleBasedBoot(); // Use role-based boot sequence
   const { debouncedFetch, isLoading: fetchLoading } = useDebouncedFetch(300);
 
   const [stats, setStats] = useState<TechnicianStats | null>(null);
@@ -82,10 +80,10 @@ const EnhancedTechnicianDashboard: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    // Only fetch data if boot sequence is ready and user is authenticated
-    if (bootState.ready && user?.role === 'technician') {
+    // Fetch data if user is authenticated as technician (boot logic moved to prevent double boot)
+    if (user?.role === 'technician') {
       debouncedFetchDashboard();
-    } else if (bootState.ready && !user) {
+    } else if (!user) {
       setLoading(false); // Not authenticated, stop loading
     }
 
@@ -95,7 +93,7 @@ const EnhancedTechnicianDashboard: React.FC = () => {
     }, 60000);
 
     return () => clearInterval(timeInterval);
-  }, [bootState.ready, user]);
+  }, [user]);
 
   // Listen for real-time updates
   useCustomEvent('technicianAssigned', (data) => {
