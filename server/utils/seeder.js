@@ -224,6 +224,152 @@ const createServices = async () => {
         ],
         warranty: { duration: 14, description: '14 days warranty on inspection report' },
         tags: ['inspection', 'pre-purchase', 'assessment', 'used-car']
+      },
+
+      // Additional Services for Testing Pagination
+      {
+        name: 'Software Update Service',
+        code: 'SW001',
+        description: 'Vehicle software and firmware updates',
+        category: 'electronics',
+        subcategory: 'update',
+        basePrice: 150000,
+        estimatedDuration: 45,
+        skillLevel: 'basic',
+        requiredCertifications: ['EV Software Systems'],
+        checklist: [
+          { step: 'Backup current software', category: 'preparation', isRequired: true, estimatedTime: 15 },
+          { step: 'Install software updates', category: 'execution', isRequired: true, estimatedTime: 20 },
+          { step: 'Verify system functionality', category: 'verification', isRequired: true, estimatedTime: 10 }
+        ],
+        warranty: { duration: 30, description: '30 days warranty on software update' },
+        tags: ['software', 'update', 'firmware', 'system']
+      },
+      {
+        name: 'Thermal Management System Check',
+        code: 'TMS001',
+        description: 'Battery thermal management system inspection',
+        category: 'battery',
+        subcategory: 'diagnostic',
+        basePrice: 180000,
+        estimatedDuration: 60,
+        skillLevel: 'intermediate',
+        requiredCertifications: ['EV Cooling Systems'],
+        checklist: [
+          { step: 'Check coolant levels', category: 'preparation', isRequired: true, estimatedTime: 10 },
+          { step: 'Test cooling pumps', category: 'execution', isRequired: true, estimatedTime: 30 },
+          { step: 'Inspect heat exchangers', category: 'verification', isRequired: true, estimatedTime: 20 }
+        ],
+        warranty: { duration: 60, description: '2 months warranty on thermal system check' },
+        tags: ['cooling', 'thermal', 'battery', 'temperature']
+      },
+      {
+        name: 'High Voltage Safety Inspection',
+        code: 'HV001',
+        description: 'Comprehensive high voltage system safety check',
+        category: 'diagnostic',
+        subcategory: 'inspection',
+        basePrice: 220000,
+        estimatedDuration: 90,
+        skillLevel: 'expert',
+        requiredCertifications: ['High Voltage Safety', 'EV Safety Inspector'],
+        checklist: [
+          { step: 'Insulation resistance test', category: 'safety', isRequired: true, estimatedTime: 30 },
+          { step: 'HV cable inspection', category: 'verification', isRequired: true, estimatedTime: 30 },
+          { step: 'Safety system verification', category: 'verification', isRequired: true, estimatedTime: 30 }
+        ],
+        warranty: { duration: 90, description: '3 months warranty on safety inspection' },
+        tags: ['safety', 'high-voltage', 'inspection', 'compliance']
+      },
+      {
+        name: 'Regenerative Braking Calibration',
+        code: 'RB001',
+        description: 'Calibration and optimization of regenerative braking system',
+        category: 'electronics',
+        subcategory: 'calibration',
+        basePrice: 280000,
+        estimatedDuration: 75,
+        skillLevel: 'advanced',
+        requiredCertifications: ['EV Braking Systems', 'Advanced Diagnostics'],
+        checklist: [
+          { step: 'Test current regen settings', category: 'preparation', isRequired: true, estimatedTime: 20 },
+          { step: 'Calibrate regen parameters', category: 'execution', isRequired: true, estimatedTime: 35 },
+          { step: 'Road test verification', category: 'verification', isRequired: true, estimatedTime: 20 }
+        ],
+        warranty: { duration: 120, description: '4 months warranty on calibration' },
+        tags: ['braking', 'regenerative', 'calibration', 'efficiency']
+      },
+      {
+        name: 'DC Fast Charging Port Service',
+        code: 'DC001',
+        description: 'DC fast charging port maintenance and repair',
+        category: 'charging',
+        subcategory: 'maintenance',
+        basePrice: 320000,
+        estimatedDuration: 100,
+        skillLevel: 'advanced',
+        requiredCertifications: ['DC Charging Systems', 'High Current Safety'],
+        checklist: [
+          { step: 'Inspect charging contacts', category: 'preparation', isRequired: true, estimatedTime: 25 },
+          { step: 'Clean and lubricate connections', category: 'execution', isRequired: true, estimatedTime: 40 },
+          { step: 'Test charging performance', category: 'verification', isRequired: true, estimatedTime: 35 }
+        ],
+        warranty: { duration: 180, description: '6 months warranty on DC port service' },
+        tags: ['charging', 'dc-fast', 'port', 'maintenance']
+      },
+      {
+        name: 'Vehicle-to-Grid Setup',
+        code: 'V2G001',
+        description: 'Vehicle-to-Grid (V2G) system installation and configuration',
+        category: 'charging',
+        subcategory: 'installation',
+        basePrice: 850000,
+        estimatedDuration: 180,
+        skillLevel: 'expert',
+        requiredCertifications: ['V2G Systems', 'Grid Integration', 'High Voltage Safety'],
+        checklist: [
+          { step: 'V2G hardware installation', category: 'execution', isRequired: true, estimatedTime: 90 },
+          { step: 'Grid communication setup', category: 'execution', isRequired: true, estimatedTime: 60 },
+          { step: 'System testing and certification', category: 'verification', isRequired: true, estimatedTime: 30 }
+        ],
+        warranty: { duration: 365, description: '1 year warranty on V2G installation' },
+        tags: ['v2g', 'grid', 'installation', 'bidirectional']
+      },
+      {
+        name: 'EV Conversion Consultation',
+        code: 'CONV001',
+        description: 'Consultation for converting ICE vehicles to electric',
+        category: 'general',
+        subcategory: 'consultation',
+        basePrice: 400000,
+        estimatedDuration: 120,
+        skillLevel: 'expert',
+        requiredCertifications: ['EV Conversion Specialist', 'Vehicle Engineering'],
+        checklist: [
+          { step: 'Vehicle assessment', category: 'preparation', isRequired: true, estimatedTime: 45 },
+          { step: 'Conversion feasibility analysis', category: 'execution', isRequired: true, estimatedTime: 45 },
+          { step: 'Cost and timeline estimation', category: 'execution', isRequired: true, estimatedTime: 30 }
+        ],
+        warranty: { duration: 30, description: '30 days warranty on consultation report' },
+        tags: ['conversion', 'consultation', 'ice-to-ev', 'assessment']
+      },
+      {
+        name: 'Wireless Charging Installation',
+        code: 'WC001',
+        description: 'Wireless charging pad installation and setup',
+        category: 'charging',
+        subcategory: 'installation',
+        basePrice: 1200000,
+        estimatedDuration: 240,
+        skillLevel: 'expert',
+        requiredCertifications: ['Wireless Charging Systems', 'Electrical Installation'],
+        checklist: [
+          { step: 'Site preparation and marking', category: 'preparation', isRequired: true, estimatedTime: 60 },
+          { step: 'Ground pad installation', category: 'execution', isRequired: true, estimatedTime: 120 },
+          { step: 'Vehicle receiver installation', category: 'execution', isRequired: true, estimatedTime: 60 }
+        ],
+        warranty: { duration: 365, description: '1 year warranty on wireless charging system' },
+        tags: ['wireless', 'charging', 'installation', 'inductive']
       }
     ];
 
@@ -1760,6 +1906,278 @@ const createParts = async () => {
         isRecommended: true,
         isActive: true,
         tags: ['consumables', 'coolant', 'thermal', 'ev']
+      },
+
+      // Additional Parts for Testing Pagination
+      {
+        partNumber: 'BAT-CELL-001',
+        name: 'Lithium Battery Cell 18650',
+        description: 'High-capacity lithium-ion battery cell for EV battery packs',
+        category: 'battery',
+        subcategory: 'cells',
+        brand: 'PowerCell',
+        specifications: {
+          dimensions: { length: 65, width: 18, height: 18 },
+          weight: 0.047,
+          voltage: 3.7,
+          capacity: 3500
+        },
+        compatibility: {
+          makes: ['Tesla', 'Custom builds'],
+          models: ['Model S', 'Model 3', 'DIY builds'],
+          years: { min: 2018, max: 2024 }
+        },
+        pricing: {
+          cost: 120000,
+          retail: 180000,
+          wholesale: 150000,
+          currency: 'VND'
+        },
+        supplierInfo: {
+          name: 'PowerCell Industries',
+          contact: 'sales@powercell.com',
+          notes: 'Premium battery cell manufacturer'
+        },
+        inventory: {
+          currentStock: 250,
+          reservedStock: 50,
+          usedStock: 0,
+          minStockLevel: 100,
+          maxStockLevel: 500,
+          reorderPoint: 150,
+          averageUsage: 30,
+          reservations: []
+        },
+        leadTime: 7,
+        warranty: {
+          duration: 24,
+          type: 'manufacturer',
+          description: '2 years battery cell warranty'
+        },
+        usage: {
+          totalUsed: 180,
+          lastUsed: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+          averageMonthlyUsage: 35
+        },
+        isRecommended: true,
+        isActive: true,
+        tags: ['battery', 'cell', 'lithium', 'high-capacity']
+      },
+      {
+        partNumber: 'CHG-CABLE-TYPE2',
+        name: 'Type 2 Charging Cable 32A',
+        description: 'Type 2 to Type 2 EV charging cable, 32 amp capacity',
+        category: 'charging',
+        subcategory: 'cables',
+        brand: 'ChargeMax',
+        specifications: {
+          dimensions: { length: 5000, width: 50, height: 50 },
+          weight: 2.5,
+          current: 32,
+          voltage: 240
+        },
+        compatibility: {
+          makes: ['Tesla', 'VinFast', 'BMW', 'Audi', 'Hyundai'],
+          models: ['Most EVs with Type 2 port'],
+          years: { min: 2020, max: 2024 }
+        },
+        pricing: {
+          cost: 2500000,
+          retail: 3500000,
+          wholesale: 3000000,
+          currency: 'VND'
+        },
+        supplierInfo: {
+          name: 'ChargeMax Solutions',
+          contact: 'orders@chargemax.com',
+          notes: 'EV charging accessories specialist'
+        },
+        inventory: {
+          currentStock: 25,
+          reservedStock: 5,
+          usedStock: 0,
+          minStockLevel: 10,
+          maxStockLevel: 50,
+          reorderPoint: 15,
+          averageUsage: 8,
+          reservations: []
+        },
+        leadTime: 10,
+        warranty: {
+          duration: 12,
+          type: 'manufacturer',
+          description: '1 year charging cable warranty'
+        },
+        usage: {
+          totalUsed: 45,
+          lastUsed: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+          averageMonthlyUsage: 10
+        },
+        isRecommended: true,
+        isActive: true,
+        tags: ['charging', 'cable', 'type2', 'high-current']
+      },
+      {
+        partNumber: 'INV-CTRL-MOD',
+        name: 'Inverter Control Module',
+        description: 'Electronic control module for motor inverter system',
+        category: 'electronics',
+        subcategory: 'control-modules',
+        brand: 'ElectroTech',
+        specifications: {
+          dimensions: { length: 200, width: 150, height: 50 },
+          weight: 1.2,
+          voltage: 400,
+          current: 150
+        },
+        compatibility: {
+          makes: ['Tesla', 'VinFast'],
+          models: ['Model 3', 'Model Y', 'VF e34'],
+          years: { min: 2020, max: 2024 }
+        },
+        pricing: {
+          cost: 8500000,
+          retail: 12000000,
+          wholesale: 10000000,
+          currency: 'VND'
+        },
+        supplierInfo: {
+          name: 'ElectroTech Components',
+          contact: 'support@electrotech.com',
+          notes: 'Advanced automotive electronics'
+        },
+        inventory: {
+          currentStock: 8,
+          reservedStock: 2,
+          usedStock: 0,
+          minStockLevel: 3,
+          maxStockLevel: 15,
+          reorderPoint: 5,
+          averageUsage: 2,
+          reservations: []
+        },
+        leadTime: 21,
+        warranty: {
+          duration: 36,
+          type: 'manufacturer',
+          description: '3 years electronic component warranty'
+        },
+        usage: {
+          totalUsed: 12,
+          lastUsed: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
+          averageMonthlyUsage: 3
+        },
+        isRecommended: false,
+        isActive: true,
+        tags: ['electronics', 'inverter', 'control', 'high-tech']
+      },
+      {
+        partNumber: 'TIRE-EV-ECO',
+        name: 'EV Eco Tire 225/50R18',
+        description: 'Low rolling resistance tire designed for electric vehicles',
+        category: 'body',
+        subcategory: 'summer',
+        brand: 'EcoTread',
+        specifications: {
+          dimensions: { diameter: 660, width: 225, sidewall: 50 },
+          weight: 12,
+          loadIndex: 95,
+          speedRating: 'V'
+        },
+        compatibility: {
+          makes: ['Tesla', 'VinFast', 'BMW', 'Hyundai'],
+          models: ['Model 3', 'VF e34', 'i4', 'IONIQ 5'],
+          years: { min: 2020, max: 2024 }
+        },
+        pricing: {
+          cost: 1800000,
+          retail: 2500000,
+          wholesale: 2200000,
+          currency: 'VND'
+        },
+        supplierInfo: {
+          name: 'EcoTread Tire Co.',
+          contact: 'sales@ecotread.com',
+          notes: 'Specialized EV tire manufacturer'
+        },
+        inventory: {
+          currentStock: 40,
+          reservedStock: 8,
+          usedStock: 0,
+          minStockLevel: 20,
+          maxStockLevel: 80,
+          reorderPoint: 30,
+          averageUsage: 12,
+          reservations: []
+        },
+        leadTime: 5,
+        warranty: {
+          duration: 6,
+          type: 'manufacturer',
+          description: '6 months tire warranty'
+        },
+        usage: {
+          totalUsed: 68,
+          lastUsed: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+          averageMonthlyUsage: 15
+        },
+        isRecommended: true,
+        isActive: true,
+        tags: ['tires', 'eco', 'low-resistance', 'performance']
+      },
+      {
+        partNumber: 'FILT-CABIN-HEPA',
+        name: 'HEPA Cabin Air Filter',
+        description: 'High-efficiency cabin air filter with HEPA technology',
+        category: 'interior',
+        subcategory: 'cabin',
+        brand: 'PureAir',
+        specifications: {
+          dimensions: { length: 280, width: 200, height: 30 },
+          weight: 0.5,
+          efficiency: 99.97,
+          airflow: 500
+        },
+        compatibility: {
+          makes: ['Tesla', 'VinFast', 'BMW', 'Audi'],
+          models: ['Model 3', 'Model Y', 'VF e34', 'i4', 'e-tron'],
+          years: { min: 2019, max: 2024 }
+        },
+        pricing: {
+          cost: 450000,
+          retail: 650000,
+          wholesale: 550000,
+          currency: 'VND'
+        },
+        supplierInfo: {
+          name: 'PureAir Filtration',
+          contact: 'info@pureair.com',
+          notes: 'Premium air filtration systems'
+        },
+        inventory: {
+          currentStock: 35,
+          reservedStock: 7,
+          usedStock: 0,
+          minStockLevel: 15,
+          maxStockLevel: 60,
+          reorderPoint: 25,
+          averageUsage: 10,
+          reservations: []
+        },
+        leadTime: 3,
+        warranty: {
+          duration: 6,
+          type: 'manufacturer',
+          description: '6 months filter performance warranty'
+        },
+        usage: {
+          totalUsed: 55,
+          lastUsed: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+          averageMonthlyUsage: 12
+        },
+        isRecommended: true,
+        isActive: true,
+        tags: ['filter', 'cabin', 'hepa', 'air-quality']
       }
     ];
 

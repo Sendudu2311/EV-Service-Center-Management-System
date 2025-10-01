@@ -1,107 +1,82 @@
 import React, { useState, useEffect } from 'react';
-import {
-  MagnifyingGlassIcon,
-  FunnelIcon,
-  PlusIcon,
-  EyeIcon,
-  PencilIcon,
+import { 
+  CogIcon, 
+  ClockIcon, 
   ExclamationTriangleIcon,
+  PlusIcon,
+  DocumentArrowUpIcon,
   CheckCircleIcon,
-  ClockIcon,
   ChartBarIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket, useCustomEvent } from '../contexts/SocketContext';
-import { partsAPI, partRequestsAPI } from '../services/api';
+import PartsList from '../components/Parts/PartsList';
+import PartForm from '../components/Parts/PartForm';
+import PartBulkImport from '../components/Parts/PartBulkImport';
+import { partRequestsAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import {
-  Part,
   PartRequest,
-  // PartFilters, // Unused import
-  partCategoryTranslations,
   partRequestStatusTranslations,
   urgencyTranslations,
-  // qualityGradeTranslations // Unused import
 } from '../types/parts';
 import { formatVND } from '../utils/vietnamese';
 
+type PartsTab = 'management' | 'requests' | 'analytics';
+
 const PartsPage: React.FC = () => {
   const { user } = useAuth();
-  const { socket } = useSocket();
-
-  const [activeTab, setActiveTab] = useState<'inventory' | 'requests' | 'analytics'>('inventory');
-  const [parts, setParts] = useState<Part[]>([]);
+  useSocket(); // Initialize socket connection for real-time events
+  const [activeTab, setActiveTab] = useState<PartsTab>('management');
+  const [showPartForm, setShowPartForm] = useState(false);
+  const [showBulkImport, setShowBulkImport] = useState(false);
+  const [selectedPart, setSelectedPart] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  
+  // Part Requests state
   const [partRequests, setPartRequests] = useState<PartRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-
-  // Inventory filters
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [brandFilter, setBrandFilter] = useState('');
-  const [stockFilter, setStockFilter] = useState<'all' | 'in_stock' | 'low_stock' | 'out_of_stock'>('all');
-
-  // Request filters
+  const [requestsLoading, setRequestsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
   const [urgencyFilter, setUrgencyFilter] = useState('');
 
   useEffect(() => {
-    fetchData();
-  }, [activeTab, categoryFilter, brandFilter, stockFilter, statusFilter, urgencyFilter]);
+    if (activeTab === 'requests') {
+      fetchPartRequests();
+    }
+  }, [activeTab, statusFilter, urgencyFilter]);
 
   // Listen for real-time updates
   useCustomEvent('partsRequested', (data) => {
-    toast.info(`Yêu cầu phụ tùng mới: ${data.requestNumber}`);
+    toast(`New part request: ${data.requestNumber}`, {
+      icon: 'ℹ️',
+    });
     if (activeTab === 'requests') {
       fetchPartRequests();
     }
   });
 
   useCustomEvent('partsApproved', (data) => {
-    toast.success(`Phụ tùng đã được duyệt: ${data.requestNumber}`);
+    toast.success(`Part approved: ${data.requestNumber}`);
     if (activeTab === 'requests') {
       fetchPartRequests();
     }
   });
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      if (activeTab === 'inventory') {
-        await fetchParts();
-      } else if (activeTab === 'requests') {
-        await fetchPartRequests();
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      toast.error('Không thể tải dữ liệu');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchParts = async () => {
-    const filters: any = {};
-    if (categoryFilter) filters.category = categoryFilter;
-    if (brandFilter) filters.brand = brandFilter;
-    if (stockFilter !== 'all') {
-      if (stockFilter === 'in_stock') filters.inStock = true;
-      if (stockFilter === 'low_stock') filters.lowStock = true;
-      if (stockFilter === 'out_of_stock') filters.inStock = false;
-    }
-    if (searchTerm) filters.search = searchTerm;
-
-    const response = await partsAPI.getAll(filters);
-    setParts(response.data.data || response.data);
-  };
-
   const fetchPartRequests = async () => {
-    const filters: any = {};
-    if (statusFilter) filters.status = statusFilter;
-    if (urgencyFilter) filters.urgency = urgencyFilter;
+    try {
+      setRequestsLoading(true);
+      const filters: any = {};
+      if (statusFilter) filters.status = statusFilter;
+      if (urgencyFilter) filters.urgency = urgencyFilter;
 
-    const response = await partRequestsAPI.getAll(filters);
-    setPartRequests(response.data.data || response.data);
+      const response = await partRequestsAPI.getAll(filters);
+      setPartRequests((response.data.data || response.data) as PartRequest[]);
+    } catch (error) {
+      console.error('Error fetching part requests:', error);
+      toast.error('Failed to load part requests data');
+    } finally {
+      setRequestsLoading(false);
+    }
   };
 
   const handleApproveRequest = async (requestId: string, decision: string, notes?: string, alternatives?: any[]) => {
@@ -111,23 +86,78 @@ const PartsPage: React.FC = () => {
         staffNotes: notes || '',
         alternativeParts: alternatives || []
       });
-      toast.success('Đã phê duyệt yêu cầu phụ tùng');
+      toast.success('Part request approved successfully');
       fetchPartRequests();
     } catch (error: any) {
       console.error('Error approving request:', error);
-      toast.error(error.response?.data?.message || 'Không thể phê duyệt yêu cầu');
+      toast.error(error.response?.data?.message || 'Failed to approve request');
     }
   };
 
-  const getStockStatus = (part: Part) => {
-    const currentStock = part.inventory?.currentStock || 0;
-    const reservedStock = part.inventory?.reservedStock || 0;
-    const minimumStock = part.inventory?.minimumStock || 0;
-    
-    const available = currentStock - reservedStock;
-    if (available <= 0) return { status: 'out', color: 'red', text: 'Hết hàng' };
-    if (available <= minimumStock) return { status: 'low', color: 'yellow', text: 'Sắp hết' };
-    return { status: 'in', color: 'green', text: 'Còn hàng' };
+  const handleEditPart = async (part: any) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/parts/${part._id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Full part data:', result.data); // Debug log
+        setSelectedPart(result.data);
+        setShowPartForm(true);
+      } else {
+        console.error('Failed to fetch part details');
+        // Fallback to using the part from list
+        setSelectedPart(part);
+        setShowPartForm(true);
+      }
+    } catch (error) {
+      console.error('Error fetching part details:', error);
+      // Fallback to using the part from list
+      setSelectedPart(part);
+      setShowPartForm(true);
+    }
+  };
+
+  const handleCloseForm = () => {
+    setShowPartForm(false);
+    setSelectedPart(null);
+    setRefreshTrigger(prev => prev + 1); // Trigger refresh
+  };
+
+  const handleImportComplete = () => {
+    setRefreshTrigger(prev => prev + 1); // Trigger refresh
+  };
+
+  const canManageParts = user?.role === 'staff' || user?.role === 'admin';
+
+  const getTabTitle = () => {
+    switch (activeTab) {
+      case 'management':
+        return 'Parts Management';
+      case 'requests':
+        return 'Part Requests';
+      case 'analytics':
+        return 'Analytics & Reports';
+      default:
+        return 'Parts Management';
+    }
+  };
+
+  const getTabDescription = () => {
+    switch (activeTab) {
+      case 'management':
+        return 'Manage parts inventory, stock levels, and compatibility';
+      case 'requests':
+        return 'View and approve part requests from technicians';
+      case 'analytics':
+        return 'Inventory statistics and low stock alerts';
+      default:
+        return 'Manage parts and inventory';
+    }
   };
 
   const getRequestStatusBadge = (status: string) => {
@@ -166,365 +196,361 @@ const PartsPage: React.FC = () => {
     );
   };
 
-  const tabs = [
-    { id: 'inventory', name: 'Kho phụ tùng', icon: ChartBarIcon },
-    { id: 'requests', name: 'Yêu cầu phụ tùng', icon: ClockIcon },
-    { id: 'analytics', name: 'Thống kê', icon: ChartBarIcon },
-  ];
-
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="md:flex md:items-center md:justify-between mb-8">
-          <div className="min-w-0 flex-1">
-            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
-              Quản lý phụ tùng
-            </h2>
-            <p className="mt-1 text-sm text-gray-500">
-              Quản lý kho phụ tùng và yêu cầu phụ tùng cho dịch vụ EV
-            </p>
-          </div>
-          <div className="mt-4 flex md:ml-4 md:mt-0 space-x-3">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-            >
-              <FunnelIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
-              Bộ lọc
-            </button>
-            {(user?.role === 'admin' || user?.role === 'staff') && (
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Parts Management</h1>
+          <p className="text-gray-600 mt-2">Manage EV parts inventory and requests</p>
+        </div>
+
+        {/* Tabs */}
+        <div className="mb-8">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
               <button
-                className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+                onClick={() => setActiveTab('management')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'management'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
               >
-                <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
-                Thêm phụ tùng
+                <div className="flex items-center space-x-2">
+                  <CogIcon className="h-4 w-4" />
+                  <span>Parts Management</span>
+                </div>
               </button>
+              
+              <button
+                onClick={() => setActiveTab('requests')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'requests'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <ClockIcon className="h-4 w-4" />
+                  <span>Part Requests</span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('analytics')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'analytics'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <ChartBarIcon className="h-4 w-4" />
+                  <span>Analytics & Reports</span>
+                </div>
+              </button>
+            </nav>
+          </div>
+        </div>
+
+        {/* Tab Content Header */}
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">{getTabTitle()}</h2>
+              <p className="text-gray-600 mt-1">{getTabDescription()}</p>
+            </div>
+            
+            {/* Action Buttons - Only show for management tab and if user can manage */}
+            {activeTab === 'management' && canManageParts && (
+              <div className="mt-4 sm:mt-0 flex space-x-3">
+                <button
+                  onClick={() => setShowBulkImport(true)}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <DocumentArrowUpIcon className="h-4 w-4 mr-2" />
+                  Import Excel
+                </button>
+                <button
+                  onClick={() => setShowPartForm(true)}
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <PlusIcon className="h-4 w-4 mr-2" />
+                  Add Part
+                </button>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`whitespace-nowrap border-b-2 py-2 px-1 text-sm font-medium flex items-center space-x-2 ${
-                    activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                  }`}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span>{tab.name}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Search and Filters */}
-        <div className="mb-6">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder={activeTab === 'inventory' ? 'Tìm kiếm phụ tùng...' : 'Tìm kiếm yêu cầu...'}
+        {/* Tab Content */}
+        <div className="space-y-6">
+          {activeTab === 'management' && (
+            <PartsManagementTab 
+              key={refreshTrigger}
+              onEditPart={canManageParts ? handleEditPart : undefined}
+              canManage={canManageParts}
             />
-          </div>
-
-          {showFilters && (
-            <div className="mt-4 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              {activeTab === 'inventory' ? (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Danh mục</label>
-                    <select
-                      value={categoryFilter}
-                      onChange={(e) => setCategoryFilter(e.target.value)}
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    >
-                      <option value="">Tất cả danh mục</option>
-                      {Object.entries(partCategoryTranslations).map(([key, value]) => (
-                        <option key={key} value={key}>{value}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Thương hiệu</label>
-                    <input
-                      type="text"
-                      value={brandFilter}
-                      onChange={(e) => setBrandFilter(e.target.value)}
-                      placeholder="Nhập thương hiệu..."
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tình trạng kho</label>
-                    <select
-                      value={stockFilter}
-                      onChange={(e) => setStockFilter(e.target.value as any)}
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    >
-                      <option value="all">Tất cả</option>
-                      <option value="in_stock">Còn hàng</option>
-                      <option value="low_stock">Sắp hết hàng</option>
-                      <option value="out_of_stock">Hết hàng</option>
-                    </select>
-                  </div>
-                  <div className="flex items-end">
-                    <button
-                      onClick={() => {
-                        setCategoryFilter('');
-                        setBrandFilter('');
-                        setStockFilter('all');
-                        setSearchTerm('');
-                      }}
-                      className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium"
-                    >
-                      Xóa bộ lọc
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    >
-                      <option value="">Tất cả trạng thái</option>
-                      {Object.entries(partRequestStatusTranslations).map(([key, value]) => (
-                        <option key={key} value={key}>{value}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Độ ưu tiên</label>
-                    <select
-                      value={urgencyFilter}
-                      onChange={(e) => setUrgencyFilter(e.target.value)}
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                    >
-                      <option value="">Tất cả độ ưu tiên</option>
-                      {Object.entries(urgencyTranslations).map(([key, value]) => (
-                        <option key={key} value={key}>{value}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="col-span-2 flex items-end">
-                    <button
-                      onClick={() => {
-                        setStatusFilter('');
-                        setUrgencyFilter('');
-                        setSearchTerm('');
-                      }}
-                      className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium"
-                    >
-                      Xóa bộ lọc
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+          )}
+          
+          {activeTab === 'requests' && (
+            <PartRequestsTab 
+              requests={partRequests}
+              loading={requestsLoading}
+              onApprove={handleApproveRequest}
+              canManage={canManageParts}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              urgencyFilter={urgencyFilter}
+              setUrgencyFilter={setUrgencyFilter}
+              getRequestStatusBadge={getRequestStatusBadge}
+              getUrgencyBadge={getUrgencyBadge}
+            />
+          )}
+          
+          {activeTab === 'analytics' && (
+            <AnalyticsTab 
+              key={refreshTrigger}
+              onEditPart={canManageParts ? handleEditPart : undefined}
+              canManage={canManageParts}
+            />
           )}
         </div>
 
-        {/* Content */}
+        {/* Part Form Modal */}
+        <PartForm
+          part={selectedPart}
+          isOpen={showPartForm}
+          onClose={handleCloseForm}
+        />
+
+        {/* Bulk Import Modal */}
+        <PartBulkImport
+          isOpen={showBulkImport}
+          onClose={() => setShowBulkImport(false)}
+          onImportComplete={handleImportComplete}
+        />
+      </div>
+    </div>
+  );
+};
+
+// Parts Management Tab Component (Full CRUD management)
+const PartsManagementTab: React.FC<{
+  onEditPart?: (part: any) => void;
+  canManage: boolean;
+}> = ({ onEditPart, canManage }) => {
+  return (
+    <div>
+      <PartsList 
+        onEditPart={onEditPart}
+        viewMode="management"
+        showFilters={true}
+        showActions={canManage}
+      />
+    </div>
+  );
+};
+
+// Part Requests Tab Component
+const PartRequestsTab: React.FC<{
+  requests: PartRequest[];
+  loading: boolean;
+  onApprove: (requestId: string, decision: string, notes?: string, alternatives?: any[]) => void;
+  canManage: boolean;
+  statusFilter: string;
+  setStatusFilter: (value: string) => void;
+  urgencyFilter: string;
+  setUrgencyFilter: (value: string) => void;
+  getRequestStatusBadge: (status: string) => JSX.Element;
+  getUrgencyBadge: (urgency: string) => JSX.Element;
+}> = ({ 
+  requests, 
+  loading, 
+  onApprove, 
+  canManage,
+  statusFilter,
+  setStatusFilter,
+  urgencyFilter,
+  setUrgencyFilter,
+  getRequestStatusBadge,
+  getUrgencyBadge
+}) => {
+  return (
+    <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+      {/* Filters */}
+      <div className="p-4 border-b border-gray-200">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            >
+              <option value="">All statuses</option>
+              {Object.entries(partRequestStatusTranslations).map(([key, value]) => (
+                <option key={key} value={key}>{value}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+            <select
+              value={urgencyFilter}
+              onChange={(e) => setUrgencyFilter(e.target.value)}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            >
+              <option value="">All priorities</option>
+              {Object.entries(urgencyTranslations).map(([key, value]) => (
+                <option key={key} value={key}>{value}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-end">
+            <button
+              onClick={() => {
+                setStatusFilter('');
+                setUrgencyFilter('');
+              }}
+              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium"
+            >
+              Clear filters
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4 py-5 sm:p-6">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
+        ) : requests.length === 0 ? (
+          <div className="text-center py-12">
+            <ClockIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-semibold text-gray-900">No part requests</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              No part requests found.
+            </p>
+          </div>
         ) : (
-          <>
-            {/* Inventory Tab */}
-            {activeTab === 'inventory' && (
-              <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-                <div className="px-4 py-5 sm:p-6">
-                  {parts.length === 0 ? (
-                    <div className="text-center py-12">
-                      <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-gray-400" />
-                      <h3 className="mt-2 text-sm font-semibold text-gray-900">Không có phụ tùng</h3>
-                      <p className="mt-1 text-sm text-gray-500">
-                        Chưa có phụ tùng nào trong kho.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {parts.map((part) => {
-                        const stockStatus = getStockStatus(part);
-                        return (
-                          <div
-                            key={part._id}
-                            className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                          >
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex-1">
-                                <h4 className="text-lg font-semibold text-gray-900">{part.name}</h4>
-                                <p className="text-sm text-gray-500">Mã: {part.partNumber}</p>
-                                <p className="text-sm text-gray-500">
-                                  {partCategoryTranslations[part.category]} - {part.brand}
-                                </p>
-                              </div>
-                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-${stockStatus.color}-100 text-${stockStatus.color}-800`}>
-                                {stockStatus.text}
-                              </span>
-                            </div>
-
-                            <div className="space-y-2 mb-4">
-                              <div className="flex justify-between text-sm">
-                                <span className="text-gray-500">Tồn kho:</span>
-                                <span className="font-medium">
-                                  {(part.inventory?.currentStock || 0) - (part.inventory?.reservedStock || 0)} / {part.inventory?.currentStock || 0}
-                                </span>
-                              </div>
-                              <div className="flex justify-between text-sm">
-                                <span className="text-gray-500">Giá bán lẻ:</span>
-                                <span className="font-medium">{formatVND(part.pricing?.retail || 0)}</span>
-                              </div>
-                              <div className="flex justify-between text-sm">
-                                <span className="text-gray-500">Vị trí:</span>
-                                <span className="font-medium">
-                                  {part.inventory?.location?.warehouse || 'N/A'} - {part.inventory?.location?.zone || 'N/A'}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                              <button className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                <EyeIcon className="h-4 w-4 mr-1" />
-                                Xem
-                              </button>
-                              {(user?.role === 'admin' || user?.role === 'staff') && (
-                                <button className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                                  <PencilIcon className="h-4 w-4 mr-1" />
-                                  Sửa
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Part Requests Tab */}
-            {activeTab === 'requests' && (
-              <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-                <div className="px-4 py-5 sm:p-6">
-                  {partRequests.length === 0 ? (
-                    <div className="text-center py-12">
-                      <ClockIcon className="mx-auto h-12 w-12 text-gray-400" />
-                      <h3 className="mt-2 text-sm font-semibold text-gray-900">Không có yêu cầu phụ tùng</h3>
-                      <p className="mt-1 text-sm text-gray-500">
-                        Chưa có yêu cầu phụ tùng nào.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {partRequests.map((request) => (
-                        <div
-                          key={request._id}
-                          className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                        >
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex-1">
-                              <h4 className="text-lg font-semibold text-gray-900">#{request.requestNumber}</h4>
-                              <p className="text-sm text-gray-500">
-                                Yêu cầu bởi: {request.requestedBy.firstName} {request.requestedBy.lastName}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                Chi phí ước tính: {formatVND(request.estimatedCost)}
-                              </p>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              {getRequestStatusBadge(request.status)}
-                              {getUrgencyBadge(request.urgency)}
-                            </div>
-                          </div>
-
-                          <div className="mb-4">
-                            <h5 className="text-sm font-medium text-gray-900 mb-2">Phụ tùng yêu cầu:</h5>
-                            <div className="space-y-2">
-                              {request.requestedParts.map((part, index) => (
-                                <div key={index} className="flex justify-between items-center bg-gray-50 p-2 rounded">
-                                  <div>
-                                    <span className="font-medium">{part.partInfo.name}</span>
-                                    <span className="text-gray-500 ml-2">({part.partInfo.partNumber})</span>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="text-sm">Số lượng: {part.quantity}</div>
-                                    {part.shortfall > 0 && (
-                                      <div className="text-xs text-red-600">Thiếu: {part.shortfall}</div>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {request.status === 'pending' && (user?.role === 'admin' || user?.role === 'staff') && (
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() => handleApproveRequest(request._id, 'approve_all')}
-                                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
-                              >
-                                <CheckCircleIcon className="h-4 w-4 mr-1" />
-                                Duyệt tất cả
-                              </button>
-                              <button
-                                onClick={() => handleApproveRequest(request._id, 'approve_partial')}
-                                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                              >
-                                Duyệt một phần
-                              </button>
-                              <button
-                                onClick={() => handleApproveRequest(request._id, 'reject_insufficient_stock')}
-                                className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                              >
-                                Từ chối
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Analytics Tab */}
-            {activeTab === 'analytics' && (
-              <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-                <div className="px-4 py-5 sm:p-6">
-                  <div className="text-center py-12">
-                    <ChartBarIcon className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-semibold text-gray-900">Thống kê phụ tùng</h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                      Tính năng thống kê và báo cáo sẽ được triển khai trong phiên bản tiếp theo.
+          <div className="space-y-4">
+            {requests.map((request) => (
+              <div
+                key={request._id}
+                className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h4 className="text-lg font-semibold text-gray-900">#{request.requestNumber}</h4>
+                    <p className="text-sm text-gray-500">
+                      Requested by: {request.requestedBy.firstName} {request.requestedBy.lastName}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Estimated cost: {formatVND(request.estimatedCost)}
                     </p>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    {getRequestStatusBadge(request.status)}
+                    {getUrgencyBadge(request.urgency)}
+                  </div>
                 </div>
+
+                <div className="mb-4">
+                  <h5 className="text-sm font-medium text-gray-900 mb-2">Requested parts:</h5>
+                  <div className="space-y-2">
+                    {request.requestedParts.map((part, index) => (
+                      <div key={index} className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                        <div>
+                          <span className="font-medium">{part.partInfo.name}</span>
+                          <span className="text-gray-500 ml-2">({part.partInfo.partNumber})</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm">Quantity: {part.quantity}</div>
+                          {part.shortfall > 0 && (
+                            <div className="text-xs text-red-600">Short: {part.shortfall}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {request.status === 'pending' && canManage && (
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => onApprove(request._id, 'approve_all')}
+                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+                    >
+                      <CheckCircleIcon className="h-4 w-4 mr-1" />
+                      Approve All
+                    </button>
+                    <button
+                      onClick={() => onApprove(request._id, 'approve_partial')}
+                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    >
+                      Partial Approve
+                    </button>
+                    <button
+                      onClick={() => onApprove(request._id, 'reject_insufficient_stock')}
+                      className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
-          </>
+            ))}
+          </div>
         )}
+      </div>
+    </div>
+  );
+};
+
+// Analytics Tab Component (Statistics and Low Stock)
+const AnalyticsTab: React.FC<{
+  onEditPart?: (part: any) => void;
+  canManage: boolean;
+}> = ({ onEditPart, canManage }) => {
+  return (
+    <div className="space-y-6">
+      {/* Low Stock Alert Section */}
+      <div>
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center">
+            <ExclamationTriangleIcon className="h-5 w-5 text-amber-600 mr-2" />
+            <h3 className="text-sm font-medium text-amber-800">
+              Low Stock Alert
+            </h3>
+          </div>
+          <p className="text-sm text-amber-700 mt-1">
+            These parts are running low on stock and may need to be reordered soon.
+          </p>
+        </div>
+        
+        <PartsList 
+          onEditPart={canManage ? onEditPart : undefined}
+          viewMode="low-stock"
+          showFilters={false}
+          showActions={canManage}
+          filterDefaults={{ stockStatus: 'low-stock' }}
+        />
+      </div>
+
+      {/* Future: Analytics Charts and Statistics */}
+      <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+        <div className="px-4 py-5 sm:p-6">
+          <div className="text-center py-12">
+            <ChartBarIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-semibold text-gray-900">Detailed Statistics</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Statistical charts and detailed reports will be implemented in the next version.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

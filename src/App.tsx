@@ -23,6 +23,7 @@ import ServiceCentersPage from "./pages/ServiceCentersPage";
 import UsersPage from "./pages/UsersPage";
 import ServiceReceptionPage from "./pages/ServiceReceptionPage";
 import PartsPage from "./pages/PartsPage";
+import ServicesPage from "./pages/ServicesPage";
 import InvoicesPage from "./pages/InvoicesPage";
 
 function App() {
@@ -109,6 +110,16 @@ function App() {
                   element={
                     <ProtectedRoute roles={["technician", "staff", "admin"]}>
                       <ServiceReceptionPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Services Management routes */}
+                <Route
+                  path="/services"
+                  element={
+                    <ProtectedRoute roles={["staff", "admin", "technician"]}>
+                      <ServicesPage />
                     </ProtectedRoute>
                   }
                 />
