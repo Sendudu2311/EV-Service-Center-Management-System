@@ -5,7 +5,7 @@ import Service from '../models/Service.js';
 // @access  Public
 export const getServices = async (req, res) => {
   try {
-    const { category, isActive } = req.query;
+    const { category, isActive, withAvailability, page = 1, limit = 12, search } = req.query;
     
     let filter = {};
     
@@ -19,14 +19,63 @@ export const getServices = async (req, res) => {
     } else {
       filter.isActive = true;
     }
+
+    // Add search functionality
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { code: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Calculate pagination
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    let services;
+    let totalServices;
     
-    const services = await Service.find(filter)
-      .select('name category description basePrice estimatedDuration')
-      .sort({ category: 1, name: 1 });
+    if (withAvailability === 'true') {
+      // Populate common parts to check availability
+      totalServices = await Service.countDocuments(filter);
+      services = await Service.find(filter)
+        .populate('commonParts', 'name inventory.currentStock inventory.minStockLevel')
+        .sort({ category: 1, name: 1 })
+        .skip(skip)
+        .limit(limitNum);
+      
+      // Add availability status to each service
+      services = services.map(service => {
+        const serviceObj = service.toObject();
+        const unavailableParts = serviceObj.commonParts?.filter(part => 
+          part.inventory?.currentStock < part.inventory?.minStockLevel
+        ) || [];
+        
+        serviceObj.availability = {
+          isAvailable: unavailableParts.length === 0,
+          unavailableParts: unavailableParts.length,
+          totalParts: serviceObj.commonParts?.length || 0
+        };
+        
+        return serviceObj;
+      });
+    } else {
+      totalServices = await Service.countDocuments(filter);
+      services = await Service.find(filter)
+        .select('name code category subcategory description basePrice estimatedDuration skillLevel isActive tags commonParts createdAt updatedAt')
+        .sort({ category: 1, name: 1 })
+        .skip(skip)
+        .limit(limitNum);
+    }
 
     res.status(200).json({
       success: true,
       count: services.length,
+      totalServices,
+      totalPages: Math.ceil(totalServices / limitNum),
+      currentPage: pageNum,
       data: services
     });
   } catch (error) {
@@ -36,7 +85,7 @@ export const getServices = async (req, res) => {
       message: 'Error fetching services'
     });
   }
-};
+};;
 
 // @desc    Get single service
 // @route   GET /api/services/:id
@@ -145,6 +194,100 @@ export const updateService = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating service'
+    });
+  }
+};
+// Get service availability based on parts stock
+export const checkServiceAvailability = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const service = await Service.findById(id)
+      .populate('commonParts', 'name partNumber inventory.currentStock inventory.minStockLevel inventory.reorderPoint');
+    
+    if (!service) {
+      return res.status(404).json({
+        success: false,
+        message: 'Service not found'
+      });
+    }
+    
+    const partsAnalysis = service.commonParts.map(part => ({
+      partId: part._id,
+      name: part.name,
+      partNumber: part.partNumber,
+      currentStock: part.inventory.currentStock,
+      minStock: part.inventory.minStockLevel,
+      isAvailable: part.inventory.currentStock >= part.inventory.minStockLevel,
+      stockStatus: part.inventory.currentStock >= part.inventory.minStockLevel 
+        ? 'in-stock' 
+        : part.inventory.currentStock > 0 
+          ? 'low-stock' 
+          : 'out-of-stock'
+    }));
+    
+    const unavailableParts = partsAnalysis.filter(part => !part.isAvailable);
+    
+    res.status(200).json({
+      success: true,
+      data: {
+        serviceId: service._id,
+        serviceName: service.name,
+        isAvailable: unavailableParts.length === 0,
+        totalParts: partsAnalysis.length,
+        availableParts: partsAnalysis.length - unavailableParts.length,
+        unavailableParts: unavailableParts.length,
+        partsAnalysis
+      }
+    });
+  } catch (error) {
+    console.error('Error checking service availability:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error checking service availability'
+    });
+  }
+};
+
+// Bulk check availability for multiple services
+export const bulkCheckAvailability = async (req, res) => {
+  try {
+    const { serviceIds } = req.body;
+    
+    if (!serviceIds || !Array.isArray(serviceIds)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Service IDs array is required'
+      });
+    }
+    
+    const services = await Service.find({
+      _id: { $in: serviceIds }
+    }).populate('commonParts', 'inventory.currentStock inventory.minStockLevel');
+    
+    const availabilityResults = services.map(service => {
+      const unavailableParts = service.commonParts.filter(part => 
+        part.inventory.currentStock < part.inventory.minStockLevel
+      );
+      
+      return {
+        serviceId: service._id,
+        serviceName: service.name,
+        isAvailable: unavailableParts.length === 0,
+        unavailablePartsCount: unavailableParts.length,
+        totalPartsCount: service.commonParts.length
+      };
+    });
+    
+    res.status(200).json({
+      success: true,
+      data: availabilityResults
+    });
+  } catch (error) {
+    console.error('Error in bulk availability check:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error checking services availability'
     });
   }
 };

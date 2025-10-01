@@ -54,9 +54,10 @@ const Navbar: React.FC = () => {
         return [
           ...baseLinks,
           { name: 'Users', href: '/users' },
+          { name: 'Services', href: '/services' },
+          { name: 'Parts', href: '/parts' },
           { name: 'All Vehicles', href: '/manage-vehicles' },
           { name: 'Appointments', href: '/appointments' },
-          { name: 'Services', href: '/services' },
         ];
       case 'technician':
         return [

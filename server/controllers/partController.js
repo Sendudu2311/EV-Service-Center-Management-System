@@ -6,18 +6,17 @@ import Appointment from '../models/Appointment.js';
 // @access  Private (Staff, Technician)
 export const getParts = async (req, res) => {
   try {
-    const { 
-      category, 
-      make, 
-      model, 
-      year, 
-      search, 
+    const {
+      category,
+      make,
+      model,
+      year,
+      search,
       inStock = true,
-      page = 1, 
-      limit = 20 
+      page = 1,
+      limit = 20
     } = req.query;
 
-    const skip = (page - 1) * limit;
     let filter = { isActive: true };
 
     // Category filter
@@ -57,11 +56,16 @@ export const getParts = async (req, res) => {
       ];
     }
 
+    const pageNum = parseInt(page, 10) || 1;
+    const limitNum = parseInt(limit, 10) || 20;
+    const skip = (pageNum - 1) * limitNum;
+
     const parts = await Part.find(filter)
-      .select('partNumber name description category brand model pricing inventory compatibility')
+      .select('partNumber name description category subcategory brand model pricing inventory compatibility warranty isActive tags createdAt updatedAt images.url images.isPrimary') // <-- THÊM images
       .sort({ name: 1 })
       .skip(skip)
-      .limit(parseInt(limit));
+      .limit(limitNum)
+      .lean();
 
     const total = await Part.countDocuments(filter);
 
@@ -69,9 +73,9 @@ export const getParts = async (req, res) => {
       success: true,
       count: parts.length,
       total,
-      page: parseInt(page),
-      totalPages: Math.ceil(total / limit),
-      data: parts
+      page: pageNum,
+      totalPages: Math.ceil(total / limitNum), // <-- nhớ dùng số
+      data: parts,
     });
   } catch (error) {
     console.error('Error fetching parts:', error);
@@ -117,7 +121,7 @@ export const getPartsByServiceCategory = async (req, res) => {
     const { category } = req.params;
     const { vehicleMake, vehicleModel, vehicleYear } = req.query;
 
-    let filter = { 
+    let filter = {
       category: category,
       isActive: true,
       'inventory.currentStock': { $gt: 0 }
@@ -183,7 +187,7 @@ export const reserveParts = async (req, res) => {
 
     // Check appointment status and workflow restrictions
     const appointment = await Appointment.findById(appointmentId);
-    
+
     if (!appointment) {
       return res.status(404).json({
         success: false,
@@ -217,17 +221,17 @@ export const reserveParts = async (req, res) => {
     // Process each part reservation
     for (const partReq of parts) {
       const part = await Part.findById(partReq.partId);
-      
+
       if (!part) {
         unavailableParts.push({ partId: partReq.partId, reason: 'Part not found' });
         continue;
       }
 
       if (part.inventory.currentStock < partReq.quantity) {
-        unavailableParts.push({ 
-          partId: partReq.partId, 
+        unavailableParts.push({
+          partId: partReq.partId,
           partName: part.name,
-          reason: `Insufficient stock. Available: ${part.inventory.currentStock}, Requested: ${partReq.quantity}` 
+          reason: `Insufficient stock. Available: ${part.inventory.currentStock}, Requested: ${partReq.quantity}`
         });
         continue;
       }
@@ -235,7 +239,7 @@ export const reserveParts = async (req, res) => {
       // Reserve the part
       part.inventory.currentStock -= partReq.quantity;
       part.inventory.reservedStock += partReq.quantity;
-      
+
       // Add reservation record
       part.inventory.reservations.push({
         appointmentId,
@@ -246,7 +250,7 @@ export const reserveParts = async (req, res) => {
       });
 
       await part.save();
-      
+
       reservations.push({
         partId: part._id,
         partName: part.name,
@@ -292,7 +296,7 @@ export const getAppointmentParts = async (req, res) => {
 
     // Get appointment details for workflow checking
     const appointment = await Appointment.findById(appointmentId).select('status assignedTechnician');
-    
+
     if (!appointment) {
       return res.status(404).json({
         success: false,
@@ -310,7 +314,7 @@ export const getAppointmentParts = async (req, res) => {
       const reservation = part.inventory.reservations.find(
         res => res.appointmentId.toString() === appointmentId
       );
-      
+
       if (reservation) {
         reservedParts.push({
           partId: part._id,
@@ -328,8 +332,8 @@ export const getAppointmentParts = async (req, res) => {
     // Determine workflow permissions
     const canReserveParts = ['confirmed', 'pending'].includes(appointment.status);
     const canModifyParts = appointment.status === 'in_progress';
-    const isAssignedTechnician = req.user.role === 'technician' && 
-      appointment.assignedTechnician && 
+    const isAssignedTechnician = req.user.role === 'technician' &&
+      appointment.assignedTechnician &&
       appointment.assignedTechnician.toString() === req.user._id.toString();
 
     res.status(200).json({
@@ -343,11 +347,11 @@ export const getAppointmentParts = async (req, res) => {
         canModifyParts: canModifyParts && isAssignedTechnician,
         isAssignedTechnician,
         restrictions: {
-          message: !canReserveParts ? 
+          message: !canReserveParts ?
             'Parts can only be reserved for confirmed appointments before work begins' :
-            canModifyParts ? 
-            'Parts selection is locked. Only usage marking is allowed during work.' :
-            'Parts can be reserved and modified'
+            canModifyParts ?
+              'Parts selection is locked. Only usage marking is allowed during work.' :
+              'Parts can be reserved and modified'
         }
       }
     });
@@ -378,7 +382,7 @@ export const useReservedParts = async (req, res) => {
 
     for (const usedPart of usedParts) {
       const part = await Part.findById(usedPart.partId);
-      
+
       if (!part) continue;
 
       // Find the reservation
@@ -389,7 +393,7 @@ export const useReservedParts = async (req, res) => {
       if (reservationIndex === -1) continue;
 
       const reservation = part.inventory.reservations[reservationIndex];
-      
+
       // Update reservation status and usage
       reservation.status = 'used';
       reservation.quantityUsed = usedPart.quantityUsed;
@@ -435,11 +439,302 @@ export const useReservedParts = async (req, res) => {
   }
 };
 
+// Create new part with image upload
+export const createPart = async (req, res) => {
+  try {
+    let partData = { ...req.body };
+
+    // Parse JSON strings from FormData
+    const jsonFields = ['pricing', 'inventory', 'compatibility', 'specifications', 'supplierInfo', 'warranty', 'tags', 'usage'];
+    jsonFields.forEach(field => {
+      if (partData[field] && typeof partData[field] === 'string') {
+        try {
+          partData[field] = JSON.parse(partData[field]);
+        } catch (e) {
+          console.warn(`Failed to parse ${field}:`, partData[field]);
+        }
+      }
+    });
+
+    // Handle image uploads if present
+    if (req.files && req.files.length > 0) {
+      partData.images = req.files.map(file => ({
+        url: file.path,
+        publicId: file.filename,
+        originalName: file.originalname
+      }));
+    }
+
+    // Ensure inventory structure
+    if (!partData.inventory) {
+      partData.inventory = {
+        currentStock: 0,
+        reservedStock: 0,
+        usedStock: 0,
+        minStockLevel: 10,
+        maxStockLevel: 100,
+        reorderPoint: 20,
+        averageUsage: 0,
+        reservations: []
+      };
+    }
+
+    const part = new Part(partData);
+    await part.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Part created successfully',
+      data: part
+    });
+  } catch (error) {
+    console.error('Error creating part:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating part',
+      error: error.message
+    });
+  }
+};
+
+// Update part with optional image upload
+export const updatePart = async (req, res) => {
+  try {
+    const { id } = req.params;
+    let updateData = { ...req.body };
+
+    // Parse JSON strings from FormData
+    const jsonFields = ['pricing', 'inventory', 'compatibility', 'specifications', 'supplierInfo', 'warranty', 'tags', 'usage'];
+    jsonFields.forEach(field => {
+      if (updateData[field] && typeof updateData[field] === 'string') {
+        try {
+          updateData[field] = JSON.parse(updateData[field]);
+        } catch (e) {
+          console.warn(`Failed to parse ${field}:`, updateData[field]);
+        }
+      }
+    });
+
+    const part = await Part.findById(id);
+    if (!part) {
+      return res.status(404).json({
+        success: false,
+        message: 'Part not found'
+      });
+    }
+
+    // Handle new image uploads
+    if (req.files && req.files.length > 0) {
+      const newImages = req.files.map(file => ({
+        url: file.path,
+        publicId: file.filename,
+        originalName: file.originalname
+      }));
+
+      // Add new images to existing ones
+      updateData.images = [...(part.images || []), ...newImages];
+    }
+
+    const updatedPart = await Part.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Part updated successfully',
+      data: updatedPart
+    });
+  } catch (error) {
+    console.error('Error updating part:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating part',
+      error: error.message
+    });
+  }
+};
+
+// Delete part
+export const deletePart = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const part = await Part.findById(id);
+    if (!part) {
+      return res.status(404).json({
+        success: false,
+        message: 'Part not found'
+      });
+    }
+
+    // Check if part is used in any services
+    const Service = (await import('../models/Service.js')).default;
+    const servicesUsingPart = await Service.find({
+      commonParts: id
+    });
+
+    if (servicesUsingPart.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot delete part that is used in services',
+        usedInServices: servicesUsingPart.map(s => s.name)
+      });
+    }
+
+    await Part.findByIdAndDelete(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Part deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting part:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting part'
+    });
+  }
+};
+
+// Adjust part stock
+export const adjustPartStock = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { quantity, type, reason } = req.body; // type: 'add' | 'remove'
+
+    const part = await Part.findById(id);
+    if (!part) {
+      return res.status(404).json({
+        success: false,
+        message: 'Part not found'
+      });
+    }
+
+    const previousStock = part.inventory.currentStock;
+
+    if (type === 'add') {
+      part.inventory.currentStock += Math.abs(quantity);
+    } else if (type === 'remove') {
+      if (part.inventory.currentStock < Math.abs(quantity)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Insufficient stock'
+        });
+      }
+      part.inventory.currentStock -= Math.abs(quantity);
+    }
+
+    // Add to stock history (if we implement this feature later)
+    part.stockHistory = part.stockHistory || [];
+    part.stockHistory.push({
+      date: new Date(),
+      type,
+      quantity: Math.abs(quantity),
+      previousStock,
+      newStock: part.inventory.currentStock,
+      reason,
+      user: req.user._id
+    });
+
+    await part.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Stock ${type === 'add' ? 'added' : 'removed'} successfully`,
+      data: {
+        partId: part._id,
+        previousStock,
+        newStock: part.inventory.currentStock,
+        adjustment: type === 'add' ? quantity : -quantity
+      }
+    });
+  } catch (error) {
+    console.error('Error adjusting stock:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error adjusting stock'
+    });
+  }
+};
+
+// Get low stock parts
+export const getLowStockParts = async (req, res) => {
+  try {
+    const lowStockParts = await Part.find({
+      $expr: {
+        $lte: ['$inventory.currentStock', '$inventory.reorderPoint']
+      },
+      isActive: true
+    }).select('name partNumber inventory category brand');
+
+    res.status(200).json({
+      success: true,
+      count: lowStockParts.length,
+      data: lowStockParts
+    });
+  } catch (error) {
+    console.error('Error fetching low stock parts:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching low stock parts'
+    });
+  }
+};
+
+// Search compatible parts
+export const searchCompatibleParts = async (req, res) => {
+  try {
+    const { make, model, year, batteryType } = req.query;
+
+    let filter = { isActive: true };
+
+    if (make) {
+      filter['compatibility.makes'] = { $in: [make] };
+    }
+
+    if (model) {
+      filter['compatibility.models'] = { $in: [model] };
+    }
+
+    if (year) {
+      filter['compatibility.years.min'] = { $lte: parseInt(year) };
+      filter['compatibility.years.max'] = { $gte: parseInt(year) };
+    }
+
+    if (batteryType) {
+      filter['compatibility.batteryTypes'] = { $in: [batteryType] };
+    }
+
+    const parts = await Part.find(filter)
+      .select('name partNumber category inventory.currentStock pricing.retail images')
+      .sort({ category: 1, name: 1 });
+
+    res.status(200).json({
+      success: true,
+      count: parts.length,
+      data: parts
+    });
+  } catch (error) {
+    console.error('Error searching compatible parts:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error searching compatible parts'
+    });
+  }
+};
 export default {
   getParts,
   getPart,
   getPartsByServiceCategory,
   reserveParts,
   getAppointmentParts,
-  useReservedParts
+  useReservedParts,
+  createPart,
+  updatePart,
+  deletePart,
+  adjustPartStock,
+  getLowStockParts,
+  searchCompatibleParts
 };

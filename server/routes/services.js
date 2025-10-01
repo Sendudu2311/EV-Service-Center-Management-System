@@ -4,9 +4,11 @@ import {
   getService,
   createService,
   updateService,
-  deleteService
+  deleteService,
+  checkServiceAvailability,
+  bulkCheckAvailability
 } from '../controllers/serviceController.js';
-import { protect } from '../middleware/auth.js';
+import { protect, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -14,10 +16,16 @@ const router = express.Router();
 router.get('/', getServices);
 router.get('/:id', getService);
 
-// Protected routes (all authenticated users)
+// Protected routes
 router.use(protect);
-router.post('/', createService);
-router.put('/:id', updateService);
-router.delete('/:id', deleteService);
+
+// Staff/Admin routes
+router.post('/', authorize('staff', 'admin'), createService);
+router.put('/:id', authorize('staff', 'admin'), updateService);
+router.delete('/:id', authorize('staff', 'admin'), deleteService);
+
+// Availability checking routes
+router.get('/:id/availability', checkServiceAvailability);
+router.post('/bulk-availability', bulkCheckAvailability);
 
 export default router;
