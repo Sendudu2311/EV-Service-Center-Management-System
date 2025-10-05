@@ -738,3 +738,63 @@ export default {
   getLowStockParts,
   searchCompatibleParts
 };
+
+// Bulk import parts
+export const importParts = async (req, res) => {
+  try {
+    const partsArray = Array.isArray(req.body) ? req.body : req.body.parts || [];
+
+    if (!Array.isArray(partsArray) || partsArray.length === 0) {
+      return res.status(400).json({ success: false, message: 'No parts provided for import' });
+    }
+
+    const results = [];
+
+    for (const incoming of partsArray) {
+      try {
+        // Basic normalization
+        const data = { ...incoming };
+
+        // Ensure nested objects are objects (in case clients stringified them)
+        const jsonFields = ['pricing', 'inventory', 'compatibility', 'specifications', 'supplierInfo', 'warranty', 'usage', 'tags', 'images'];
+        jsonFields.forEach(field => {
+          if (data[field] && typeof data[field] === 'string') {
+            try { data[field] = JSON.parse(data[field]); } catch (e) { /* ignore */ }
+          }
+        });
+
+        // If images are provided as URLs array, normalize shape
+        if (Array.isArray(data.images) && data.images.length > 0 && typeof data.images[0] === 'string') {
+          data.images = data.images.map(url => ({ url, isPrimary: false }));
+        }
+
+        // Map common field names
+        if (!data.partNumber && data.partNo) data.partNumber = data.partNo;
+
+        // Skip if duplicate partNumber exists
+        if (data.partNumber) {
+          const existing = await Part.findOne({ partNumber: data.partNumber });
+          if (existing) {
+            results.push({ success: false, message: 'Duplicate partNumber', partNumber: data.partNumber });
+            continue;
+          }
+        }
+
+        // Set defaults for inventory/pricing if absent
+        if (!data.inventory) data.inventory = { currentStock: 0, reservedStock: 0, usedStock: 0, minStockLevel: 0, maxStockLevel: 0, reorderPoint: 0, averageUsage: 0 };
+        if (!data.pricing) data.pricing = { cost: 0, retail: 0, wholesale: 0, currency: 'VND' };
+
+        const part = new Part(data);
+        await part.save();
+        results.push({ success: true, message: 'Imported', id: part._id, partNumber: part.partNumber });
+      } catch (err) {
+        results.push({ success: false, message: err.message || 'Failed to import row', detail: err });
+      }
+    }
+
+    res.status(200).json({ success: true, message: 'Import finished', results });
+  } catch (error) {
+    console.error('Import parts error:', error);
+    res.status(500).json({ success: false, message: 'Error importing parts', error: error.message });
+  }
+};

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { XMarkIcon, PencilIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { BoltIcon, ClockIcon } from '@heroicons/react/24/solid';
 import { vehiclesAPI } from '../../services/api';
+import VehicleImageGallery from './VehicleImageGallery';
 import toast from 'react-hot-toast';
 
 interface Vehicle {
@@ -24,6 +25,11 @@ interface Vehicle {
   nextMaintenanceDate?: string;
   isMaintenanceDue: boolean;
   createdAt: string;
+  images?: Array<{
+    url: string;
+    description: string;
+    uploadDate: string;
+  }>;
 }
 
 interface MaintenanceRecord {
@@ -51,12 +57,14 @@ interface VehicleDetailsProps {
   vehicle: Vehicle;
   onClose: () => void;
   onEdit: (vehicle: Vehicle) => void;
+  onVehicleUpdated?: () => void;
 }
 
 const VehicleDetails: React.FC<VehicleDetailsProps> = ({
   vehicle,
   onClose,
-  onEdit
+  onEdit,
+  onVehicleUpdated
 }) => {
   const [maintenanceHistory, setMaintenanceHistory] = useState<MaintenanceRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
@@ -72,12 +80,18 @@ const VehicleDetails: React.FC<VehicleDetailsProps> = ({
     try {
       setLoadingHistory(true);
       const response = await vehiclesAPI.getServiceHistory(vehicle._id);
-      setMaintenanceHistory(response.data.data);
+      setMaintenanceHistory(response.data.data || []);
     } catch (error) {
       console.error('Error fetching maintenance history:', error);
       toast.error('Failed to load maintenance history');
     } finally {
       setLoadingHistory(false);
+    }
+  };
+
+  const handleImagesUpdated = () => {
+    if (onVehicleUpdated) {
+      onVehicleUpdated();
     }
   };
 
@@ -296,6 +310,17 @@ const VehicleDetails: React.FC<VehicleDetailsProps> = ({
                       ))}
                     </div>
                   )}
+                </div>
+
+                {/* Vehicle Images */}
+                <div className="mt-6 bg-gray-50 rounded-lg p-6">
+                  <h4 className="text-lg font-medium text-gray-900 mb-4">Vehicle Images</h4>
+                  <VehicleImageGallery
+                    vehicleId={vehicle._id}
+                    images={vehicle.images || []}
+                    onImagesUpdated={handleImagesUpdated}
+                    canUpload={true}
+                  />
                 </div>
               </div>
 

@@ -8,6 +8,7 @@ import {
   useReservedParts,
   createPart,
   updatePart,
+  importParts,
   deletePart,
   adjustPartStock,
   getLowStockParts,
@@ -45,6 +46,10 @@ router.get('/by-service/:category', getPartsByServiceCategory);
 // @desc    Create new part with images
 // @access  Private (Staff, Admin)
 router.post('/', authorize('staff', 'admin'), uploadImage.array('images', 5), createPart);
+// @route   POST /api/parts/import
+// @desc    Bulk import parts from JSON/Excel mapping
+// @access  Private (Staff, Admin)
+router.post('/import', authorize('staff', 'admin'), importParts);
 
 // @route   POST /api/parts/reserve
 // @desc    Reserve parts for appointment
