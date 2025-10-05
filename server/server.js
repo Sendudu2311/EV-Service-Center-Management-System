@@ -20,6 +20,7 @@ import partRoutes from "./routes/parts.js";
 import partRequestRoutes from "./routes/partRequests.js";
 import invoiceRoutes from "./routes/invoices.js";
 import serviceReceptionRoutes from "./routes/serviceReception.js";
+import vnpayRoutes from "./routes/vnpay.js";
 
 // Import error handler
 import { globalErrorHandler } from "./utils/response.js";
@@ -93,6 +94,7 @@ app.use("/api/parts", partRoutes);
 app.use("/api/part-requests", partRequestRoutes);
 app.use("/api/invoices", invoiceRoutes);
 app.use("/api/service-receptions", serviceReceptionRoutes);
+app.use("/api/vnpay", vnpayRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

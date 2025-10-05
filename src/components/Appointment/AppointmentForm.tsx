@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { appointmentsAPI, vehiclesAPI, serviceCentersAPI, servicesAPI } from '../../services/api';
+import { appointmentsAPI, vehiclesAPI, serviceCentersAPI, servicesAPI, vnpayAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import TechnicianSelection from './TechnicianSelection';
 
@@ -44,6 +44,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [serviceCenters, setServiceCenters] = useState<ServiceCenter[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentVerified, setPaymentVerified] = useState(false);
+  const [pendingAppointment, setPendingAppointment] = useState<any>(null);
+  const [selectedBank, setSelectedBank] = useState('');
   const [formData, setFormData] = useState({
     vehicleId: '',
     serviceCenterId: '',
@@ -150,23 +154,100 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (formData.services.length === 0) {
-      toast.error('Please select at least one service');
+  const calculateTotalAmount = () => {
+    return formData.services.reduce((total, serviceId) => {
+      const service = services.find(s => s._id === serviceId);
+      return total + (service?.basePrice || 0);
+    }, 0);
+  };
+
+  const handleCreatePayment = async () => {
+    const totalAmount = calculateTotalAmount();
+
+    if (totalAmount <= 0) {
+      toast.error('Invalid payment amount');
       return;
     }
 
     setLoading(true);
-
     try {
       const appointmentData = {
         ...formData,
         services: formData.services.map(serviceId => ({ serviceId, quantity: 1 })),
         ...(formData.technicianId && { technicianId: formData.technicianId })
       };
-      
+
+      const paymentData = {
+        amount: totalAmount,
+        bankCode: selectedBank || undefined,
+        language: 'vn',
+        orderInfo: `Thanh toan dich vu xe dien - ${formData.services.length} dich vu`,
+        appointmentData: appointmentData
+      };
+
+      const response = await vnpayAPI.createPayment(paymentData);
+
+      if (response.data?.paymentUrl) {
+        // Store pending appointment data for after payment
+        const appointmentData = {
+          ...formData,
+          services: formData.services.map(serviceId => ({ serviceId, quantity: 1 })),
+          ...(formData.technicianId && { technicianId: formData.technicianId }),
+          paymentInfo: {
+            transactionRef: response.data.transactionRef,
+            amount: totalAmount,
+            method: 'vnpay'
+          }
+        };
+
+        setPendingAppointment(appointmentData);
+        localStorage.setItem('pendingAppointment', JSON.stringify(appointmentData));
+
+        // Redirect to VNPay payment page
+        window.location.href = response.data.paymentUrl;
+      } else {
+        throw new Error('Failed to create payment URL');
+      }
+    } catch (error: any) {
+      console.error('Error creating payment:', error);
+      toast.error(error.response?.data?.message || 'Failed to create payment');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (formData.services.length === 0) {
+      toast.error('Please select at least one service');
+      return;
+    }
+
+    const totalAmount = calculateTotalAmount();
+
+    if (totalAmount > 0 && !paymentVerified) {
+      // Show payment selection
+      setShowPayment(true);
+    } else {
+      // Direct booking for free services or when payment is already verified
+      await handleDirectBooking();
+    }
+  };
+
+  const handleDirectBooking = async () => {
+    setLoading(true);
+
+    try {
+      const appointmentData = {
+        ...formData,
+        services: formData.services.map(serviceId => ({ serviceId, quantity: 1 })),
+        ...(formData.technicianId && { technicianId: formData.technicianId }),
+        ...(paymentVerified && pendingAppointment?.paymentInfo && {
+          paymentInfo: pendingAppointment.paymentInfo
+        })
+      };
+
       await appointmentsAPI.create(appointmentData);
       toast.success('Appointment booked successfully');
       onSuccess();
@@ -176,7 +257,95 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
     } finally {
       setLoading(false);
     }
-  };;
+  };
+
+  const handlePaymentSuccess = async () => {
+    if (!pendingAppointment) return;
+
+    setLoading(true);
+    try {
+      // First verify the payment
+      const verifyResponse = await vnpayAPI.verifyAppointmentPayment({
+        transactionRef: pendingAppointment.paymentInfo.transactionRef
+      });
+
+      if (verifyResponse.data?.success) {
+        // Create appointment with verified payment info
+        const appointmentData = {
+          ...pendingAppointment,
+          paymentInfo: verifyResponse.data.paymentInfo
+        };
+
+        await appointmentsAPI.create(appointmentData);
+        toast.success('Appointment booked successfully after payment');
+        localStorage.removeItem('pendingAppointment');
+        onSuccess();
+      } else {
+        throw new Error('Payment verification failed');
+      }
+    } catch (error: any) {
+      console.error('Error creating appointment after payment:', error);
+      toast.error(error.response?.data?.message || 'Failed to book appointment after payment');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Check for successful payment on component mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const transactionRef = urlParams.get('transactionRef');
+
+    // Check for payment verification data
+    const paymentVerified = localStorage.getItem('paymentVerified');
+
+    if (paymentVerified) {
+      const paymentData = JSON.parse(paymentVerified);
+      const pendingData = localStorage.getItem('pendingAppointment');
+
+      if (pendingData) {
+        const appointment = JSON.parse(pendingData);
+
+        // Pre-fill the form with the appointment data
+        setFormData({
+          vehicleId: appointment.vehicleId || '',
+          serviceCenterId: appointment.serviceCenterId || '',
+          services: appointment.services?.map((s: any) => s.serviceId) || [],
+          scheduledDate: appointment.scheduledDate || '',
+          scheduledTime: appointment.scheduledTime || '',
+          customerNotes: appointment.customerNotes || '',
+          priority: appointment.priority || 'normal',
+          technicianId: appointment.technicianId || null
+        });
+
+        // Set the pending appointment with payment info
+        setPendingAppointment({
+          ...appointment,
+          paymentInfo: paymentData
+        });
+
+        // Set payment verified flag
+        setPaymentVerified(true);
+
+        // Clean up localStorage
+        localStorage.removeItem('pendingAppointment');
+        localStorage.removeItem('paymentVerified');
+
+        // Show success message
+        toast.success('Payment verified! Please complete your appointment booking.');
+      }
+    } else if (success === 'true' && transactionRef) {
+      const pendingData = localStorage.getItem('pendingAppointment');
+      if (pendingData) {
+        const appointment = JSON.parse(pendingData);
+        if (appointment.paymentInfo?.transactionRef === transactionRef) {
+          setPendingAppointment(appointment);
+          handlePaymentSuccess();
+        }
+      }
+    }
+  }, []);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -198,6 +367,32 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                   <XMarkIcon className="h-6 w-6" />
                 </button>
               </div>
+
+              {/* Payment Verification Status */}
+              {paymentVerified && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-green-700">
+                        <strong>Payment Verified!</strong> Your payment has been processed successfully. Please complete your booking.
+                      </p>
+                      {pendingAppointment?.paymentInfo && (
+                        <p className="text-xs text-green-600 mt-1">
+                          Amount: {new Intl.NumberFormat('vi-VN', {
+                            style: 'currency',
+                            currency: 'VND'
+                          }).format(pendingAppointment.paymentInfo.amount)} • Transaction: {pendingAppointment.paymentInfo.transactionRef}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-6">
                 {/* Vehicle Selection */}
@@ -400,17 +595,85 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
+
+                {/* Payment Selection */}
+                {showPayment && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-blue-900 mb-3">Payment Method</h4>
+
+                    {/* Total Amount */}
+                    <div className="mb-4 p-3 bg-white rounded-md">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Total Amount:</span>
+                        <span className="text-lg font-semibold text-blue-600">
+                          {new Intl.NumberFormat('vi-VN', {
+                            style: 'currency',
+                            currency: 'VND'
+                          }).format(calculateTotalAmount())}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Bank Selection */}
+                    <div className="mb-4">
+                      <label htmlFor="bankCode" className="block text-sm font-medium text-gray-700 mb-2">
+                        Select Bank (Optional)
+                      </label>
+                      <select
+                        id="bankCode"
+                        value={selectedBank}
+                        onChange={(e) => setSelectedBank(e.target.value)}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      >
+                        <option value="">Auto-select bank</option>
+                        <option value="VNPAYQR">VNPay QR Code</option>
+                        <option value="VNBANK">Vietnamese Bank Cards</option>
+                        <option value="INTCARD">International Cards</option>
+                        <option value="VISA">Visa</option>
+                        <option value="MASTERCARD">Mastercard</option>
+                      </select>
+                    </div>
+
+                    {/* Payment Info */}
+                    <div className="text-xs text-gray-600 mb-4">
+                      <p>• You will be redirected to VNPay secure payment page</p>
+                      <p>• After successful payment, your appointment will be automatically booked</p>
+                      <p>• Payment reference: {pendingAppointment?.paymentInfo?.transactionRef || 'Will be generated'}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-              <button
-                type="submit"
-                disabled={loading}
-                className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:ml-3 sm:w-auto disabled:opacity-50"
-              >
-                {loading ? 'Booking...' : 'Book Appointment'}
-              </button>
+              {!showPayment ? (
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:ml-3 sm:w-auto disabled:opacity-50"
+                >
+                  {loading ? 'Processing...' : (paymentVerified ? 'Complete Booking' : 'Continue to Payment')}
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleCreatePayment}
+                    disabled={loading}
+                    className="inline-flex w-full justify-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600 sm:ml-3 sm:w-auto disabled:opacity-50"
+                  >
+                    {loading ? 'Processing...' : `Pay ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(calculateTotalAmount())}`}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowPayment(false)}
+                    disabled={loading}
+                    className="mt-3 inline-flex w-full justify-center rounded-md bg-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-400 sm:mt-0 sm:w-auto"
+                  >
+                    Back
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 onClick={onCancel}

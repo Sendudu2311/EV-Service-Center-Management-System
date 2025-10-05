@@ -25,6 +25,7 @@ import ServiceReceptionPage from "./pages/ServiceReceptionPage";
 import PartsPage from "./pages/PartsPage";
 import ServicesPage from "./pages/ServicesPage";
 import InvoicesPage from "./pages/InvoicesPage";
+import PaymentResult from "./pages/PaymentResult";
 
 function App() {
   return (
@@ -198,6 +199,18 @@ function App() {
                       </div>
                     </ProtectedRoute>
                   }
+                />
+
+                {/* Payment Result */}
+                <Route
+                  path="/payment/result"
+                  element={<PaymentResult />}
+                />
+
+                {/* VNPay Return URL */}
+                <Route
+                  path="/payment/vnpay-return"
+                  element={<PaymentResult />}
                 />
 
                 {/* 404 Page */}

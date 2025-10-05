@@ -161,6 +161,19 @@ const AppointmentsPage: React.FC = () => {
    */
   useEffect(() => {
     fetchAppointments();
+
+    // Check if user is coming from successful payment
+    const urlParams = new URLSearchParams(window.location.search);
+    const showFormParam = urlParams.get('showForm') === 'true';
+    const paymentSuccess = urlParams.get('payment') === 'success';
+
+    if (showFormParam && paymentSuccess) {
+      // Show the appointment form automatically
+      setShowForm(true);
+
+      // Clean up URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, [fetchAppointments]);
 
   /**
