@@ -383,17 +383,18 @@ export const getVehicleMaintenance = async (req, res) => {
   }
 };
 
-// @desc    Add vehicle image
+// @desc    Add vehicle image with file upload
 // @route   POST /api/vehicles/:id/images
 // @access  Private (Customer - own vehicle only)
 export const addVehicleImage = async (req, res) => {
   try {
-    const { url, description } = req.body;
+    const { description } = req.body;
 
-    if (!url) {
+    // Check if file was uploaded
+    if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: 'Image URL is required'
+        message: 'Image file is required'
       });
     }
 
@@ -410,9 +411,9 @@ export const addVehicleImage = async (req, res) => {
       });
     }
 
-    // Add image
+    // Add image with uploaded file URL
     vehicle.images.push({
-      url,
+      url: req.file.path, // Cloudinary URL
       description: description || '',
       uploadDate: new Date()
     });

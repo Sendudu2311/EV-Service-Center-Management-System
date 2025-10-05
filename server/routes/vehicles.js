@@ -10,6 +10,7 @@ import {
   addVehicleImage
 } from '../controllers/vehicleController.js';
 import { protect } from '../middleware/auth.js';
+import { uploadImage } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -29,6 +30,6 @@ router.route('/:id')
 // Specific vehicle actions (all authenticated users)
 router.put('/:id/mileage', updateMileage);
 router.get('/:id/maintenance', getVehicleMaintenance);
-router.post('/:id/images', addVehicleImage);
+router.post('/:id/images', uploadImage.single('image'), addVehicleImage);
 
 export default router;

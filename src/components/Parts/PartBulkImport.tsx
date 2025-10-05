@@ -38,7 +38,7 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
   const [showPreview, setShowPreview] = useState(false);
 
   const requiredFields = ['name', 'partNumber', 'category', 'brand'];
-  const categories = ['Battery', 'Motor', 'Electronics', 'Charging', 'Body', 'Interior', 'Tires', 'Fluids'];
+  const categories = ['battery', 'motor', 'charging', 'electronics', 'body', 'interior', 'safety', 'consumables'];
 
   const validateRow = (row: ImportRow, index: number): ValidationError[] => {
     const errors: ValidationError[] = [];
@@ -54,8 +54,8 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
       }
     });
 
-    // Validate category
-    if (row.category && !categories.includes(row.category)) {
+    // Validate category - case insensitive
+    if (row.category && !categories.includes(row.category.toLowerCase())) {
       errors.push({
         row: index + 1,
         field: 'category',
@@ -76,7 +76,7 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
     });
 
     return errors;
-  };
+  };;
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -112,26 +112,71 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
           return;
         }
 
-        // Map headers to expected field names
+        // Map headers to expected field names - comprehensive mapping
         const headers = jsonData[0];
         const headerMapping: { [key: string]: string } = {
+          // Basic fields
           'Part Name': 'name',
           'Name': 'name',
           'Part Number': 'partNumber',
           'PartNumber': 'partNumber',
           'Category': 'category',
+          'Subcategory': 'subcategory',
           'Brand': 'brand',
+          'Model': 'model',
           'Description': 'description',
+          
+          // Specifications
+          'Spec Voltage': 'specVoltage',
+          'Spec Power': 'specPower',
+          'Dim Length': 'dimLength',
+          'Dim Width': 'dimWidth',
+          'Dim Height': 'dimHeight',
+          'Spec Other': 'specOther',
+          
+          // Compatibility
+          'Compatibility Makes': 'makes',
+          'Compatibility Models': 'models',
+          'Compatibility Years Min': 'yearsMin',
+          'Compatibility Years Max': 'yearsMax',
+          'Battery Types': 'batteryTypes',
+          
+          // Pricing
           'Cost Price': 'costPrice',
           'CostPrice': 'costPrice',
           'Retail Price': 'retailPrice',
           'RetailPrice': 'retailPrice',
+          'Wholesale Price': 'wholesalePrice',
+          'WholesalePrice': 'wholesalePrice',
+          'Currency': 'currency',
+          
+          // Supplier
+          'Supplier Name': 'supplierName',
+          'Supplier Contact': 'supplierContact',
+          'Supplier Notes': 'supplierNotes',
+          
+          // Inventory
           'Current Stock': 'currentStock',
           'CurrentStock': 'currentStock',
+          'Reserved Stock': 'reservedStock',
           'Min Stock Level': 'minStockLevel',
           'MinStockLevel': 'minStockLevel',
-          'Model': 'model',
-          'Subcategory': 'subcategory'
+          'Max Stock Level': 'maxStockLevel',
+          'MaxStockLevel': 'maxStockLevel',
+          'Reorder Point': 'reorderPoint',
+          'Average Usage': 'averageUsage',
+          
+          // Other fields
+          'Lead Time (days)': 'leadTime',
+          'Warranty Duration (days)': 'warrantyDuration',
+          'Warranty Type': 'warrantyType',
+          'Warranty Description': 'warrantyDescription',
+          'Tags (comma separated)': 'tags',
+          'Image URLs (comma separated)': 'images',
+          'Is Recommended (true/false)': 'isRecommended',
+          'Is Active (true/false)': 'isActive',
+          'Is Discontinued (true/false)': 'isDiscontinued',
+          'Replacement Part Numbers (comma separated)': 'replacementParts'
         };
 
         // Process data rows
@@ -159,7 +204,7 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
         if (allErrors.length === 0) {
           toast.success(`${processedData.length} rows loaded successfully`);
         } else {
-          toast.warning(`${allErrors.length} validation errors found`);
+          toast(`${allErrors.length} validation errors found`);
         }
       } catch (error) {
         console.error('Error parsing Excel file:', error);
@@ -168,7 +213,7 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
     };
 
     reader.readAsArrayBuffer(file);
-  };
+  };;
 
   const handleImport = async () => {
     if (validationErrors.length > 0) {
@@ -181,66 +226,172 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
 
     try {
       const token = localStorage.getItem('token');
-      const successCount = importData.length;
-      let processedCount = 0;
-
-      // Process in batches to avoid overwhelming the server
-      const batchSize = 10;
-      for (let i = 0; i < importData.length; i += batchSize) {
-        const batch = importData.slice(i, i + batchSize);
-        
-        const promises = batch.map(async (row) => {
-          const partData = {
-            name: row.name,
-            partNumber: row.partNumber,
-            description: row.description || '',
-            category: row.category,
-            subcategory: row.subcategory || '',
-            brand: row.brand,
-            model: row.model || '',
-            pricing: {
-              cost: parseFloat(row.costPrice) || 0,
-              retail: parseFloat(row.retailPrice) || 0,
-              wholesale: parseFloat(row.wholesalePrice) || 0,
-              currency: 'VND'
-            },
-            inventory: {
-              currentStock: parseInt(row.currentStock) || 0,
-              reservedStock: 0,
-              usedStock: 0,
-              minStockLevel: parseInt(row.minStockLevel) || 10,
-              maxStockLevel: parseInt(row.maxStockLevel) || 100,
-              reorderPoint: parseInt(row.reorderPoint) || 20,
-              averageUsage: 0
-            },
-            isActive: true,
-            isRecommended: false,
-            isDiscontinued: false,
-            tags: []
-          };
-
-          const response = await fetch('/api/parts', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(partData)
-          });
-
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(`Row ${processedCount + 1}: ${error.message}`);
+      const payload = importData.map((row) => {
+        // Parse images and tags if provided as comma-separated strings
+        let images = [] as any[];
+        if (row.images) {
+          if (typeof row.images === 'string') {
+            images = row.images.split(',').map((s: string) => ({ url: s.trim(), isPrimary: false }));
+          } else if (Array.isArray(row.images)) {
+            images = row.images.map((u: string) => ({ url: u, isPrimary: false }));
           }
+        }
 
-          processedCount++;
-          setProgress((processedCount / successCount) * 100);
-        });
+        let tags = [] as string[];
+        if (row.tags) {
+          if (typeof row.tags === 'string') tags = row.tags.split(',').map((s: string) => s.trim()).filter(Boolean);
+          else if (Array.isArray(row.tags)) tags = row.tags.map((s: any) => String(s).trim()).filter(Boolean);
+        }
 
-        await Promise.all(promises);
+        const pricing = {
+          cost: Number(row.costPrice ?? row.cost ?? 0) || 0,
+          retail: Number(row.retailPrice ?? row.retail ?? 0) || 0,
+          wholesale: Number(row.wholesalePrice ?? row.wholesale ?? 0) || 0,
+          currency: row.currency || 'VND'
+        };
+
+        const inventory = {
+          currentStock: Number(row.currentStock ?? 0) || 0,
+          reservedStock: Number(row.reservedStock ?? 0) || 0,
+          usedStock: Number(row.usedStock ?? 0) || 0,
+          minStockLevel: Number(row.minStockLevel ?? 0) || 0,
+          maxStockLevel: Number(row.maxStockLevel ?? 0) || 0,
+          reorderPoint: Number(row.reorderPoint ?? 0) || 0,
+          averageUsage: Number(row.averageUsage ?? 0) || 0
+        };
+
+        // Handle years properly - can be from separate min/max columns or JSON string
+        let years = undefined;
+        if (row.yearsMin || row.yearsMax) {
+          years = {
+            min: Number(row.yearsMin) || undefined,
+            max: Number(row.yearsMax) || undefined
+          };
+        } else if (row.years) {
+          if (typeof row.years === 'string') {
+            try {
+              years = JSON.parse(row.years);
+            } catch (e) {
+              // If not JSON, try to parse as "min-max" format
+              const yearMatch = row.years.match(/(\d{4})-(\d{4})/);
+              if (yearMatch) {
+                years = { min: Number(yearMatch[1]), max: Number(yearMatch[2]) };
+              }
+            }
+          } else {
+            years = row.years;
+          }
+        }
+
+        const compatibility = {
+          makes: row.makes ? String(row.makes).split(',').map((s: string) => s.trim()) : [],
+          models: row.models ? String(row.models).split(',').map((s: string) => s.trim()) : [],
+          years,
+          batteryTypes: row.batteryTypes ? String(row.batteryTypes).split(',').map((s: string) => s.trim()) : []
+        };
+
+        // Handle specifications
+        const specifications: any = {};
+        if (row.specVoltage || row.voltage) specifications.voltage = Number(row.specVoltage || row.voltage);
+        if (row.specPower || row.power) specifications.power = Number(row.specPower || row.power);
+        
+        // Handle dimensions
+        if (row.dimLength || row.dimWidth || row.dimHeight) {
+          specifications.dimensions = {};
+          if (row.dimLength) specifications.dimensions.length = Number(row.dimLength);
+          if (row.dimWidth) specifications.dimensions.width = Number(row.dimWidth);
+          if (row.dimHeight) specifications.dimensions.height = Number(row.dimHeight);
+        }
+        
+        // Handle spec other - parse key:value;key:value format
+        if (row.specOther) {
+          try {
+            if (typeof row.specOther === 'string') {
+              const otherObj: any = {};
+              row.specOther.split(';').forEach((pair: string) => {
+                const [key, value] = pair.split(':');
+                if (key && value) {
+                  otherObj[key.trim()] = isNaN(Number(value.trim())) ? value.trim() : Number(value.trim());
+                }
+              });
+              specifications.other = otherObj;
+            } else {
+              specifications.other = row.specOther;
+            }
+          } catch (e) {
+            specifications.other = row.specOther;
+          }
+        }
+
+        // Handle warranty
+        let warranty = undefined;
+        if (row.warrantyDuration || row.warrantyType || row.warrantyDescription) {
+          warranty = {
+            duration: row.warrantyDuration ? Number(row.warrantyDuration) : undefined,
+            type: row.warrantyType || 'manufacturer',
+            description: row.warrantyDescription || ''
+          };
+        }
+
+        // Handle supplier info
+        let supplierInfo = undefined;
+        if (row.supplierName || row.supplierContact || row.supplierNotes) {
+          supplierInfo = {
+            name: row.supplierName || '',
+            contact: row.supplierContact || '',
+            notes: row.supplierNotes || ''
+          };
+        }
+
+        return {
+          name: row.name,
+          partNumber: row.partNumber,
+          description: row.description || '',
+          category: (row.category || '').toLowerCase(), // Ensure lowercase
+          subcategory: row.subcategory || '',
+          brand: row.brand || '',
+          model: row.model || '',
+          pricing,
+          inventory,
+          compatibility,
+          specifications,
+          supplierInfo,
+          warranty,
+          leadTime: row.leadTime ? Number(row.leadTime) : undefined,
+          isActive: row.isActive !== undefined ? Boolean(row.isActive === 'true' || row.isActive === true) : true,
+          isRecommended: row.isRecommended !== undefined ? Boolean(row.isRecommended === 'true' || row.isRecommended === true) : false,
+          isDiscontinued: row.isDiscontinued !== undefined ? Boolean(row.isDiscontinued === 'true' || row.isDiscontinued === true) : false,
+          replacementParts: row.replacementParts ? (typeof row.replacementParts === 'string' ? row.replacementParts.split(',').map((s: string) => s.trim()) : row.replacementParts) : [],
+          tags,
+          images
+        };
+      });
+
+      // Send single bulk request
+      const response = await fetch('/api/parts/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => null);
+        throw new Error(err?.message || 'Import failed');
       }
 
-      toast.success(`Successfully imported ${successCount} parts`);
+      const result = await response.json();
+      const successCount = result.results.filter((r: any) => r.success).length;
+      const failCount = result.results.filter((r: any) => !r.success).length;
+      if (failCount === 0) {
+        toast.success(`Successfully imported ${successCount} parts`);
+      } else {
+        toast.success(`Imported ${successCount} parts, ${failCount} failed`);
+        console.warn('Import results', result.results);
+      }
+
       onImportComplete?.();
       onClose();
     } catch (error) {
@@ -250,13 +401,40 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
       setIsProcessing(false);
       setProgress(0);
     }
-  };
+  };;
 
   const downloadTemplate = () => {
     const templateData = [
-      ['Part Name', 'Part Number', 'Category', 'Brand', 'Description', 'Cost Price', 'Retail Price', 'Current Stock', 'Min Stock Level'],
-      ['Sample Battery', 'BAT001', 'Battery', 'BrandX', 'High performance lithium battery', '1000000', '1500000', '50', '10'],
-      ['Sample Motor', 'MOT001', 'Motor', 'BrandY', 'Electric motor for EV', '5000000', '7500000', '20', '5']
+      [
+        'Part Name', 'Part Number', 'Category', 'Subcategory', 'Brand', 'Model', 'Description',
+        'Spec Voltage', 'Spec Power', 'Dim Length', 'Dim Width', 'Dim Height', 'Spec Other',
+        'Compatibility Makes', 'Compatibility Models', 'Compatibility Years Min', 'Compatibility Years Max', 'Battery Types',
+        'Cost Price', 'Retail Price', 'Wholesale Price', 'Currency',
+        'Supplier Name', 'Supplier Contact', 'Supplier Notes',
+        'Current Stock', 'Reserved Stock', 'Min Stock Level', 'Max Stock Level', 'Reorder Point', 'Average Usage',
+        'Lead Time (days)', 'Warranty Duration (days)', 'Warranty Type', 'Warranty Description',
+        'Tags (comma separated)', 'Image URLs (comma separated)', 'Is Recommended (true/false)', 'Is Active (true/false)', 'Is Discontinued (true/false)', 'Replacement Part Numbers (comma separated)'
+      ],
+      [
+        '22kW Onboard Charger (Excel Test)', 'CHG-ONBOARD-22KW-001-T', 'charging', 'onboard-charger', 'ChargeMax', '', 'High-efficiency 22kW onboard charging unit',
+        '400', '22', '400', '300', '150', 'efficiency:95;cooling:liquid',
+        'VinFast,Hyundai,BMW', 'VF e34,IONIQ 5', '2022', '2024', 'lithium-ion',
+        '3500000', '5500000', '4500000', 'VND',
+        'ChargeMax Technologies', 'info@chargemax.com', 'Specialized charging equipment manufacturer',
+        '12', '1', '5', '20', '8', '3',
+        '10', '180', 'manufacturer', '6 months manufacturer warranty',
+        'charging,onboard,22kw,charger', 'https://res.cloudinary.com/.../charger.jpg', 'true', 'true', 'false', ''
+      ],
+      [
+        'DC-DC Converter 12V (Excel Test)', 'ELC-DC-CONVERTER-001-T', 'electronics', 'power-converter', 'PowerTech', '', 'High voltage to 12V DC converter for auxiliary systems',
+        '12', '1.5', '250', '180', '80', 'inputVoltage:250-450V;outputCurrent:125A;efficiency:92',
+        'Tesla,VinFast,Hyundai', 'Model 3,Model Y,VF e34,IONIQ 5', '2020', '2024', 'lithium-ion',
+        '2000000', '3200000', '2600000', 'VND',
+        'PowerTech Solutions', 'support@powertech.com', 'Automotive power electronics specialist',
+        '18', '2', '8', '30', '12', '6',
+        '7', '120', 'manufacturer', '4 months manufacturer warranty',
+        'electronics,dc-converter,12v,power', 'https://res.cloudinary.com/.../dc_converter.jpg', 'true', 'true', 'false', ''
+      ]
     ];
 
     const worksheet = XLSX.utils.aoa_to_sheet(templateData);

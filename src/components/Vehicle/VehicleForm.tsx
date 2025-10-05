@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect, useRef } from 'react';
+import { XMarkIcon, PhotoIcon, TrashIcon } from '@heroicons/react/24/outline';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
@@ -19,6 +19,11 @@ interface Vehicle {
   maintenanceInterval: number;
   timeBasedInterval: number;
   warrantyExpiry: string;
+  images?: Array<{
+    url: string;
+    description: string;
+    uploadDate: string;
+  }>;
 }
 
 interface VehicleFormProps {
@@ -35,6 +40,10 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
   onCancel
 }) => {
   const [loading, setLoading] = useState(false);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [formData, setFormData] = useState({
     vin: '',
     make: '',
@@ -51,6 +60,40 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     timeBasedInterval: 12,
     warrantyExpiry: ''
   });
+
+  // Handle image selection
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // Validate file types
+    const validFiles = files.filter(file => {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} is not a valid image file`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length > 0) {
+      setSelectedImages(prev => [...prev, ...validFiles]);
+      
+      // Create preview URLs
+      validFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setPreviewUrls(prev => [...prev, e.target?.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  // Remove image from selection
+  const removeImage = (index: number) => {
+    setSelectedImages(prev => prev.filter((_, i) => i !== index));
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
 
   useEffect(() => {
     if (vehicle && mode === 'edit') {
@@ -88,13 +131,42 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     setLoading(true);
 
     try {
+      let vehicleId: string;
+      
       if (mode === 'create') {
-        await api.post('/api/vehicles', formData);
+        const response = await api.post('/api/vehicles', formData);
+        vehicleId = response.data.data._id;
         toast.success('Vehicle registered successfully');
       } else {
         await api.put(`/api/vehicles/${vehicle?._id}`, formData);
+        vehicleId = vehicle!._id!;
         toast.success('Vehicle updated successfully');
       }
+
+      // Upload images if any selected
+      if (selectedImages.length > 0) {
+        for (const [index, image] of selectedImages.entries()) {
+          const imageFormData = new FormData();
+          imageFormData.append('image', image);
+          imageFormData.append('description', `Vehicle image ${index + 1}`);
+          
+          try {
+            await api.post(`/api/vehicles/${vehicleId}/images`, imageFormData, {
+              headers: {
+                'Content-Type': 'multipart/form-data'
+              }
+            });
+          } catch (imageError) {
+            console.error('Error uploading image:', imageError);
+            toast.error(`Failed to upload image ${index + 1}`);
+          }
+        }
+        
+        if (selectedImages.length > 0) {
+          toast.success(`${selectedImages.length} image(s) uploaded successfully`);
+        }
+      }
+
       onSuccess();
     } catch (error: any) {
       console.error('Error saving vehicle:', error);
@@ -380,6 +452,62 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     onChange={handleChange}
                     className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
                   />
+                </div>
+
+                {/* Vehicle Images */}
+                <div className="sm:col-span-6">
+                  <label className="block text-sm font-medium leading-6 text-gray-900 mb-2">
+                    Vehicle Images
+                  </label>
+                  
+                  {/* File Input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageSelect}
+                    className="hidden"
+                  />
+                  
+                  {/* Upload Button */}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="mb-4 inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <PhotoIcon className="h-5 w-5 mr-2" />
+                    Add Images
+                  </button>
+                  
+                  {/* Image Previews */}
+                  {previewUrls.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {previewUrls.map((url, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={url}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg border border-gray-300"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                          <div className="mt-1 text-xs text-gray-500 truncate">
+                            {selectedImages[index]?.name}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <p className="mt-2 text-sm text-gray-500">
+                    Upload images of your vehicle. Supported formats: JPG, PNG, GIF. Max file size: 5MB each.
+                  </p>
                 </div>
               </div>
             </div>
