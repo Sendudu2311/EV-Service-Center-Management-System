@@ -415,8 +415,8 @@ const AppointmentsPage: React.FC = () => {
   const renderStatusActions = useCallback((appointment: Appointment) => {
     if (!user) return null;
 
-    // Special case for pending appointments - show "Yêu cầu hủy" button
-    if (appointment.status === 'pending') {
+    // Special case for pending appointments - show "Yêu cầu hủy" button only for customers
+    if (appointment.status === 'pending' && user?.role === 'customer') {
       return (
         <div className="flex items-center space-x-1 mt-2" role="group" aria-label="Hành động trạng thái">
           <button
