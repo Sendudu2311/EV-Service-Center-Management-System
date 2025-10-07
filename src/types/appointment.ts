@@ -151,7 +151,7 @@ export interface Appointment {
   invoiceId?: string;
 
   // Pricing
-  estimatedCost: number;
+  totalAmount?: number;
   finalCost?: number;
   laborCost?: number;
   partsCost?: number;

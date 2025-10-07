@@ -346,7 +346,7 @@ const ServiceReceptionPage: React.FC = () => {
                     : 'Chưa có thời gian'}
                 </p>
                 <p className="text-sm text-gray-500">
-                  Chi phí ước tính: {formatVND(appointment.estimatedCost)}
+                  Chi phí ước tính: {formatVND(appointment.totalAmount)}
                 </p>
               </div>
             </div>
