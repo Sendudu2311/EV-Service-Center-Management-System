@@ -410,21 +410,49 @@ const AppointmentsPage: React.FC = () => {
 
 
   /**
-   * Check if user can update appointment status
-   */
-  const canUpdateStatus = useCallback((appointment: Appointment) => {
-    if (!user) return false;
-    const nextStatuses = getNextStatuses(appointment.status, user.role);
-    return nextStatuses.length > 0;
-  }, [user]);
-
-  /**
    * Render status action buttons
    */
   const renderStatusActions = useCallback((appointment: Appointment) => {
-    if (!user || !canUpdateStatus(appointment)) return null;
+    if (!user) return null;
+
+    // Special case for pending appointments - show "Yêu cầu hủy" button
+    if (appointment.status === 'pending') {
+      return (
+        <div className="flex items-center space-x-1 mt-2" role="group" aria-label="Hành động trạng thái">
+          <button
+            onClick={() => handleStatusUpdate(appointment._id, 'cancelled')}
+            disabled={state.updatingStatus === appointment._id}
+            className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            aria-label="Yêu cầu hủy lịch hẹn"
+          >
+            {state.updatingStatus === appointment._id ? (
+              <ArrowPathIcon className="w-3 h-3 animate-spin" />
+            ) : (
+              'Yêu cầu hủy'
+            )}
+          </button>
+        </div>
+      );
+    }
+
+    // If appointment is cancelled, show "Da Huy" button
+    if (appointment.status === 'cancelled') {
+      return (
+        <div className="flex items-center space-x-1 mt-2" role="group" aria-label="Hành động trạng thái">
+          <button
+            disabled
+            className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-gray-500 cursor-not-allowed"
+            aria-label="Đã hủy"
+          >
+            Đã hủy
+          </button>
+        </div>
+      );
+    }
 
     const nextStatuses = getNextStatuses(appointment.status, user.role);
+
+    if (nextStatuses.length === 0) return null;
 
     return (
       <div className="flex items-center space-x-1 mt-2" role="group" aria-label="Hành động trạng thái">
@@ -445,7 +473,7 @@ const AppointmentsPage: React.FC = () => {
         ))}
       </div>
     );
-  }, [user, canUpdateStatus, handleStatusUpdate, state.updatingStatus]);
+  }, [user, handleStatusUpdate, state.updatingStatus]);
 
   /**
    * Calculate dashboard statistics
@@ -757,7 +785,7 @@ const AppointmentsPage: React.FC = () => {
                               </time>
                             </p>
                             <p className="text-sm text-gray-500">
-                              Chi phí ước tính: {formatVND(appointment.estimatedCost)}
+                              Chi phí ước tính: {formatVND(appointment.totalAmount)}
                             </p>
                           </div>
                         </div>
@@ -782,16 +810,6 @@ const AppointmentsPage: React.FC = () => {
                         >
                           <EyeIcon className="h-4 w-4" />
                         </button>
-
-                        {['pending', 'confirmed'].includes(appointment.status) && (
-                          <button
-                            onClick={() => handleCancelAppointment(appointment._id)}
-                            className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                            aria-label={`Hủy lịch hẹn #${appointment.appointmentNumber}`}
-                          >
-                            <XMarkIcon className="h-4 w-4" />
-                          </button>
-                        )}
                       </div>
                     </div>
                   </article>
