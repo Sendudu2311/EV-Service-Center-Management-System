@@ -634,4 +634,19 @@ export const usersAPI = {
     api.put<ApiResponse<any>>(`/api/auth/users/${id}/status`, { isActive }),
 };
 
+// VNPay API
+export const vnpayAPI = {
+  createPayment: (paymentData: any) =>
+    api.post<ApiResponse<any>>('/api/vnpay/create-payment', paymentData),
+
+  checkTransaction: (transactionRef: string) =>
+    api.post<ApiResponse<any>>('/api/vnpay/check-transaction', { transactionRef }),
+
+  verifyAppointmentPayment: (paymentData: any) =>
+    api.post<ApiResponse<any>>('/api/vnpay/verify-appointment-payment', paymentData),
+
+  getPaymentMethods: () =>
+    api.get<ApiResponse<any[]>>('/api/vnpay/payment-methods')
+};
+
 export default api;

@@ -75,3 +75,5 @@ artifacts/
 # Server logs
 server.log
 *.log
+
+.claude
