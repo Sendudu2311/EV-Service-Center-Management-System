@@ -14,7 +14,8 @@ import {
   CheckCircleIcon,
   XMarkIcon,
   PlusIcon,
-  TrashIcon
+  TrashIcon,
+  WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline';
 import {
   ServiceReception,
@@ -54,6 +55,7 @@ const ServiceReceptionPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'basic' | 'condition' | 'services' | 'checklist' | 'estimate'>('basic');
   const [newComplaint, setNewComplaint] = useState('');
   const [newRequest, setNewRequest] = useState('');
+  const [services, setServices] = useState<any[]>([]);
 
   const {
     control,
@@ -87,6 +89,19 @@ const ServiceReceptionPage: React.FC = () => {
       const appointmentResponse = await appointmentsAPI.getById(appointmentId!);
       const appointmentData = appointmentResponse.data.data || appointmentResponse.data;
       setAppointment(appointmentData);
+
+      // Initialize services from appointment
+      const appointmentServices = (appointmentData.services || []).map(service => ({
+        serviceId: typeof service.serviceId === 'string' ? service.serviceId : service.serviceId._id,
+        serviceName: service.serviceName,
+        description: service.description || '',
+        category: service.category,
+        quantity: service.quantity,
+        estimatedDuration: service.estimatedDuration || 60,
+        estimatedCost: service.totalPrice,
+        notes: service.notes || ''
+      }));
+      setServices(appointmentServices);
 
       // Set form values from appointment
       setValue('appointmentId', appointmentData._id);
@@ -561,10 +576,67 @@ const ServiceReceptionPage: React.FC = () => {
             )}
 
             {activeTab === 'services' && (
-              <div className="text-center py-12">
-                <CheckCircleIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-semibold text-gray-900">Quản lý dịch vụ</h3>
-                <p className="mt-1 text-sm text-gray-500">Tính năng này sẽ được triển khai trong phiên bản tiếp theo.</p>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Dịch vụ từ lịch hẹn</h3>
+                  <div className="bg-white border border-gray-200 rounded-lg">
+                    <div className="px-4 py-3 border-b border-gray-200">
+                      <h4 className="text-sm font-medium text-gray-900">Dịch vụ đã đặt</h4>
+                    </div>
+                    <div className="divide-y divide-gray-200">
+                      {services.length > 0 ? (
+                        services.map((service, index) => (
+                          <div key={index} className="px-4 py-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                  <h5 className="text-sm font-medium text-gray-900">{service.serviceName}</h5>
+                                  <span className="text-sm text-gray-500">{service.estimatedDuration} phút</span>
+                                </div>
+                                <div className="mt-1 text-sm text-gray-600">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                    {service.category}
+                                  </span>
+                                  <span className="ml-2">Số lượng: {service.quantity}</span>
+                                  {service.estimatedCost && (
+                                    <span className="ml-2">Chi phí: {formatVND(service.estimatedCost)}</span>
+                                  )}
+                                </div>
+                                {service.description && (
+                                  <p className="mt-1 text-sm text-gray-500">{service.description}</p>
+                                )}
+                                {service.notes && (
+                                  <p className="mt-1 text-sm text-gray-500">Ghi chú: {service.notes}</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-8 text-center text-sm text-gray-500">
+                          Không có dịch vụ nào được đặt trong lịch hẹn này.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Additional Services Section */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Dịch vụ bổ sung (tùy chọn)</h3>
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <p className="text-sm text-gray-600 mb-4">
+                      Kỹ thuật viên có thể thêm các dịch vụ bổ sung ngoài những dịch vụ đã đặt trong lịch hẹn.
+                    </p>
+                    <div className="text-center py-8">
+                      <WrenchScrewdriverIcon className="mx-auto h-12 w-12 text-gray-400" />
+                      <h4 className="mt-2 text-sm font-semibold text-gray-900">Tính năng đang phát triển</h4>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Chức năng thêm dịch vụ bổ sung sẽ được triển khai trong phiên bản tiếp theo.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
