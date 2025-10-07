@@ -500,8 +500,8 @@ const AppointmentsPage: React.FC = () => {
     (appointment: Appointment) => {
       if (!user) return null;
 
-      // Special case for pending appointments - show "Yêu cầu hủy" button
-      if (appointment.status === "pending") {
+      // Special case for pending appointments - show "Yêu cầu hủy" button only for customers
+      if (appointment.status === "pending" && user?.role === "customer") {
         return (
           <div
             className="flex items-center space-x-1 mt-2"

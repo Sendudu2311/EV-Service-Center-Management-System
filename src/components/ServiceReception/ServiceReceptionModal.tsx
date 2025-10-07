@@ -160,6 +160,36 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
   const [availableParts, setAvailableParts] = useState<any[]>([]);
   const [loadingParts, setLoadingParts] = useState(false);
 
+  // Calculate totals
+  const calculateTotals = () => {
+    // Start with appointment services time
+    let totalTime = appointment.services.reduce((total, service) =>
+      total + (service.serviceId.estimatedDuration * service.quantity), 0
+    );
+    let totalCost = 0;
+
+    // Add time from additional services
+    formData.additionalServices.forEach(service => {
+      const serviceData = availableServices.find(s => s._id === service.serviceId);
+      if (serviceData) {
+        totalTime += serviceData.estimatedDuration * service.quantity;
+        totalCost += serviceData.basePrice * service.quantity;
+      }
+    });
+
+    // Add cost from requested parts
+    formData.requestedParts.forEach(part => {
+      const partData = availableParts.find(p => p._id === part.partId);
+      if (partData) {
+        totalCost += (partData.pricing?.retail || 0) * part.quantity;
+      }
+    });
+
+    return { totalTime, totalCost };
+  };
+
+  const { totalTime, totalCost } = calculateTotals();
+
   // Load available services from API
   useEffect(() => {
     const loadServices = async () => {
@@ -215,7 +245,12 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
   };
 
   const handleSubmit = async () => {
-    await onSubmit(formData);
+    // Update formData with calculated totals before submitting
+    const updatedFormData = {
+      ...formData,
+      estimatedServiceTime: totalTime
+    };
+    await onSubmit(updatedFormData);
   };
 
   const addCustomerItem = () => {
@@ -734,10 +769,16 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
               <div className="space-y-2">
                 {appointment.services.map((service, index) => (
                   <div key={index} className="flex justify-between items-center text-sm">
-                    <span>{service.serviceId.name}</span>
-                    <span className="text-gray-600">{service.serviceId.estimatedDuration} phút</span>
+                    <span>{service.serviceId.name} {service.quantity > 1 ? `(${service.quantity})` : ''}</span>
+                    <span className="text-gray-600">{service.serviceId.estimatedDuration * service.quantity} phút</span>
                   </div>
                 ))}
+              </div>
+              <div className="mt-3 pt-3 border-t text-sm">
+                <div className="flex justify-between">
+                  <span className="font-medium">Tổng thời gian dịch vụ đã đặt:</span>
+                  <span>{appointment.services.reduce((total, service) => total + (service.serviceId.estimatedDuration * service.quantity), 0)} phút</span>
+                </div>
               </div>
             </div>
 
@@ -848,14 +889,14 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                         />
                       </div>
 
-                      {service.estimatedCost > 0 && (
+                      {(service.estimatedCost || 0) > 0 && (
                         <div className="text-sm text-gray-600 bg-blue-50 p-2 rounded">
                           <span className="font-medium">Giá dịch vụ: </span>
                           <span className="text-blue-700 font-semibold">
-                            {service.estimatedCost.toLocaleString('vi-VN')} VNĐ
+                            {(service.estimatedCost || 0).toLocaleString('vi-VN')} VNĐ
                           </span>
                           <span className="text-gray-500 ml-2">
-                            (Tổng: {(service.estimatedCost * service.quantity).toLocaleString('vi-VN')} VNĐ)
+                            (Tổng: {((service.estimatedCost || 0) * service.quantity).toLocaleString('vi-VN')} VNĐ)
                           </span>
                         </div>
                       )}
@@ -869,19 +910,17 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Thời gian dự kiến (phút)
+                  Thời gian dự kiến (phút) - Tự động tính
                 </label>
                 <input
                   type="number"
-                  min="30"
-                  max="480"
-                  value={formData.estimatedServiceTime}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    estimatedServiceTime: parseInt(e.target.value) || 120
-                  }))}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  value={totalTime}
+                  readOnly
+                  className="block w-full rounded-md border-gray-300 shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Bao gồm thời gian của tất cả dịch vụ đã đặt và bổ sung
+                </p>
               </div>
 
               <div>
@@ -997,9 +1036,9 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                                 partId: e.target.value,
                                 partName: selectedPart?.name || '',
                                 partNumber: selectedPart?.partNumber || '',
-                                estimatedCost: selectedPart?.price || 0,
-                                isAvailable: selectedPart?.stockQuantity > 0,
-                                availableQuantity: selectedPart?.stockQuantity || 0
+                                estimatedCost: selectedPart?.pricing?.retail || 0,
+                                isAvailable: (selectedPart?.inventory?.currentStock || 0) > 0,
+                                availableQuantity: selectedPart?.inventory?.currentStock || 0
                               };
                               setFormData(prev => ({ ...prev, requestedParts: newParts }));
                             }}
@@ -1009,8 +1048,8 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                             <option value="">Chọn phụ tùng...</option>
                             {availableParts.map((availablePart) => (
                               <option key={availablePart._id} value={availablePart._id}>
-                                {availablePart.name} ({availablePart.partNumber}) - {availablePart.price?.toLocaleString('vi-VN')} VNĐ
-                                {availablePart.stockQuantity > 0 ? ` - Có sẵn: ${availablePart.stockQuantity}` : ' - Hết hàng'}
+                                {availablePart.name} ({availablePart.partNumber}) - {availablePart.pricing?.retail?.toLocaleString('vi-VN')} VNĐ
+                                {(availablePart.inventory?.currentStock || 0) > 0 ? ` - Có sẵn: ${availablePart.inventory?.currentStock}` : ' - Hết hàng'}
                               </option>
                             ))}
                           </select>
@@ -1055,13 +1094,13 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                         </select>
                       </div>
 
-                      {part.partId && part.estimatedCost > 0 && (
+                      {part.partId && (part.estimatedCost || 0) > 0 && (
                         <div className="mb-3 text-sm bg-blue-50 p-3 rounded">
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <span className="font-medium text-gray-700">Giá: </span>
                               <span className="text-blue-700 font-semibold">
-                                {part.estimatedCost.toLocaleString('vi-VN')} VNĐ
+                                {(part.estimatedCost || 0).toLocaleString('vi-VN')} VNĐ
                               </span>
                             </div>
                             <div>
@@ -1074,16 +1113,16 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                           <div className="mt-2">
                             <span className="font-medium text-gray-700">Tổng giá: </span>
                             <span className="text-green-600 font-semibold">
-                              {(part.estimatedCost * part.quantity).toLocaleString('vi-VN')} VNĐ
+                              {((part.estimatedCost || 0) * part.quantity).toLocaleString('vi-VN')} VNĐ
                             </span>
                             {!part.isAvailable && (
                               <span className="ml-2 text-red-600 text-xs">
                                 ⚠️ Phụ tùng hiện tại hết hàng
                               </span>
                             )}
-                            {part.isAvailable && part.quantity > part.availableQuantity && (
+                            {part.isAvailable && part.quantity > (part.availableQuantity || 0) && (
                               <span className="ml-2 text-orange-600 text-xs">
-                                ⚠️ Yêu cầu {part.quantity} nhưng chỉ còn {part.availableQuantity}
+                                ⚠️ Yêu cầu {part.quantity} nhưng chỉ còn {part.availableQuantity || 0}
                               </span>
                             )}
                           </div>
@@ -1113,11 +1152,12 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
             <div className="bg-green-50 rounded-lg p-4">
               <h4 className="text-md font-medium text-gray-900 mb-2">Tóm tắt</h4>
               <div className="text-sm text-gray-700 space-y-1">
+                <p>• Dịch vụ đã đặt: {appointment.services.length} dịch vụ</p>
                 <p>• Dịch vụ bổ sung: {formData.additionalServices.length} dịch vụ
                   {formData.additionalServices.length > 0 && (
                     <span className="ml-2 text-blue-600 font-medium">
                       ({formData.additionalServices.reduce((total, service) =>
-                        total + (service.estimatedCost * service.quantity), 0
+                        total + ((service.estimatedCost || 0) * service.quantity), 0
                       ).toLocaleString('vi-VN')} VNĐ)
                     </span>
                   )}
@@ -1126,12 +1166,12 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                   {formData.requestedParts.length > 0 && (
                     <span className="ml-2 text-blue-600 font-medium">
                       ({formData.requestedParts.reduce((total, part) =>
-                        total + (part.estimatedCost * part.quantity), 0
+                        total + ((part.estimatedCost || 0) * part.quantity), 0
                       ).toLocaleString('vi-VN')} VNĐ)
                     </span>
                   )}
                 </p>
-                <p>• Thời gian dự kiến: {formData.estimatedServiceTime} phút</p>
+                <p>• Tổng thời gian dự kiến: {totalTime} phút</p>
                 <p>• Mức độ ưu tiên: {
                   formData.priorityLevel === 'low' ? 'Thấp' :
                   formData.priorityLevel === 'normal' ? 'Bình thường' :
@@ -1140,13 +1180,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                 {(formData.additionalServices.length > 0 || formData.requestedParts.length > 0) && (
                   <div className="pt-2 mt-2 border-t border-green-200">
                     <p className="font-semibold text-green-700">
-                      • Tổng ước tính: {(
-                        formData.additionalServices.reduce((total, service) =>
-                          total + (service.estimatedCost * service.quantity), 0
-                        ) + formData.requestedParts.reduce((total, part) =>
-                          total + (part.estimatedCost * part.quantity), 0
-                        )
-                      ).toLocaleString('vi-VN')} VNĐ
+                      • Tổng chi phí ước tính: {totalCost.toLocaleString('vi-VN')} VNĐ (chưa bao gồm VAT)
                     </p>
                   </div>
                 )}

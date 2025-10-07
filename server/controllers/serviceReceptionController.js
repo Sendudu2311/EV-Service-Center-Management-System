@@ -103,6 +103,17 @@ export const createServiceReception = async (req, res) => {
 
     const receptionNumber = `REC-${dateStr}-${(todayCount + 1).toString().padStart(3, '0')}`;
 
+    // Prepare booked services from appointment services
+    const bookedServices = (appointment.services || []).map(appointmentService => ({
+      serviceId: typeof appointmentService.serviceId === 'string' ? appointmentService.serviceId : appointmentService.serviceId._id,
+      serviceName: typeof appointmentService.serviceId === 'string' ? 'Unknown Service' : appointmentService.serviceId.name,
+      category: typeof appointmentService.serviceId === 'string' ? 'general' : appointmentService.serviceId.category,
+      quantity: appointmentService.quantity,
+      estimatedDuration: typeof appointmentService.serviceId === 'string' ? 60 : appointmentService.serviceId.estimatedDuration,
+      customerInstructions: appointmentService.notes || '',
+      isCompleted: false
+    }));
+
     // Create service reception
     const serviceReception = new ServiceReception({
       receptionNumber,
@@ -115,6 +126,7 @@ export const createServiceReception = async (req, res) => {
       estimatedCompletionTime: completionTime,
       checklist: checklist || {},
       services: requestedServices || [],
+      bookedServices: bookedServices,
       // Enhanced data from new frontend structure
       vehicleCondition: vehicleCondition || {},
       customerItems: customerItems || [],
