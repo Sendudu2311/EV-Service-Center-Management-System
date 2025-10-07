@@ -20,6 +20,7 @@ router.post('/create-payment', async (req, res, next) => {
 
     const { amount, bankCode, language, orderInfo, appointmentData } = req.body;
 
+
     if (!amount || amount <= 0) {
       return res.status(400).json({
         success: false,
@@ -31,7 +32,7 @@ router.post('/create-payment', async (req, res, next) => {
     const transactionRef = `APP${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
 
     // Convert VND to VNPay amount (multiply by 100)
-    const vnpayAmount = Math.round(amount) * 100;
+    const vnpayAmount = Math.round(amount);
 
     // Create payment URL parameters
     const paymentParams = {
@@ -161,8 +162,8 @@ router.get('/return', async (req, res, next) => {
         };
 
         // Note: Auto-appointment creation has been removed.
-      // The frontend will handle appointment creation after payment verification.
-      console.log('Payment successful, waiting for frontend to complete appointment booking');
+        // The frontend will handle appointment creation after payment verification.
+        console.log('Payment successful, waiting for frontend to complete appointment booking');
       }
 
       // Convert amount back from VNPay format for consistency
@@ -276,8 +277,8 @@ router.post('/ipn', async (req, res, next) => {
         };
 
         // Note: Auto-appointment creation has been removed from IPN as well.
-      // The frontend will handle appointment creation after payment verification.
-      console.log('IPN - Payment successful, waiting for frontend to complete appointment booking');
+        // The frontend will handle appointment creation after payment verification.
+        console.log('IPN - Payment successful, waiting for frontend to complete appointment booking');
       }
 
       // Respond to VNPay
