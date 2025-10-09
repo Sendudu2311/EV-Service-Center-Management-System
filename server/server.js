@@ -36,8 +36,11 @@ import {
 // Import appointment scheduler
 import { startAppointmentScheduler } from "./utils/appointmentScheduler.js";
 
+// Import payment notifications
+import { setSocketInstance } from "./utils/paymentNotifications.js";
+
 // Load env vars
-dotenv.config();
+dotenv.config({ path: "./server/.env" });
 
 // Connect to database
 connectDB();
@@ -67,6 +70,9 @@ const io = new Server(server, {
 
 // Apply socket authentication middleware
 io.use(socketAuth);
+
+// Set socket instance for payment notifications
+setSocketInstance(io);
 
 // Body parser middleware
 app.use(express.json({ limit: "10mb" }));
