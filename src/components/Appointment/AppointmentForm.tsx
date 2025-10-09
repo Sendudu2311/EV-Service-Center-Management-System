@@ -268,12 +268,17 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   const handleConfirmationConfirm = async () => {
     const totalAmount = calculateTotalAmount();
 
-    if (totalAmount > 0 && !paymentVerified) {
-      // Show payment selection
+    if (paymentVerified) {
+      // Payment already verified - directly book appointment and trigger post-payment workflow
+      setShowConfirmation(false);
+      await handleDirectBooking();
+    } else if (totalAmount > 0) {
+      // Need payment - show payment selection
       setShowConfirmation(false);
       setShowPayment(true);
     } else {
-      // Direct booking for free services or when payment is already verified
+      // Free service - direct booking
+      setShowConfirmation(false);
       await handleDirectBooking();
     }
   };
@@ -299,8 +304,30 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
           }),
       };
 
+      // Create appointment FIRST
       await appointmentsAPI.create(appointmentData);
-      toast.success("Appointment booked successfully");
+
+      // THEN trigger post-payment workflow (emails) AFTER appointment is created
+      if (paymentVerified && pendingAppointment?.paymentInfo) {
+        try {
+          await vnpayAPI.verifyAppointmentPayment({
+            transactionRef: pendingAppointment.paymentInfo.transactionRef,
+          });
+        } catch (verifyError) {
+          console.error(
+            "Failed to send post-payment notifications:",
+            verifyError
+          );
+          // Don't fail the booking if notifications fail
+        }
+      }
+
+      toast.success("Appointment booked successfully!");
+
+      // Clean up
+      localStorage.removeItem("pendingAppointment");
+      localStorage.removeItem("paymentVerified");
+
       onSuccess();
     } catch (error: any) {
       console.error("Error creating appointment:", error);
@@ -354,14 +381,14 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
     const transactionRef = urlParams.get("transactionRef");
 
     // Check for payment verification data
-    const paymentVerified = localStorage.getItem("paymentVerified");
+    const paymentVerifiedStr = localStorage.getItem("paymentVerified");
+    const pendingDataStr = localStorage.getItem("pendingAppointment");
 
-    if (paymentVerified) {
-      const paymentData = JSON.parse(paymentVerified);
-      const pendingData = localStorage.getItem("pendingAppointment");
+    if (paymentVerifiedStr) {
+      const paymentData = JSON.parse(paymentVerifiedStr);
 
-      if (pendingData) {
-        const appointment = JSON.parse(pendingData);
+      if (pendingDataStr) {
+        const appointment = JSON.parse(pendingDataStr);
 
         // Pre-fill the form with the appointment data
         setFormData({
@@ -438,6 +465,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                   onConfirm={handleConfirmationConfirm}
                   onBack={handleConfirmationBack}
                   loading={loading}
+                  paymentVerified={paymentVerified}
                 />
               ) : (
                 <>

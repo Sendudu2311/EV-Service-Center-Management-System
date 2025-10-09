@@ -23,7 +23,7 @@ const PaymentResult: React.FC = () => {
     const vnp_TransactionNo = queryParams.get("vnp_TransactionNo");
 
     // Check for regular payment result parameters
-    const success = queryParams.get("success") === "true";
+    const success = queryParams.get("success");
     const transactionRef = queryParams.get("transactionRef");
     const amount = queryParams.get("amount");
     const appointmentId = queryParams.get("appointmentId");
@@ -109,48 +109,37 @@ const PaymentResult: React.FC = () => {
         });
       }
     }
-    // Handle regular payment result
-    else if (success && transactionRef) {
-      if (appointmentId) {
-        // Appointment was already created by the backend
-        setStatus("success");
-        setPaymentInfo({
-          success: true,
-          transactionRef,
-          amount: amount,
-          appointmentId: appointmentId,
-          autoCreated: true,
-        });
+    // Handle regular payment result (from backend redirect)
+    else if (success === "true" && transactionRef) {
+      setStatus("success");
+      setPaymentInfo({
+        success: true,
+        transactionRef,
+        amount: amount,
+      });
 
-        toast.success(
-          "Payment successful! Please complete your appointment booking."
-        );
+      toast.success(
+        "Payment successful! Please complete your appointment booking.",
+        {
+          duration: 6000,
+          icon: "✅",
+        }
+      );
 
-        // Store payment verification and redirect to appointments page with pre-filled data
-        localStorage.setItem(
-          "paymentVerified",
-          JSON.stringify({
-            transactionRef: vnp_TxnRef,
-            amount: amountInVND,
-            paymentDate: new Date(),
-            vnpayTransaction: {
-              transactionNo: vnp_TransactionNo,
-              responseCode: vnp_ResponseCode,
-              bankCode: queryParams.get("vnp_BankCode") || "",
-              cardType: queryParams.get("vnp_CardType") || "",
-              payDate: queryParams.get("vnp_PayDate") || "",
-            },
-          })
-        );
+      // Store payment verification data for AppointmentForm
+      localStorage.setItem(
+        "paymentVerified",
+        JSON.stringify({
+          transactionRef: transactionRef,
+          amount: parseInt(amount),
+          paymentDate: new Date(),
+        })
+      );
 
-        // Redirect to appointments page to show appointment form with pre-filled data
-        setTimeout(() => {
-          navigate("/appointments?payment=success&showForm=true");
-        }, 2000);
-      } else {
-        // Fallback: verify payment and book appointment
-        verifyPaymentAndBookAppointment(transactionRef);
-      }
+      // Redirect to appointments page to show appointment form
+      setTimeout(() => {
+        navigate("/appointments?payment=success&showForm=true");
+      }, 2000);
     } else {
       setStatus("error");
       setPaymentInfo({
@@ -159,7 +148,7 @@ const PaymentResult: React.FC = () => {
         amount: amount,
       });
     }
-  }, [location]);
+  }, [location, navigate]);
 
   // Note: This function is now a fallback since appointment creation is handled by the backend
   const bookAppointmentAfterPayment = async (transactionRef: string) => {

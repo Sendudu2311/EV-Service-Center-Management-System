@@ -90,34 +90,79 @@ export const sendAppointmentConfirmation = async (
   userData
 ) => {
   try {
+    // DEBUG: Log the incoming appointment data
+    console.log("📧 [Email Debug] Appointment data received:", {
+      appointmentNumber: appointmentData.appointmentNumber,
+      scheduledDate: appointmentData.scheduledDate,
+      scheduledTime: appointmentData.scheduledTime,
+      servicesCount: appointmentData.services?.length,
+      serviceCenterId: appointmentData.serviceCenterId,
+      hasServiceCenter: !!appointmentData.serviceCenter,
+    });
+
     // Get service center data if not provided
     let serviceCenter = appointmentData.serviceCenter;
     if (!serviceCenter && appointmentData.serviceCenterId) {
+      console.log(
+        "📧 [Email Debug] Fetching service center:",
+        appointmentData.serviceCenterId
+      );
       const ServiceCenter = (await import("../models/ServiceCenter.js"))
         .default;
       serviceCenter = await ServiceCenter.findById(
         appointmentData.serviceCenterId
       );
+      console.log("📧 [Email Debug] Service center fetched:", {
+        found: !!serviceCenter,
+        name: serviceCenter?.name,
+        hasAddress: !!serviceCenter?.address,
+      });
     }
 
     // Provide default service center data if not found
     if (!serviceCenter) {
+      console.log("📧 [Email Debug] Using default service center");
       serviceCenter = {
         name: "EV Service Center",
         address: "123 Main Street, Ho Chi Minh City",
       };
     }
 
+    // DEBUG: Log services data
+    console.log(
+      "📧 [Email Debug] Services data:",
+      appointmentData.services?.map((s) => ({
+        name: s.serviceName || s.name,
+        duration: s.estimatedDuration || s.duration,
+      }))
+    );
+
+    const emailHTML = generateAppointmentConfirmationTemplate(
+      {
+        ...appointmentData,
+        serviceCenter,
+      },
+      userData
+    );
+
+    // DEBUG: Log a preview of the HTML
+    console.log(
+      "📧 [Email Debug] HTML preview (first 500 chars):",
+      emailHTML.substring(0, 500)
+    );
+    console.log(
+      "📧 [Email Debug] HTML contains 'Services Booked':",
+      emailHTML.includes("Services Booked")
+    );
+    console.log(
+      "📧 [Email Debug] HTML contains 'Important Reminders':",
+      emailHTML.includes("Important Reminders")
+    );
+
     const emailOptions = {
       email: userData.email,
       subject: "Appointment Confirmed - EV Service Center",
-      html: generateAppointmentConfirmationTemplate(
-        {
-          ...appointmentData,
-          serviceCenter,
-        },
-        userData
-      ),
+      html: emailHTML,
     };
 
     await sendEmail(emailOptions);
@@ -125,6 +170,7 @@ export const sendAppointmentConfirmation = async (
     return { success: true, message: "Appointment confirmation email sent" };
   } catch (error) {
     console.error("❌ Failed to send appointment confirmation email:", error);
+    console.error("❌ Error stack:", error.stack);
     return { success: false, error: error.message };
   }
 };

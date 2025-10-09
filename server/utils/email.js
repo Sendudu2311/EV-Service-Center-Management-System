@@ -1,14 +1,28 @@
 import nodemailer from "nodemailer";
 
-export const sendEmail = async (options) => {
-  // Create transporter for Gmail
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+// Create a reusable transporter with connection pooling
+let transporter = null;
+
+const getTransporter = () => {
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+      pool: true, // Use connection pooling
+      maxConnections: 5, // Max concurrent connections
+      maxMessages: 100, // Max messages per connection
+      rateDelta: 1000, // Time window for rate limiting (ms)
+      rateLimit: 5, // Max messages per rateDelta
+    });
+  }
+  return transporter;
+};
+
+export const sendEmail = async (options, retries = 3) => {
+  const transporter = getTransporter();
 
   // Define email options
   const mailOptions = {
@@ -19,10 +33,32 @@ export const sendEmail = async (options) => {
     html: options.html,
   };
 
-  // Send email
-  const info = await transporter.sendMail(mailOptions);
-  console.log("Message sent: %s", info.messageId);
-  return info;
+  // Send email with retry logic
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const info = await transporter.sendMail(mailOptions);
+      console.log("Message sent: %s", info.messageId);
+      return info;
+    } catch (error) {
+      console.error(`Email send attempt ${attempt} failed:`, error.message);
+
+      if (attempt === retries) {
+        throw error; // Throw on last attempt
+      }
+
+      // Wait before retry (exponential backoff)
+      const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+
+      // Reset transporter on connection errors
+      if (
+        error.message.includes("socket") ||
+        error.message.includes("connection")
+      ) {
+        transporter = null;
+      }
+    }
+  }
 };
 // Generate 6-digit OTP
 export const generateOTP = () => {

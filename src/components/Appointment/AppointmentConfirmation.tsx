@@ -60,6 +60,7 @@ interface AppointmentConfirmationProps {
   onConfirm: () => void;
   onBack: () => void;
   loading?: boolean;
+  paymentVerified?: boolean;
 }
 
 const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
@@ -72,6 +73,7 @@ const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
   onConfirm,
   onBack,
   loading = false,
+  paymentVerified = false,
 }) => {
   // Get selected data
   const selectedVehicle = vehicles.find((v) => v._id === formData.vehicleId);
@@ -313,41 +315,68 @@ const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
         </div>
 
         {/* Payment Information */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <div className="flex items-start">
-            <div className="flex-shrink-0">
-              <svg
-                className="h-5 w-5 text-yellow-400"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M8.257 3.099c.765-1.36 2.726-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">
-                Payment Information
-              </h3>
-              <div className="mt-2 text-sm text-yellow-700">
-                <ul className="list-disc list-inside space-y-1">
-                  <li>You will be redirected to VNPay secure payment page</li>
-                  <li>
-                    After successful payment, your appointment will be
-                    automatically booked
-                  </li>
-                  <li>
-                    You will receive email confirmation with appointment details
-                  </li>
-                  <li>Payment is processed securely through VNPay</li>
-                </ul>
+        {paymentVerified ? (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <CheckCircleIcon className="h-5 w-5 text-green-400" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-green-800">
+                  Payment Verified
+                </h3>
+                <div className="mt-2 text-sm text-green-700">
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Your payment has been successfully processed</li>
+                    <li>
+                      Click "Confirm Booking" to complete your appointment
+                    </li>
+                    <li>
+                      You will receive email confirmation with appointment
+                      details
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-yellow-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.726-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-yellow-800">
+                  Payment Information
+                </h3>
+                <div className="mt-2 text-sm text-yellow-700">
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>You will be redirected to VNPay secure payment page</li>
+                    <li>
+                      After successful payment, return to complete your booking
+                    </li>
+                    <li>
+                      You will receive email confirmation with appointment
+                      details
+                    </li>
+                    <li>Payment is processed securely through VNPay</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Action Buttons */}
@@ -390,6 +419,11 @@ const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
                 ></path>
               </svg>
               Processing...
+            </>
+          ) : paymentVerified ? (
+            <>
+              <CheckCircleIcon className="h-5 w-5 mr-2" />
+              Confirm Booking
             </>
           ) : (
             `Confirm & Pay ${formatCurrency(totalAmount)}`
