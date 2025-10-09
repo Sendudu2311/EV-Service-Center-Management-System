@@ -23,7 +23,7 @@ export const sendEmail = async (options) => {
   const info = await transporter.sendMail(mailOptions);
   console.log("Message sent: %s", info.messageId);
   return info;
-};;
+};
 // Generate 6-digit OTP
 export const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
