@@ -102,6 +102,7 @@ interface ServiceReceptionModalProps {
         name: string;
         category: string;
         estimatedDuration: number;
+        basePrice?: number;
       };
       quantity: number;
     }>;
@@ -162,11 +163,16 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
 
   // Calculate totals
   const calculateTotals = () => {
-    // Start with appointment services time
+    // Start with appointment services time and cost
     let totalTime = appointment.services.reduce((total, service) =>
       total + (service.serviceId.estimatedDuration * service.quantity), 0
     );
-    let totalCost = 0;
+    let totalCost = appointment.services.reduce((total, service) => {
+      // Try to get price from serviceId object, fallback to lookup in availableServices
+      const price = service.serviceId.basePrice ||
+        availableServices.find(s => s._id === service.serviceId._id)?.basePrice || 0;
+      return total + (price * service.quantity);
+    }, 0);
 
     // Add time from additional services
     formData.additionalServices.forEach(service => {
@@ -767,17 +773,35 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
             <div className="bg-blue-50 rounded-lg p-4">
               <h4 className="text-md font-medium text-gray-900 mb-3">Dịch vụ đã đặt</h4>
               <div className="space-y-2">
-                {appointment.services.map((service, index) => (
-                  <div key={index} className="flex justify-between items-center text-sm">
-                    <span>{service.serviceId.name} {service.quantity > 1 ? `(${service.quantity})` : ''}</span>
-                    <span className="text-gray-600">{service.serviceId.estimatedDuration * service.quantity} phút</span>
-                  </div>
-                ))}
+                {appointment.services.map((service, index) => {
+                  const price = service.serviceId.basePrice ||
+                    availableServices.find(s => s._id === service.serviceId._id)?.basePrice || 0;
+                  const totalServicePrice = price * service.quantity;
+                  return (
+                    <div key={index} className="flex justify-between items-center text-sm">
+                      <span>{service.serviceId.name} {service.quantity > 1 ? `(${service.quantity})` : ''}</span>
+                      <div className="text-right">
+                        <div className="text-gray-600">{service.serviceId.estimatedDuration * service.quantity} phút</div>
+                        <div className="text-blue-600 font-medium">{totalServicePrice.toLocaleString('vi-VN')} VNĐ</div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
               <div className="mt-3 pt-3 border-t text-sm">
                 <div className="flex justify-between">
                   <span className="font-medium">Tổng thời gian dịch vụ đã đặt:</span>
                   <span>{appointment.services.reduce((total, service) => total + (service.serviceId.estimatedDuration * service.quantity), 0)} phút</span>
+                </div>
+                <div className="flex justify-between mt-1">
+                  <span className="font-medium">Tổng chi phí dịch vụ đã đặt:</span>
+                  <span className="text-blue-600 font-semibold">
+                    {appointment.services.reduce((total, service) => {
+                      const price = service.serviceId.basePrice ||
+                        availableServices.find(s => s._id === service.serviceId._id)?.basePrice || 0;
+                      return total + (price * service.quantity);
+                    }, 0).toLocaleString('vi-VN')} VNĐ
+                  </span>
                 </div>
               </div>
             </div>
@@ -1152,7 +1176,15 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
             <div className="bg-green-50 rounded-lg p-4">
               <h4 className="text-md font-medium text-gray-900 mb-2">Tóm tắt</h4>
               <div className="text-sm text-gray-700 space-y-1">
-                <p>• Dịch vụ đã đặt: {appointment.services.length} dịch vụ</p>
+                <p>• Dịch vụ đã đặt: {appointment.services.length} dịch vụ
+                  <span className="ml-2 text-blue-600 font-medium">
+                    ({appointment.services.reduce((total, service) => {
+                      const price = service.serviceId.basePrice ||
+                        availableServices.find(s => s._id === service.serviceId._id)?.basePrice || 0;
+                      return total + (price * service.quantity);
+                    }, 0).toLocaleString('vi-VN')} VNĐ)
+                  </span>
+                </p>
                 <p>• Dịch vụ bổ sung: {formData.additionalServices.length} dịch vụ
                   {formData.additionalServices.length > 0 && (
                     <span className="ml-2 text-blue-600 font-medium">

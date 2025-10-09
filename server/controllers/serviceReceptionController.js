@@ -110,6 +110,7 @@ export const createServiceReception = async (req, res) => {
       category: typeof appointmentService.serviceId === 'string' ? 'general' : appointmentService.serviceId.category,
       quantity: appointmentService.quantity,
       estimatedDuration: typeof appointmentService.serviceId === 'string' ? 60 : appointmentService.serviceId.estimatedDuration,
+      basePrice: typeof appointmentService.serviceId === 'string' ? 0 : appointmentService.serviceId.basePrice,
       customerInstructions: appointmentService.notes || '',
       isCompleted: false
     }));

@@ -353,6 +353,7 @@ const serviceReceptionSchema = new mongoose.Schema({
       default: 1
     },
     estimatedDuration: Number, // minutes
+    basePrice: Number, // service price
     actualDuration: Number, // minutes
     isCompleted: {
       type: Boolean,

@@ -1,15 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   CheckCircleIcon,
   XMarkIcon,
-  ExclamationTriangleIcon,
   ClockIcon,
-  CurrencyDollarIcon,
-  DocumentTextIcon,
-  PhotoIcon,
-  WrenchScrewdriverIcon
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
-import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { formatVND } from '../../utils/vietnamese';
 
@@ -75,6 +70,7 @@ interface ServiceReception {
     category: string;
     quantity: number;
     estimatedDuration: number;
+    basePrice?: number;
   }>;
   specialInstructions: {
     fromCustomer: string;
@@ -400,7 +396,14 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                         <div key={index} className="bg-white rounded p-3 text-sm">
                           <div className="flex justify-between items-start mb-1">
                             <span className="font-medium">{service.serviceName}</span>
-                            <span className="text-gray-600">{service.estimatedDuration} phút</span>
+                            <div className="text-right">
+                              <div className="text-gray-600">{service.estimatedDuration * service.quantity} phút</div>
+                              {service.basePrice && (
+                                <div className="text-blue-600 font-medium">
+                                  {(service.basePrice * service.quantity).toLocaleString('vi-VN')} VNĐ
+                                </div>
+                              )}
+                            </div>
                           </div>
                           <div className="text-gray-600">
                             Danh mục: {service.category} • Số lượng: {service.quantity}
@@ -412,6 +415,14 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                       <div className="flex justify-between">
                         <span className="font-medium">Tổng thời gian ước tính:</span>
                         <span>{selectedReception.estimatedServiceTime} phút</span>
+                      </div>
+                      <div className="flex justify-between mt-1">
+                        <span className="font-medium">Tổng chi phí dịch vụ:</span>
+                        <span className="text-blue-600 font-semibold">
+                          {selectedReception.bookedServices.reduce((total, service) =>
+                            total + ((service.basePrice || 0) * service.quantity), 0
+                          ).toLocaleString('vi-VN')} VNĐ
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -433,20 +444,42 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Chi phí ước tính (VND)
+                          Chi phí ước tính bổ sung (VND)
                         </label>
                         <input
                           type="number"
                           value={estimatedCost}
                           onChange={(e) => setEstimatedCost(parseInt(e.target.value) || 0)}
                           className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                          placeholder="Nhập chi phí ước tính..."
+                          placeholder="Nhập chi phí ước tính cho dịch vụ bổ sung và phụ tùng..."
                         />
-                        {estimatedCost > 0 && (
-                          <p className="text-sm text-gray-600 mt-1">
-                            {formatVND(estimatedCost)} (bao gồm VAT 10%)
-                          </p>
-                        )}
+                        {(() => {
+                          const bookedServicesCost = selectedReception.bookedServices.reduce((total, service) =>
+                            total + ((service.basePrice || 0) * service.quantity), 0
+                          );
+                          const totalEstimatedCost = bookedServicesCost + estimatedCost;
+                          return estimatedCost > 0 || bookedServicesCost > 0 ? (
+                            <div className="text-sm text-gray-600 mt-2 space-y-1">
+                              <div className="flex justify-between">
+                                <span>Chi phí dịch vụ đã đặt:</span>
+                                <span>{bookedServicesCost.toLocaleString('vi-VN')} VNĐ</span>
+                              </div>
+                              {estimatedCost > 0 && (
+                                <div className="flex justify-between">
+                                  <span>Chi phí bổ sung:</span>
+                                  <span>{estimatedCost.toLocaleString('vi-VN')} VNĐ</span>
+                                </div>
+                              )}
+                              <div className="flex justify-between font-medium border-t pt-1">
+                                <span>Tổng chi phí ước tính:</span>
+                                <span className="text-blue-600">{totalEstimatedCost.toLocaleString('vi-VN')} VNĐ</span>
+                              </div>
+                              <p className="text-xs text-gray-500">
+                                (bao gồm VAT 10%: {(totalEstimatedCost * 1.1).toLocaleString('vi-VN')} VNĐ)
+                              </p>
+                            </div>
+                          ) : null;
+                        })()}
                       </div>
 
                       <div>
