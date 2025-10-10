@@ -11,6 +11,7 @@ import './ChecklistInstance.js';
 import './Vehicle.js';
 import './PartRequest.js';
 import './Invoice.js';
+import './VNPAYTransaction.js';
 
 // Export for convenience
 export { default as User } from './User.js';
@@ -25,3 +26,4 @@ export { default as ChecklistInstance } from './ChecklistInstance.js';
 export { default as Vehicle } from './Vehicle.js';
 export { default as PartRequest } from './PartRequest.js';
 export { default as Invoice } from './Invoice.js';
+export { default as VNPAYTransaction } from './VNPAYTransaction.js';

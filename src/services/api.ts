@@ -795,6 +795,28 @@ export const vnpayAPI = {
 
   getPaymentMethods: () =>
     api.get<ApiResponse<any[]>>("/api/vnpay/payment-methods"),
+
+  // Transaction Management APIs
+  getUserTransactions: (params?: any) =>
+    api.get<ApiResponse<any>>("/api/vnpay/transactions", { params }),
+
+  getTransactionById: (transactionId: string) =>
+    api.get<ApiResponse<any>>(`/api/vnpay/transactions/${transactionId}`),
+
+  getTransactionStats: (params?: any) =>
+    api.get<ApiResponse<any>>("/api/vnpay/transactions/stats", { params }),
+
+  updateTransactionStatus: (transactionId: string, statusData: any) =>
+    api.put<ApiResponse<any>>(`/api/vnpay/transactions/${transactionId}/status`, statusData),
+
+  refundTransaction: (transactionId: string, refundData: any) =>
+    api.post<ApiResponse<any>>(`/api/vnpay/transactions/${transactionId}/refund`, refundData),
+
+  getExpiredTransactions: () =>
+    api.get<ApiResponse<any>>("/api/vnpay/transactions/expired"),
+
+  cleanupExpiredTransactions: () =>
+    api.post<ApiResponse<any>>("/api/vnpay/transactions/cleanup-expired"),
 };
 
 export default api;
