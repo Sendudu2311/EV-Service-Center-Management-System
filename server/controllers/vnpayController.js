@@ -11,7 +11,14 @@ import { executePaymentSuccessWorkflow } from "../utils/paymentNotifications.js"
  */
 export const createPayment = async (req, res, next) => {
   try {
-    const { amount, bankCode, language, orderInfo, appointmentData, paymentType = 'appointment' } = req.body;
+    const {
+      amount,
+      bankCode,
+      language,
+      orderInfo,
+      appointmentData,
+      paymentType = "appointment",
+    } = req.body;
 
     if (!amount || amount <= 0) {
       return res.status(400).json({
@@ -25,7 +32,7 @@ export const createPayment = async (req, res, next) => {
       .toString(36)
       .substr(2, 9)}`;
 
-    // VNPay amount (no multiplication, direct VND amount)
+    // VNPay library automatically handles currency conversion
     const vnpayAmount = Math.round(amount);
 
     // Create payment URL parameters
@@ -76,28 +83,29 @@ export const createPayment = async (req, res, next) => {
       orderInfo: paymentParams.vnp_OrderInfo,
       orderType: paymentParams.vnp_OrderType,
       userId: user._id,
+      appointmentId: appointmentData?.appointmentId || null,
       amount: amount,
       currency: paymentParams.vnp_CurrCode,
-      status: 'pending',
+      status: "pending",
       vnpayData: {
         bankCode: bankCode || null,
         ipAddr: paymentParams.vnp_IpAddr,
         locale: paymentParams.vnp_Locale,
         version: paymentParams.vnp_Version,
         command: paymentParams.vnp_Command,
-        payDate: paymentParams.vnp_CreateDate
+        payDate: paymentParams.vnp_CreateDate,
       },
       billingInfo: {
         mobile: user.phone || null,
         email: user.email || null,
-        fullName: `${user.firstName} ${user.lastName}`
+        fullName: `${user.firstName} ${user.lastName}`,
       },
       metadata: {
         appointmentData: appointmentData,
         returnUrl: paymentParams.vnp_ReturnUrl,
-        userAgent: req.get('User-Agent'),
-        referer: req.get('Referer')
-      }
+        userAgent: req.get("User-Agent"),
+        referer: req.get("Referer"),
+      },
     });
 
     await transaction.save();
@@ -121,7 +129,7 @@ export const createPayment = async (req, res, next) => {
       paymentUrl,
       transactionRef: paymentParams.vnp_TxnRef,
       amount: Math.round(amount),
-      transactionId: transaction._id
+      transactionId: transaction._id,
     });
   } catch (error) {
     next(error);
@@ -147,10 +155,10 @@ export const handleReturn = async (req, res, next) => {
         await VNPAYTransaction.findOneAndUpdate(
           { transactionRef: vnp_TxnRef },
           {
-            status: 'failed',
-            responseCode: 'INVALID_VERIFY',
-            errorMessage: 'Return URL verification failed',
-            updatedAt: new Date()
+            status: "failed",
+            responseCode: "INVALID_VERIFY",
+            errorMessage: "Return URL verification failed",
+            updatedAt: new Date(),
           }
         );
       }
@@ -158,26 +166,30 @@ export const handleReturn = async (req, res, next) => {
       return res.redirect(redirectUrl);
     }
 
-    const { vnp_TxnRef, vnp_ResponseCode, vnp_TransactionNo, vnp_Amount } = vnp_Params;
+    const { vnp_TxnRef, vnp_ResponseCode, vnp_TransactionNo, vnp_Amount } =
+      vnp_Params;
 
     // Find and update transaction record
-    const transaction = await VNPAYTransaction.findOne({ transactionRef: vnp_TxnRef });
+    const transaction = await VNPAYTransaction.findOne({
+      transactionRef: vnp_TxnRef,
+    });
 
     if (transaction) {
       const success = vnp_ResponseCode === "00";
-      const paidAmount = parseInt(vnp_Amount);
+      // VNPay returns amount in smallest currency unit (VND * 100), so divide by 100
+      const paidAmount = parseInt(vnp_Amount) / 100;
 
       // Update transaction record
-      await transaction.updateStatus(success ? 'completed' : 'failed', {
+      await transaction.updateStatus(success ? "completed" : "failed", {
         responseCode: vnp_ResponseCode,
         transactionNo: vnp_TransactionNo,
         paidAmount: success ? paidAmount : 0,
-        'vnpayData.bankCode': vnp_Params.vnp_BankCode || null,
-        'vnpayData.cardType': vnp_Params.vnp_CardType || null,
-        'vnpayData.payDate': vnp_Params.vnp_PayDate || null,
-        'vnpayData.secureHash': vnp_Params.vnp_SecureHash || null,
+        "vnpayData.bankCode": vnp_Params.vnp_BankCode || null,
+        "vnpayData.cardType": vnp_Params.vnp_CardType || null,
+        "vnpayData.payDate": vnp_Params.vnp_PayDate || null,
+        "vnpayData.secureHash": vnp_Params.vnp_SecureHash || null,
         errorMessage: success ? null : `Payment failed: ${vnp_ResponseCode}`,
-        errorCode: success ? null : vnp_ResponseCode
+        errorCode: success ? null : vnp_ResponseCode,
       });
 
       // Check if this is an appointment payment
@@ -199,11 +211,42 @@ export const handleReturn = async (req, res, next) => {
             payDate: vnp_Params.vnp_PayDate || "",
             amount: paidAmount,
           };
+
+          // Update appointment with payment information
+          // Note: This won't be called for new appointments since they're created after payment success
+          if (pendingPayment.appointmentData?.appointmentId) {
+            try {
+              const { default: Appointment } = await import(
+                "../models/Appointment.js"
+              );
+              await Appointment.findByIdAndUpdate(
+                pendingPayment.appointmentData.appointmentId,
+                {
+                  paymentInfo: {
+                    transactionRef: vnp_TxnRef,
+                    paymentMethod: "vnpay",
+                    paidAmount: paidAmount,
+                    paymentDate: new Date(),
+                    vnpayTransactionId: transaction._id,
+                  },
+                  paymentStatus: "paid",
+                }
+              );
+              console.log(
+                `✅ Updated appointment ${pendingPayment.appointmentData.appointmentId} with payment info`
+              );
+            } catch (error) {
+              console.error(
+                "❌ Failed to update appointment with payment info:",
+                error
+              );
+            }
+          }
         }
       }
 
       // Redirect to frontend
-      const displayAmount = parseInt(vnp_Amount);
+      const displayAmount = parseInt(vnp_Amount) / 100;
       const redirectUrl = `${process.env.CLIENT_URL}/payment/vnpay-return?success=${success}&transactionRef=${vnp_TxnRef}&amount=${displayAmount}`;
       return res.redirect(redirectUrl);
     } else {
@@ -216,24 +259,25 @@ export const handleReturn = async (req, res, next) => {
         // Create transaction record for legacy payments
         const legacyTransaction = new VNPAYTransaction({
           transactionRef: vnp_TxnRef,
-          paymentType: 'invoice',
-          orderInfo: 'Legacy invoice payment',
-          orderType: 'other',
-          amount: parseInt(vnp_Amount),
-          currency: 'VND',
-          status: vnp_ResponseCode === "00" ? 'completed' : 'failed',
+          paymentType: "invoice",
+          orderInfo: "Legacy invoice payment",
+          orderType: "other",
+          amount: parseInt(vnp_Amount) / 100,
+          currency: "VND",
+          status: vnp_ResponseCode === "00" ? "completed" : "failed",
           responseCode: vnp_ResponseCode,
           transactionNo: vnp_TransactionNo,
-          paidAmount: vnp_ResponseCode === "00" ? parseInt(vnp_Amount) : 0,
+          paidAmount:
+            vnp_ResponseCode === "00" ? parseInt(vnp_Amount) / 100 : 0,
           vnpayData: {
             bankCode: vnp_Params.vnp_BankCode || null,
             cardType: vnp_Params.vnp_CardType || null,
             payDate: vnp_Params.vnp_PayDate || null,
-            secureHash: vnp_Params.vnp_SecureHash || null
+            secureHash: vnp_Params.vnp_SecureHash || null,
           },
           metadata: {
-            additionalNotes: 'Legacy invoice payment processed'
-          }
+            additionalNotes: "Legacy invoice payment processed",
+          },
         });
         await legacyTransaction.save();
 
@@ -242,7 +286,8 @@ export const handleReturn = async (req, res, next) => {
       }
 
       // Update invoice and create transaction record
-      const paidAmount = parseInt(vnp_Amount);
+      // VNPay returns amount in smallest currency unit (VND * 100), so divide by 100
+      const paidAmount = parseInt(vnp_Amount) / 100;
 
       if (vnp_ResponseCode === "00") {
         invoice.paymentInfo.status = "paid";
@@ -268,23 +313,23 @@ export const handleReturn = async (req, res, next) => {
       // Create transaction record for invoice
       const invoiceTransaction = new VNPAYTransaction({
         transactionRef: vnp_TxnRef,
-        paymentType: 'invoice',
+        paymentType: "invoice",
         orderInfo: `Invoice payment for ${invoice.invoiceNumber}`,
-        orderType: 'other',
+        orderType: "other",
         userId: invoice.customerId,
         invoiceId: invoice._id,
         amount: invoice.totals.totalAmount,
         paidAmount: vnp_ResponseCode === "00" ? paidAmount : 0,
-        currency: 'VND',
-        status: vnp_ResponseCode === "00" ? 'completed' : 'failed',
+        currency: "VND",
+        status: vnp_ResponseCode === "00" ? "completed" : "failed",
         responseCode: vnp_ResponseCode,
         transactionNo: vnp_TransactionNo,
         vnpayData: {
           bankCode: vnp_Params.vnp_BankCode || null,
           cardType: vnp_Params.vnp_CardType || null,
           payDate: vnp_Params.vnp_PayDate || null,
-          secureHash: vnp_Params.vnp_SecureHash || null
-        }
+          secureHash: vnp_Params.vnp_SecureHash || null,
+        },
       });
       await invoiceTransaction.save();
 
@@ -319,10 +364,10 @@ export const handleIPN = async (req, res, next) => {
         await VNPAYTransaction.findOneAndUpdate(
           { transactionRef: vnp_TxnRef },
           {
-            status: 'failed',
-            responseCode: 'INVALID_IPN',
-            errorMessage: 'IPN verification failed',
-            updatedAt: new Date()
+            status: "failed",
+            responseCode: "INVALID_IPN",
+            errorMessage: "IPN verification failed",
+            updatedAt: new Date(),
           }
         );
       }
@@ -332,26 +377,30 @@ export const handleIPN = async (req, res, next) => {
       });
     }
 
-    const { vnp_TxnRef, vnp_ResponseCode, vnp_TransactionNo, vnp_Amount } = vnp_Params;
+    const { vnp_TxnRef, vnp_ResponseCode, vnp_TransactionNo, vnp_Amount } =
+      vnp_Params;
 
     // Find and update transaction record
-    const transaction = await VNPAYTransaction.findOne({ transactionRef: vnp_TxnRef });
+    const transaction = await VNPAYTransaction.findOne({
+      transactionRef: vnp_TxnRef,
+    });
 
     if (transaction) {
       const success = vnp_ResponseCode === "00";
-      const paidAmount = parseInt(vnp_Amount);
+      // VNPay returns amount in smallest currency unit (VND * 100), so divide by 100
+      const paidAmount = parseInt(vnp_Amount) / 100;
 
       // Update transaction record
-      await transaction.updateStatus(success ? 'completed' : 'failed', {
+      await transaction.updateStatus(success ? "completed" : "failed", {
         responseCode: vnp_ResponseCode,
         transactionNo: vnp_TransactionNo,
         paidAmount: success ? paidAmount : 0,
-        'vnpayData.bankCode': vnp_Params.vnp_BankCode || null,
-        'vnpayData.cardType': vnp_Params.vnp_CardType || null,
-        'vnpayData.payDate': vnp_Params.vnp_PayDate || null,
-        'vnpayData.secureHash': vnp_Params.vnp_SecureHash || null,
+        "vnpayData.bankCode": vnp_Params.vnp_BankCode || null,
+        "vnpayData.cardType": vnp_Params.vnp_CardType || null,
+        "vnpayData.payDate": vnp_Params.vnp_PayDate || null,
+        "vnpayData.secureHash": vnp_Params.vnp_SecureHash || null,
         errorMessage: success ? null : `Payment failed: ${vnp_ResponseCode}`,
-        errorCode: success ? null : vnp_ResponseCode
+        errorCode: success ? null : vnp_ResponseCode,
       });
 
       // Check if this is an appointment payment
@@ -373,6 +422,37 @@ export const handleIPN = async (req, res, next) => {
             payDate: vnp_Params.vnp_PayDate || "",
             amount: paidAmount,
           };
+
+          // Update appointment with payment information
+          // Note: This won't be called for new appointments since they're created after payment success
+          if (pendingPayment.appointmentData?.appointmentId) {
+            try {
+              const { default: Appointment } = await import(
+                "../models/Appointment.js"
+              );
+              await Appointment.findByIdAndUpdate(
+                pendingPayment.appointmentData.appointmentId,
+                {
+                  paymentInfo: {
+                    transactionRef: vnp_TxnRef,
+                    paymentMethod: "vnpay",
+                    paidAmount: paidAmount,
+                    paymentDate: new Date(),
+                    vnpayTransactionId: transaction._id,
+                  },
+                  paymentStatus: "paid",
+                }
+              );
+              console.log(
+                `✅ Updated appointment ${pendingPayment.appointmentData.appointmentId} with payment info`
+              );
+            } catch (error) {
+              console.error(
+                "❌ Failed to update appointment with payment info:",
+                error
+              );
+            }
+          }
         }
       }
 
@@ -388,14 +468,17 @@ export const handleIPN = async (req, res, next) => {
       });
 
       if (!invoice) {
-        console.error(`[VNPay] Invoice not found for transaction ${vnp_TxnRef}`);
+        console.error(
+          `[VNPay] Invoice not found for transaction ${vnp_TxnRef}`
+        );
         return res.status(404).json({
           RspCode: "01",
           Message: "Invoice not found",
         });
       }
 
-      const paidAmount = parseInt(vnp_Amount);
+      // VNPay returns amount in smallest currency unit (VND * 100), so divide by 100
+      const paidAmount = parseInt(vnp_Amount) / 100;
 
       if (vnp_ResponseCode === "00") {
         invoice.paymentInfo.status = "paid";
@@ -421,26 +504,26 @@ export const handleIPN = async (req, res, next) => {
       // Create transaction record for invoice
       const invoiceTransaction = new VNPAYTransaction({
         transactionRef: vnp_TxnRef,
-        paymentType: 'invoice',
+        paymentType: "invoice",
         orderInfo: `Invoice payment for ${invoice.invoiceNumber}`,
-        orderType: 'other',
+        orderType: "other",
         userId: invoice.customerId,
         invoiceId: invoice._id,
         amount: invoice.totals.totalAmount,
         paidAmount: vnp_ResponseCode === "00" ? paidAmount : 0,
-        currency: 'VND',
-        status: vnp_ResponseCode === "00" ? 'completed' : 'failed',
+        currency: "VND",
+        status: vnp_ResponseCode === "00" ? "completed" : "failed",
         responseCode: vnp_ResponseCode,
         transactionNo: vnp_TransactionNo,
         vnpayData: {
           bankCode: vnp_Params.vnp_BankCode || null,
           cardType: vnp_Params.vnp_CardType || null,
           payDate: vnp_Params.vnp_PayDate || null,
-          secureHash: vnp_Params.vnp_SecureHash || null
+          secureHash: vnp_Params.vnp_SecureHash || null,
         },
         metadata: {
-          additionalNotes: 'Legacy invoice payment processed via IPN'
-        }
+          additionalNotes: "Legacy invoice payment processed via IPN",
+        },
       });
       await invoiceTransaction.save();
 
@@ -543,11 +626,11 @@ export const checkTransaction = async (req, res, next) => {
           bankCode: transaction.vnpayData.bankCode,
           cardType: transaction.vnpayData.cardType,
           payDate: transaction.vnpayData.payDate,
-          transactionNo: transaction.transactionNo
+          transactionNo: transaction.transactionNo,
         },
         billingInfo: transaction.billingInfo,
         appointmentId: transaction.appointmentId,
-        invoiceId: transaction.invoiceId
+        invoiceId: transaction.invoiceId,
       });
     } else {
       // Check if this is a pending payment (backward compatibility)
@@ -804,7 +887,14 @@ export const debugPendingPayments = async (req, res) => {
 export const getUserTransactions = async (req, res, next) => {
   try {
     const userId = req.user._id;
-    const { page = 1, limit = 10, status, paymentType, startDate, endDate } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      status,
+      paymentType,
+      startDate,
+      endDate,
+    } = req.query;
 
     const filter = { userId };
 
@@ -823,9 +913,9 @@ export const getUserTransactions = async (req, res, next) => {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(parseInt(limit))
-        .populate('appointmentId', 'appointmentNumber scheduledDate status')
-        .populate('invoiceId', 'invoiceNumber status totals'),
-      VNPAYTransaction.countDocuments(filter)
+        .populate("appointmentId", "appointmentNumber scheduledDate status")
+        .populate("invoiceId", "invoiceNumber status totals"),
+      VNPAYTransaction.countDocuments(filter),
     ]);
 
     res.json({
@@ -835,8 +925,8 @@ export const getUserTransactions = async (req, res, next) => {
         page: parseInt(page),
         limit: parseInt(limit),
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     next(error);
@@ -851,29 +941,32 @@ export const getTransactionById = async (req, res, next) => {
     const { transactionId } = req.params;
 
     const transaction = await VNPAYTransaction.findById(transactionId)
-      .populate('userId', 'firstName lastName email phone')
-      .populate('appointmentId', 'appointmentNumber scheduledDate status')
-      .populate('invoiceId', 'invoiceNumber status totals')
-      .populate('serviceCenterId', 'name address');
+      .populate("userId", "firstName lastName email phone")
+      .populate("appointmentId", "appointmentNumber scheduledDate status")
+      .populate("invoiceId", "invoiceNumber status totals");
+    // serviceCenterId populate removed - single center architecture
 
     if (!transaction) {
       return res.status(404).json({
         success: false,
-        message: "Transaction not found"
+        message: "Transaction not found",
       });
     }
 
     // Check if user has permission to view this transaction
-    if (req.user.role !== 'admin' && req.user._id.toString() !== transaction.userId._id.toString()) {
+    if (
+      req.user.role !== "admin" &&
+      req.user._id.toString() !== transaction.userId._id.toString()
+    ) {
       return res.status(403).json({
         success: false,
-        message: "Unauthorized to view this transaction"
+        message: "Unauthorized to view this transaction",
       });
     }
 
     res.json({
       success: true,
-      transaction
+      transaction,
     });
   } catch (error) {
     next(error);
@@ -894,7 +987,7 @@ export const getTransactionStats = async (req, res, next) => {
     let stats = await VNPAYTransaction.getStatistics(dateRange);
 
     if (paymentType) {
-      stats = stats.filter(stat => {
+      stats = stats.filter((stat) => {
         // We need to re-query with paymentType filter
         return true; // This will be handled in the aggregation pipeline
       });
@@ -903,33 +996,47 @@ export const getTransactionStats = async (req, res, next) => {
     // Get additional statistics
     const [totalTransactions, totalRevenue, successRate] = await Promise.all([
       VNPAYTransaction.countDocuments(
-        startDate || endDate ? {
-          createdAt: dateRange.startDate ? { $gte: dateRange.startDate } : {},
-          ...(endDate && { createdAt: { ...dateRange.startDate, $lte: dateRange.endDate } })
-        } : {}
+        startDate || endDate
+          ? {
+              createdAt: dateRange.startDate
+                ? { $gte: dateRange.startDate }
+                : {},
+              ...(endDate && {
+                createdAt: { ...dateRange.startDate, $lte: dateRange.endDate },
+              }),
+            }
+          : {}
       ),
       VNPAYTransaction.aggregate([
-        { $match: {
-          status: 'completed',
-          ...(startDate && { createdAt: { $gte: new Date(startDate) } }),
-          ...(endDate && { createdAt: { $lte: new Date(endDate) } })
-        }},
-        { $group: { _id: null, total: { $sum: '$paidAmount' } } }
+        {
+          $match: {
+            status: "completed",
+            ...(startDate && { createdAt: { $gte: new Date(startDate) } }),
+            ...(endDate && { createdAt: { $lte: new Date(endDate) } }),
+          },
+        },
+        { $group: { _id: null, total: { $sum: "$paidAmount" } } },
       ]),
       VNPAYTransaction.aggregate([
-        { $match: {
-          ...(startDate && { createdAt: { $gte: new Date(startDate) } }),
-          ...(endDate && { createdAt: { $lte: new Date(endDate) } })
-        }},
-        { $group: {
-          _id: null,
-          total: { $sum: 1 },
-          completed: { $sum: { $cond: ['$status', 'completed', 0] } }
-        }},
-        { $project: {
-          successRate: { $divide: ['$completed', '$total'] }
-        }}
-      ])
+        {
+          $match: {
+            ...(startDate && { createdAt: { $gte: new Date(startDate) } }),
+            ...(endDate && { createdAt: { $lte: new Date(endDate) } }),
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: 1 },
+            completed: { $sum: { $cond: ["$status", "completed", 0] } },
+          },
+        },
+        {
+          $project: {
+            successRate: { $divide: ["$completed", "$total"] },
+          },
+        },
+      ]),
     ]);
 
     res.json({
@@ -938,8 +1045,8 @@ export const getTransactionStats = async (req, res, next) => {
         byStatus: stats,
         totalTransactions,
         totalRevenue: totalRevenue[0]?.total || 0,
-        successRate: successRate[0]?.successRate || 0
-      }
+        successRate: successRate[0]?.successRate || 0,
+      },
     });
   } catch (error) {
     next(error);
@@ -954,10 +1061,10 @@ export const updateTransactionStatus = async (req, res, next) => {
     const { transactionId } = req.params;
     const { status, errorMessage, errorCode, additionalData } = req.body;
 
-    if (req.user.role !== 'admin') {
+    if (req.user.role !== "admin") {
       return res.status(403).json({
         success: false,
-        message: "Unauthorized to update transaction status"
+        message: "Unauthorized to update transaction status",
       });
     }
 
@@ -966,7 +1073,7 @@ export const updateTransactionStatus = async (req, res, next) => {
     if (!transaction) {
       return res.status(404).json({
         success: false,
-        message: "Transaction not found"
+        message: "Transaction not found",
       });
     }
 
@@ -974,7 +1081,7 @@ export const updateTransactionStatus = async (req, res, next) => {
       errorMessage,
       errorCode,
       updatedAt: new Date(),
-      ...additionalData
+      ...additionalData,
     };
 
     await transaction.updateStatus(status, updateData);
@@ -982,7 +1089,7 @@ export const updateTransactionStatus = async (req, res, next) => {
     res.json({
       success: true,
       message: "Transaction status updated successfully",
-      transaction
+      transaction,
     });
   } catch (error) {
     next(error);
@@ -997,10 +1104,10 @@ export const refundTransaction = async (req, res, next) => {
     const { transactionId } = req.params;
     const { refundAmount, reason } = req.body;
 
-    if (req.user.role !== 'admin') {
+    if (req.user.role !== "admin") {
       return res.status(403).json({
         success: false,
-        message: "Unauthorized to refund transaction"
+        message: "Unauthorized to refund transaction",
       });
     }
 
@@ -1009,37 +1116,80 @@ export const refundTransaction = async (req, res, next) => {
     if (!transaction) {
       return res.status(404).json({
         success: false,
-        message: "Transaction not found"
+        message: "Transaction not found",
       });
     }
 
-    if (transaction.status !== 'completed') {
+    if (transaction.status !== "completed") {
       return res.status(400).json({
         success: false,
-        message: "Only completed transactions can be refunded"
+        message: "Only completed transactions can be refunded",
       });
     }
 
-    // Update transaction status
-    await transaction.updateStatus('refunded', {
+    // Create a new refund transaction record
+    const refundTransactionRef = `REFUND_${
+      transaction.transactionRef
+    }_${Date.now()}`;
+
+    const refundTransaction = new VNPAYTransaction({
+      transactionRef: refundTransactionRef,
+      paymentType: "refund",
+      orderInfo: `Refund for transaction ${transaction.transactionRef} - ${reason}`,
+      orderType: "refund",
+      userId: transaction.userId,
+      appointmentId: transaction.appointmentId,
+      invoiceId: transaction.invoiceId,
+      amount: refundAmount || transaction.paidAmount,
+      paidAmount: refundAmount || transaction.paidAmount,
+      currency: "VND",
+      status: "completed", // Refund is immediately processed
+      responseCode: "00", // Success code for refund
+      vnpayData: {
+        bankCode: transaction.vnpayData?.bankCode,
+        cardType: transaction.vnpayData?.cardType,
+        paymentDate: new Date(),
+      },
       settlementInfo: {
         settled: true,
         settlementDate: new Date(),
         settlementAmount: refundAmount || transaction.paidAmount,
-        settlementReference: `REFUND${Date.now()}`
+        settlementReference: `REFUND${Date.now()}`,
       },
       metadata: {
-        ...transaction.metadata,
+        originalTransactionId: transaction._id,
+        originalTransactionRef: transaction.transactionRef,
         refundReason: reason,
         refundedBy: req.user._id,
-        refundDate: new Date()
-      }
+        refundDate: new Date(),
+        refundType:
+          req.user.role === "admin" ? "admin_refund" : "customer_cancellation",
+      },
+    });
+
+    await refundTransaction.save();
+
+    // Update original transaction status to refunded
+    await transaction.updateStatus("refunded", {
+      metadata: {
+        ...transaction.metadata,
+        refundTransactionId: refundTransaction._id,
+        refundTransactionRef: refundTransactionRef,
+        refundReason: reason,
+        refundedBy: req.user._id,
+        refundDate: new Date(),
+        refundType:
+          req.user.role === "admin" ? "admin_refund" : "customer_cancellation",
+      },
     });
 
     res.json({
       success: true,
       message: "Transaction refunded successfully",
-      transaction
+      transaction: {
+        original: transaction,
+        refund: refundTransaction,
+      },
     });
   } catch (error) {
     next(error);
@@ -1051,10 +1201,10 @@ export const refundTransaction = async (req, res, next) => {
  */
 export const getExpiredTransactions = async (req, res, next) => {
   try {
-    if (req.user.role !== 'admin') {
+    if (req.user.role !== "admin") {
       return res.status(403).json({
         success: false,
-        message: "Unauthorized to view expired transactions"
+        message: "Unauthorized to view expired transactions",
       });
     }
 
@@ -1063,7 +1213,7 @@ export const getExpiredTransactions = async (req, res, next) => {
     res.json({
       success: true,
       count: expiredTransactions.length,
-      transactions: expiredTransactions
+      transactions: expiredTransactions,
     });
   } catch (error) {
     next(error);
@@ -1075,20 +1225,20 @@ export const getExpiredTransactions = async (req, res, next) => {
  */
 export const cleanupExpiredTransactions = async (req, res, next) => {
   try {
-    if (req.user.role !== 'admin') {
+    if (req.user.role !== "admin") {
       return res.status(403).json({
         success: false,
-        message: "Unauthorized to clean up transactions"
+        message: "Unauthorized to clean up transactions",
       });
     }
 
     const expiredTransactions = await VNPAYTransaction.findExpired();
 
     // Update expired transactions to 'expired' status
-    const updatePromises = expiredTransactions.map(transaction =>
-      transaction.updateStatus('expired', {
-        errorMessage: 'Transaction expired',
-        errorCode: 'EXPIRED'
+    const updatePromises = expiredTransactions.map((transaction) =>
+      transaction.updateStatus("expired", {
+        errorMessage: "Transaction expired",
+        errorCode: "EXPIRED",
       })
     );
 
@@ -1097,7 +1247,66 @@ export const cleanupExpiredTransactions = async (req, res, next) => {
     res.json({
       success: true,
       message: `Updated ${expiredTransactions.length} expired transactions`,
-      updatedCount: expiredTransactions.length
+      updatedCount: expiredTransactions.length,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get all transactions with filtering (admin only)
+ */
+export const getAllTransactions = async (req, res, next) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized to view all transactions",
+      });
+    }
+
+    const {
+      page = 1,
+      limit = 20,
+      status,
+      paymentType,
+      userId,
+      startDate,
+      endDate,
+    } = req.query;
+
+    const filter = {};
+
+    if (status) filter.status = status;
+    if (paymentType) filter.paymentType = paymentType;
+    if (userId) filter.userId = userId;
+
+    if (startDate || endDate) {
+      filter.createdAt = {};
+      if (startDate) filter.createdAt.$gte = new Date(startDate);
+      if (endDate) filter.createdAt.$lte = new Date(endDate);
+    }
+
+    const transactions = await VNPAYTransaction.find(filter)
+      .populate("userId", "firstName lastName email")
+      .populate("appointmentId", "appointmentNumber scheduledDate")
+      .populate("invoiceId", "invoiceNumber")
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await VNPAYTransaction.countDocuments(filter);
+
+    res.json({
+      success: true,
+      transactions,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     next(error);

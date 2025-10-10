@@ -5,7 +5,6 @@ import {
   generatePaymentReceiptTemplate,
 } from "./emailTemplates.js";
 import User from "../models/User.js";
-import ServiceCenter from "../models/ServiceCenter.js";
 import Service from "../models/Service.js";
 import {
   logPaymentSuccess,
@@ -100,24 +99,9 @@ export const sendAppointmentConfirmation = async (
       hasServiceCenter: !!appointmentData.serviceCenter,
     });
 
-    // Get service center data if not provided
+    // Single center architecture - use default service center data
     let serviceCenter = appointmentData.serviceCenter;
-    if (!serviceCenter && appointmentData.serviceCenterId) {
-      console.log(
-        "📧 [Email Debug] Fetching service center:",
-        appointmentData.serviceCenterId
-      );
-      const ServiceCenter = (await import("../models/ServiceCenter.js"))
-        .default;
-      serviceCenter = await ServiceCenter.findById(
-        appointmentData.serviceCenterId
-      );
-      console.log("📧 [Email Debug] Service center fetched:", {
-        found: !!serviceCenter,
-        name: serviceCenter?.name,
-        hasAddress: !!serviceCenter?.address,
-      });
-    }
+    console.log("📧 [Email Debug] Using single center architecture");
 
     // Provide default service center data if not found
     if (!serviceCenter) {
@@ -203,13 +187,21 @@ export const notifyServiceCenterStaff = async (
   serviceCenterId
 ) => {
   try {
-    // Get service center data
-    const serviceCenter = await ServiceCenter.findById(serviceCenterId);
-
-    if (!serviceCenter) {
-      console.log("Service center not found:", serviceCenterId);
-      return { success: false, message: "Service center not found" };
-    }
+    // Single center architecture - use default service center data
+    const serviceCenter = {
+      name: "EV Service Center",
+      address: {
+        street: "123 Main Street",
+        city: "Ho Chi Minh City",
+        state: "Ho Chi Minh",
+        zipCode: "700000",
+        country: "Vietnam",
+      },
+      contact: {
+        phone: "+84 28 1234 5678",
+        email: "info@evservicecenter.com",
+      },
+    };
 
     // For now, send to a default admin email or skip staff notifications
     // In a real system, you would have staff emails configured

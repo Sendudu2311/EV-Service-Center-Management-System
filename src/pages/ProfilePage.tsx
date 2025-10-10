@@ -1,8 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { UserIcon, PencilIcon, KeyIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { useAuth } from '../contexts/AuthContext';
-import { authAPI } from '../services/api';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect } from "react";
+import {
+  UserIcon,
+  PencilIcon,
+  KeyIcon,
+  CheckIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
+import { useAuth } from "../contexts/AuthContext";
+import { authAPI } from "../services/api";
+import toast from "react-hot-toast";
 
 interface UserProfile {
   _id: string;
@@ -12,11 +18,8 @@ interface UserProfile {
   phone: string;
   role: string;
   avatar?: string;
-  serviceCenterId?: {
-    _id: string;
-    name: string;
-    code: string;
-  };
+  // serviceCenterId removed - single center architecture
+  code: string;
   specializations?: string[];
   certifications?: Array<{
     name: string;
@@ -33,17 +36,17 @@ const ProfilePage: React.FC = () => {
   const [editing, setEditing] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  
+
   const [editData, setEditData] = useState({
-    firstName: '',
-    lastName: '',
-    phone: ''
+    firstName: "",
+    lastName: "",
+    phone: "",
   });
 
   const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
 
   useEffect(() => {
@@ -59,11 +62,11 @@ const ProfilePage: React.FC = () => {
       setEditData({
         firstName: userData.firstName,
         lastName: userData.lastName,
-        phone: userData.phone
+        phone: userData.phone,
       });
     } catch (error) {
-      console.error('Error fetching profile:', error);
-      toast.error('Failed to load profile');
+      console.error("Error fetching profile:", error);
+      toast.error("Failed to load profile");
     } finally {
       setLoading(false);
     }
@@ -76,9 +79,9 @@ const ProfilePage: React.FC = () => {
       await updateProfile(editData);
       await fetchProfile();
       setEditing(false);
-      toast.success('Profile updated successfully');
+      toast.success("Profile updated successfully");
     } catch (error: any) {
-      toast.error(error.message || 'Failed to update profile');
+      toast.error(error.message || "Failed to update profile");
     } finally {
       setLoading(false);
     }
@@ -86,14 +89,14 @@ const ProfilePage: React.FC = () => {
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error('New passwords do not match');
+      toast.error("New passwords do not match");
       return;
     }
 
     if (passwordData.newPassword.length < 6) {
-      toast.error('Password must be at least 6 characters long');
+      toast.error("Password must be at least 6 characters long");
       return;
     }
 
@@ -103,41 +106,41 @@ const ProfilePage: React.FC = () => {
         passwordData.currentPassword,
         passwordData.newPassword
       );
-      
+
       setPasswordData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
       });
       setChangingPassword(false);
-      toast.success('Password changed successfully');
+      toast.success("Password changed successfully");
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to change password');
+      toast.error(error.response?.data?.message || "Failed to change password");
     } finally {
       setLoading(false);
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'admin':
-        return 'bg-red-100 text-red-800';
-      case 'staff':
-        return 'bg-blue-100 text-blue-800';
-      case 'technician':
-        return 'bg-green-100 text-green-800';
+      case "admin":
+        return "bg-red-100 text-red-800";
+      case "staff":
+        return "bg-blue-100 text-blue-800";
+      case "technician":
+        return "bg-green-100 text-green-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -153,8 +156,10 @@ const ProfilePage: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900">Failed to load profile</h2>
-          <button 
+          <h2 className="text-xl font-semibold text-gray-900">
+            Failed to load profile
+          </h2>
+          <button
             onClick={fetchProfile}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
@@ -171,7 +176,9 @@ const ProfilePage: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Profile Settings</h1>
-          <p className="text-gray-600 mt-2">Manage your account information and preferences</p>
+          <p className="text-gray-600 mt-2">
+            Manage your account information and preferences
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -180,7 +187,9 @@ const ProfilePage: React.FC = () => {
             <div className="bg-white shadow rounded-lg">
               <div className="px-6 py-5 border-b border-gray-200">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900">Personal Information</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Personal Information
+                  </h2>
                   {!editing ? (
                     <button
                       onClick={() => setEditing(true)}
@@ -197,7 +206,7 @@ const ProfilePage: React.FC = () => {
                           setEditData({
                             firstName: profile.firstName,
                             lastName: profile.lastName,
-                            phone: profile.phone
+                            phone: profile.phone,
                           });
                         }}
                         className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
@@ -220,7 +229,10 @@ const ProfilePage: React.FC = () => {
                   <form onSubmit={handleEditSubmit} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                        <label
+                          htmlFor="firstName"
+                          className="block text-sm font-medium text-gray-700"
+                        >
                           First Name
                         </label>
                         <input
@@ -228,12 +240,20 @@ const ProfilePage: React.FC = () => {
                           id="firstName"
                           required
                           value={editData.firstName}
-                          onChange={(e) => setEditData({ ...editData, firstName: e.target.value })}
+                          onChange={(e) =>
+                            setEditData({
+                              ...editData,
+                              firstName: e.target.value,
+                            })
+                          }
                           className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         />
                       </div>
                       <div>
-                        <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                        <label
+                          htmlFor="lastName"
+                          className="block text-sm font-medium text-gray-700"
+                        >
                           Last Name
                         </label>
                         <input
@@ -241,13 +261,21 @@ const ProfilePage: React.FC = () => {
                           id="lastName"
                           required
                           value={editData.lastName}
-                          onChange={(e) => setEditData({ ...editData, lastName: e.target.value })}
+                          onChange={(e) =>
+                            setEditData({
+                              ...editData,
+                              lastName: e.target.value,
+                            })
+                          }
                           className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         />
                       </div>
                     </div>
                     <div>
-                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                      <label
+                        htmlFor="phone"
+                        className="block text-sm font-medium text-gray-700"
+                      >
                         Phone Number
                       </label>
                       <input
@@ -255,7 +283,9 @@ const ProfilePage: React.FC = () => {
                         id="phone"
                         required
                         value={editData.phone}
-                        onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                        onChange={(e) =>
+                          setEditData({ ...editData, phone: e.target.value })
+                        }
                         className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       />
                     </div>
@@ -265,7 +295,11 @@ const ProfilePage: React.FC = () => {
                     <div className="flex items-center space-x-4">
                       <div className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center">
                         {profile.avatar ? (
-                          <img src={profile.avatar} alt="Profile" className="w-16 h-16 rounded-full object-cover" />
+                          <img
+                            src={profile.avatar}
+                            alt="Profile"
+                            className="w-16 h-16 rounded-full object-cover"
+                          />
                         ) : (
                           <UserIcon className="w-8 h-8 text-gray-500" />
                         )}
@@ -274,59 +308,76 @@ const ProfilePage: React.FC = () => {
                         <h3 className="text-lg font-semibold text-gray-900">
                           {profile.firstName} {profile.lastName}
                         </h3>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(profile.role)}`}>
-                          {profile.role.charAt(0).toUpperCase() + profile.role.slice(1)}
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(
+                            profile.role
+                          )}`}
+                        >
+                          {profile.role.charAt(0).toUpperCase() +
+                            profile.role.slice(1)}
                         </span>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <dt className="text-sm font-medium text-gray-500">Email Address</dt>
-                        <dd className="mt-1 text-sm text-gray-900">{profile.email}</dd>
+                        <dt className="text-sm font-medium text-gray-500">
+                          Email Address
+                        </dt>
+                        <dd className="mt-1 text-sm text-gray-900">
+                          {profile.email}
+                        </dd>
                       </div>
                       <div>
-                        <dt className="text-sm font-medium text-gray-500">Phone Number</dt>
-                        <dd className="mt-1 text-sm text-gray-900">{profile.phone}</dd>
+                        <dt className="text-sm font-medium text-gray-500">
+                          Phone Number
+                        </dt>
+                        <dd className="mt-1 text-sm text-gray-900">
+                          {profile.phone}
+                        </dd>
                       </div>
                       <div>
-                        <dt className="text-sm font-medium text-gray-500">Account Created</dt>
-                        <dd className="mt-1 text-sm text-gray-900">{formatDate(profile.createdAt)}</dd>
+                        <dt className="text-sm font-medium text-gray-500">
+                          Account Created
+                        </dt>
+                        <dd className="mt-1 text-sm text-gray-900">
+                          {formatDate(profile.createdAt)}
+                        </dd>
                       </div>
                       {profile.lastLogin && (
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">Last Login</dt>
-                          <dd className="mt-1 text-sm text-gray-900">{formatDate(profile.lastLogin)}</dd>
+                          <dt className="text-sm font-medium text-gray-500">
+                            Last Login
+                          </dt>
+                          <dd className="mt-1 text-sm text-gray-900">
+                            {formatDate(profile.lastLogin)}
+                          </dd>
                         </div>
                       )}
                     </div>
 
-                    {profile.serviceCenterId && (
-                      <div>
-                        <dt className="text-sm font-medium text-gray-500">Service Center</dt>
-                        <dd className="mt-1 text-sm text-gray-900">
-                          {profile.serviceCenterId.name} ({profile.serviceCenterId.code})
-                        </dd>
-                      </div>
-                    )}
+                    {/* Service Center information removed - single center architecture */}
 
-                    {profile.specializations && profile.specializations.length > 0 && (
-                      <div>
-                        <dt className="text-sm font-medium text-gray-500">Specializations</dt>
-                        <dd className="mt-1">
-                          <div className="flex flex-wrap gap-2">
-                            {profile.specializations.map((spec, index) => (
-                              <span
-                                key={index}
-                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                              >
-                                {spec}
-                              </span>
-                            ))}
-                          </div>
-                        </dd>
-                      </div>
-                    )}
+                    {profile.specializations &&
+                      profile.specializations.length > 0 && (
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">
+                            Specializations
+                          </dt>
+                          <dd className="mt-1">
+                            <div className="flex flex-wrap gap-2">
+                              {profile.specializations.map((spec, index) => (
+                                <span
+                                  key={index}
+                                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                >
+                                  {spec}
+                                </span>
+                              ))}
+                            </div>
+                          </dd>
+                        </div>
+                      )}
                   </div>
                 )}
               </div>
@@ -338,7 +389,9 @@ const ProfilePage: React.FC = () => {
             {/* Password Change */}
             <div className="bg-white shadow rounded-lg">
               <div className="px-6 py-5 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">Security</h3>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Security
+                </h3>
               </div>
               <div className="px-6 py-5">
                 {!changingPassword ? (
@@ -352,7 +405,10 @@ const ProfilePage: React.FC = () => {
                 ) : (
                   <form onSubmit={handlePasswordSubmit} className="space-y-4">
                     <div>
-                      <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">
+                      <label
+                        htmlFor="currentPassword"
+                        className="block text-sm font-medium text-gray-700"
+                      >
                         Current Password
                       </label>
                       <input
@@ -360,12 +416,20 @@ const ProfilePage: React.FC = () => {
                         id="currentPassword"
                         required
                         value={passwordData.currentPassword}
-                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                        onChange={(e) =>
+                          setPasswordData({
+                            ...passwordData,
+                            currentPassword: e.target.value,
+                          })
+                        }
                         className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       />
                     </div>
                     <div>
-                      <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
+                      <label
+                        htmlFor="newPassword"
+                        className="block text-sm font-medium text-gray-700"
+                      >
                         New Password
                       </label>
                       <input
@@ -374,12 +438,20 @@ const ProfilePage: React.FC = () => {
                         required
                         minLength={6}
                         value={passwordData.newPassword}
-                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                        onChange={(e) =>
+                          setPasswordData({
+                            ...passwordData,
+                            newPassword: e.target.value,
+                          })
+                        }
                         className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       />
                     </div>
                     <div>
-                      <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                      <label
+                        htmlFor="confirmPassword"
+                        className="block text-sm font-medium text-gray-700"
+                      >
                         Confirm New Password
                       </label>
                       <input
@@ -387,7 +459,12 @@ const ProfilePage: React.FC = () => {
                         id="confirmPassword"
                         required
                         value={passwordData.confirmPassword}
-                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                        onChange={(e) =>
+                          setPasswordData({
+                            ...passwordData,
+                            confirmPassword: e.target.value,
+                          })
+                        }
                         className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                       />
                     </div>
@@ -397,16 +474,16 @@ const ProfilePage: React.FC = () => {
                         disabled={loading}
                         className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                       >
-                        {loading ? 'Updating...' : 'Update Password'}
+                        {loading ? "Updating..." : "Update Password"}
                       </button>
                       <button
                         type="button"
                         onClick={() => {
                           setChangingPassword(false);
                           setPasswordData({
-                            currentPassword: '',
-                            newPassword: '',
-                            confirmPassword: ''
+                            currentPassword: "",
+                            newPassword: "",
+                            confirmPassword: "",
                           });
                         }}
                         className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
@@ -423,15 +500,26 @@ const ProfilePage: React.FC = () => {
             {profile.certifications && profile.certifications.length > 0 && (
               <div className="bg-white shadow rounded-lg">
                 <div className="px-6 py-5 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900">Certifications</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Certifications
+                  </h3>
                 </div>
                 <div className="px-6 py-5">
                   <div className="space-y-4">
                     {profile.certifications.map((cert, index) => (
-                      <div key={index} className="border border-gray-200 rounded-lg p-3">
-                        <h4 className="font-medium text-gray-900">{cert.name}</h4>
-                        <p className="text-sm text-gray-600">Issued by {cert.issuer}</p>
-                        <p className="text-sm text-gray-500">Valid until {formatDate(cert.validUntil)}</p>
+                      <div
+                        key={index}
+                        className="border border-gray-200 rounded-lg p-3"
+                      >
+                        <h4 className="font-medium text-gray-900">
+                          {cert.name}
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          Issued by {cert.issuer}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Valid until {formatDate(cert.validUntil)}
+                        </p>
                       </div>
                     ))}
                   </div>

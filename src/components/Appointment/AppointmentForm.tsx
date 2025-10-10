@@ -3,8 +3,8 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import {
   appointmentsAPI,
   vehiclesAPI,
-  serviceCentersAPI,
   servicesAPI,
+  techniciansAPI,
   vnpayAPI,
 } from "../../services/api";
 import toast from "react-hot-toast";
@@ -19,15 +19,7 @@ interface Vehicle {
   vin: string;
 }
 
-interface ServiceCenter {
-  _id: string;
-  name: string;
-  address: {
-    street: string;
-    city: string;
-    state: string;
-  };
-}
+// ServiceCenter interface removed - single center architecture
 
 interface Service {
   _id: string;
@@ -49,7 +41,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [serviceCenters, setServiceCenters] = useState<ServiceCenter[]>([]);
+  // serviceCenters removed - single center architecture
   const [services, setServices] = useState<Service[]>([]);
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -59,7 +51,6 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   const [selectedBank, setSelectedBank] = useState("");
   const [formData, setFormData] = useState({
     vehicleId: "",
-    serviceCenterId: "",
     services: [] as string[],
     scheduledDate: "",
     scheduledTime: "",
@@ -69,15 +60,14 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   });
 
   useEffect(() => {
-    Promise.all([fetchVehicles(), fetchServiceCenters()]);
+    fetchVehicles();
   }, []);
 
   useEffect(() => {
-    if (formData.serviceCenterId) {
-      fetchServices();
-      fetchTechnicians();
-    }
-  }, [formData.serviceCenterId]);
+    // Single center architecture - always fetch services and technicians
+    fetchServices();
+    fetchTechnicians();
+  }, []);
 
   const fetchVehicles = async () => {
     try {
@@ -91,17 +81,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
     }
   };
 
-  const fetchServiceCenters = async () => {
-    try {
-      const response = await serviceCentersAPI.getAll();
-      const centerData = response.data?.data || response.data || [];
-      setServiceCenters(Array.isArray(centerData) ? centerData : []);
-    } catch (error) {
-      console.error("Error fetching service centers:", error);
-      toast.error("Failed to load service centers");
-      setServiceCenters([]);
-    }
-  };
+  // fetchServiceCenters removed - single center architecture
 
   const fetchServices = async () => {
     try {
@@ -116,12 +96,8 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   };
 
   const fetchTechnicians = async () => {
-    if (!formData.serviceCenterId) return;
-
     try {
-      const response = await appointmentsAPI.getTechnicians(
-        formData.serviceCenterId
-      );
+      const response = await techniciansAPI.getAll();
       const technicianData = response.data?.data || response.data || [];
       setTechnicians(Array.isArray(technicianData) ? technicianData : []);
     } catch (error) {
@@ -157,15 +133,8 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
       const updates: any = { [name]: value };
 
       // Reset technician selection when critical fields change
-      if (
-        ["serviceCenterId", "scheduledDate", "scheduledTime"].includes(name)
-      ) {
+      if (["scheduledDate", "scheduledTime"].includes(name)) {
         updates.technicianId = null;
-      }
-
-      // Reset services when service center changes
-      if (name === "serviceCenterId") {
-        updates.services = [];
       }
 
       setFormData((prev) => ({
@@ -261,7 +230,13 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
       return;
     }
 
-    // Show confirmation step instead of going directly to payment
+    // If payment is already verified, directly complete the booking
+    if (paymentVerified) {
+      await handleDirectBooking();
+      return;
+    }
+
+    // Show confirmation step for normal flow
     setShowConfirmation(true);
   };
 
@@ -393,7 +368,6 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
         // Pre-fill the form with the appointment data
         setFormData({
           vehicleId: appointment.vehicleId || "",
-          serviceCenterId: appointment.serviceCenterId || "",
           services: appointment.services?.map((s: any) => s.serviceId) || [],
           scheduledDate: appointment.scheduledDate || "",
           scheduledTime: appointment.scheduledTime || "",
@@ -441,9 +415,18 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
           <form onSubmit={handleSubmit}>
             <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
               <div className="flex items-start justify-between mb-6">
-                <h3 className="text-lg font-semibold leading-6 text-gray-900">
-                  Book New Appointment
-                </h3>
+                <div>
+                  <h3 className="text-lg font-semibold leading-6 text-gray-900">
+                    {paymentVerified
+                      ? "Appointment Details"
+                      : "Book New Appointment"}
+                  </h3>
+                  {paymentVerified && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      Payment completed - reviewing your booking details
+                    </p>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={onCancel}
@@ -453,12 +436,11 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                 </button>
               </div>
 
-              {/* Show confirmation step */}
-              {showConfirmation ? (
+              {/* Show confirmation step - but not if payment is already verified */}
+              {showConfirmation && !paymentVerified ? (
                 <AppointmentConfirmation
                   formData={formData}
                   vehicles={vehicles}
-                  serviceCenters={serviceCenters}
                   services={services}
                   technicians={technicians}
                   totalAmount={calculateTotalAmount()}
@@ -489,8 +471,8 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                         <div className="ml-3">
                           <p className="text-sm text-green-700">
                             <strong>Payment Verified!</strong> Your payment has
-                            been processed successfully. Please complete your
-                            booking.
+                            been processed successfully. Please review and
+                            confirm your booking.
                           </p>
                           {pendingAppointment?.paymentInfo && (
                             <p className="text-xs text-green-600 mt-1">
@@ -505,6 +487,73 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                               {pendingAppointment.paymentInfo.transactionRef}
                             </p>
                           )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Booking Summary for Payment Verified */}
+                  {paymentVerified && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                      <h4 className="text-sm font-medium text-blue-900 mb-3">
+                        Booking Summary
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Vehicle:</span>
+                          <span className="font-medium">
+                            {(() => {
+                              const vehicle = vehicles.find(
+                                (v) => v._id === formData.vehicleId
+                              );
+                              return vehicle
+                                ? `${vehicle.make} ${vehicle.model} ${vehicle.year}`
+                                : "Selected";
+                            })()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Date & Time:</span>
+                          <span className="font-medium">
+                            {formData.scheduledDate} at {formData.scheduledTime}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Services:</span>
+                          <span className="font-medium">
+                            {formData.services.length} service
+                            {formData.services.length !== 1 ? "s" : ""} selected
+                          </span>
+                        </div>
+                        {formData.technicianId && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Technician:</span>
+                            <span className="font-medium">
+                              {(() => {
+                                const technician = technicians.find(
+                                  (t) => t._id === formData.technicianId
+                                );
+                                return technician
+                                  ? `${technician.firstName} ${technician.lastName}`
+                                  : "Selected";
+                              })()}
+                            </span>
+                          </div>
+                        )}
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Priority:</span>
+                          <span className="font-medium capitalize">
+                            {formData.priority}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-blue-600 font-semibold">
+                          <span>Total Amount:</span>
+                          <span>
+                            {new Intl.NumberFormat("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            }).format(calculateTotalAmount())}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -525,7 +574,12 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                         required
                         value={formData.vehicleId}
                         onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        disabled={paymentVerified}
+                        className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                          paymentVerified
+                            ? "bg-gray-100 cursor-not-allowed opacity-60"
+                            : ""
+                        }`}
                       >
                         <option value="">Select a vehicle</option>
                         {vehicles.map((vehicle) => (
@@ -537,30 +591,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                       </select>
                     </div>
 
-                    {/* Service Center Selection */}
-                    <div>
-                      <label
-                        htmlFor="serviceCenterId"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Service Center <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        id="serviceCenterId"
-                        name="serviceCenterId"
-                        required
-                        value={formData.serviceCenterId}
-                        onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      >
-                        <option value="">Select a service center</option>
-                        {serviceCenters.map((center) => (
-                          <option key={center._id} value={center._id}>
-                            {center.name} - {center.address.city}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {/* Service Center Selection removed - single center architecture */}
 
                     {/* Date and Time */}
                     <div className="grid grid-cols-2 gap-4">
@@ -579,7 +610,12 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                           min={new Date().toISOString().split("T")[0]}
                           value={formData.scheduledDate}
                           onChange={handleChange}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                          disabled={paymentVerified}
+                          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                            paymentVerified
+                              ? "bg-gray-100 cursor-not-allowed opacity-60"
+                              : ""
+                          }`}
                         />
                       </div>
                       <div>
@@ -595,7 +631,12 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                           required
                           value={formData.scheduledTime}
                           onChange={handleChange}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                          disabled={paymentVerified}
+                          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                            paymentVerified
+                              ? "bg-gray-100 cursor-not-allowed opacity-60"
+                              : ""
+                          }`}
                         >
                           <option value="">Select time</option>
                           {[
@@ -632,7 +673,11 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                           Select Services{" "}
                           <span className="text-red-500">*</span>
                         </label>
-                        <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
+                        <div
+                          className={`space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3 ${
+                            paymentVerified ? "bg-gray-50" : ""
+                          }`}
+                        >
                           {services.map((service) => (
                             <div key={service._id} className="flex items-start">
                               <input
@@ -643,7 +688,12 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                                   service._id
                                 )}
                                 onChange={handleChange}
-                                className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                disabled={paymentVerified}
+                                className={`mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded ${
+                                  paymentVerified
+                                    ? "cursor-not-allowed opacity-60"
+                                    : ""
+                                }`}
                               />
                               <label
                                 htmlFor={service._id}
@@ -670,13 +720,11 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                     )}
 
                     {/* Technician Selection */}
-                    {formData.serviceCenterId &&
-                      formData.services.length > 0 &&
+                    {formData.services.length > 0 &&
                       formData.scheduledDate &&
                       formData.scheduledTime && (
                         <div>
                           <TechnicianSelection
-                            serviceCenterId={formData.serviceCenterId}
                             selectedServices={formData.services.map(
                               (serviceId) => {
                                 const service = services.find(
@@ -690,7 +738,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                             )}
                             selectedTechnicianId={formData.technicianId}
                             onTechnicianSelect={handleTechnicianSelect}
-                            disabled={loading}
+                            disabled={loading || paymentVerified}
                             appointmentDate={formData.scheduledDate}
                             appointmentTime={formData.scheduledTime}
                             estimatedDuration={formData.services.reduce(
@@ -709,8 +757,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                       )}
 
                     {/* Info message when technician selection is not available yet */}
-                    {formData.serviceCenterId &&
-                      formData.services.length > 0 &&
+                    {formData.services.length > 0 &&
                       (!formData.scheduledDate || !formData.scheduledTime) && (
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                           <div className="flex items-center">
@@ -750,7 +797,12 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                         name="priority"
                         value={formData.priority}
                         onChange={handleChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        disabled={paymentVerified}
+                        className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                          paymentVerified
+                            ? "bg-gray-100 cursor-not-allowed opacity-60"
+                            : ""
+                        }`}
                       >
                         <option value="low">Low</option>
                         <option value="normal">Normal</option>
@@ -773,8 +825,13 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                         rows={3}
                         value={formData.customerNotes}
                         onChange={handleChange}
+                        disabled={paymentVerified}
                         placeholder="Please describe any specific issues or requests..."
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                          paymentVerified
+                            ? "bg-gray-100 cursor-not-allowed opacity-60"
+                            : ""
+                        }`}
                       />
                     </div>
 
@@ -855,7 +912,11 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                   disabled={loading}
                   className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:ml-3 sm:w-auto disabled:opacity-50"
                 >
-                  {loading ? "Processing..." : "Review & Continue"}
+                  {loading
+                    ? "Processing..."
+                    : paymentVerified
+                    ? "Confirm Booking"
+                    : "Review & Continue"}
                 </button>
               ) : (
                 <>

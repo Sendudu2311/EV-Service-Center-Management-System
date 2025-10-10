@@ -81,7 +81,11 @@ router.get("/transactions", protect, vnpayController.getUserTransactions);
  * @desc    Get transaction by ID
  * @access  Private
  */
-router.get("/transactions/:transactionId", protect, vnpayController.getTransactionById);
+router.get(
+  "/transactions/:transactionId",
+  protect,
+  vnpayController.getTransactionById
+);
 
 /**
  * @route   GET /api/vnpay/transactions/stats
@@ -133,5 +137,12 @@ router.post(
   protect,
   vnpayController.cleanupExpiredTransactions
 );
+
+/**
+ * @route   GET /api/vnpay/transactions/all
+ * @desc    Get all transactions with filtering (admin only)
+ * @access  Private/Admin
+ */
+router.get("/transactions/all", protect, vnpayController.getAllTransactions);
 
 export default router;

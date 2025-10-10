@@ -1,8 +1,8 @@
-import Invoice from '../models/Invoice.js';
-import Appointment from '../models/Appointment.js';
-import ServiceReception from '../models/ServiceReception.js';
-import Service from '../models/Service.js';
-import Part from '../models/Part.js';
+import Invoice from "../models/Invoice.js";
+import Appointment from "../models/Appointment.js";
+import ServiceReception from "../models/ServiceReception.js";
+import Service from "../models/Service.js";
+import Part from "../models/Part.js";
 
 // ==============================================================================
 // INVOICE APIS (Phase 2.4)
@@ -15,31 +15,31 @@ export const generateInvoice = async (req, res) => {
   try {
     const { appointmentId } = req.params;
     const {
-      paymentTerms = 'immediate',
+      paymentTerms = "immediate",
       discountPercentage = 0,
       additionalCharges = [],
-      notes = '',
-      customerInfo = {}
+      notes = "",
+      customerInfo = {},
     } = req.body;
 
     // Find and validate appointment
     const appointment = await Appointment.findById(appointmentId)
-      .populate('customerId', 'firstName lastName email phone address')
-      .populate('vehicleId', 'make model year vin licensePlate')
-      .populate('serviceCenterId', 'name address phone email taxId');
+      .populate("customerId", "firstName lastName email phone address")
+      .populate("vehicleId", "make model year vin licensePlate");
+    // serviceCenterId populate removed - single center architecture
 
     if (!appointment) {
       return res.status(404).json({
         success: false,
-        message: 'Appointment not found'
+        message: "Appointment not found",
       });
     }
 
     // Check if appointment is completed
-    if (appointment.status !== 'completed') {
+    if (appointment.status !== "completed") {
       return res.status(400).json({
         success: false,
-        message: `Cannot generate invoice. Appointment status is: ${appointment.status}`
+        message: `Cannot generate invoice. Appointment status is: ${appointment.status}`,
       });
     }
 
@@ -48,21 +48,25 @@ export const generateInvoice = async (req, res) => {
     if (existingInvoice) {
       return res.status(400).json({
         success: false,
-        message: 'Invoice already exists for this appointment'
+        message: "Invoice already exists for this appointment",
       });
     }
 
     // Get service reception for detailed work performed
     const serviceReception = await ServiceReception.findOne({ appointmentId })
-      .populate('bookedServices.serviceId', 'name category basePrice')
-      .populate('additionalServices.serviceId', 'name category basePrice')
-      .populate('requestedParts.partId', 'name partNumber unitPrice')
-      .populate('additionalPartRequests');
+      .populate("bookedServices.serviceId", "name category basePrice")
+      .populate("additionalServices.serviceId", "name category basePrice")
+      .populate("requestedParts.partId", "name partNumber unitPrice")
+      .populate("additionalPartRequests");
 
-    if (!serviceReception || !serviceReception.evChecklistProgress.isCompleted) {
+    if (
+      !serviceReception ||
+      !serviceReception.evChecklistProgress.isCompleted
+    ) {
       return res.status(400).json({
         success: false,
-        message: 'Cannot generate invoice. EV checklist must be completed first'
+        message:
+          "Cannot generate invoice. EV checklist must be completed first",
       });
     }
 
@@ -70,7 +74,7 @@ export const generateInvoice = async (req, res) => {
     const invoiceItems = {
       services: [],
       parts: [],
-      labor: []
+      labor: [],
     };
 
     let subtotalServices = 0;
@@ -80,7 +84,8 @@ export const generateInvoice = async (req, res) => {
     // Process booked services
     for (const bookedService of serviceReception.bookedServices) {
       if (bookedService.isCompleted) {
-        const serviceTotal = bookedService.serviceId.basePrice * bookedService.quantity;
+        const serviceTotal =
+          bookedService.serviceId.basePrice * bookedService.quantity;
         invoiceItems.services.push({
           serviceId: bookedService.serviceId._id,
           serviceName: bookedService.serviceId.name,
@@ -90,7 +95,7 @@ export const generateInvoice = async (req, res) => {
           totalPrice: serviceTotal,
           description: `${bookedService.serviceId.name} - ${bookedService.serviceId.category}`,
           completedAt: bookedService.completedAt,
-          technicianNotes: bookedService.technicianNotes
+          technicianNotes: bookedService.technicianNotes,
         });
         subtotalServices += serviceTotal;
       }
@@ -99,7 +104,8 @@ export const generateInvoice = async (req, res) => {
     // Process additional services
     for (const additionalService of serviceReception.additionalServices) {
       if (additionalService.isCompleted && additionalService.customerApproved) {
-        const serviceTotal = additionalService.serviceId.basePrice * additionalService.quantity;
+        const serviceTotal =
+          additionalService.serviceId.basePrice * additionalService.quantity;
         invoiceItems.services.push({
           serviceId: additionalService.serviceId._id,
           serviceName: additionalService.serviceId.name,
@@ -109,7 +115,7 @@ export const generateInvoice = async (req, res) => {
           totalPrice: serviceTotal,
           description: `${additionalService.serviceId.name} - Additional Service`,
           reason: additionalService.reason,
-          technicianNotes: additionalService.technicianNotes
+          technicianNotes: additionalService.technicianNotes,
         });
         subtotalServices += serviceTotal;
       }
@@ -118,7 +124,8 @@ export const generateInvoice = async (req, res) => {
     // Process requested parts
     for (const requestedPart of serviceReception.requestedParts) {
       if (requestedPart.isApproved && requestedPart.isAvailable) {
-        const partTotal = requestedPart.partId.unitPrice * requestedPart.quantity;
+        const partTotal =
+          requestedPart.partId.unitPrice * requestedPart.quantity;
         invoiceItems.parts.push({
           partId: requestedPart.partId._id,
           partName: requestedPart.partId.name,
@@ -127,25 +134,27 @@ export const generateInvoice = async (req, res) => {
           unitPrice: requestedPart.partId.unitPrice,
           totalPrice: partTotal,
           description: `${requestedPart.partId.name} (${requestedPart.partId.partNumber})`,
-          reason: requestedPart.reason
+          reason: requestedPart.reason,
         });
         subtotalParts += partTotal;
       }
     }
 
     // Calculate labor charges based on actual time spent
-    const actualServiceTime = serviceReception.actualServiceTime || serviceReception.estimatedServiceTime;
+    const actualServiceTime =
+      serviceReception.actualServiceTime ||
+      serviceReception.estimatedServiceTime;
     const laborRate = 50000; // VND per hour - should be configurable
     const laborHours = Math.ceil(actualServiceTime / 60); // Convert minutes to hours
     const laborTotal = laborHours * laborRate;
 
     if (laborHours > 0) {
       invoiceItems.labor.push({
-        description: 'Technical Labor',
+        description: "Technical Labor",
         hours: laborHours,
         hourlyRate: laborRate,
         totalPrice: laborTotal,
-        timeSpent: actualServiceTime
+        timeSpent: actualServiceTime,
       });
       subtotalLabor = laborTotal;
     }
@@ -154,10 +163,10 @@ export const generateInvoice = async (req, res) => {
     const subtotal = subtotalServices + subtotalParts + subtotalLabor;
     const discountAmount = (subtotal * discountPercentage) / 100;
     const subtotalAfterDiscount = subtotal - discountAmount;
-    
+
     // Add additional charges
     let additionalChargesTotal = 0;
-    additionalCharges.forEach(charge => {
+    additionalCharges.forEach((charge) => {
       additionalChargesTotal += charge.amount;
     });
 
@@ -173,21 +182,26 @@ export const generateInvoice = async (req, res) => {
       customerId: appointment.customerId._id,
       vehicleId: appointment.vehicleId._id,
       serviceCenterId: appointment.serviceCenterId._id,
-      
+
       // Customer and vehicle details
       customerInfo: {
-        name: customerInfo.name || `${appointment.customerId.firstName} ${appointment.customerId.lastName}`,
+        name:
+          customerInfo.name ||
+          `${appointment.customerId.firstName} ${appointment.customerId.lastName}`,
         email: customerInfo.email || appointment.customerId.email,
         phone: customerInfo.phone || appointment.customerId.phone,
-        address: customerInfo.address || appointment.customerId.address || 'Not provided'
+        address:
+          customerInfo.address ||
+          appointment.customerId.address ||
+          "Not provided",
       },
-      
+
       vehicleInfo: {
         make: appointment.vehicleId.make,
         model: appointment.vehicleId.model,
         year: appointment.vehicleId.year,
         vin: appointment.vehicleId.vin,
-        licensePlate: appointment.vehicleId.licensePlate
+        licensePlate: appointment.vehicleId.licensePlate,
       },
 
       // Service center details
@@ -196,7 +210,7 @@ export const generateInvoice = async (req, res) => {
         address: appointment.serviceCenterId.address,
         phone: appointment.serviceCenterId.phone,
         email: appointment.serviceCenterId.email,
-        taxId: appointment.serviceCenterId.taxId
+        taxId: appointment.serviceCenterId.taxId,
       },
 
       // Invoice items and calculations
@@ -204,7 +218,7 @@ export const generateInvoice = async (req, res) => {
         services: invoiceItems.services,
         parts: invoiceItems.parts,
         labor: invoiceItems.labor,
-        additionalCharges
+        additionalCharges,
       },
 
       totals: {
@@ -217,7 +231,7 @@ export const generateInvoice = async (req, res) => {
         additionalChargesTotal,
         taxRate,
         taxAmount,
-        totalAmount
+        totalAmount,
       },
 
       serviceDetails: {
@@ -225,46 +239,53 @@ export const generateInvoice = async (req, res) => {
         completedDate: new Date(),
         actualServiceTime: actualServiceTime,
         estimatedServiceTime: serviceReception.estimatedServiceTime,
-        workPerformed: serviceReception.bookedServices.map(s => s.serviceId.name),
-        evChecklistCompleted: serviceReception.evChecklistProgress.isCompleted
+        workPerformed: serviceReception.bookedServices.map(
+          (s) => s.serviceId.name
+        ),
+        evChecklistCompleted: serviceReception.evChecklistProgress.isCompleted,
       },
 
       paymentInfo: {
         terms: paymentTerms,
-        dueDate: paymentTerms === 'immediate' ? new Date() : 
-                 new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        status: 'pending'
+        dueDate:
+          paymentTerms === "immediate"
+            ? new Date()
+            : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        status: "pending",
       },
 
       notes,
       generatedBy: req.user._id,
-      status: 'draft'
+      status: "draft",
     });
 
     await invoice.save();
 
     // Update appointment status to invoiced
-    await appointment.updateStatus('invoiced', req.user._id, 'Invoice generated');
+    await appointment.updateStatus(
+      "invoiced",
+      req.user._id,
+      "Invoice generated"
+    );
 
     // Populate invoice for response
     await invoice.populate([
-      { path: 'customerId', select: 'firstName lastName email phone' },
-      { path: 'vehicleId', select: 'make model year vin licensePlate' },
-      { path: 'serviceCenterId', select: 'name address phone' },
-      { path: 'generatedBy', select: 'firstName lastName' }
+      { path: "customerId", select: "firstName lastName email phone" },
+      { path: "vehicleId", select: "make model year vin licensePlate" },
+      { path: "serviceCenterId", select: "name address phone" },
+      { path: "generatedBy", select: "firstName lastName" },
     ]);
 
     res.status(201).json({
       success: true,
-      message: 'Invoice generated successfully',
-      data: invoice
+      message: "Invoice generated successfully",
+      data: invoice,
     });
-
   } catch (error) {
-    console.error('Error generating invoice:', error);
+    console.error("Error generating invoice:", error);
     res.status(500).json({
       success: false,
-      message: 'Error generating invoice'
+      message: "Error generating invoice",
     });
   }
 };
@@ -277,39 +298,43 @@ export const getInvoice = async (req, res) => {
     const { id } = req.params;
 
     const invoice = await Invoice.findById(id)
-      .populate('appointmentId', 'appointmentNumber scheduledDate scheduledTime')
-      .populate('customerId', 'firstName lastName email phone')
-      .populate('vehicleId', 'make model year vin licensePlate')
-      .populate('serviceCenterId', 'name address phone email')
-      .populate('generatedBy', 'firstName lastName')
-      .populate('reviewedBy', 'firstName lastName');
+      .populate(
+        "appointmentId",
+        "appointmentNumber scheduledDate scheduledTime"
+      )
+      .populate("customerId", "firstName lastName email phone")
+      .populate("vehicleId", "make model year vin licensePlate")
+      // serviceCenterId populate removed - single center architecture
+      .populate("generatedBy", "firstName lastName")
+      .populate("reviewedBy", "firstName lastName");
 
     if (!invoice) {
       return res.status(404).json({
         success: false,
-        message: 'Invoice not found'
+        message: "Invoice not found",
       });
     }
 
     // Check access permissions
-    if (req.user.role === 'customer' && 
-        invoice.customerId._id.toString() !== req.user._id.toString()) {
+    if (
+      req.user.role === "customer" &&
+      invoice.customerId._id.toString() !== req.user._id.toString()
+    ) {
       return res.status(403).json({
         success: false,
-        message: 'Not authorized to view this invoice'
+        message: "Not authorized to view this invoice",
       });
     }
 
     res.status(200).json({
       success: true,
-      data: invoice
+      data: invoice,
     });
-
   } catch (error) {
-    console.error('Error getting invoice:', error);
+    console.error("Error getting invoice:", error);
     res.status(500).json({
       success: false,
-      message: 'Error getting invoice'
+      message: "Error getting invoice",
     });
   }
 };
@@ -327,22 +352,22 @@ export const getInvoices = async (req, res) => {
       dateFrom,
       dateTo,
       page = 1,
-      limit = 10
+      limit = 10,
     } = req.query;
 
     const skip = (page - 1) * limit;
     let filter = {};
 
     // Build filter based on user role
-    if (req.user.role === 'customer') {
+    if (req.user.role === "customer") {
       filter.customerId = req.user._id;
-    } else if (req.user.role === 'staff') {
+    } else if (req.user.role === "staff") {
       filter.serviceCenterId = req.user.serviceCenterId;
     }
 
     // Add additional filters
     if (status) filter.status = status;
-    if (paymentStatus) filter['paymentInfo.status'] = paymentStatus;
+    if (paymentStatus) filter["paymentInfo.status"] = paymentStatus;
     if (customerId) filter.customerId = customerId;
     if (serviceCenterId) filter.serviceCenterId = serviceCenterId;
 
@@ -354,10 +379,10 @@ export const getInvoices = async (req, res) => {
     }
 
     const invoices = await Invoice.find(filter)
-      .populate('appointmentId', 'appointmentNumber scheduledDate')
-      .populate('customerId', 'firstName lastName email phone')
-      .populate('vehicleId', 'make model year licensePlate')
-      .populate('serviceCenterId', 'name address')
+      .populate("appointmentId", "appointmentNumber scheduledDate")
+      .populate("customerId", "firstName lastName email phone")
+      .populate("vehicleId", "make model year licensePlate")
+      // serviceCenterId populate removed - single center architecture
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
@@ -370,14 +395,13 @@ export const getInvoices = async (req, res) => {
       total,
       page: parseInt(page),
       pages: Math.ceil(total / limit),
-      data: invoices
+      data: invoices,
     });
-
   } catch (error) {
-    console.error('Error getting invoices:', error);
+    console.error("Error getting invoices:", error);
     res.status(500).json({
       success: false,
-      message: 'Error getting invoices'
+      message: "Error getting invoices",
     });
   }
 };
@@ -388,14 +412,21 @@ export const getInvoices = async (req, res) => {
 export const updateInvoiceStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, notes = '' } = req.body;
+    const { status, notes = "" } = req.body;
 
     // Validate status
-    const validStatuses = ['draft', 'sent', 'paid', 'overdue', 'cancelled', 'refunded'];
+    const validStatuses = [
+      "draft",
+      "sent",
+      "paid",
+      "overdue",
+      "cancelled",
+      "refunded",
+    ];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid status. Must be one of: ' + validStatuses.join(', ')
+        message: "Invalid status. Must be one of: " + validStatuses.join(", "),
       });
     }
 
@@ -403,20 +434,20 @@ export const updateInvoiceStatus = async (req, res) => {
     if (!invoice) {
       return res.status(404).json({
         success: false,
-        message: 'Invoice not found'
+        message: "Invoice not found",
       });
     }
 
     // Update status
     const oldStatus = invoice.status;
     invoice.status = status;
-    
+
     // Update payment status if needed
-    if (status === 'paid') {
-      invoice.paymentInfo.status = 'paid';
+    if (status === "paid") {
+      invoice.paymentInfo.status = "paid";
       invoice.paymentInfo.paidAt = new Date();
       invoice.paymentInfo.paidAmount = invoice.totals.totalAmount;
-    } else if (status === 'sent') {
+    } else if (status === "sent") {
       invoice.sentAt = new Date();
       invoice.sentBy = req.user._id;
     }
@@ -427,7 +458,7 @@ export const updateInvoiceStatus = async (req, res) => {
       changes: `Status updated from ${oldStatus} to ${status}`,
       changedBy: req.user._id,
       changeDate: new Date(),
-      notes
+      notes,
     });
 
     await invoice.save();
@@ -439,15 +470,14 @@ export const updateInvoiceStatus = async (req, res) => {
         id: invoice._id,
         status: invoice.status,
         paymentStatus: invoice.paymentInfo.status,
-        updatedAt: invoice.updatedAt
-      }
+        updatedAt: invoice.updatedAt,
+      },
     });
-
   } catch (error) {
-    console.error('Error updating invoice status:', error);
+    console.error("Error updating invoice status:", error);
     res.status(500).json({
       success: false,
-      message: 'Error updating invoice status'
+      message: "Error updating invoice status",
     });
   }
 };
@@ -461,15 +491,15 @@ export const processPayment = async (req, res) => {
     const {
       paymentMethod,
       paidAmount,
-      transactionId = '',
-      paymentNotes = ''
+      transactionId = "",
+      paymentNotes = "",
     } = req.body;
 
     const invoice = await Invoice.findById(id);
     if (!invoice) {
       return res.status(404).json({
         success: false,
-        message: 'Invoice not found'
+        message: "Invoice not found",
       });
     }
 
@@ -477,29 +507,30 @@ export const processPayment = async (req, res) => {
     if (paidAmount <= 0 || paidAmount > invoice.totals.totalAmount) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid payment amount'
+        message: "Invalid payment amount",
       });
     }
 
     // Check if already paid
-    if (invoice.paymentInfo.status === 'paid') {
+    if (invoice.paymentInfo.status === "paid") {
       return res.status(400).json({
         success: false,
-        message: 'Invoice is already paid'
+        message: "Invoice is already paid",
       });
     }
 
     // Process payment
     const isFullPayment = paidAmount >= invoice.totals.totalAmount;
-    
-    invoice.paymentInfo.status = isFullPayment ? 'paid' : 'partially_paid';
-    invoice.paymentInfo.paidAmount = (invoice.paymentInfo.paidAmount || 0) + paidAmount;
+
+    invoice.paymentInfo.status = isFullPayment ? "paid" : "partially_paid";
+    invoice.paymentInfo.paidAmount =
+      (invoice.paymentInfo.paidAmount || 0) + paidAmount;
     invoice.paymentInfo.paidAt = new Date();
     invoice.paymentInfo.paymentMethod = paymentMethod;
     invoice.paymentInfo.transactionId = transactionId;
 
     if (isFullPayment) {
-      invoice.status = 'paid';
+      invoice.status = "paid";
     }
 
     // Add payment record
@@ -509,37 +540,39 @@ export const processPayment = async (req, res) => {
       transactionId,
       processedBy: req.user._id,
       processedAt: new Date(),
-      notes: paymentNotes
+      notes: paymentNotes,
     });
 
     // Add revision history
     invoice.revisionHistory.push({
       version: invoice.revisionHistory.length + 1,
-      changes: `Payment processed: ${paidAmount.toLocaleString('vi-VN')} VND via ${paymentMethod}`,
+      changes: `Payment processed: ${paidAmount.toLocaleString(
+        "vi-VN"
+      )} VND via ${paymentMethod}`,
       changedBy: req.user._id,
       changeDate: new Date(),
-      notes: paymentNotes
+      notes: paymentNotes,
     });
 
     await invoice.save();
 
     res.status(200).json({
       success: true,
-      message: 'Payment processed successfully',
+      message: "Payment processed successfully",
       data: {
         id: invoice._id,
         paymentStatus: invoice.paymentInfo.status,
         paidAmount: invoice.paymentInfo.paidAmount,
-        remainingAmount: invoice.totals.totalAmount - invoice.paymentInfo.paidAmount,
-        isFullyPaid: isFullPayment
-      }
+        remainingAmount:
+          invoice.totals.totalAmount - invoice.paymentInfo.paidAmount,
+        isFullyPaid: isFullPayment,
+      },
     });
-
   } catch (error) {
-    console.error('Error processing payment:', error);
+    console.error("Error processing payment:", error);
     res.status(500).json({
       success: false,
-      message: 'Error processing payment'
+      message: "Error processing payment",
     });
   }
 };
@@ -552,15 +585,15 @@ export const generateInvoicePDF = async (req, res) => {
     const { id } = req.params;
 
     const invoice = await Invoice.findById(id)
-      .populate('appointmentId')
-      .populate('customerId')
-      .populate('vehicleId')
-      .populate('serviceCenterId');
+      .populate("appointmentId")
+      .populate("customerId")
+      .populate("vehicleId");
+    // serviceCenterId populate removed - single center architecture
 
     if (!invoice) {
       return res.status(404).json({
         success: false,
-        message: 'Invoice not found'
+        message: "Invoice not found",
       });
     }
 
@@ -568,19 +601,18 @@ export const generateInvoicePDF = async (req, res) => {
     // For now, returning JSON structure that frontend can use to generate PDF
     res.status(200).json({
       success: true,
-      message: 'PDF generation endpoint ready',
+      message: "PDF generation endpoint ready",
       data: {
         invoice,
         pdfUrl: `/api/invoices/${id}/pdf/download`, // Future PDF download URL
-        note: 'PDF generation would be implemented here'
-      }
+        note: "PDF generation would be implemented here",
+      },
     });
-
   } catch (error) {
-    console.error('Error generating invoice PDF:', error);
+    console.error("Error generating invoice PDF:", error);
     res.status(500).json({
       success: false,
-      message: 'Error generating invoice PDF'
+      message: "Error generating invoice PDF",
     });
   }
 };

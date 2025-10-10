@@ -4,7 +4,6 @@ import {
   CalendarIcon,
   EyeIcon,
   ArrowPathIcon,
-  XMarkIcon,
   FunnelIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
@@ -85,6 +84,11 @@ const AppointmentsPage: React.FC = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [hasVehicles, setHasVehicles] = useState(false);
 
+  // Confirmation dialog state
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [appointmentToCancel, setAppointmentToCancel] =
+    useState<Appointment | null>(null);
+
   // Filters state
   const [filters, setFilters] = useState<FiltersState>({
     statusFilter: "",
@@ -111,7 +115,7 @@ const AppointmentsPage: React.FC = () => {
           setState((prev) => ({ ...prev, loading: true, error: null }));
         }
 
-        const params: any = {
+        const params: Record<string, string | number> = {
           page: filters.page,
           limit: filters.limit,
         };
@@ -179,15 +183,11 @@ const AppointmentsPage: React.FC = () => {
       let vehicleCount = 0;
       if (Array.isArray(data)) {
         vehicleCount = data.length;
-      } else if (data && typeof data.count === "number") {
+      } else if (data && "count" in data && typeof data.count === "number") {
         vehicleCount = data.count;
       }
 
       setHasVehicles(vehicleCount > 0);
-      console.log("Vehicle check result:", {
-        vehicleCount,
-        hasVehicles: vehicleCount > 0,
-      }); // Debug log
     } catch (error) {
       console.error("Error fetching user vehicles:", error);
       setHasVehicles(false); // Default to false on error
@@ -291,15 +291,45 @@ const AppointmentsPage: React.FC = () => {
           ),
         }));
 
-        // Call the correct API endpoint based on status
-        await appointmentsAPI.updateStatus(appointmentId, newStatus, notes);
+        // Handle cancellation specially to include refund logic
+        if (newStatus === "cancelled") {
+          const response = await appointmentsAPI.cancel(
+            appointmentId,
+            "Khách hàng yêu cầu hủy"
+          );
+
+          // Check if refund was processed
+          if (
+            response.data &&
+            "refundInfo" in response.data &&
+            response.data.refundInfo
+          ) {
+            const refundInfo = response.data.refundInfo as {
+              refundAmount: number;
+            };
+            const refundAmount = new Intl.NumberFormat("vi-VN", {
+              style: "currency",
+              currency: "VND",
+            }).format(refundInfo.refundAmount);
+
+            toast.success(
+              `Đã hủy lịch hẹn thành công! Hoàn tiền ${refundAmount} sẽ được xử lý trong 3-5 ngày làm việc.`,
+              { duration: 6000 }
+            );
+          } else {
+            toast.success("Đã hủy lịch hẹn thành công");
+          }
+        } else {
+          // Call the correct API endpoint based on status
+          await appointmentsAPI.updateStatus(appointmentId, newStatus, notes);
+
+          toast.success(
+            `Đã cập nhật trạng thái: ${appointmentStatusTranslations[newStatus]}`
+          );
+        }
 
         // Emit real-time update
         emitStatusUpdate(appointmentId, newStatus);
-
-        toast.success(
-          `Đã cập nhật trạng thái: ${appointmentStatusTranslations[newStatus]}`
-        );
 
         // Refresh to ensure data consistency
         fetchAppointments(false);
@@ -348,12 +378,6 @@ const AppointmentsPage: React.FC = () => {
         return;
       }
 
-      const confirmMessage = `Bạn có chắc chắn muốn hủy lịch hẹn #${appointment.appointmentNumber}?\nLý do: ${reason || "Khách hàng hủy"}`;
-
-      if (!window.confirm(confirmMessage)) {
-        return;
-      }
-
       try {
         // Use correct API method and parameters
         await appointmentsAPI.cancel(appointmentId, reason || "Khách hàng hủy");
@@ -373,6 +397,36 @@ const AppointmentsPage: React.FC = () => {
     },
     [state.appointments, fetchAppointments]
   );
+
+  /**
+   * Show cancel confirmation dialog
+   */
+  const showCancelConfirmation = useCallback((appointment: Appointment) => {
+    setAppointmentToCancel(appointment);
+    setShowCancelDialog(true);
+  }, []);
+
+  /**
+   * Handle cancel confirmation
+   */
+  const handleCancelConfirmation = useCallback(
+    async (reason?: string) => {
+      if (!appointmentToCancel) return;
+
+      setShowCancelDialog(false);
+      await handleCancelAppointment(appointmentToCancel._id, reason);
+      setAppointmentToCancel(null);
+    },
+    [appointmentToCancel, handleCancelAppointment]
+  );
+
+  /**
+   * Handle cancel dialog close
+   */
+  const handleCancelDialogClose = useCallback(() => {
+    setShowCancelDialog(false);
+    setAppointmentToCancel(null);
+  }, []);
 
   /**
    * Handle form success callback
@@ -407,7 +461,7 @@ const AppointmentsPage: React.FC = () => {
       setFilters((prev) => ({
         ...prev,
         [filterType]: value,
-        page: filterType !== "page" ? 1 : value, // Reset to page 1 when filters change
+        page: filterType !== "page" ? 1 : typeof value === "number" ? value : 1, // Reset to page 1 when filters change
       }));
     },
     []
@@ -454,7 +508,9 @@ const AppointmentsPage: React.FC = () => {
         }`}
         title={appointmentStatusTranslations[status] || status}
         role="status"
-        aria-label={`Trạng thái: ${appointmentStatusTranslations[status] || status}`}
+        aria-label={`Trạng thái: ${
+          appointmentStatusTranslations[status] || status
+        }`}
       >
         {appointmentStatusTranslations[status] || status}
       </span>
@@ -501,27 +557,68 @@ const AppointmentsPage: React.FC = () => {
       if (!user) return null;
 
       // Special case for pending appointments - show "Yêu cầu hủy" button only for customers
+      // Check 24-hour rule for cancellation
       if (appointment.status === "pending" && user?.role === "customer") {
-        return (
-          <div
-            className="flex items-center space-x-1 mt-2"
-            role="group"
-            aria-label="Hành động trạng thái"
-          >
-            <button
-              onClick={() => handleStatusUpdate(appointment._id, "cancelled")}
-              disabled={state.updatingStatus === appointment._id}
-              className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-              aria-label="Yêu cầu hủy lịch hẹn"
+        // More robust date parsing
+        let appointmentDate;
+        try {
+          // Check if scheduledDate is already a full ISO datetime
+          if (
+            appointment.scheduledDate.includes("T") &&
+            appointment.scheduledDate.includes("Z")
+          ) {
+            // It's already a full ISO datetime, use it directly
+            appointmentDate = new Date(appointment.scheduledDate);
+          } else if (appointment.scheduledDate.includes("/")) {
+            // Handle DD/MM/YYYY format
+            const [day, month, year] = appointment.scheduledDate.split("/");
+            appointmentDate = new Date(
+              `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T${
+                appointment.scheduledTime
+              }`
+            );
+          } else {
+            // Handle YYYY-MM-DD format
+            appointmentDate = new Date(
+              `${appointment.scheduledDate}T${appointment.scheduledTime}`
+            );
+          }
+        } catch (error) {
+          console.error("Error parsing appointment date:", error);
+          appointmentDate = new Date(
+            `${appointment.scheduledDate}T${appointment.scheduledTime}`
+          );
+        }
+
+        const now = new Date();
+        const hoursDiff =
+          (appointmentDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+        // Only show cancel button if more than 24 hours before appointment
+        if (hoursDiff > 24) {
+          return (
+            <div
+              className="flex items-center space-x-1 mt-2"
+              role="group"
+              aria-label="Hành động trạng thái"
             >
-              {state.updatingStatus === appointment._id ? (
-                <ArrowPathIcon className="w-3 h-3 animate-spin" />
-              ) : (
-                "Yêu cầu hủy"
-              )}
-            </button>
-          </div>
-        );
+              <button
+                onClick={() => showCancelConfirmation(appointment)}
+                disabled={state.updatingStatus === appointment._id}
+                className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                aria-label="Yêu cầu hủy lịch hẹn"
+              >
+                {state.updatingStatus === appointment._id ? (
+                  <ArrowPathIcon className="w-3 h-3 animate-spin" />
+                ) : (
+                  "Yêu cầu hủy"
+                )}
+              </button>
+            </div>
+          );
+        }
+        // If less than 24 hours, don't show cancel button
+        return null;
       }
 
       // If appointment is cancelled, show "Da Huy" button
@@ -571,7 +668,7 @@ const AppointmentsPage: React.FC = () => {
         </div>
       );
     },
-    [user, handleStatusUpdate, state.updatingStatus]
+    [user, handleStatusUpdate, state.updatingStatus, showCancelConfirmation]
   );
 
   /**
@@ -1002,7 +1099,7 @@ const AppointmentsPage: React.FC = () => {
                             </p>
                             <p className="text-sm text-gray-500">
                               Chi phí ước tính:{" "}
-                              {formatVND(appointment.totalAmount)}
+                              {formatVND(appointment.totalAmount || 0)}
                             </p>
                           </div>
                         </div>
@@ -1055,6 +1152,49 @@ const AppointmentsPage: React.FC = () => {
           onClose={handleDetailsClose}
           _onUpdate={() => fetchAppointments(false)}
         />
+      )}
+
+      {/* Cancel Confirmation Dialog */}
+      {showCancelDialog && appointmentToCancel && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mt-4">
+                Xác nhận hủy lịch hẹn
+              </h3>
+              <div className="mt-2 px-7 py-3">
+                <p className="text-sm text-gray-500">
+                  Bạn có chắc chắn muốn hủy lịch hẹn{" "}
+                  <span className="font-semibold text-gray-900">
+                    #{appointmentToCancel.appointmentNumber}
+                  </span>
+                  ?
+                </p>
+                <p className="text-xs text-gray-400 mt-2">
+                  Hành động này không thể hoàn tác. Nếu đã thanh toán, tiền sẽ
+                  được hoàn lại trong 3-5 ngày làm việc.
+                </p>
+              </div>
+              <div className="flex justify-center space-x-3 mt-4">
+                <button
+                  onClick={handleCancelDialogClose}
+                  className="px-4 py-2 bg-gray-300 text-gray-800 text-sm font-medium rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  onClick={() => handleCancelConfirmation()}
+                  className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  Xác nhận hủy
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

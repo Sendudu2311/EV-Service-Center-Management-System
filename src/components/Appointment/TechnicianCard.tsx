@@ -1,6 +1,6 @@
-import React from 'react';
-import { StarIcon, UserIcon, CheckBadgeIcon } from '@heroicons/react/24/solid';
-import { ClockIcon, CpuChipIcon } from '@heroicons/react/24/outline';
+import React from "react";
+import { StarIcon, UserIcon, CheckBadgeIcon } from "@heroicons/react/24/solid";
+import { ClockIcon, CpuChipIcon } from "@heroicons/react/24/outline";
 
 interface Technician {
   id: string;
@@ -30,6 +30,7 @@ interface TechnicianCardProps {
   onSelect: (technicianId: string) => void;
   selectedServices?: string[];
   isAvailableForSlot?: boolean;
+  disabled?: boolean;
 }
 
 const TechnicianCard: React.FC<TechnicianCardProps> = ({
@@ -37,34 +38,43 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
   isSelected,
   onSelect,
   selectedServices = [],
-  isAvailableForSlot = true
+  isAvailableForSlot = true,
+  disabled = false,
 }) => {
   const getAvailabilityColor = (status: string) => {
     switch (status) {
-      case 'available': return 'text-green-600 bg-green-100';
-      case 'busy': return 'text-yellow-600 bg-yellow-100';
-      case 'offline': return 'text-gray-600 bg-gray-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case "available":
+        return "text-green-600 bg-green-100";
+      case "busy":
+        return "text-yellow-600 bg-yellow-100";
+      case "offline":
+        return "text-gray-600 bg-gray-100";
+      default:
+        return "text-gray-600 bg-gray-100";
     }
   };
 
   const getAvailabilityText = (status: string) => {
     switch (status) {
-      case 'available': return 'Available';
-      case 'busy': return 'Busy';
-      case 'offline': return 'Offline';
-      default: return 'Unknown';
+      case "available":
+        return "Available";
+      case "busy":
+        return "Busy";
+      case "offline":
+        return "Offline";
+      default:
+        return "Unknown";
     }
   };
 
   const getSkillLevel = (level: number) => {
-    const levels = ['Beginner', 'Basic', 'Intermediate', 'Advanced', 'Expert'];
-    return levels[level - 1] || 'Unknown';
+    const levels = ["Beginner", "Basic", "Intermediate", "Advanced", "Expert"];
+    return levels[level - 1] || "Unknown";
   };
 
   const getRelevantSkills = () => {
     if (selectedServices.length === 0) return technician.skills;
-    return technician.skills.filter(skill => 
+    return technician.skills.filter((skill) =>
       selectedServices.includes(skill.category)
     );
   };
@@ -73,13 +83,15 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
   const hasRelevantSkills = relevantSkills.length > 0;
 
   return (
-    <div 
-      className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-        isSelected 
-          ? 'border-blue-500 bg-blue-50 shadow-md' 
-          : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+    <div
+      className={`relative p-4 rounded-lg border-2 transition-all duration-200 ${
+        disabled
+          ? "cursor-not-allowed opacity-60 bg-gray-50 border-gray-200"
+          : isSelected
+          ? "border-blue-500 bg-blue-50 shadow-md cursor-pointer"
+          : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm cursor-pointer"
       }`}
-      onClick={() => onSelect(technician.id)}
+      onClick={disabled ? undefined : () => onSelect(technician.id)}
     >
       {/* Recommended Badge */}
       {technician.isRecommended && (
@@ -110,7 +122,11 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
       {/* Availability Status */}
       <div className="space-y-2 mb-3">
         <div className="flex items-center justify-between">
-          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getAvailabilityColor(technician.availability.status)}`}>
+          <span
+            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getAvailabilityColor(
+              technician.availability.status
+            )}`}
+          >
             {getAvailabilityText(technician.availability.status)}
           </span>
           <span className="text-sm text-gray-600">
@@ -153,7 +169,9 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
       {/* Specializations */}
       {technician.specializations.length > 0 && (
         <div className="mb-3">
-          <div className="text-sm font-medium text-gray-700 mb-1">Specializations:</div>
+          <div className="text-sm font-medium text-gray-700 mb-1">
+            Specializations:
+          </div>
           <div className="flex flex-wrap gap-1">
             {technician.specializations.map((spec) => (
               <span
@@ -175,7 +193,10 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
           </div>
           <div className="space-y-1">
             {relevantSkills.slice(0, 3).map((skill) => (
-              <div key={skill.category} className="flex items-center justify-between text-xs">
+              <div
+                key={skill.category}
+                className="flex items-center justify-between text-xs"
+              >
                 <div className="flex items-center">
                   <CpuChipIcon className="w-3 h-3 mr-1 text-gray-500" />
                   <span className="capitalize">{skill.category}</span>

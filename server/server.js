@@ -12,7 +12,7 @@ import "./models/index.js";
 import authRoutes from "./routes/auth.js";
 import vehicleRoutes from "./routes/vehicles.js";
 import appointmentRoutes from "./routes/appointments.js";
-import serviceCenterRoutes from "./routes/serviceCenters.js";
+// serviceCenterRoutes removed - single center architecture
 import serviceRoutes from "./routes/services.js";
 import technicianRoutes from "./routes/technicians.js";
 import dashboardRoutes from "./routes/dashboard.js";
@@ -92,7 +92,7 @@ app.use("/uploads", express.static("public/uploads"));
 app.use("/api/auth", authRoutes);
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/appointments", appointmentRoutes);
-app.use("/api/service-centers", serviceCenterRoutes);
+// serviceCenterRoutes removed - single center architecture
 app.use("/api/services", serviceRoutes);
 app.use("/api/technicians", technicianRoutes);
 app.use("/api/dashboard", dashboardRoutes);

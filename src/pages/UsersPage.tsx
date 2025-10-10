@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   UserIcon,
   MagnifyingGlassIcon,
@@ -10,11 +10,11 @@ import {
   PencilIcon,
   PlusIcon,
   WrenchScrewdriverIcon,
-  BuildingOfficeIcon
-} from '@heroicons/react/24/outline';
-import { useAuth } from '../contexts/AuthContext';
-import { usersAPI, appointmentsAPI, vehiclesAPI } from '../services/api';
-import toast from 'react-hot-toast';
+  BuildingOfficeIcon,
+} from "@heroicons/react/24/outline";
+import { useAuth } from "../contexts/AuthContext";
+import { usersAPI, appointmentsAPI, vehiclesAPI } from "../services/api";
+import toast from "react-hot-toast";
 
 interface User {
   _id: string;
@@ -26,11 +26,8 @@ interface User {
   isActive: boolean;
   createdAt: string;
   lastLogin?: string;
-  serviceCenterId?: {
-    _id: string;
-    name: string;
-    code: string;
-  };
+  // serviceCenterId removed - single center architecture
+  code: string;
   specializations?: string[];
   certifications?: Array<{
     name: string;
@@ -66,7 +63,7 @@ interface Appointment {
   totalCost: number;
 }
 
-type UserRole = 'customer' | 'staff' | 'technician';
+type UserRole = "customer" | "staff" | "technician";
 
 const UsersPage: React.FC = () => {
   const { user: currentUser } = useAuth();
@@ -75,18 +72,22 @@ const UsersPage: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userVehicles, setUserVehicles] = useState<Vehicle[]>([]);
   const [userAppointments, setUserAppointments] = useState<Appointment[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
-  const [activeTab, setActiveTab] = useState<UserRole>('customer');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState<
+    "all" | "active" | "inactive"
+  >("all");
+  const [activeTab, setActiveTab] = useState<UserRole>("customer");
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState<'profile' | 'vehicles' | 'appointments' | 'edit'>('profile');
+  const [modalType, setModalType] = useState<
+    "profile" | "vehicles" | "appointments" | "edit"
+  >("profile");
   const [editFormData, setEditFormData] = useState({
-    firstName: '',
-    lastName: '',
-    phone: '',
-    role: '',
+    firstName: "",
+    lastName: "",
+    phone: "",
+    role: "",
     isActive: true,
-    serviceCenterId: ''
+    // serviceCenterId removed - single center architecture
   });
 
   useEffect(() => {
@@ -96,45 +97,49 @@ const UsersPage: React.FC = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      
+
       const filters: any = {
-        role: activeTab
+        role: activeTab,
       };
-      
+
       if (searchTerm) {
         filters.search = searchTerm;
       }
-      
-      if (filterStatus !== 'all') {
-        filters.isActive = filterStatus === 'active';
+
+      if (filterStatus !== "all") {
+        filters.isActive = filterStatus === "active";
       }
 
       const response = await usersAPI.getAll(filters);
-      
+
       // For customers, get additional stats
-      if (activeTab === 'customer') {
+      if (activeTab === "customer") {
         const userData = response.data?.data || response.data || [];
         const usersWithStats = await Promise.all(
           (Array.isArray(userData) ? userData : []).map(async (user: User) => {
             try {
               // Get vehicle count
-              const vehiclesResponse = await vehiclesAPI.getAll({ customerId: user._id });
+              const vehiclesResponse = await vehiclesAPI.getAll({
+                customerId: user._id,
+              });
               const vehicleCount = vehiclesResponse.data.count || 0;
 
               // Get appointment count
-              const appointmentsResponse = await appointmentsAPI.getAll({ customerId: user._id });
+              const appointmentsResponse = await appointmentsAPI.getAll({
+                customerId: user._id,
+              });
               const appointmentCount = appointmentsResponse.data.count || 0;
 
               return {
                 ...user,
                 vehicleCount,
-                appointmentCount
+                appointmentCount,
               };
             } catch (error) {
               return {
                 ...user,
                 vehicleCount: 0,
-                appointmentCount: 0
+                appointmentCount: 0,
               };
             }
           })
@@ -144,21 +149,24 @@ const UsersPage: React.FC = () => {
         setUsers(response.data.data || []);
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
-      toast.error('Failed to load users');
+      console.error("Error fetching users:", error);
+      toast.error("Failed to load users");
     } finally {
       setLoading(false);
     }
-  };;
+  };
 
-  const fetchUserDetails = async (userId: string, type: 'profile' | 'vehicles' | 'appointments') => {
+  const fetchUserDetails = async (
+    userId: string,
+    type: "profile" | "vehicles" | "appointments"
+  ) => {
     try {
       setLoading(true);
 
-      if (type === 'vehicles' && activeTab === 'customer') {
+      if (type === "vehicles" && activeTab === "customer") {
         const response = await vehiclesAPI.getAll({ customerId: userId });
         setUserVehicles(response.data.data || []);
-      } else if (type === 'appointments' && activeTab === 'customer') {
+      } else if (type === "appointments" && activeTab === "customer") {
         const response = await appointmentsAPI.getAll({ customerId: userId });
         setUserAppointments(response.data.data || []);
       }
@@ -166,20 +174,24 @@ const UsersPage: React.FC = () => {
       setModalType(type);
       setShowModal(true);
     } catch (error) {
-      console.error('Error fetching user details:', error);
-      toast.error('Failed to load user details');
+      console.error("Error fetching user details:", error);
+      toast.error("Failed to load user details");
     } finally {
       setLoading(false);
     }
-  };;
+  };
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
       await usersAPI.update(userId, { isActive: !currentStatus });
-      toast.success(`User ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
+      toast.success(
+        `User ${!currentStatus ? "activated" : "deactivated"} successfully`
+      );
       fetchUsers();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update user status');
+      toast.error(
+        error.response?.data?.message || "Failed to update user status"
+      );
     }
   };
 
@@ -191,9 +203,9 @@ const UsersPage: React.FC = () => {
       phone: user.phone,
       role: user.role,
       isActive: user.isActive,
-      serviceCenterId: user.serviceCenterId?._id || ''
+      // serviceCenterId removed - single center architecture
     });
-    setModalType('edit');
+    setModalType("edit");
     setShowModal(true);
   };
 
@@ -203,60 +215,62 @@ const UsersPage: React.FC = () => {
 
     try {
       await usersAPI.update(selectedUser._id, editFormData);
-      toast.success('User updated successfully');
+      toast.success("User updated successfully");
       setShowModal(false);
       fetchUsers();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update user');
+      toast.error(error.response?.data?.message || "Failed to update user");
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed':
-        return 'bg-blue-100 text-blue-800';
-      case 'in_progress':
-        return 'bg-purple-100 text-purple-800';
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "confirmed":
+        return "bg-blue-100 text-blue-800";
+      case "in_progress":
+        return "bg-purple-100 text-purple-800";
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "cancelled":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'admin':
-        return 'bg-red-100 text-red-800';
-      case 'staff':
-        return 'bg-blue-100 text-blue-800';
-      case 'technician':
-        return 'bg-green-100 text-green-800';
+      case "admin":
+        return "bg-red-100 text-red-800";
+      case "staff":
+        return "bg-blue-100 text-blue-800";
+      case "technician":
+        return "bg-green-100 text-green-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
-  if (!['staff', 'admin'].includes(currentUser?.role || '')) {
+  if (!["staff", "admin"].includes(currentUser?.role || "")) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900">Access Denied</h2>
-          <p className="text-gray-600 mt-2">You need staff privileges to access this page.</p>
+          <p className="text-gray-600 mt-2">
+            You need staff privileges to access this page.
+          </p>
         </div>
       </div>
     );
@@ -268,7 +282,9 @@ const UsersPage: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600 mt-2">Manage customers, staff, and technicians</p>
+          <p className="text-gray-600 mt-2">
+            Manage customers, staff, and technicians
+          </p>
         </div>
 
         {/* Tabs */}
@@ -276,11 +292,11 @@ const UsersPage: React.FC = () => {
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
               <button
-                onClick={() => setActiveTab('customer')}
+                onClick={() => setActiveTab("customer")}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'customer'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  activeTab === "customer"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
               >
                 <div className="flex items-center space-x-2">
@@ -289,11 +305,11 @@ const UsersPage: React.FC = () => {
                 </div>
               </button>
               <button
-                onClick={() => setActiveTab('staff')}
+                onClick={() => setActiveTab("staff")}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'staff'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  activeTab === "staff"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
               >
                 <div className="flex items-center space-x-2">
@@ -302,11 +318,11 @@ const UsersPage: React.FC = () => {
                 </div>
               </button>
               <button
-                onClick={() => setActiveTab('technician')}
+                onClick={() => setActiveTab("technician")}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'technician'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  activeTab === "technician"
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
               >
                 <div className="flex items-center space-x-2">
@@ -353,7 +369,8 @@ const UsersPage: React.FC = () => {
         <div className="bg-white shadow rounded-lg">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">
-              {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}s ({users.length})
+              {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}s (
+              {users.length})
             </h2>
           </div>
 
@@ -364,15 +381,22 @@ const UsersPage: React.FC = () => {
           ) : users.length === 0 ? (
             <div className="p-6 text-center">
               <UserIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No {activeTab}s found</h3>
-              <p className="mt-1 text-sm text-gray-500">Try adjusting your search or filters.</p>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">
+                No {activeTab}s found
+              </h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Try adjusting your search or filters.
+              </p>
             </div>
           ) : (
             <>
               {/* Mobile Cards View (hidden on lg screens) */}
               <div className="block lg:hidden space-y-4 p-4">
                 {users.map((user) => (
-                  <div key={user._id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                  <div
+                    key={user._id}
+                    className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+                  >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
@@ -389,12 +413,14 @@ const UsersPage: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.isActive
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {user.isActive ? 'Active' : 'Inactive'}
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          user.isActive
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {user.isActive ? "Active" : "Inactive"}
                       </span>
                     </div>
 
@@ -407,7 +433,7 @@ const UsersPage: React.FC = () => {
                         <PhoneIcon className="h-4 w-4 mr-2 text-gray-400" />
                         {user.phone}
                       </div>
-                      {activeTab === 'customer' && (
+                      {activeTab === "customer" && (
                         <div className="flex items-center justify-between">
                           <div className="flex items-center text-sm text-gray-500">
                             <TruckIcon className="h-4 w-4 mr-1 text-gray-400" />
@@ -415,17 +441,16 @@ const UsersPage: React.FC = () => {
                           </div>
                           <div className="flex items-center text-sm text-gray-500">
                             <CalendarIcon className="h-4 w-4 mr-1 text-gray-400" />
-                            <span>{user.appointmentCount || 0} appointments</span>
+                            <span>
+                              {user.appointmentCount || 0} appointments
+                            </span>
                           </div>
                         </div>
                       )}
-                      {activeTab !== 'customer' && user.serviceCenterId && (
-                        <div className="text-sm text-gray-500">
-                          <span className="font-medium">Service Center:</span> {user.serviceCenterId.name} ({user.serviceCenterId.code})
-                        </div>
-                      )}
+                      {/* Service Center information removed - single center architecture */}
                       <div className="text-xs text-gray-500">
-                        <span className="font-medium">Last Login:</span> {user.lastLogin ? formatDate(user.lastLogin) : 'Never'}
+                        <span className="font-medium">Last Login:</span>{" "}
+                        {user.lastLogin ? formatDate(user.lastLogin) : "Never"}
                       </div>
                     </div>
 
@@ -433,7 +458,7 @@ const UsersPage: React.FC = () => {
                       <button
                         onClick={() => {
                           setSelectedUser(user);
-                          fetchUserDetails(user._id, 'profile');
+                          fetchUserDetails(user._id, "profile");
                         }}
                         className="inline-flex items-center px-2 py-1 text-xs text-blue-600 hover:text-blue-900"
                         title="View Profile"
@@ -441,12 +466,12 @@ const UsersPage: React.FC = () => {
                         <EyeIcon className="h-3 w-3 mr-1" />
                         Profile
                       </button>
-                      {activeTab === 'customer' && (
+                      {activeTab === "customer" && (
                         <>
                           <button
                             onClick={() => {
                               setSelectedUser(user);
-                              fetchUserDetails(user._id, 'vehicles');
+                              fetchUserDetails(user._id, "vehicles");
                             }}
                             className="inline-flex items-center px-2 py-1 text-xs text-green-600 hover:text-green-900"
                             title="View Vehicles"
@@ -457,7 +482,7 @@ const UsersPage: React.FC = () => {
                           <button
                             onClick={() => {
                               setSelectedUser(user);
-                              fetchUserDetails(user._id, 'appointments');
+                              fetchUserDetails(user._id, "appointments");
                             }}
                             className="inline-flex items-center px-2 py-1 text-xs text-purple-600 hover:text-purple-900"
                             title="View Appointments"
@@ -467,7 +492,7 @@ const UsersPage: React.FC = () => {
                           </button>
                         </>
                       )}
-                      {currentUser?.role === 'admin' && (
+                      {currentUser?.role === "admin" && (
                         <button
                           onClick={() => handleEditUser(user)}
                           className="inline-flex items-center px-2 py-1 text-xs text-orange-600 hover:text-orange-900"
@@ -478,16 +503,18 @@ const UsersPage: React.FC = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => toggleUserStatus(user._id, user.isActive)}
+                        onClick={() =>
+                          toggleUserStatus(user._id, user.isActive)
+                        }
                         className={`inline-flex items-center px-2 py-1 text-xs ${
                           user.isActive
-                            ? 'text-red-600 hover:text-red-900'
-                            : 'text-green-600 hover:text-green-900'
+                            ? "text-red-600 hover:text-red-900"
+                            : "text-green-600 hover:text-green-900"
                         }`}
-                        title={user.isActive ? 'Deactivate' : 'Activate'}
+                        title={user.isActive ? "Deactivate" : "Activate"}
                       >
                         <PencilIcon className="h-3 w-3 mr-1" />
-                        {user.isActive ? 'Deactivate' : 'Activate'}
+                        {user.isActive ? "Deactivate" : "Activate"}
                       </button>
                     </div>
                   </div>
@@ -505,7 +532,7 @@ const UsersPage: React.FC = () => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Contact
                       </th>
-                      {activeTab === 'customer' && (
+                      {activeTab === "customer" && (
                         <>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Vehicles
@@ -515,7 +542,7 @@ const UsersPage: React.FC = () => {
                           </th>
                         </>
                       )}
-                      {activeTab !== 'customer' && (
+                      {activeTab !== "customer" && (
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Service Center
                         </th>
@@ -563,57 +590,61 @@ const UsersPage: React.FC = () => {
                             </div>
                           </div>
                         </td>
-                        {activeTab === 'customer' && (
+                        {activeTab === "customer" && (
                           <>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
                                 <TruckIcon className="h-4 w-4 mr-1 text-gray-400" />
-                                <span className="text-sm text-gray-900">{user.vehicleCount || 0}</span>
+                                <span className="text-sm text-gray-900">
+                                  {user.vehicleCount || 0}
+                                </span>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center">
                                 <CalendarIcon className="h-4 w-4 mr-1 text-gray-400" />
-                                <span className="text-sm text-gray-900">{user.appointmentCount || 0}</span>
+                                <span className="text-sm text-gray-900">
+                                  {user.appointmentCount || 0}
+                                </span>
                               </div>
                             </td>
                           </>
                         )}
-                        {activeTab !== 'customer' && (
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {user.serviceCenterId ? `${user.serviceCenterId.name} (${user.serviceCenterId.code})` : 'Not assigned'}
-                          </td>
-                        )}
+                        {/* Service Center column removed - single center architecture */}
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            user.isActive
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {user.isActive ? 'Active' : 'Inactive'}
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              user.isActive
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {user.isActive ? "Active" : "Inactive"}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {user.lastLogin ? formatDate(user.lastLogin) : 'Never'}
+                          {user.lastLogin
+                            ? formatDate(user.lastLogin)
+                            : "Never"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
                             <button
                               onClick={() => {
                                 setSelectedUser(user);
-                                fetchUserDetails(user._id, 'profile');
+                                fetchUserDetails(user._id, "profile");
                               }}
                               className="text-blue-600 hover:text-blue-900"
                               title="View Profile"
                             >
                               <EyeIcon className="h-4 w-4" />
                             </button>
-                            {activeTab === 'customer' && (
+                            {activeTab === "customer" && (
                               <>
                                 <button
                                   onClick={() => {
                                     setSelectedUser(user);
-                                    fetchUserDetails(user._id, 'vehicles');
+                                    fetchUserDetails(user._id, "vehicles");
                                   }}
                                   className="text-green-600 hover:text-green-900"
                                   title="View Vehicles"
@@ -623,7 +654,7 @@ const UsersPage: React.FC = () => {
                                 <button
                                   onClick={() => {
                                     setSelectedUser(user);
-                                    fetchUserDetails(user._id, 'appointments');
+                                    fetchUserDetails(user._id, "appointments");
                                   }}
                                   className="text-purple-600 hover:text-purple-900"
                                   title="View Appointments"
@@ -632,7 +663,7 @@ const UsersPage: React.FC = () => {
                                 </button>
                               </>
                             )}
-                            {currentUser?.role === 'admin' && (
+                            {currentUser?.role === "admin" && (
                               <button
                                 onClick={() => handleEditUser(user)}
                                 className="text-orange-600 hover:text-orange-900"
@@ -642,13 +673,15 @@ const UsersPage: React.FC = () => {
                               </button>
                             )}
                             <button
-                              onClick={() => toggleUserStatus(user._id, user.isActive)}
+                              onClick={() =>
+                                toggleUserStatus(user._id, user.isActive)
+                              }
                               className={`${
                                 user.isActive
-                                  ? 'text-red-600 hover:text-red-900'
-                                  : 'text-green-600 hover:text-green-900'
+                                  ? "text-red-600 hover:text-red-900"
+                                  : "text-green-600 hover:text-green-900"
                               }`}
-                              title={user.isActive ? 'Deactivate' : 'Activate'}
+                              title={user.isActive ? "Deactivate" : "Activate"}
                             >
                               <PencilIcon className="h-4 w-4" />
                             </button>
@@ -670,11 +703,14 @@ const UsersPage: React.FC = () => {
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">
-                    {modalType === 'profile' && `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Profile`}
-                    {modalType === 'vehicles' && 'Customer Vehicles'}
-                    {modalType === 'appointments' && 'Customer Appointments'}
-                    {modalType === 'edit' && 'Edit User'}
-                    : {selectedUser.firstName} {selectedUser.lastName}
+                    {modalType === "profile" &&
+                      `${
+                        activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
+                      } Profile`}
+                    {modalType === "vehicles" && "Customer Vehicles"}
+                    {modalType === "appointments" && "Customer Appointments"}
+                    {modalType === "edit" && "Edit User"}:{" "}
+                    {selectedUser.firstName} {selectedUser.lastName}
                   </h3>
                   <button
                     onClick={() => setShowModal(false)}
@@ -684,99 +720,150 @@ const UsersPage: React.FC = () => {
                   </button>
                 </div>
 
-                {modalType === 'profile' && (
+                {modalType === "profile" && (
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">First Name</label>
-                        <p className="mt-1 text-sm text-gray-900">{selectedUser.firstName}</p>
+                        <label className="block text-sm font-medium text-gray-700">
+                          First Name
+                        </label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {selectedUser.firstName}
+                        </p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Last Name</label>
-                        <p className="mt-1 text-sm text-gray-900">{selectedUser.lastName}</p>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Last Name
+                        </label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {selectedUser.lastName}
+                        </p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Email</label>
-                        <p className="mt-1 text-sm text-gray-900">{selectedUser.email}</p>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Email
+                        </label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {selectedUser.email}
+                        </p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Phone</label>
-                        <p className="mt-1 text-sm text-gray-900">{selectedUser.phone}</p>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Phone
+                        </label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {selectedUser.phone}
+                        </p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Role</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Role
+                        </label>
                         <p className="mt-1">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(selectedUser.role)}`}>
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(
+                              selectedUser.role
+                            )}`}
+                          >
                             {selectedUser.role}
                           </span>
                         </p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Status</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Status
+                        </label>
                         <p className="mt-1">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            selectedUser.isActive
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {selectedUser.isActive ? 'Active' : 'Inactive'}
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              selectedUser.isActive
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {selectedUser.isActive ? "Active" : "Inactive"}
                           </span>
                         </p>
                       </div>
-                      {selectedUser.serviceCenterId && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Service Center</label>
-                          <p className="mt-1 text-sm text-gray-900">
-                            {selectedUser.serviceCenterId.name} ({selectedUser.serviceCenterId.code})
-                          </p>
-                        </div>
-                      )}
+                      {/* Service Center information removed - single center architecture */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Member Since</label>
-                        <p className="mt-1 text-sm text-gray-900">{formatDate(selectedUser.createdAt)}</p>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Member Since
+                        </label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {formatDate(selectedUser.createdAt)}
+                        </p>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {modalType === 'edit' && (
+                {modalType === "edit" && (
                   <form onSubmit={handleUpdateUser} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">First Name</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          First Name
+                        </label>
                         <input
                           type="text"
                           required
                           value={editFormData.firstName}
-                          onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
+                          onChange={(e) =>
+                            setEditFormData({
+                              ...editFormData,
+                              firstName: e.target.value,
+                            })
+                          }
                           className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Last Name</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Last Name
+                        </label>
                         <input
                           type="text"
                           required
                           value={editFormData.lastName}
-                          onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
+                          onChange={(e) =>
+                            setEditFormData({
+                              ...editFormData,
+                              lastName: e.target.value,
+                            })
+                          }
                           className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Phone</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Phone
+                        </label>
                         <input
                           type="tel"
                           required
                           value={editFormData.phone}
-                          onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                          onChange={(e) =>
+                            setEditFormData({
+                              ...editFormData,
+                              phone: e.target.value,
+                            })
+                          }
                           className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Role</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Role
+                        </label>
                         <select
                           value={editFormData.role}
-                          onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
+                          onChange={(e) =>
+                            setEditFormData({
+                              ...editFormData,
+                              role: e.target.value,
+                            })
+                          }
                           className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                         >
                           <option value="customer">Customer</option>
@@ -786,10 +873,17 @@ const UsersPage: React.FC = () => {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Status</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Status
+                        </label>
                         <select
                           value={editFormData.isActive.toString()}
-                          onChange={(e) => setEditFormData({ ...editFormData, isActive: e.target.value === 'true' })}
+                          onChange={(e) =>
+                            setEditFormData({
+                              ...editFormData,
+                              isActive: e.target.value === "true",
+                            })
+                          }
                           className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                         >
                           <option value="true">Active</option>
@@ -797,7 +891,7 @@ const UsersPage: React.FC = () => {
                         </select>
                       </div>
                     </div>
-                    
+
                     <div className="flex justify-end space-x-3 pt-4">
                       <button
                         type="button"
@@ -816,28 +910,44 @@ const UsersPage: React.FC = () => {
                   </form>
                 )}
 
-                {modalType === 'vehicles' && (
+                {modalType === "vehicles" && (
                   <div className="space-y-4">
                     {userVehicles.length === 0 ? (
-                      <p className="text-gray-500 text-center py-4">No vehicles registered</p>
+                      <p className="text-gray-500 text-center py-4">
+                        No vehicles registered
+                      </p>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {userVehicles.map((vehicle) => (
-                          <div key={vehicle._id} className="border border-gray-200 rounded-lg p-4">
+                          <div
+                            key={vehicle._id}
+                            className="border border-gray-200 rounded-lg p-4"
+                          >
                             <h4 className="font-medium text-gray-900">
                               {vehicle.year} {vehicle.make} {vehicle.model}
                             </h4>
                             <div className="mt-2 space-y-1 text-sm text-gray-600">
-                              <p><span className="font-medium">VIN:</span> {vehicle.vin}</p>
-                              <p><span className="font-medium">Color:</span> {vehicle.color}</p>
-                              <p><span className="font-medium">Battery:</span> {vehicle.batteryType}</p>
                               <p>
-                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                  vehicle.isActive
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
-                                }`}>
-                                  {vehicle.isActive ? 'Active' : 'Inactive'}
+                                <span className="font-medium">VIN:</span>{" "}
+                                {vehicle.vin}
+                              </p>
+                              <p>
+                                <span className="font-medium">Color:</span>{" "}
+                                {vehicle.color}
+                              </p>
+                              <p>
+                                <span className="font-medium">Battery:</span>{" "}
+                                {vehicle.batteryType}
+                              </p>
+                              <p>
+                                <span
+                                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                    vehicle.isActive
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-red-100 text-red-800"
+                                  }`}
+                                >
+                                  {vehicle.isActive ? "Active" : "Inactive"}
                                 </span>
                               </p>
                             </div>
@@ -848,24 +958,47 @@ const UsersPage: React.FC = () => {
                   </div>
                 )}
 
-                {modalType === 'appointments' && (
+                {modalType === "appointments" && (
                   <div className="space-y-4">
                     {userAppointments.length === 0 ? (
-                      <p className="text-gray-500 text-center py-4">No appointments found</p>
+                      <p className="text-gray-500 text-center py-4">
+                        No appointments found
+                      </p>
                     ) : (
                       <div className="space-y-4">
                         {userAppointments.map((appointment) => (
-                          <div key={appointment._id} className="border border-gray-200 rounded-lg p-4">
+                          <div
+                            key={appointment._id}
+                            className="border border-gray-200 rounded-lg p-4"
+                          >
                             <div className="flex items-center justify-between mb-2">
-                              <h4 className="font-medium text-gray-900">#{appointment.appointmentNumber}</h4>
-                              <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(appointment.status)}`}>
+                              <h4 className="font-medium text-gray-900">
+                                #{appointment.appointmentNumber}
+                              </h4>
+                              <span
+                                className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                                  appointment.status
+                                )}`}
+                              >
                                 {appointment.status}
                               </span>
                             </div>
                             <div className="space-y-1 text-sm text-gray-600">
-                              <p><span className="font-medium">Date:</span> {formatDate(appointment.scheduledDate)}</p>
-                              <p><span className="font-medium">Services:</span> {appointment.services?.map(s => s.serviceId?.name || 'Unknown').filter(Boolean).join(', ') || 'No services'}</p>
-                              <p><span className="font-medium">Total:</span> ${appointment.totalCost?.toFixed(2) || 'N/A'}</p>
+                              <p>
+                                <span className="font-medium">Date:</span>{" "}
+                                {formatDate(appointment.scheduledDate)}
+                              </p>
+                              <p>
+                                <span className="font-medium">Services:</span>{" "}
+                                {appointment.services
+                                  ?.map((s) => s.serviceId?.name || "Unknown")
+                                  .filter(Boolean)
+                                  .join(", ") || "No services"}
+                              </p>
+                              <p>
+                                <span className="font-medium">Total:</span> $
+                                {appointment.totalCost?.toFixed(2) || "N/A"}
+                              </p>
                             </div>
                           </div>
                         ))}
@@ -874,7 +1007,7 @@ const UsersPage: React.FC = () => {
                   </div>
                 )}
 
-                {modalType !== 'edit' && (
+                {modalType !== "edit" && (
                   <div className="flex justify-end mt-6">
                     <button
                       onClick={() => setShowModal(false)}

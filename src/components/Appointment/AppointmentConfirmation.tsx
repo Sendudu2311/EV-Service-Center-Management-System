@@ -15,15 +15,7 @@ interface Vehicle {
   vin: string;
 }
 
-interface ServiceCenter {
-  _id: string;
-  name: string;
-  address: {
-    street: string;
-    city: string;
-    state: string;
-  };
-}
+// ServiceCenter interface removed - single center architecture
 
 interface Service {
   _id: string;
@@ -44,7 +36,6 @@ interface Technician {
 interface AppointmentConfirmationProps {
   formData: {
     vehicleId: string;
-    serviceCenterId: string;
     services: string[];
     scheduledDate: string;
     scheduledTime: string;
@@ -53,7 +44,6 @@ interface AppointmentConfirmationProps {
     technicianId: string | null;
   };
   vehicles: Vehicle[];
-  serviceCenters: ServiceCenter[];
   services: Service[];
   technicians: Technician[];
   totalAmount: number;
@@ -66,7 +56,6 @@ interface AppointmentConfirmationProps {
 const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
   formData,
   vehicles,
-  serviceCenters,
   services,
   technicians,
   totalAmount,
@@ -77,9 +66,7 @@ const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
 }) => {
   // Get selected data
   const selectedVehicle = vehicles.find((v) => v._id === formData.vehicleId);
-  const selectedServiceCenter = serviceCenters.find(
-    (sc) => sc._id === formData.serviceCenterId
-  );
+  // serviceCenterId removed - single center architecture
   const selectedServices = services.filter((s) =>
     formData.services.includes(s._id)
   );
@@ -175,20 +162,12 @@ const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
               Service Center
             </h3>
           </div>
-          {selectedServiceCenter ? (
-            <div>
-              <p className="font-medium text-lg">
-                {selectedServiceCenter.name}
-              </p>
-              <p className="text-gray-600">
-                {selectedServiceCenter.address.street},{" "}
-                {selectedServiceCenter.address.city},{" "}
-                {selectedServiceCenter.address.state}
-              </p>
-            </div>
-          ) : (
-            <p className="text-red-600">No service center selected</p>
-          )}
+          <div>
+            <p className="font-medium text-lg">EV Service Center</p>
+            <p className="text-gray-600">
+              123 Main Street, Ho Chi Minh City, Vietnam
+            </p>
+          </div>
         </div>
 
         {/* Date & Time */}

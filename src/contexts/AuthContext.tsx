@@ -14,23 +14,7 @@ interface User {
   lastLogin?: string;
   createdAt: string;
   updatedAt: string;
-  serviceCenterId?: {
-    _id: string;
-    name: string;
-    code: string;
-    address: {
-      street: string;
-      ward: string;
-      district: string;
-      city: string;
-      zipCode: string;
-      country: string;
-    };
-    contact: {
-      phone: string;
-      email: string;
-    };
-  };
+  // serviceCenterId removed - single center architecture
   technicianProfile?: {
     _id: string;
     employeeId: string;

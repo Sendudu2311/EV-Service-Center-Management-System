@@ -18,7 +18,7 @@ export const socketAuth = async (socket, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Get user from token
-    const user = await User.findById(decoded.id).populate('serviceCenterId');
+    const user = await User.findById(decoded.id);
 
     if (!user) {
       return next(new Error('User not found'));
@@ -32,7 +32,7 @@ export const socketAuth = async (socket, next) => {
     socket.user = user;
     socket.userId = user._id.toString();
     socket.userRole = user.role;
-    socket.serviceCenterId = user.serviceCenterId?._id?.toString() || user.serviceCenterId?.toString();
+    // serviceCenterId removed - single center architecture
 
     next();
   } catch (error) {
@@ -74,28 +74,17 @@ export const validateAppointmentAccess = async (socket, appointmentId) => {
       };
     }
 
-    // Staff can access appointments in their service center
+    // Staff can access all appointments - single center architecture
     if (user.role === 'staff') {
-      const userServiceCenter = socket.serviceCenterId;
-      const appointmentServiceCenter = appointment.serviceCenterId?.toString();
-      const canJoin = userServiceCenter === appointmentServiceCenter;
-      return {
-        canJoin,
-        message: canJoin ? undefined : 'Access denied to appointments outside your service center'
-      };
+      return { canJoin: true };
     }
 
-    // Technician can access appointments assigned to them
+    // Technician can access appointments assigned to them - single center architecture
     if (user.role === 'technician') {
       const isAssignedTechnician = appointment.assignedTechnician?.toString() === user._id.toString();
-      const userServiceCenter = socket.serviceCenterId;
-      const appointmentServiceCenter = appointment.serviceCenterId?.toString();
-      const sameServiceCenter = userServiceCenter === appointmentServiceCenter;
-
-      const canJoin = isAssignedTechnician && sameServiceCenter;
       return {
-        canJoin,
-        message: canJoin ? undefined : 'Access denied to this appointment'
+        canJoin: isAssignedTechnician,
+        message: isAssignedTechnician ? undefined : 'Access denied to this appointment'
       };
     }
 
