@@ -22,7 +22,7 @@ export const protect = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Get user from token
-    req.user = await User.findById(decoded.id).populate('serviceCenterId');
+    req.user = await User.findById(decoded.id);
 
     if (!req.user) {
       return res.status(401).json({
@@ -85,12 +85,9 @@ export const authorize = (...roles) => {
   };
 };
 
-// Service center restrictions removed - all authenticated users have access
+// Service center restrictions removed - single center architecture
 export const checkServiceCenter = (req, res, next) => {
-  // Add service center ID to request if available (for backward compatibility)
-  if (req.user.serviceCenterId) {
-    req.serviceCenterId = req.user.serviceCenterId._id || req.user.serviceCenterId;
-  }
+  // Single center architecture - no service center restrictions
   next();
 };
 

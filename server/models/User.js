@@ -69,13 +69,7 @@ const userSchema = new mongoose.Schema(
       default: "local",
     },
 
-    serviceCenterId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "ServiceCenter",
-      required: function () {
-        return ["staff", "technician", "admin"].includes(this.role);
-      },
-    },
+    // serviceCenterId removed - single center architecture
     specializations: [
       {
         type: String,
@@ -123,7 +117,7 @@ userSchema.virtual("fullName").get(function () {
 });
 
 // Indexes for performance optimization (email already has unique index from schema)
-userSchema.index({ role: 1, serviceCenterId: 1 });
+userSchema.index({ role: 1 });
 userSchema.index({ isActive: 1 });
 userSchema.index({ resetPasswordToken: 1 });
 

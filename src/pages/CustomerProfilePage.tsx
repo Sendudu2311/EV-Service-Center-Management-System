@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
   UserIcon,
   TruckIcon,
@@ -10,13 +10,13 @@ import {
   CalendarIcon,
   ClockIcon,
   CheckCircleIcon,
-  XCircleIcon
-} from '@heroicons/react/24/outline';
-import { useAuth } from '../contexts/AuthContext';
-import { appointmentsAPI, vehiclesAPI } from '../services/api';
-import toast from 'react-hot-toast';
-import { formatVietnameseDateTime, formatVND } from '../utils/vietnamese';
-import { appointmentStatusTranslations } from '../types/appointment';
+  XCircleIcon,
+} from "@heroicons/react/24/outline";
+import { useAuth } from "../contexts/AuthContext";
+import { appointmentsAPI, vehiclesAPI } from "../services/api";
+import toast from "react-hot-toast";
+import { formatVietnameseDateTime, formatVND } from "../utils/vietnamese";
+import { appointmentStatusTranslations } from "../types/appointment";
 
 interface Vehicle {
   _id: string;
@@ -75,37 +75,42 @@ interface CustomerStats {
 
 const CustomerProfilePage: React.FC = () => {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'profile' | 'vehicles' | 'history'>('profile');
+  const [activeTab, setActiveTab] = useState<
+    "profile" | "vehicles" | "history"
+  >("profile");
   const [loading, setLoading] = useState(true);
 
   // Profile and stats
-  const [customerStats, setCustomerStats] = useState<CustomerStats | null>(null);
+  const [customerStats, setCustomerStats] = useState<CustomerStats | null>(
+    null
+  );
 
   // Vehicles management
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [showAddVehicle, setShowAddVehicle] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [vehicleForm, setVehicleForm] = useState<Partial<Vehicle>>({
-    make: '',
-    model: '',
+    make: "",
+    model: "",
     year: new Date().getFullYear(),
-    licensePlate: '',
-    batteryType: '',
+    licensePlate: "",
+    batteryType: "",
     batteryCapacity: 0,
-    chargingPort: '',
+    chargingPort: "",
     maxChargingPower: 0,
-    color: '',
-    isDefault: false
+    color: "",
+    isDefault: false,
   });
 
   // Appointment history
   const [appointments, setAppointments] = useState<CustomerAppointment[]>([]);
-  const [selectedAppointment, setSelectedAppointment] = useState<CustomerAppointment | null>(null);
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<CustomerAppointment | null>(null);
   const [appointmentFilters, setAppointmentFilters] = useState({
-    status: '',
-    dateFrom: '',
-    dateTo: '',
-    vehicleId: ''
+    status: "",
+    dateFrom: "",
+    dateTo: "",
+    vehicleId: "",
   });
 
   // Pagination
@@ -113,7 +118,7 @@ const CustomerProfilePage: React.FC = () => {
     page: 1,
     limit: 10,
     total: 0,
-    totalPages: 0
+    totalPages: 0,
   });
 
   const [updating, setUpdating] = useState(false);
@@ -126,8 +131,8 @@ const CustomerProfilePage: React.FC = () => {
       const response = await appointmentsAPI.getCustomerStats();
       setCustomerStats(response.data.data);
     } catch (error: unknown) {
-      console.error('Error fetching customer stats:', error);
-      toast.error('Không thể tải thống kê khách hàng');
+      console.error("Error fetching customer stats:", error);
+      toast.error("Không thể tải thống kê khách hàng");
     }
   }, []);
 
@@ -139,8 +144,8 @@ const CustomerProfilePage: React.FC = () => {
       const response = await vehiclesAPI.getCustomerVehicles();
       setVehicles(response.data.data || []);
     } catch (error: unknown) {
-      console.error('Error fetching vehicles:', error);
-      toast.error('Không thể tải danh sách xe');
+      console.error("Error fetching vehicles:", error);
+      toast.error("Không thể tải danh sách xe");
     }
   }, []);
 
@@ -153,21 +158,21 @@ const CustomerProfilePage: React.FC = () => {
         page: pagination.page,
         limit: pagination.limit,
         ...appointmentFilters,
-        customerOnly: true
+        customerOnly: true,
       };
 
       const response = await appointmentsAPI.getCustomerAppointments(params);
       const data = response.data;
 
       setAppointments(data.data || []);
-      setPagination(prev => ({
+      setPagination((prev) => ({
         ...prev,
         total: data.total || 0,
-        totalPages: data.totalPages || 1
+        totalPages: data.totalPages || 1,
       }));
     } catch (error: unknown) {
-      console.error('Error fetching appointments:', error);
-      toast.error('Không thể tải lịch sử lịch hẹn');
+      console.error("Error fetching appointments:", error);
+      toast.error("Không thể tải lịch sử lịch hẹn");
     }
   }, [pagination.page, pagination.limit, appointmentFilters]);
 
@@ -176,7 +181,7 @@ const CustomerProfilePage: React.FC = () => {
    */
   const addVehicle = useCallback(async () => {
     if (!vehicleForm.make || !vehicleForm.model || !vehicleForm.licensePlate) {
-      toast.error('Vui lòng điền đầy đủ thông tin xe');
+      toast.error("Vui lòng điền đầy đủ thông tin xe");
       return;
     }
 
@@ -184,24 +189,24 @@ const CustomerProfilePage: React.FC = () => {
       setUpdating(true);
       await vehiclesAPI.create(vehicleForm);
 
-      toast.success('Đã thêm xe thành công');
+      toast.success("Đã thêm xe thành công");
       setShowAddVehicle(false);
       setVehicleForm({
-        make: '',
-        model: '',
+        make: "",
+        model: "",
         year: new Date().getFullYear(),
-        licensePlate: '',
-        batteryType: '',
+        licensePlate: "",
+        batteryType: "",
         batteryCapacity: 0,
-        chargingPort: '',
+        chargingPort: "",
         maxChargingPower: 0,
-        color: '',
-        isDefault: false
+        color: "",
+        isDefault: false,
       });
       fetchVehicles();
     } catch (error: unknown) {
-      console.error('Error adding vehicle:', error);
-      toast.error('Không thể thêm xe');
+      console.error("Error adding vehicle:", error);
+      toast.error("Không thể thêm xe");
     } finally {
       setUpdating(false);
     }
@@ -211,8 +216,13 @@ const CustomerProfilePage: React.FC = () => {
    * Update vehicle
    */
   const updateVehicle = useCallback(async () => {
-    if (!editingVehicle || !vehicleForm.make || !vehicleForm.model || !vehicleForm.licensePlate) {
-      toast.error('Vui lòng điền đầy đủ thông tin xe');
+    if (
+      !editingVehicle ||
+      !vehicleForm.make ||
+      !vehicleForm.model ||
+      !vehicleForm.licensePlate
+    ) {
+      toast.error("Vui lòng điền đầy đủ thông tin xe");
       return;
     }
 
@@ -220,24 +230,24 @@ const CustomerProfilePage: React.FC = () => {
       setUpdating(true);
       await vehiclesAPI.update(editingVehicle._id, vehicleForm);
 
-      toast.success('Đã cập nhật thông tin xe thành công');
+      toast.success("Đã cập nhật thông tin xe thành công");
       setEditingVehicle(null);
       setVehicleForm({
-        make: '',
-        model: '',
+        make: "",
+        model: "",
         year: new Date().getFullYear(),
-        licensePlate: '',
-        batteryType: '',
+        licensePlate: "",
+        batteryType: "",
         batteryCapacity: 0,
-        chargingPort: '',
+        chargingPort: "",
         maxChargingPower: 0,
-        color: '',
-        isDefault: false
+        color: "",
+        isDefault: false,
       });
       fetchVehicles();
     } catch (error: unknown) {
-      console.error('Error updating vehicle:', error);
-      toast.error('Không thể cập nhật thông tin xe');
+      console.error("Error updating vehicle:", error);
+      toast.error("Không thể cập nhật thông tin xe");
     } finally {
       setUpdating(false);
     }
@@ -246,72 +256,92 @@ const CustomerProfilePage: React.FC = () => {
   /**
    * Delete vehicle
    */
-  const deleteVehicle = useCallback(async (vehicleId: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa xe này?')) {
-      return;
-    }
+  const deleteVehicle = useCallback(
+    async (vehicleId: string) => {
+      if (!confirm("Bạn có chắc chắn muốn xóa xe này?")) {
+        return;
+      }
 
-    try {
-      setUpdating(true);
-      await vehiclesAPI.delete(vehicleId);
+      try {
+        setUpdating(true);
+        await vehiclesAPI.delete(vehicleId);
 
-      toast.success('Đã xóa xe thành công');
-      fetchVehicles();
-    } catch (error: unknown) {
-      console.error('Error deleting vehicle:', error);
-      toast.error('Không thể xóa xe');
-    } finally {
-      setUpdating(false);
-    }
-  }, [fetchVehicles]);
+        toast.success("Đã xóa xe thành công");
+        fetchVehicles();
+      } catch (error: unknown) {
+        console.error("Error deleting vehicle:", error);
+        toast.error("Không thể xóa xe");
+      } finally {
+        setUpdating(false);
+      }
+    },
+    [fetchVehicles]
+  );
 
   /**
    * Set default vehicle
    */
-  const setDefaultVehicle = useCallback(async (vehicleId: string) => {
-    try {
-      setUpdating(true);
-      await vehiclesAPI.setDefault(vehicleId);
+  const setDefaultVehicle = useCallback(
+    async (vehicleId: string) => {
+      try {
+        setUpdating(true);
+        await vehiclesAPI.setDefault(vehicleId);
 
-      toast.success('Đã đặt xe mặc định thành công');
-      fetchVehicles();
-    } catch (error: unknown) {
-      console.error('Error setting default vehicle:', error);
-      toast.error('Không thể đặt xe mặc định');
-    } finally {
-      setUpdating(false);
-    }
-  }, [fetchVehicles]);
+        toast.success("Đã đặt xe mặc định thành công");
+        fetchVehicles();
+      } catch (error: unknown) {
+        console.error("Error setting default vehicle:", error);
+        toast.error("Không thể đặt xe mặc định");
+      } finally {
+        setUpdating(false);
+      }
+    },
+    [fetchVehicles]
+  );
 
   /**
    * Cancel appointment
    */
-  const cancelAppointment = useCallback(async (appointmentId: string, reason: string) => {
-    try {
-      setUpdating(true);
-      await appointmentsAPI.customerCancel(appointmentId, {
-        reason,
-        reasonCategory: 'customer_request'
-      });
+  const cancelAppointment = useCallback(
+    async (appointmentId: string, reason: string) => {
+      try {
+        setUpdating(true);
+        const response = await appointmentsAPI.cancel(appointmentId, reason);
 
-      toast.success('Đã hủy lịch hẹn thành công');
-      fetchAppointments();
-    } catch (error: unknown) {
-      console.error('Error cancelling appointment:', error);
-      toast.error('Không thể hủy lịch hẹn');
-    } finally {
-      setUpdating(false);
-    }
-  }, [fetchAppointments]);
+        // Check if refund was processed
+        if (response.data?.refundInfo) {
+          const refundAmount = new Intl.NumberFormat("vi-VN", {
+            style: "currency",
+            currency: "VND",
+          }).format(response.data.refundInfo.refundAmount);
+
+          toast.success(
+            `Đã hủy lịch hẹn thành công! Hoàn tiền ${refundAmount} sẽ được xử lý trong 3-5 ngày làm việc.`,
+            { duration: 6000 }
+          );
+        } else {
+          toast.success("Đã hủy lịch hẹn thành công");
+        }
+
+        fetchAppointments();
+      } catch (error: unknown) {
+        console.error("Error cancelling appointment:", error);
+        toast.error("Không thể hủy lịch hẹn");
+      } finally {
+        setUpdating(false);
+      }
+    },
+    [fetchAppointments]
+  );
 
   // Effects
   useEffect(() => {
-    if (user?.role === 'customer') {
+    if (user?.role === "customer") {
       setLoading(true);
       Promise.all([
         fetchCustomerStats(),
         fetchVehicles(),
-        fetchAppointments()
+        fetchAppointments(),
       ]).finally(() => setLoading(false));
     }
   }, [user, fetchCustomerStats, fetchVehicles, fetchAppointments]);
@@ -319,28 +349,103 @@ const CustomerProfilePage: React.FC = () => {
   // Helper functions
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'confirmed': return 'bg-blue-100 text-blue-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      case 'in_progress': return 'bg-indigo-100 text-indigo-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "confirmed":
+        return "bg-blue-100 text-blue-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "cancelled":
+        return "bg-red-100 text-red-800";
+      case "in_progress":
+        return "bg-indigo-100 text-indigo-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const canCancelAppointment = (appointment: CustomerAppointment) => {
-    const appointmentDate = new Date(`${appointment.scheduledDate}T${appointment.scheduledTime}`);
-    const now = new Date();
-    const hoursDiff = (appointmentDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    // More robust date parsing
+    let appointmentDate;
+    try {
+      // Check if scheduledDate is already a full ISO datetime
+      if (
+        appointment.scheduledDate.includes("T") &&
+        appointment.scheduledDate.includes("Z")
+      ) {
+        // It's already a full ISO datetime, use it directly
+        appointmentDate = new Date(appointment.scheduledDate);
+      } else if (appointment.scheduledDate.includes("/")) {
+        // Handle DD/MM/YYYY format
+        const [day, month, year] = appointment.scheduledDate.split("/");
+        appointmentDate = new Date(
+          `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T${
+            appointment.scheduledTime
+          }`
+        );
+      } else {
+        // Handle YYYY-MM-DD format
+        appointmentDate = new Date(
+          `${appointment.scheduledDate}T${appointment.scheduledTime}`
+        );
+      }
+    } catch (error) {
+      console.error("Error parsing appointment date:", error);
+      appointmentDate = new Date(
+        `${appointment.scheduledDate}T${appointment.scheduledTime}`
+      );
+    }
 
-    return ['pending', 'confirmed'].includes(appointment.status) && hoursDiff > 24;
+    const now = new Date();
+    const hoursDiff =
+      (appointmentDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    // Debug logging
+    console.log(
+      "🔍 [CustomerProfile 24-Hour Rule Debug] Appointment:",
+      appointment.appointmentNumber
+    );
+    console.log(
+      "📅 [CustomerProfile 24-Hour Rule Debug] Scheduled Date:",
+      appointment.scheduledDate
+    );
+    console.log(
+      "⏰ [CustomerProfile 24-Hour Rule Debug] Scheduled Time:",
+      appointment.scheduledTime
+    );
+    console.log(
+      "📅 [CustomerProfile 24-Hour Rule Debug] Appointment DateTime:",
+      appointmentDate
+    );
+    console.log(
+      "📅 [CustomerProfile 24-Hour Rule Debug] Current DateTime:",
+      now
+    );
+    console.log(
+      "⏱️ [CustomerProfile 24-Hour Rule Debug] Hours Difference:",
+      hoursDiff
+    );
+    console.log(
+      "📊 [CustomerProfile 24-Hour Rule Debug] Status:",
+      appointment.status
+    );
+    console.log(
+      "✅ [CustomerProfile 24-Hour Rule Debug] Can cancel:",
+      ["pending", "confirmed"].includes(appointment.status) && hoursDiff > 24
+    );
+
+    return (
+      ["pending", "confirmed"].includes(appointment.status) && hoursDiff > 24
+    );
   };
 
-  if (user?.role !== 'customer') {
+  if (user?.role !== "customer") {
     return (
       <div className="text-center py-12">
         <UserIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Không có quyền truy cập</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          Không có quyền truy cập
+        </h3>
         <p className="text-gray-500">Trang này chỉ dành cho khách hàng.</p>
       </div>
     );
@@ -380,8 +485,12 @@ const CustomerProfilePage: React.FC = () => {
             <div className="flex items-center">
               <ClipboardDocumentListIcon className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Tổng lịch hẹn</p>
-                <p className="text-2xl font-bold text-gray-900">{customerStats.totalAppointments}</p>
+                <p className="text-sm font-medium text-gray-500">
+                  Tổng lịch hẹn
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {customerStats.totalAppointments}
+                </p>
               </div>
             </div>
           </div>
@@ -389,8 +498,12 @@ const CustomerProfilePage: React.FC = () => {
             <div className="flex items-center">
               <CheckCircleIcon className="h-8 w-8 text-green-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Đã hoàn thành</p>
-                <p className="text-2xl font-bold text-gray-900">{customerStats.completedAppointments}</p>
+                <p className="text-sm font-medium text-gray-500">
+                  Đã hoàn thành
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {customerStats.completedAppointments}
+                </p>
               </div>
             </div>
           </div>
@@ -398,8 +511,12 @@ const CustomerProfilePage: React.FC = () => {
             <div className="flex items-center">
               <TruckIcon className="h-8 w-8 text-purple-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Tổng chi tiêu</p>
-                <p className="text-2xl font-bold text-gray-900">{formatVND(customerStats.totalSpent)}</p>
+                <p className="text-sm font-medium text-gray-500">
+                  Tổng chi tiêu
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatVND(customerStats.totalSpent)}
+                </p>
               </div>
             </div>
           </div>
@@ -408,7 +525,9 @@ const CustomerProfilePage: React.FC = () => {
               <ClockIcon className="h-8 w-8 text-orange-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Đánh giá TB</p>
-                <p className="text-2xl font-bold text-gray-900">{(customerStats.avgRating || 0).toFixed(1)}/5</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {(customerStats.avgRating || 0).toFixed(1)}/5
+                </p>
               </div>
             </div>
           </div>
@@ -420,17 +539,25 @@ const CustomerProfilePage: React.FC = () => {
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex">
             {[
-              { id: 'profile', label: 'Thông tin cá nhân', icon: UserIcon },
-              { id: 'vehicles', label: `Xe của tôi (${vehicles.length})`, icon: TruckIcon },
-              { id: 'history', label: `Lịch sử dịch vụ (${appointments.length})`, icon: ClipboardDocumentListIcon }
+              { id: "profile", label: "Thông tin cá nhân", icon: UserIcon },
+              {
+                id: "vehicles",
+                label: `Xe của tôi (${vehicles.length})`,
+                icon: TruckIcon,
+              },
+              {
+                id: "history",
+                label: `Lịch sử dịch vụ (${appointments.length})`,
+                icon: ClipboardDocumentListIcon,
+              },
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
                 className={`group inline-flex items-center py-4 px-6 border-b-2 font-medium text-sm ${
                   activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
               >
                 <tab.icon className="h-5 w-5 mr-2" />
@@ -442,44 +569,67 @@ const CustomerProfilePage: React.FC = () => {
 
         <div className="p-6">
           {/* Profile Tab */}
-          {activeTab === 'profile' && (
+          {activeTab === "profile" && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Thông tin liên hệ</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  Thông tin liên hệ
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Họ và tên</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Họ và tên
+                    </label>
                     <p className="mt-1 text-sm text-gray-900">{user?.name}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Email
+                    </label>
                     <p className="mt-1 text-sm text-gray-900">{user?.email}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Số điện thoại
+                    </label>
                     <p className="mt-1 text-sm text-gray-900">{user?.phone}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Địa chỉ</label>
-                    <p className="mt-1 text-sm text-gray-900">{user?.address || 'Chưa cập nhật'}</p>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Địa chỉ
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {user?.address || "Chưa cập nhật"}
+                    </p>
                   </div>
                 </div>
               </div>
 
               {customerStats && (
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Thông tin dịch vụ</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                    Thông tin dịch vụ
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Lần bảo dưỡng gần nhất</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Lần bảo dưỡng gần nhất
+                      </label>
                       <p className="mt-1 text-sm text-gray-900">
-                        {customerStats.lastServiceDate ? formatVietnameseDateTime(customerStats.lastServiceDate) : 'Chưa có'}
+                        {customerStats.lastServiceDate
+                          ? formatVietnameseDateTime(
+                              customerStats.lastServiceDate
+                            )
+                          : "Chưa có"}
                       </p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Dịch vụ khuyến nghị tiếp theo</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Dịch vụ khuyến nghị tiếp theo
+                      </label>
                       <p className="mt-1 text-sm text-gray-900">
-                        {customerStats.nextRecommendedService || 'Chưa có khuyến nghị'}
+                        {customerStats.nextRecommendedService ||
+                          "Chưa có khuyến nghị"}
                       </p>
                     </div>
                   </div>
@@ -489,10 +639,12 @@ const CustomerProfilePage: React.FC = () => {
           )}
 
           {/* Vehicles Tab */}
-          {activeTab === 'vehicles' && (
+          {activeTab === "vehicles" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">Danh sách xe</h3>
+                <h3 className="text-lg font-medium text-gray-900">
+                  Danh sách xe
+                </h3>
                 <button
                   onClick={() => setShowAddVehicle(true)}
                   className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
@@ -506,55 +658,90 @@ const CustomerProfilePage: React.FC = () => {
               {(showAddVehicle || editingVehicle) && (
                 <div className="bg-gray-50 p-6 rounded-lg">
                   <h4 className="text-md font-medium text-gray-900 mb-4">
-                    {editingVehicle ? 'Chỉnh sửa thông tin xe' : 'Thêm xe mới'}
+                    {editingVehicle ? "Chỉnh sửa thông tin xe" : "Thêm xe mới"}
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Hãng xe</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Hãng xe
+                      </label>
                       <input
                         type="text"
                         value={vehicleForm.make}
-                        onChange={(e) => setVehicleForm({ ...vehicleForm, make: e.target.value })}
+                        onChange={(e) =>
+                          setVehicleForm({
+                            ...vehicleForm,
+                            make: e.target.value,
+                          })
+                        }
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                         placeholder="VinFast, Tesla, ..."
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Mẫu xe</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Mẫu xe
+                      </label>
                       <input
                         type="text"
                         value={vehicleForm.model}
-                        onChange={(e) => setVehicleForm({ ...vehicleForm, model: e.target.value })}
+                        onChange={(e) =>
+                          setVehicleForm({
+                            ...vehicleForm,
+                            model: e.target.value,
+                          })
+                        }
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                         placeholder="VF8, Model 3, ..."
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Năm sản xuất</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Năm sản xuất
+                      </label>
                       <input
                         type="number"
                         value={vehicleForm.year}
-                        onChange={(e) => setVehicleForm({ ...vehicleForm, year: Number(e.target.value) })}
+                        onChange={(e) =>
+                          setVehicleForm({
+                            ...vehicleForm,
+                            year: Number(e.target.value),
+                          })
+                        }
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                         min="2000"
                         max={new Date().getFullYear() + 1}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Biển số xe</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Biển số xe
+                      </label>
                       <input
                         type="text"
                         value={vehicleForm.licensePlate}
-                        onChange={(e) => setVehicleForm({ ...vehicleForm, licensePlate: e.target.value.toUpperCase() })}
+                        onChange={(e) =>
+                          setVehicleForm({
+                            ...vehicleForm,
+                            licensePlate: e.target.value.toUpperCase(),
+                          })
+                        }
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                         placeholder="30A-12345"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Loại pin</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Loại pin
+                      </label>
                       <select
                         value={vehicleForm.batteryType}
-                        onChange={(e) => setVehicleForm({ ...vehicleForm, batteryType: e.target.value })}
+                        onChange={(e) =>
+                          setVehicleForm({
+                            ...vehicleForm,
+                            batteryType: e.target.value,
+                          })
+                        }
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                       >
                         <option value="">Chọn loại pin</option>
@@ -565,21 +752,35 @@ const CustomerProfilePage: React.FC = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Dung lượng pin (kWh)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Dung lượng pin (kWh)
+                      </label>
                       <input
                         type="number"
                         value={vehicleForm.batteryCapacity}
-                        onChange={(e) => setVehicleForm({ ...vehicleForm, batteryCapacity: Number(e.target.value) })}
+                        onChange={(e) =>
+                          setVehicleForm({
+                            ...vehicleForm,
+                            batteryCapacity: Number(e.target.value),
+                          })
+                        }
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                         min="0"
                         step="0.1"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Cổng sạc</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Cổng sạc
+                      </label>
                       <select
                         value={vehicleForm.chargingPort}
-                        onChange={(e) => setVehicleForm({ ...vehicleForm, chargingPort: e.target.value })}
+                        onChange={(e) =>
+                          setVehicleForm({
+                            ...vehicleForm,
+                            chargingPort: e.target.value,
+                          })
+                        }
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                       >
                         <option value="">Chọn cổng sạc</option>
@@ -590,21 +791,35 @@ const CustomerProfilePage: React.FC = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Công suất sạc tối đa (kW)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Công suất sạc tối đa (kW)
+                      </label>
                       <input
                         type="number"
                         value={vehicleForm.maxChargingPower}
-                        onChange={(e) => setVehicleForm({ ...vehicleForm, maxChargingPower: Number(e.target.value) })}
+                        onChange={(e) =>
+                          setVehicleForm({
+                            ...vehicleForm,
+                            maxChargingPower: Number(e.target.value),
+                          })
+                        }
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                         min="0"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Màu sắc</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Màu sắc
+                      </label>
                       <input
                         type="text"
                         value={vehicleForm.color}
-                        onChange={(e) => setVehicleForm({ ...vehicleForm, color: e.target.value })}
+                        onChange={(e) =>
+                          setVehicleForm({
+                            ...vehicleForm,
+                            color: e.target.value,
+                          })
+                        }
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                         placeholder="Đen, Trắng, Xanh, ..."
                       />
@@ -613,7 +828,12 @@ const CustomerProfilePage: React.FC = () => {
                       <input
                         type="checkbox"
                         checked={vehicleForm.isDefault || false}
-                        onChange={(e) => setVehicleForm({ ...vehicleForm, isDefault: e.target.checked })}
+                        onChange={(e) =>
+                          setVehicleForm({
+                            ...vehicleForm,
+                            isDefault: e.target.checked,
+                          })
+                        }
                         className="h-4 w-4 text-blue-600 rounded border-gray-300 mr-2"
                       />
                       <label className="text-sm font-medium text-gray-700">
@@ -627,23 +847,27 @@ const CustomerProfilePage: React.FC = () => {
                       disabled={updating}
                       className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
                     >
-                      {updating ? 'Đang lưu...' : (editingVehicle ? 'Cập nhật' : 'Thêm xe')}
+                      {updating
+                        ? "Đang lưu..."
+                        : editingVehicle
+                        ? "Cập nhật"
+                        : "Thêm xe"}
                     </button>
                     <button
                       onClick={() => {
                         setShowAddVehicle(false);
                         setEditingVehicle(null);
                         setVehicleForm({
-                          make: '',
-                          model: '',
+                          make: "",
+                          model: "",
                           year: new Date().getFullYear(),
-                          licensePlate: '',
-                          batteryType: '',
+                          licensePlate: "",
+                          batteryType: "",
                           batteryCapacity: 0,
-                          chargingPort: '',
+                          chargingPort: "",
                           maxChargingPower: 0,
-                          color: '',
-                          isDefault: false
+                          color: "",
+                          isDefault: false,
                         });
                       }}
                       className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
@@ -657,7 +881,10 @@ const CustomerProfilePage: React.FC = () => {
               {/* Vehicles List */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {vehicles.map((vehicle) => (
-                  <div key={vehicle._id} className="bg-white border border-gray-200 rounded-lg p-6">
+                  <div
+                    key={vehicle._id}
+                    className="bg-white border border-gray-200 rounded-lg p-6"
+                  >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-2">
@@ -671,17 +898,33 @@ const CustomerProfilePage: React.FC = () => {
                           )}
                         </div>
                         <p className="text-sm text-gray-600 mb-3">
-                          <span className="font-medium">Biển số:</span> {vehicle.licensePlate}
+                          <span className="font-medium">Biển số:</span>{" "}
+                          {vehicle.licensePlate}
                         </p>
                         <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
-                          <p><span className="font-medium">Pin:</span> {vehicle.batteryType} - {vehicle.batteryCapacity}kWh</p>
-                          <p><span className="font-medium">Cổng sạc:</span> {vehicle.chargingPort}</p>
-                          <p><span className="font-medium">Công suất sạc:</span> {vehicle.maxChargingPower}kW</p>
-                          <p><span className="font-medium">Màu:</span> {vehicle.color}</p>
+                          <p>
+                            <span className="font-medium">Pin:</span>{" "}
+                            {vehicle.batteryType} - {vehicle.batteryCapacity}kWh
+                          </p>
+                          <p>
+                            <span className="font-medium">Cổng sạc:</span>{" "}
+                            {vehicle.chargingPort}
+                          </p>
+                          <p>
+                            <span className="font-medium">Công suất sạc:</span>{" "}
+                            {vehicle.maxChargingPower}kW
+                          </p>
+                          <p>
+                            <span className="font-medium">Màu:</span>{" "}
+                            {vehicle.color}
+                          </p>
                         </div>
                         {vehicle.lastServiceDate && (
                           <p className="text-sm text-gray-600 mt-2">
-                            <span className="font-medium">Bảo dưỡng gần nhất:</span> {formatVietnameseDateTime(vehicle.lastServiceDate)}
+                            <span className="font-medium">
+                              Bảo dưỡng gần nhất:
+                            </span>{" "}
+                            {formatVietnameseDateTime(vehicle.lastServiceDate)}
                           </p>
                         )}
                       </div>
@@ -731,19 +974,28 @@ const CustomerProfilePage: React.FC = () => {
           )}
 
           {/* History Tab */}
-          {activeTab === 'history' && (
+          {activeTab === "history" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">Lịch sử dịch vụ</h3>
+                <h3 className="text-lg font-medium text-gray-900">
+                  Lịch sử dịch vụ
+                </h3>
               </div>
 
               {/* Filters */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Trạng thái
+                  </label>
                   <select
                     value={appointmentFilters.status}
-                    onChange={(e) => setAppointmentFilters({ ...appointmentFilters, status: e.target.value })}
+                    onChange={(e) =>
+                      setAppointmentFilters({
+                        ...appointmentFilters,
+                        status: e.target.value,
+                      })
+                    }
                     className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                   >
                     <option value="">Tất cả trạng thái</option>
@@ -755,10 +1007,17 @@ const CustomerProfilePage: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Xe</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Xe
+                  </label>
                   <select
                     value={appointmentFilters.vehicleId}
-                    onChange={(e) => setAppointmentFilters({ ...appointmentFilters, vehicleId: e.target.value })}
+                    onChange={(e) =>
+                      setAppointmentFilters({
+                        ...appointmentFilters,
+                        vehicleId: e.target.value,
+                      })
+                    }
                     className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                   >
                     <option value="">Tất cả xe</option>
@@ -770,20 +1029,34 @@ const CustomerProfilePage: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Từ ngày</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Từ ngày
+                  </label>
                   <input
                     type="date"
                     value={appointmentFilters.dateFrom}
-                    onChange={(e) => setAppointmentFilters({ ...appointmentFilters, dateFrom: e.target.value })}
+                    onChange={(e) =>
+                      setAppointmentFilters({
+                        ...appointmentFilters,
+                        dateFrom: e.target.value,
+                      })
+                    }
                     className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Đến ngày</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Đến ngày
+                  </label>
                   <input
                     type="date"
                     value={appointmentFilters.dateTo}
-                    onChange={(e) => setAppointmentFilters({ ...appointmentFilters, dateTo: e.target.value })}
+                    onChange={(e) =>
+                      setAppointmentFilters({
+                        ...appointmentFilters,
+                        dateTo: e.target.value,
+                      })
+                    }
                     className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                   />
                 </div>
@@ -792,53 +1065,87 @@ const CustomerProfilePage: React.FC = () => {
               {/* Appointments List */}
               <div className="space-y-4">
                 {appointments.map((appointment) => (
-                  <div key={appointment._id} className="bg-white border border-gray-200 rounded-lg p-6">
+                  <div
+                    key={appointment._id}
+                    className="bg-white border border-gray-200 rounded-lg p-6"
+                  >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-4 mb-3">
                           <h4 className="text-lg font-medium text-gray-900">
                             #{appointment.appointmentNumber}
                           </h4>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(appointment.status)}`}>
-                            {appointmentStatusTranslations[appointment.status as keyof typeof appointmentStatusTranslations]}
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                              appointment.status
+                            )}`}
+                          >
+                            {
+                              appointmentStatusTranslations[
+                                appointment.status as keyof typeof appointmentStatusTranslations
+                              ]
+                            }
                           </span>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <p className="text-sm text-gray-600">
-                              <span className="font-medium">Xe:</span> {appointment.vehicle.make} {appointment.vehicle.model} ({appointment.vehicle.licensePlate})
+                              <span className="font-medium">Xe:</span>{" "}
+                              {appointment.vehicle.make}{" "}
+                              {appointment.vehicle.model} (
+                              {appointment.vehicle.licensePlate})
                             </p>
                             <p className="text-sm text-gray-600">
-                              <span className="font-medium">Thời gian:</span> {formatVietnameseDateTime(appointment.scheduledDate, appointment.scheduledTime)}
+                              <span className="font-medium">Thời gian:</span>{" "}
+                              {formatVietnameseDateTime(
+                                appointment.scheduledDate,
+                                appointment.scheduledTime
+                              )}
                             </p>
                             <p className="text-sm text-gray-600">
-                              <span className="font-medium">Trung tâm:</span> {appointment.serviceCenter.name}
+                              <span className="font-medium">Trung tâm:</span>{" "}
+                              {appointment.serviceCenter.name}
                             </p>
                             {appointment.technician && (
                               <p className="text-sm text-gray-600">
-                                <span className="font-medium">Kỹ thuật viên:</span> {appointment.technician.name}
+                                <span className="font-medium">
+                                  Kỹ thuật viên:
+                                </span>{" "}
+                                {appointment.technician.name}
                               </p>
                             )}
                           </div>
                           <div>
                             <div className="mb-2">
-                              <p className="text-sm font-medium text-gray-600 mb-1">Dịch vụ:</p>
+                              <p className="text-sm font-medium text-gray-600 mb-1">
+                                Dịch vụ:
+                              </p>
                               <ul className="text-sm text-gray-600 space-y-1">
                                 {appointment.services.map((service, index) => (
-                                  <li key={index}>• {service.name} - {formatVND(service.price)}</li>
+                                  <li key={index}>
+                                    • {service.name} -{" "}
+                                    {formatVND(service.price)}
+                                  </li>
                                 ))}
                               </ul>
                             </div>
                             <p className="text-sm text-gray-600">
-                              <span className="font-medium">Tổng tiền:</span> <span className="font-semibold text-green-600">{formatVND(appointment.totalAmount)}</span>
+                              <span className="font-medium">Tổng tiền:</span>{" "}
+                              <span className="font-semibold text-green-600">
+                                {formatVND(appointment.totalAmount)}
+                              </span>
                             </p>
                             <p className="text-sm text-gray-600">
-                              <span className="font-medium">Đặt lúc:</span> {formatVietnameseDateTime(appointment.createdAt)}
+                              <span className="font-medium">Đặt lúc:</span>{" "}
+                              {formatVietnameseDateTime(appointment.createdAt)}
                             </p>
                             {appointment.completedAt && (
                               <p className="text-sm text-gray-600">
-                                <span className="font-medium">Hoàn thành:</span> {formatVietnameseDateTime(appointment.completedAt)}
+                                <span className="font-medium">Hoàn thành:</span>{" "}
+                                {formatVietnameseDateTime(
+                                  appointment.completedAt
+                                )}
                               </p>
                             )}
                           </div>
@@ -855,7 +1162,12 @@ const CustomerProfilePage: React.FC = () => {
                         </button>
                         {canCancelAppointment(appointment) && (
                           <button
-                            onClick={() => cancelAppointment(appointment._id, 'Khách hàng yêu cầu hủy')}
+                            onClick={() =>
+                              cancelAppointment(
+                                appointment._id,
+                                "Khách hàng yêu cầu hủy"
+                              )
+                            }
                             disabled={updating}
                             className="px-4 py-2 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-white hover:bg-red-50 disabled:opacity-50"
                           >
@@ -872,7 +1184,9 @@ const CustomerProfilePage: React.FC = () => {
                   <div className="text-center py-12 text-gray-500">
                     <CalendarIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                     <p>Chưa có lịch hẹn nào.</p>
-                    <p className="text-sm">Hãy đặt lịch dịch vụ để bắt đầu sử dụng.</p>
+                    <p className="text-sm">
+                      Hãy đặt lịch dịch vụ để bắt đầu sử dụng.
+                    </p>
                   </div>
                 )}
               </div>
@@ -881,11 +1195,17 @@ const CustomerProfilePage: React.FC = () => {
               {pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-700">
-                    Hiển thị {appointments.length} trong tổng số {pagination.total} lịch hẹn
+                    Hiển thị {appointments.length} trong tổng số{" "}
+                    {pagination.total} lịch hẹn
                   </div>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
+                      onClick={() =>
+                        setPagination((prev) => ({
+                          ...prev,
+                          page: Math.max(1, prev.page - 1),
+                        }))
+                      }
                       disabled={pagination.page === 1}
                       className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
                     >
@@ -895,7 +1215,12 @@ const CustomerProfilePage: React.FC = () => {
                       Trang {pagination.page}/{pagination.totalPages}
                     </span>
                     <button
-                      onClick={() => setPagination(prev => ({ ...prev, page: Math.min(prev.totalPages, prev.page + 1) }))}
+                      onClick={() =>
+                        setPagination((prev) => ({
+                          ...prev,
+                          page: Math.min(prev.totalPages, prev.page + 1),
+                        }))
+                      }
                       disabled={pagination.page === pagination.totalPages}
                       className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
                     >
@@ -931,52 +1256,84 @@ const CustomerProfilePage: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-600">
-                        <span className="font-medium">Xe:</span> {selectedAppointment.vehicle.make} {selectedAppointment.vehicle.model}
+                        <span className="font-medium">Xe:</span>{" "}
+                        {selectedAppointment.vehicle.make}{" "}
+                        {selectedAppointment.vehicle.model}
                       </p>
                       <p className="text-sm text-gray-600">
-                        <span className="font-medium">Biển số:</span> {selectedAppointment.vehicle.licensePlate}
+                        <span className="font-medium">Biển số:</span>{" "}
+                        {selectedAppointment.vehicle.licensePlate}
                       </p>
                       <p className="text-sm text-gray-600">
-                        <span className="font-medium">Thời gian:</span> {formatVietnameseDateTime(selectedAppointment.scheduledDate, selectedAppointment.scheduledTime)}
+                        <span className="font-medium">Thời gian:</span>{" "}
+                        {formatVietnameseDateTime(
+                          selectedAppointment.scheduledDate,
+                          selectedAppointment.scheduledTime
+                        )}
                       </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">
                         <span className="font-medium">Trạng thái:</span>
-                        <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(selectedAppointment.status)}`}>
-                          {appointmentStatusTranslations[selectedAppointment.status as keyof typeof appointmentStatusTranslations]}
+                        <span
+                          className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(
+                            selectedAppointment.status
+                          )}`}
+                        >
+                          {
+                            appointmentStatusTranslations[
+                              selectedAppointment.status as keyof typeof appointmentStatusTranslations
+                            ]
+                          }
                         </span>
                       </p>
                       <p className="text-sm text-gray-600">
-                        <span className="font-medium">Trung tâm:</span> {selectedAppointment.serviceCenter.name}
+                        <span className="font-medium">Trung tâm:</span>{" "}
+                        {selectedAppointment.serviceCenter.name}
                       </p>
                       <p className="text-sm text-gray-600">
-                        <span className="font-medium">Địa chỉ:</span> {selectedAppointment.serviceCenter.address}
+                        <span className="font-medium">Địa chỉ:</span>{" "}
+                        {selectedAppointment.serviceCenter.address}
                       </p>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="text-md font-medium text-gray-900 mb-2">Dịch vụ</h4>
+                  <h4 className="text-md font-medium text-gray-900 mb-2">
+                    Dịch vụ
+                  </h4>
                   <div className="space-y-2">
                     {selectedAppointment.services.map((service, index) => (
-                      <div key={index} className="flex justify-between items-center p-3 bg-white border border-gray-200 rounded">
-                        <span className="text-sm text-gray-900">{service.name}</span>
-                        <span className="text-sm font-medium text-gray-900">{formatVND(service.price)}</span>
+                      <div
+                        key={index}
+                        className="flex justify-between items-center p-3 bg-white border border-gray-200 rounded"
+                      >
+                        <span className="text-sm text-gray-900">
+                          {service.name}
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">
+                          {formatVND(service.price)}
+                        </span>
                       </div>
                     ))}
                     <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded font-medium">
                       <span className="text-sm text-gray-900">Tổng cộng</span>
-                      <span className="text-sm text-green-600">{formatVND(selectedAppointment.totalAmount)}</span>
+                      <span className="text-sm text-green-600">
+                        {formatVND(selectedAppointment.totalAmount)}
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 {selectedAppointment.technician && (
                   <div>
-                    <h4 className="text-md font-medium text-gray-900 mb-2">Kỹ thuật viên</h4>
-                    <p className="text-sm text-gray-600">{selectedAppointment.technician.name}</p>
+                    <h4 className="text-md font-medium text-gray-900 mb-2">
+                      Kỹ thuật viên
+                    </h4>
+                    <p className="text-sm text-gray-600">
+                      {selectedAppointment.technician.name}
+                    </p>
                   </div>
                 )}
               </div>
@@ -991,7 +1348,10 @@ const CustomerProfilePage: React.FC = () => {
                 {canCancelAppointment(selectedAppointment) && (
                   <button
                     onClick={() => {
-                      cancelAppointment(selectedAppointment._id, 'Khách hàng yêu cầu hủy');
+                      cancelAppointment(
+                        selectedAppointment._id,
+                        "Khách hàng yêu cầu hủy"
+                      );
                       setSelectedAppointment(null);
                     }}
                     disabled={updating}

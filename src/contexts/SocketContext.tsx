@@ -40,7 +40,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             token,
             userId: user._id,
             role: user.role,
-            serviceCenterId: user.serviceCenterId?._id,
+            // serviceCenterId removed - single center architecture
           },
           transports: ["websocket", "polling"],
           timeout: 10000,

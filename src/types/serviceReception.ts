@@ -5,7 +5,15 @@ export interface EVChecklistItem {
   stepNumber: number;
   title: string;
   description?: string;
-  category: 'safety' | 'preparation' | 'inspection' | 'testing' | 'maintenance' | 'verification' | 'cleanup' | 'documentation';
+  category:
+    | "safety"
+    | "preparation"
+    | "inspection"
+    | "testing"
+    | "maintenance"
+    | "verification"
+    | "cleanup"
+    | "documentation";
   isRequired: boolean;
   isSafetyItem: boolean;
   estimatedTime: number; // minutes
@@ -26,7 +34,15 @@ export interface EVChecklistItem {
     description: string;
     isRequired: boolean;
     expectedValue?: string;
-    measurementType: 'voltage' | 'current' | 'temperature' | 'pressure' | 'resistance' | 'frequency' | 'visual' | 'boolean';
+    measurementType:
+      | "voltage"
+      | "current"
+      | "temperature"
+      | "pressure"
+      | "resistance"
+      | "frequency"
+      | "visual"
+      | "boolean";
     actualValue?: string;
     isCompleted: boolean;
     notes?: string;
@@ -46,7 +62,7 @@ export interface EVChecklistItem {
   }[];
   issues?: {
     description: string;
-    severity: 'low' | 'medium' | 'high' | 'critical';
+    severity: "low" | "medium" | "high" | "critical";
     resolution?: string;
     isResolved: boolean;
   }[];
@@ -85,11 +101,7 @@ export interface ServiceReception {
       homeChargingSetup: boolean;
     };
   };
-  serviceCenterId: {
-    _id: string;
-    name: string;
-    code: string;
-  };
+  // serviceCenterId removed - single center architecture
 
   // Technician Information
   createdBy: {
@@ -111,30 +123,36 @@ export interface ServiceReception {
   // Vehicle Condition Assessment
   vehicleCondition: {
     exterior: {
-      condition: 'excellent' | 'good' | 'fair' | 'poor';
+      condition: "excellent" | "good" | "fair" | "poor";
       damages: {
-        type: 'scratch' | 'dent' | 'crack' | 'missing_part' | 'corrosion' | 'other';
+        type:
+          | "scratch"
+          | "dent"
+          | "crack"
+          | "missing_part"
+          | "corrosion"
+          | "other";
         location: string;
-        severity: 'minor' | 'moderate' | 'major';
+        severity: "minor" | "moderate" | "major";
         description: string;
         photo?: string;
       }[];
       notes?: string;
     };
     interior: {
-      condition: 'excellent' | 'good' | 'fair' | 'poor';
+      condition: "excellent" | "good" | "fair" | "poor";
       issues: {
-        type: 'wear' | 'tear' | 'stain' | 'malfunction' | 'missing' | 'other';
+        type: "wear" | "tear" | "stain" | "malfunction" | "missing" | "other";
         location: string;
         description: string;
       }[];
       notes?: string;
     };
     underHood: {
-      condition: 'excellent' | 'good' | 'fair' | 'poor';
+      condition: "excellent" | "good" | "fair" | "poor";
       findings: {
         component: string;
-        condition: 'normal' | 'needs_attention' | 'needs_replacement';
+        condition: "normal" | "needs_attention" | "needs_replacement";
         notes: string;
       }[];
     };
@@ -143,9 +161,9 @@ export interface ServiceReception {
       voltage: number;
       temperature: number;
       chargeCycles: number;
-      healthStatus: 'excellent' | 'good' | 'fair' | 'poor';
+      healthStatus: "excellent" | "good" | "fair" | "poor";
       estimatedRange: number;
-      chargingPortCondition: 'excellent' | 'good' | 'fair' | 'poor';
+      chargingPortCondition: "excellent" | "good" | "fair" | "poor";
       issues: string[];
     };
     tires: {
@@ -169,7 +187,7 @@ export interface ServiceReception {
     category: string;
     estimatedDuration: number;
     estimatedCost: number;
-    priority: 'low' | 'normal' | 'high' | 'urgent';
+    priority: "low" | "normal" | "high" | "urgent";
     requiredParts?: string[];
     notes?: string;
   }[];
@@ -179,7 +197,7 @@ export interface ServiceReception {
     serviceName: string;
     description: string;
     reason: string;
-    urgency: 'immediate' | 'next_service' | 'future';
+    urgency: "immediate" | "next_service" | "future";
     estimatedCost: number;
     customerApprovalRequired: boolean;
     customerApproved?: boolean;
@@ -194,9 +212,9 @@ export interface ServiceReception {
     partName: string;
     partNumber: string;
     quantity: number;
-    urgency: 'immediate' | 'normal' | 'can_wait';
+    urgency: "immediate" | "normal" | "can_wait";
     estimatedCost: number;
-    availabilityStatus: 'in_stock' | 'order_required' | 'back_order';
+    availabilityStatus: "in_stock" | "order_required" | "back_order";
     estimatedDelivery?: string;
     alternativeParts?: {
       partId: string;
@@ -222,7 +240,7 @@ export interface ServiceReception {
     additionalCharges: {
       description: string;
       amount: number;
-      type: 'fee' | 'environmental' | 'disposal' | 'other';
+      type: "fee" | "environmental" | "disposal" | "other";
     }[];
     subtotal: number;
     taxRate: number;
@@ -231,7 +249,13 @@ export interface ServiceReception {
   };
 
   // Approval Workflow
-  status: 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'in_progress' | 'completed';
+  status:
+    | "draft"
+    | "pending_approval"
+    | "approved"
+    | "rejected"
+    | "in_progress"
+    | "completed";
   approvalHistory: {
     status: string;
     timestamp: string;
@@ -247,9 +271,14 @@ export interface ServiceReception {
 
   // Customer Communication
   customerNotifications: {
-    type: 'reception_created' | 'estimate_ready' | 'approval_required' | 'work_started' | 'work_completed';
+    type:
+      | "reception_created"
+      | "estimate_ready"
+      | "approval_required"
+      | "work_started"
+      | "work_completed";
     sentAt: string;
-    method: 'email' | 'sms' | 'phone' | 'in_person';
+    method: "email" | "sms" | "phone" | "in_person";
     message: string;
     delivered: boolean;
     customerResponse?: string;
@@ -261,7 +290,7 @@ export interface ServiceReception {
     category: string;
     checkpoints: {
       item: string;
-      status: 'pass' | 'fail' | 'na';
+      status: "pass" | "fail" | "na";
       notes?: string;
       inspector: string;
       timestamp: string;
@@ -270,7 +299,7 @@ export interface ServiceReception {
 
   // Documentation
   photos: {
-    category: 'before' | 'during' | 'after' | 'damage' | 'repair';
+    category: "before" | "during" | "after" | "damage" | "repair";
     url: string;
     description: string;
     timestamp: string;
@@ -278,7 +307,7 @@ export interface ServiceReception {
   }[];
 
   documents: {
-    type: 'warranty' | 'manual' | 'certificate' | 'invoice' | 'other';
+    type: "warranty" | "manual" | "certificate" | "invoice" | "other";
     name: string;
     url: string;
     uploadedBy: string;
@@ -286,7 +315,7 @@ export interface ServiceReception {
   }[];
 
   // Metadata
-  priority: 'low' | 'normal' | 'high' | 'urgent';
+  priority: "low" | "normal" | "high" | "urgent";
   estimatedCompletionDate: string;
   actualCompletionDate?: string;
   internalNotes?: string;
@@ -304,24 +333,24 @@ export interface ServiceReceptionFormData {
   customerComplaints: string[];
   customerRequests: string[];
   customerNotes?: string;
-  vehicleCondition: ServiceReception['vehicleCondition'];
-  plannedServices: ServiceReception['plannedServices'];
-  additionalServicesRecommended: ServiceReception['additionalServicesRecommended'];
-  partsNeeded: ServiceReception['partsNeeded'];
-  priority: 'low' | 'normal' | 'high' | 'urgent';
+  vehicleCondition: ServiceReception["vehicleCondition"];
+  plannedServices: ServiceReception["plannedServices"];
+  additionalServicesRecommended: ServiceReception["additionalServicesRecommended"];
+  partsNeeded: ServiceReception["partsNeeded"];
+  priority: "low" | "normal" | "high" | "urgent";
   estimatedCompletionDate: string;
   internalNotes?: string;
 }
 
 export interface ServiceReceptionUpdate {
-  status?: ServiceReception['status'];
-  vehicleCondition?: Partial<ServiceReception['vehicleCondition']>;
-  plannedServices?: ServiceReception['plannedServices'];
-  additionalServicesRecommended?: ServiceReception['additionalServicesRecommended'];
-  partsNeeded?: ServiceReception['partsNeeded'];
-  costEstimate?: ServiceReception['costEstimate'];
+  status?: ServiceReception["status"];
+  vehicleCondition?: Partial<ServiceReception["vehicleCondition"]>;
+  plannedServices?: ServiceReception["plannedServices"];
+  additionalServicesRecommended?: ServiceReception["additionalServicesRecommended"];
+  partsNeeded?: ServiceReception["partsNeeded"];
+  costEstimate?: ServiceReception["costEstimate"];
   evChecklist?: EVChecklistItem[];
-  priority?: ServiceReception['priority'];
+  priority?: ServiceReception["priority"];
   estimatedCompletionDate?: string;
   actualCompletionDate?: string;
   internalNotes?: string;
@@ -329,31 +358,31 @@ export interface ServiceReceptionUpdate {
 
 // Vietnamese translations for Service Reception
 export const serviceReceptionStatusTranslations: Record<string, string> = {
-  'draft': 'Bản nháp',
-  'pending_approval': 'Chờ phê duyệt',
-  'approved': 'Đã phê duyệt',
-  'rejected': 'Đã từ chối',
-  'in_progress': 'Đang thực hiện',
-  'completed': 'Hoàn thành',
+  draft: "Bản nháp",
+  pending_approval: "Chờ phê duyệt",
+  approved: "Đã phê duyệt",
+  rejected: "Đã từ chối",
+  in_progress: "Đang thực hiện",
+  completed: "Hoàn thành",
 };
 
 export const vehicleConditionTranslations: Record<string, string> = {
-  'excellent': 'Xuất sắc',
-  'good': 'Tốt',
-  'fair': 'Khá',
-  'poor': 'Kém',
+  excellent: "Xuất sắc",
+  good: "Tốt",
+  fair: "Khá",
+  poor: "Kém",
 };
 
 export const urgencyTranslations: Record<string, string> = {
-  'immediate': 'Ngay lập tức',
-  'next_service': 'Lần bảo dưỡng tiếp theo',
-  'future': 'Tương lai',
-  'normal': 'Bình thường',
-  'can_wait': 'Có thể đợi',
+  immediate: "Ngay lập tức",
+  next_service: "Lần bảo dưỡng tiếp theo",
+  future: "Tương lai",
+  normal: "Bình thường",
+  can_wait: "Có thể đợi",
 };
 
 export const availabilityStatusTranslations: Record<string, string> = {
-  'in_stock': 'Còn hàng',
-  'order_required': 'Cần đặt hàng',
-  'back_order': 'Hết hàng tạm thời',
+  in_stock: "Còn hàng",
+  order_required: "Cần đặt hàng",
+  back_order: "Hết hàng tạm thời",
 };

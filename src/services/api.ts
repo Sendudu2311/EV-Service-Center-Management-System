@@ -183,20 +183,15 @@ export const appointmentsAPI = {
       .put<ApiResponse<any>>(`/api/appointments/${id}`, updateData)
       .catch(handleApiError),
 
-  // Availability checking with pre-validation
-  checkAvailability: (
-    serviceCenterId: string,
-    date: string,
-    duration?: number
-  ) =>
+  // Availability checking with pre-validation - single center architecture
+  checkAvailability: (date: string, duration?: number) =>
     api
       .get<ApiResponse<any>>("/api/appointments/availability", {
-        params: { serviceCenterId, date, duration },
+        params: { date, duration },
       })
       .catch(handleApiError),
 
   preValidateAvailability: (
-    serviceCenterId: string,
     date: string,
     time: string,
     duration?: number,
@@ -204,12 +199,11 @@ export const appointmentsAPI = {
   ) =>
     api
       .get<ApiResponse<any>>("/api/appointments/pre-validate", {
-        params: { serviceCenterId, date, time, duration, technicianId },
+        params: { date, time, duration, technicianId },
       })
       .catch(handleApiError),
 
   getAvailableTechnicians: (
-    serviceCenterId: string,
     date: string,
     time: string,
     duration?: number,
@@ -217,7 +211,7 @@ export const appointmentsAPI = {
   ) =>
     api
       .get<ApiResponse<any>>("/api/appointments/available-technicians", {
-        params: { serviceCenterId, date, time, duration, serviceCategories },
+        params: { date, time, duration, serviceCategories },
       })
       .catch(handleApiError),
 
@@ -337,13 +331,9 @@ export const appointmentsAPI = {
       params: { ...params, customerOnly: true },
     }),
 
-  getAvailableTimeSlots: (
-    date: string,
-    serviceCenterId: string,
-    duration: number = 60
-  ) =>
+  getAvailableTimeSlots: (date: string, duration: number = 60) =>
     api.get<ApiResponse<any[]>>("/api/appointments/available-slots", {
-      params: { date, serviceCenterId, duration },
+      params: { date, duration },
     }),
 
   customerReschedule: (
@@ -689,10 +679,10 @@ export const techniciansAPI = {
       params: { technicianId: id },
     }),
 
-  // Fixed: Use appointments system for availability
-  getAvailable: (date: string, serviceCenterId?: string) =>
+  // Fixed: Use appointments system for availability - single center architecture
+  getAvailable: (date: string) =>
     api.get<ApiResponse<any[]>>("/api/appointments/available-technicians", {
-      params: { date, serviceCenterId },
+      params: { date },
     }),
 
   // Note: Backend doesn't have individual availability update
@@ -795,6 +785,34 @@ export const vnpayAPI = {
 
   getPaymentMethods: () =>
     api.get<ApiResponse<any[]>>("/api/vnpay/payment-methods"),
+
+  // Transaction Management APIs
+  getUserTransactions: (params?: any) =>
+    api.get<ApiResponse<any>>("/api/vnpay/transactions", { params }),
+
+  getTransactionById: (transactionId: string) =>
+    api.get<ApiResponse<any>>(`/api/vnpay/transactions/${transactionId}`),
+
+  getTransactionStats: (params?: any) =>
+    api.get<ApiResponse<any>>("/api/vnpay/transactions/stats", { params }),
+
+  updateTransactionStatus: (transactionId: string, statusData: any) =>
+    api.put<ApiResponse<any>>(
+      `/api/vnpay/transactions/${transactionId}/status`,
+      statusData
+    ),
+
+  refundTransaction: (transactionId: string, refundData: any) =>
+    api.post<ApiResponse<any>>(
+      `/api/vnpay/transactions/${transactionId}/refund`,
+      refundData
+    ),
+
+  getExpiredTransactions: () =>
+    api.get<ApiResponse<any>>("/api/vnpay/transactions/expired"),
+
+  cleanupExpiredTransactions: () =>
+    api.post<ApiResponse<any>>("/api/vnpay/transactions/cleanup-expired"),
 };
 
 export default api;

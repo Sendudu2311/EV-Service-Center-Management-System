@@ -212,9 +212,7 @@ export const login = asyncHandler(async (req, res) => {
   }
 
   // Check for user and include password
-  const user = await User.findOne({ email })
-    .select("+password")
-    .populate("serviceCenterId");
+  const user = await User.findOne({ email }).select("+password");
 
   if (!user) {
     return sendAuthError(res, "Invalid credentials");
@@ -310,7 +308,7 @@ export const googleAuth = asyncHandler(async (req, res) => {
     });
 
     // Check if user already exists with this Google ID
-    let user = await User.findOne({ googleId }).populate("serviceCenterId");
+    let user = await User.findOne({ googleId });
     console.log("🔍 Existing user with Google ID:", !!user);
 
     if (user) {
@@ -389,8 +387,7 @@ export const googleAuth = asyncHandler(async (req, res) => {
 
     console.log("✅ New user created:", user.email);
 
-    // Populate serviceCenterId if needed
-    await user.populate("serviceCenterId");
+    // serviceCenterId populate removed - single center architecture
 
     // Generate token
     const token = generateToken(user);
@@ -422,7 +419,7 @@ export const googleAuth = asyncHandler(async (req, res) => {
 // @route   GET /api/auth/me
 // @access  Private
 export const getMe = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user.id).populate("serviceCenterId");
+  const user = await User.findById(req.user.id);
 
   return sendSuccess(res, 200, "User profile retrieved successfully", { user });
 });
@@ -445,7 +442,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
   const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
     new: true,
     runValidators: true,
-  }).populate("serviceCenterId");
+  });
 
   return sendSuccess(res, 200, "Profile updated successfully", { user });
 });
@@ -516,7 +513,9 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   await user.save();
 
   // Create reset URL
-  const resetUrl = `${process.env.CLIENT_URL || "http://localhost:5173"}/reset-password/${resetToken}`;
+  const resetUrl = `${
+    process.env.CLIENT_URL || "http://localhost:5173"
+  }/reset-password/${resetToken}`;
 
   try {
     // Import password reset template
@@ -662,7 +661,7 @@ export const getUsers = async (req, res) => {
 
     const users = await User.find(filter)
       .select("-password -resetPasswordToken -resetPasswordExpire")
-      .populate("serviceCenterId", "name code")
+      // serviceCenterId populate removed - single center architecture
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
@@ -730,7 +729,7 @@ export const updateUser = async (req, res) => {
         runValidators: true,
       }
     )
-      .populate("serviceCenterId", "name code")
+      // serviceCenterId populate removed - single center architecture
       .select("-password");
 
     res.json({

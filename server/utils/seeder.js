@@ -1,17 +1,16 @@
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import User from '../models/User.js';
-import ServiceCenter from '../models/ServiceCenter.js';
-import Service from '../models/Service.js';
-import Vehicle from '../models/Vehicle.js';
-import Appointment from '../models/Appointment.js';
-import Part from '../models/Part.js';
-import TechnicianProfile from '../models/TechnicianProfile.js';
-import ServiceReception from '../models/ServiceReception.js';
-import EVChecklist from '../models/EVChecklist.js';
-import ChecklistInstance from '../models/ChecklistInstance.js';
-import PartRequest from '../models/PartRequest.js';
-import Invoice from '../models/Invoice.js';
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import User from "../models/User.js";
+import Service from "../models/Service.js";
+import Vehicle from "../models/Vehicle.js";
+import Appointment from "../models/Appointment.js";
+import Part from "../models/Part.js";
+import TechnicianProfile from "../models/TechnicianProfile.js";
+import ServiceReception from "../models/ServiceReception.js";
+import EVChecklist from "../models/EVChecklist.js";
+import ChecklistInstance from "../models/ChecklistInstance.js";
+import PartRequest from "../models/PartRequest.js";
+import Invoice from "../models/Invoice.js";
 
 // Load env vars
 dotenv.config();
@@ -22,7 +21,7 @@ const connectDB = async () => {
     const conn = await mongoose.connect(process.env.MONGODB_URI);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error('Error connecting to database:', error);
+    console.error("Error connecting to database:", error);
     process.exit(1);
   }
 };
@@ -39,12 +38,12 @@ const clearData = async () => {
     await Appointment.deleteMany({});
     await Vehicle.deleteMany({});
     await User.deleteMany({});
-    await ServiceCenter.deleteMany({});
+    // ServiceCenter operations removed - single center architecture
     await Service.deleteMany({});
     await Part.deleteMany({});
-    console.log('Existing data cleared');
+    console.log("Existing data cleared");
   } catch (error) {
-    console.error('Error clearing data:', error);
+    console.error("Error clearing data:", error);
   }
 };
 
@@ -54,323 +53,654 @@ const createServices = async () => {
     const services = [
       // Battery Services
       {
-        name: 'Battery Health Check',
-        code: 'BAT001',
-        description: 'Comprehensive battery health assessment and diagnostic',
-        category: 'battery',
-        subcategory: 'diagnostic',
+        name: "Battery Health Check",
+        code: "BAT001",
+        description: "Comprehensive battery health assessment and diagnostic",
+        category: "battery",
+        subcategory: "diagnostic",
         basePrice: 200000,
         estimatedDuration: 60,
-        skillLevel: 'intermediate',
-        requiredCertifications: ['EV Battery Certification'],
+        skillLevel: "intermediate",
+        requiredCertifications: ["EV Battery Certification"],
         checklist: [
-          { step: 'Check battery voltage', category: 'preparation', isRequired: true, estimatedTime: 15 },
-          { step: 'Test charging capacity', category: 'execution', isRequired: true, estimatedTime: 30 },
-          { step: 'Inspect battery connections', category: 'verification', isRequired: true, estimatedTime: 15 }
+          {
+            step: "Check battery voltage",
+            category: "preparation",
+            isRequired: true,
+            estimatedTime: 15,
+          },
+          {
+            step: "Test charging capacity",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 30,
+          },
+          {
+            step: "Inspect battery connections",
+            category: "verification",
+            isRequired: true,
+            estimatedTime: 15,
+          },
         ],
-        warranty: { duration: 30, description: '30 days warranty on diagnostic results' },
-        tags: ['battery', 'diagnostic', 'health-check']
+        warranty: {
+          duration: 30,
+          description: "30 days warranty on diagnostic results",
+        },
+        tags: ["battery", "diagnostic", "health-check"],
       },
       {
-        name: 'Battery Replacement',
-        code: 'BAT002',
-        description: 'Complete battery pack replacement service',
-        category: 'battery',
-        subcategory: 'replacement',
+        name: "Battery Replacement",
+        code: "BAT002",
+        description: "Complete battery pack replacement service",
+        category: "battery",
+        subcategory: "replacement",
         basePrice: 15000000,
         estimatedDuration: 240,
-        skillLevel: 'expert',
-        requiredCertifications: ['EV Battery Certification', 'High Voltage Safety'],
-        checklist: [
-          { step: 'Safety protocol setup', category: 'safety', isRequired: true, estimatedTime: 30 },
-          { step: 'Remove old battery pack', category: 'execution', isRequired: true, estimatedTime: 90 },
-          { step: 'Install new battery pack', category: 'execution', isRequired: true, estimatedTime: 90 },
-          { step: 'System calibration', category: 'verification', isRequired: true, estimatedTime: 30 }
+        skillLevel: "expert",
+        requiredCertifications: [
+          "EV Battery Certification",
+          "High Voltage Safety",
         ],
-        warranty: { duration: 365, description: '1 year warranty on battery replacement' },
-        tags: ['battery', 'replacement', 'major-service']
+        checklist: [
+          {
+            step: "Safety protocol setup",
+            category: "safety",
+            isRequired: true,
+            estimatedTime: 30,
+          },
+          {
+            step: "Remove old battery pack",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 90,
+          },
+          {
+            step: "Install new battery pack",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 90,
+          },
+          {
+            step: "System calibration",
+            category: "verification",
+            isRequired: true,
+            estimatedTime: 30,
+          },
+        ],
+        warranty: {
+          duration: 365,
+          description: "1 year warranty on battery replacement",
+        },
+        tags: ["battery", "replacement", "major-service"],
       },
 
       // Motor Services
       {
-        name: 'Motor Diagnostic',
-        code: 'MOT001',
-        description: 'Electric motor performance diagnostic and analysis',
-        category: 'motor',
-        subcategory: 'diagnostic',
+        name: "Motor Diagnostic",
+        code: "MOT001",
+        description: "Electric motor performance diagnostic and analysis",
+        category: "motor",
+        subcategory: "diagnostic",
         basePrice: 300000,
         estimatedDuration: 90,
-        skillLevel: 'intermediate',
-        requiredCertifications: ['EV Motor Systems'],
+        skillLevel: "intermediate",
+        requiredCertifications: ["EV Motor Systems"],
         checklist: [
-          { step: 'Motor performance test', category: 'execution', isRequired: true, estimatedTime: 45 },
-          { step: 'Check motor mounts', category: 'verification', isRequired: true, estimatedTime: 20 },
-          { step: 'Inspect wiring harness', category: 'verification', isRequired: true, estimatedTime: 25 }
+          {
+            step: "Motor performance test",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 45,
+          },
+          {
+            step: "Check motor mounts",
+            category: "verification",
+            isRequired: true,
+            estimatedTime: 20,
+          },
+          {
+            step: "Inspect wiring harness",
+            category: "verification",
+            isRequired: true,
+            estimatedTime: 25,
+          },
         ],
-        warranty: { duration: 30, description: '30 days warranty on diagnostic' },
-        tags: ['motor', 'diagnostic', 'performance']
+        warranty: {
+          duration: 30,
+          description: "30 days warranty on diagnostic",
+        },
+        tags: ["motor", "diagnostic", "performance"],
       },
       {
-        name: 'Motor Repair',
-        code: 'MOT002',
-        description: 'Electric motor repair and maintenance service',
-        category: 'motor',
-        subcategory: 'repair',
+        name: "Motor Repair",
+        code: "MOT002",
+        description: "Electric motor repair and maintenance service",
+        category: "motor",
+        subcategory: "repair",
         basePrice: 2500000,
         estimatedDuration: 300,
-        skillLevel: 'expert',
-        requiredCertifications: ['EV Motor Systems', 'Advanced Electrical'],
+        skillLevel: "expert",
+        requiredCertifications: ["EV Motor Systems", "Advanced Electrical"],
         checklist: [
-          { step: 'Disassemble motor components', category: 'preparation', isRequired: true, estimatedTime: 90 },
-          { step: 'Replace worn parts', category: 'execution', isRequired: true, estimatedTime: 120 },
-          { step: 'Reassemble and test', category: 'verification', isRequired: true, estimatedTime: 90 }
+          {
+            step: "Disassemble motor components",
+            category: "preparation",
+            isRequired: true,
+            estimatedTime: 90,
+          },
+          {
+            step: "Replace worn parts",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 120,
+          },
+          {
+            step: "Reassemble and test",
+            category: "verification",
+            isRequired: true,
+            estimatedTime: 90,
+          },
         ],
-        warranty: { duration: 180, description: '6 months warranty on motor repair' },
-        tags: ['motor', 'repair', 'major-service']
+        warranty: {
+          duration: 180,
+          description: "6 months warranty on motor repair",
+        },
+        tags: ["motor", "repair", "major-service"],
       },
 
       // Charging Services
       {
-        name: 'Charging System Diagnostic',
-        code: 'CHG001',
-        description: 'Complete charging system inspection and diagnostic',
-        category: 'charging',
-        subcategory: 'diagnostic',
+        name: "Charging System Diagnostic",
+        code: "CHG001",
+        description: "Complete charging system inspection and diagnostic",
+        category: "charging",
+        subcategory: "diagnostic",
         basePrice: 250000,
         estimatedDuration: 75,
-        skillLevel: 'intermediate',
-        requiredCertifications: ['EV Charging Systems'],
+        skillLevel: "intermediate",
+        requiredCertifications: ["EV Charging Systems"],
         checklist: [
-          { step: 'Test onboard charger', category: 'execution', isRequired: true, estimatedTime: 30 },
-          { step: 'Check charging port', category: 'verification', isRequired: true, estimatedTime: 20 },
-          { step: 'Verify charging protocols', category: 'verification', isRequired: true, estimatedTime: 25 }
+          {
+            step: "Test onboard charger",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 30,
+          },
+          {
+            step: "Check charging port",
+            category: "verification",
+            isRequired: true,
+            estimatedTime: 20,
+          },
+          {
+            step: "Verify charging protocols",
+            category: "verification",
+            isRequired: true,
+            estimatedTime: 25,
+          },
         ],
-        warranty: { duration: 30, description: '30 days warranty on diagnostic' },
-        tags: ['charging', 'diagnostic', 'onboard-charger']
+        warranty: {
+          duration: 30,
+          description: "30 days warranty on diagnostic",
+        },
+        tags: ["charging", "diagnostic", "onboard-charger"],
       },
       {
-        name: 'Charging Port Repair',
-        code: 'CHG002',
-        description: 'Charging port maintenance and repair service',
-        category: 'charging',
-        subcategory: 'repair',
+        name: "Charging Port Repair",
+        code: "CHG002",
+        description: "Charging port maintenance and repair service",
+        category: "charging",
+        subcategory: "repair",
         basePrice: 800000,
         estimatedDuration: 120,
-        skillLevel: 'intermediate',
-        requiredCertifications: ['EV Charging Systems'],
+        skillLevel: "intermediate",
+        requiredCertifications: ["EV Charging Systems"],
         checklist: [
-          { step: 'Remove damaged port', category: 'preparation', isRequired: true, estimatedTime: 45 },
-          { step: 'Install new charging port', category: 'execution', isRequired: true, estimatedTime: 60 },
-          { step: 'Test charging functionality', category: 'verification', isRequired: true, estimatedTime: 15 }
+          {
+            step: "Remove damaged port",
+            category: "preparation",
+            isRequired: true,
+            estimatedTime: 45,
+          },
+          {
+            step: "Install new charging port",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 60,
+          },
+          {
+            step: "Test charging functionality",
+            category: "verification",
+            isRequired: true,
+            estimatedTime: 15,
+          },
         ],
-        warranty: { duration: 90, description: '3 months warranty on charging port' },
-        tags: ['charging', 'port', 'repair']
+        warranty: {
+          duration: 90,
+          description: "3 months warranty on charging port",
+        },
+        tags: ["charging", "port", "repair"],
       },
 
       // Electronics Services
       {
-        name: 'Electronics Diagnostic',
-        code: 'ELC001',
-        description: 'Complete vehicle electronics system diagnostic',
-        category: 'electronics',
-        subcategory: 'diagnostic',
+        name: "Electronics Diagnostic",
+        code: "ELC001",
+        description: "Complete vehicle electronics system diagnostic",
+        category: "electronics",
+        subcategory: "diagnostic",
         basePrice: 350000,
         estimatedDuration: 90,
-        skillLevel: 'advanced',
-        requiredCertifications: ['EV Electronics', 'Automotive Diagnostics'],
+        skillLevel: "advanced",
+        requiredCertifications: ["EV Electronics", "Automotive Diagnostics"],
         checklist: [
-          { step: 'OBD system scan', category: 'execution', isRequired: true, estimatedTime: 30 },
-          { step: 'Check control modules', category: 'execution', isRequired: true, estimatedTime: 40 },
-          { step: 'Test communication networks', category: 'verification', isRequired: true, estimatedTime: 20 }
+          {
+            step: "OBD system scan",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 30,
+          },
+          {
+            step: "Check control modules",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 40,
+          },
+          {
+            step: "Test communication networks",
+            category: "verification",
+            isRequired: true,
+            estimatedTime: 20,
+          },
         ],
-        warranty: { duration: 30, description: '30 days warranty on diagnostic' },
-        tags: ['electronics', 'diagnostic', 'obd', 'modules']
+        warranty: {
+          duration: 30,
+          description: "30 days warranty on diagnostic",
+        },
+        tags: ["electronics", "diagnostic", "obd", "modules"],
       },
 
       // General Services
       {
-        name: 'Annual Maintenance',
-        code: 'GEN001',
-        description: 'Comprehensive annual maintenance service',
-        category: 'general',
-        subcategory: 'maintenance',
+        name: "Annual Maintenance",
+        code: "GEN001",
+        description: "Comprehensive annual maintenance service",
+        category: "general",
+        subcategory: "maintenance",
         basePrice: 800000,
         estimatedDuration: 180,
-        skillLevel: 'intermediate',
-        requiredCertifications: ['General EV Maintenance'],
+        skillLevel: "intermediate",
+        requiredCertifications: ["General EV Maintenance"],
         checklist: [
-          { step: 'Multi-point inspection', category: 'execution', isRequired: true, estimatedTime: 60 },
-          { step: 'Fluid level checks', category: 'execution', isRequired: true, estimatedTime: 30 },
-          { step: 'Brake system check', category: 'safety', isRequired: true, estimatedTime: 45 },
-          { step: 'Tire rotation and inspection', category: 'execution', isRequired: true, estimatedTime: 45 }
+          {
+            step: "Multi-point inspection",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 60,
+          },
+          {
+            step: "Fluid level checks",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 30,
+          },
+          {
+            step: "Brake system check",
+            category: "safety",
+            isRequired: true,
+            estimatedTime: 45,
+          },
+          {
+            step: "Tire rotation and inspection",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 45,
+          },
         ],
-        warranty: { duration: 90, description: '3 months warranty on maintenance service' },
-        tags: ['maintenance', 'annual', 'comprehensive', 'inspection']
+        warranty: {
+          duration: 90,
+          description: "3 months warranty on maintenance service",
+        },
+        tags: ["maintenance", "annual", "comprehensive", "inspection"],
       },
       {
-        name: 'Pre-Purchase Inspection',
-        code: 'GEN002',
-        description: 'Thorough inspection for used EV purchase',
-        category: 'general',
-        subcategory: 'inspection',
+        name: "Pre-Purchase Inspection",
+        code: "GEN002",
+        description: "Thorough inspection for used EV purchase",
+        category: "general",
+        subcategory: "inspection",
         basePrice: 500000,
         estimatedDuration: 120,
-        skillLevel: 'advanced',
-        requiredCertifications: ['EV Inspector Certification'],
+        skillLevel: "advanced",
+        requiredCertifications: ["EV Inspector Certification"],
         checklist: [
-          { step: 'Battery health assessment', category: 'execution', isRequired: true, estimatedTime: 45 },
-          { step: 'Motor performance check', category: 'execution', isRequired: true, estimatedTime: 30 },
-          { step: 'Body and interior inspection', category: 'verification', isRequired: true, estimatedTime: 45 }
+          {
+            step: "Battery health assessment",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 45,
+          },
+          {
+            step: "Motor performance check",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 30,
+          },
+          {
+            step: "Body and interior inspection",
+            category: "verification",
+            isRequired: true,
+            estimatedTime: 45,
+          },
         ],
-        warranty: { duration: 14, description: '14 days warranty on inspection report' },
-        tags: ['inspection', 'pre-purchase', 'assessment', 'used-car']
+        warranty: {
+          duration: 14,
+          description: "14 days warranty on inspection report",
+        },
+        tags: ["inspection", "pre-purchase", "assessment", "used-car"],
       },
 
       // Additional Services for Testing Pagination
       {
-        name: 'Software Update Service',
-        code: 'SW001',
-        description: 'Vehicle software and firmware updates',
-        category: 'electronics',
-        subcategory: 'update',
+        name: "Software Update Service",
+        code: "SW001",
+        description: "Vehicle software and firmware updates",
+        category: "electronics",
+        subcategory: "update",
         basePrice: 150000,
         estimatedDuration: 45,
-        skillLevel: 'basic',
-        requiredCertifications: ['EV Software Systems'],
+        skillLevel: "basic",
+        requiredCertifications: ["EV Software Systems"],
         checklist: [
-          { step: 'Backup current software', category: 'preparation', isRequired: true, estimatedTime: 15 },
-          { step: 'Install software updates', category: 'execution', isRequired: true, estimatedTime: 20 },
-          { step: 'Verify system functionality', category: 'verification', isRequired: true, estimatedTime: 10 }
+          {
+            step: "Backup current software",
+            category: "preparation",
+            isRequired: true,
+            estimatedTime: 15,
+          },
+          {
+            step: "Install software updates",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 20,
+          },
+          {
+            step: "Verify system functionality",
+            category: "verification",
+            isRequired: true,
+            estimatedTime: 10,
+          },
         ],
-        warranty: { duration: 30, description: '30 days warranty on software update' },
-        tags: ['software', 'update', 'firmware', 'system']
+        warranty: {
+          duration: 30,
+          description: "30 days warranty on software update",
+        },
+        tags: ["software", "update", "firmware", "system"],
       },
       {
-        name: 'Thermal Management System Check',
-        code: 'TMS001',
-        description: 'Battery thermal management system inspection',
-        category: 'battery',
-        subcategory: 'diagnostic',
+        name: "Thermal Management System Check",
+        code: "TMS001",
+        description: "Battery thermal management system inspection",
+        category: "battery",
+        subcategory: "diagnostic",
         basePrice: 180000,
         estimatedDuration: 60,
-        skillLevel: 'intermediate',
-        requiredCertifications: ['EV Cooling Systems'],
+        skillLevel: "intermediate",
+        requiredCertifications: ["EV Cooling Systems"],
         checklist: [
-          { step: 'Check coolant levels', category: 'preparation', isRequired: true, estimatedTime: 10 },
-          { step: 'Test cooling pumps', category: 'execution', isRequired: true, estimatedTime: 30 },
-          { step: 'Inspect heat exchangers', category: 'verification', isRequired: true, estimatedTime: 20 }
+          {
+            step: "Check coolant levels",
+            category: "preparation",
+            isRequired: true,
+            estimatedTime: 10,
+          },
+          {
+            step: "Test cooling pumps",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 30,
+          },
+          {
+            step: "Inspect heat exchangers",
+            category: "verification",
+            isRequired: true,
+            estimatedTime: 20,
+          },
         ],
-        warranty: { duration: 60, description: '2 months warranty on thermal system check' },
-        tags: ['cooling', 'thermal', 'battery', 'temperature']
+        warranty: {
+          duration: 60,
+          description: "2 months warranty on thermal system check",
+        },
+        tags: ["cooling", "thermal", "battery", "temperature"],
       },
       {
-        name: 'High Voltage Safety Inspection',
-        code: 'HV001',
-        description: 'Comprehensive high voltage system safety check',
-        category: 'diagnostic',
-        subcategory: 'inspection',
+        name: "High Voltage Safety Inspection",
+        code: "HV001",
+        description: "Comprehensive high voltage system safety check",
+        category: "diagnostic",
+        subcategory: "inspection",
         basePrice: 220000,
         estimatedDuration: 90,
-        skillLevel: 'expert',
-        requiredCertifications: ['High Voltage Safety', 'EV Safety Inspector'],
+        skillLevel: "expert",
+        requiredCertifications: ["High Voltage Safety", "EV Safety Inspector"],
         checklist: [
-          { step: 'Insulation resistance test', category: 'safety', isRequired: true, estimatedTime: 30 },
-          { step: 'HV cable inspection', category: 'verification', isRequired: true, estimatedTime: 30 },
-          { step: 'Safety system verification', category: 'verification', isRequired: true, estimatedTime: 30 }
+          {
+            step: "Insulation resistance test",
+            category: "safety",
+            isRequired: true,
+            estimatedTime: 30,
+          },
+          {
+            step: "HV cable inspection",
+            category: "verification",
+            isRequired: true,
+            estimatedTime: 30,
+          },
+          {
+            step: "Safety system verification",
+            category: "verification",
+            isRequired: true,
+            estimatedTime: 30,
+          },
         ],
-        warranty: { duration: 90, description: '3 months warranty on safety inspection' },
-        tags: ['safety', 'high-voltage', 'inspection', 'compliance']
+        warranty: {
+          duration: 90,
+          description: "3 months warranty on safety inspection",
+        },
+        tags: ["safety", "high-voltage", "inspection", "compliance"],
       },
       {
-        name: 'Regenerative Braking Calibration',
-        code: 'RB001',
-        description: 'Calibration and optimization of regenerative braking system',
-        category: 'electronics',
-        subcategory: 'calibration',
+        name: "Regenerative Braking Calibration",
+        code: "RB001",
+        description:
+          "Calibration and optimization of regenerative braking system",
+        category: "electronics",
+        subcategory: "calibration",
         basePrice: 280000,
         estimatedDuration: 75,
-        skillLevel: 'advanced',
-        requiredCertifications: ['EV Braking Systems', 'Advanced Diagnostics'],
+        skillLevel: "advanced",
+        requiredCertifications: ["EV Braking Systems", "Advanced Diagnostics"],
         checklist: [
-          { step: 'Test current regen settings', category: 'preparation', isRequired: true, estimatedTime: 20 },
-          { step: 'Calibrate regen parameters', category: 'execution', isRequired: true, estimatedTime: 35 },
-          { step: 'Road test verification', category: 'verification', isRequired: true, estimatedTime: 20 }
+          {
+            step: "Test current regen settings",
+            category: "preparation",
+            isRequired: true,
+            estimatedTime: 20,
+          },
+          {
+            step: "Calibrate regen parameters",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 35,
+          },
+          {
+            step: "Road test verification",
+            category: "verification",
+            isRequired: true,
+            estimatedTime: 20,
+          },
         ],
-        warranty: { duration: 120, description: '4 months warranty on calibration' },
-        tags: ['braking', 'regenerative', 'calibration', 'efficiency']
+        warranty: {
+          duration: 120,
+          description: "4 months warranty on calibration",
+        },
+        tags: ["braking", "regenerative", "calibration", "efficiency"],
       },
       {
-        name: 'DC Fast Charging Port Service',
-        code: 'DC001',
-        description: 'DC fast charging port maintenance and repair',
-        category: 'charging',
-        subcategory: 'maintenance',
+        name: "DC Fast Charging Port Service",
+        code: "DC001",
+        description: "DC fast charging port maintenance and repair",
+        category: "charging",
+        subcategory: "maintenance",
         basePrice: 320000,
         estimatedDuration: 100,
-        skillLevel: 'advanced',
-        requiredCertifications: ['DC Charging Systems', 'High Current Safety'],
+        skillLevel: "advanced",
+        requiredCertifications: ["DC Charging Systems", "High Current Safety"],
         checklist: [
-          { step: 'Inspect charging contacts', category: 'preparation', isRequired: true, estimatedTime: 25 },
-          { step: 'Clean and lubricate connections', category: 'execution', isRequired: true, estimatedTime: 40 },
-          { step: 'Test charging performance', category: 'verification', isRequired: true, estimatedTime: 35 }
+          {
+            step: "Inspect charging contacts",
+            category: "preparation",
+            isRequired: true,
+            estimatedTime: 25,
+          },
+          {
+            step: "Clean and lubricate connections",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 40,
+          },
+          {
+            step: "Test charging performance",
+            category: "verification",
+            isRequired: true,
+            estimatedTime: 35,
+          },
         ],
-        warranty: { duration: 180, description: '6 months warranty on DC port service' },
-        tags: ['charging', 'dc-fast', 'port', 'maintenance']
+        warranty: {
+          duration: 180,
+          description: "6 months warranty on DC port service",
+        },
+        tags: ["charging", "dc-fast", "port", "maintenance"],
       },
       {
-        name: 'Vehicle-to-Grid Setup',
-        code: 'V2G001',
-        description: 'Vehicle-to-Grid (V2G) system installation and configuration',
-        category: 'charging',
-        subcategory: 'installation',
+        name: "Vehicle-to-Grid Setup",
+        code: "V2G001",
+        description:
+          "Vehicle-to-Grid (V2G) system installation and configuration",
+        category: "charging",
+        subcategory: "installation",
         basePrice: 850000,
         estimatedDuration: 180,
-        skillLevel: 'expert',
-        requiredCertifications: ['V2G Systems', 'Grid Integration', 'High Voltage Safety'],
-        checklist: [
-          { step: 'V2G hardware installation', category: 'execution', isRequired: true, estimatedTime: 90 },
-          { step: 'Grid communication setup', category: 'execution', isRequired: true, estimatedTime: 60 },
-          { step: 'System testing and certification', category: 'verification', isRequired: true, estimatedTime: 30 }
+        skillLevel: "expert",
+        requiredCertifications: [
+          "V2G Systems",
+          "Grid Integration",
+          "High Voltage Safety",
         ],
-        warranty: { duration: 365, description: '1 year warranty on V2G installation' },
-        tags: ['v2g', 'grid', 'installation', 'bidirectional']
+        checklist: [
+          {
+            step: "V2G hardware installation",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 90,
+          },
+          {
+            step: "Grid communication setup",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 60,
+          },
+          {
+            step: "System testing and certification",
+            category: "verification",
+            isRequired: true,
+            estimatedTime: 30,
+          },
+        ],
+        warranty: {
+          duration: 365,
+          description: "1 year warranty on V2G installation",
+        },
+        tags: ["v2g", "grid", "installation", "bidirectional"],
       },
       {
-        name: 'EV Conversion Consultation',
-        code: 'CONV001',
-        description: 'Consultation for converting ICE vehicles to electric',
-        category: 'general',
-        subcategory: 'consultation',
+        name: "EV Conversion Consultation",
+        code: "CONV001",
+        description: "Consultation for converting ICE vehicles to electric",
+        category: "general",
+        subcategory: "consultation",
         basePrice: 400000,
         estimatedDuration: 120,
-        skillLevel: 'expert',
-        requiredCertifications: ['EV Conversion Specialist', 'Vehicle Engineering'],
-        checklist: [
-          { step: 'Vehicle assessment', category: 'preparation', isRequired: true, estimatedTime: 45 },
-          { step: 'Conversion feasibility analysis', category: 'execution', isRequired: true, estimatedTime: 45 },
-          { step: 'Cost and timeline estimation', category: 'execution', isRequired: true, estimatedTime: 30 }
+        skillLevel: "expert",
+        requiredCertifications: [
+          "EV Conversion Specialist",
+          "Vehicle Engineering",
         ],
-        warranty: { duration: 30, description: '30 days warranty on consultation report' },
-        tags: ['conversion', 'consultation', 'ice-to-ev', 'assessment']
+        checklist: [
+          {
+            step: "Vehicle assessment",
+            category: "preparation",
+            isRequired: true,
+            estimatedTime: 45,
+          },
+          {
+            step: "Conversion feasibility analysis",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 45,
+          },
+          {
+            step: "Cost and timeline estimation",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 30,
+          },
+        ],
+        warranty: {
+          duration: 30,
+          description: "30 days warranty on consultation report",
+        },
+        tags: ["conversion", "consultation", "ice-to-ev", "assessment"],
       },
       {
-        name: 'Wireless Charging Installation',
-        code: 'WC001',
-        description: 'Wireless charging pad installation and setup',
-        category: 'charging',
-        subcategory: 'installation',
+        name: "Wireless Charging Installation",
+        code: "WC001",
+        description: "Wireless charging pad installation and setup",
+        category: "charging",
+        subcategory: "installation",
         basePrice: 1200000,
         estimatedDuration: 240,
-        skillLevel: 'expert',
-        requiredCertifications: ['Wireless Charging Systems', 'Electrical Installation'],
-        checklist: [
-          { step: 'Site preparation and marking', category: 'preparation', isRequired: true, estimatedTime: 60 },
-          { step: 'Ground pad installation', category: 'execution', isRequired: true, estimatedTime: 120 },
-          { step: 'Vehicle receiver installation', category: 'execution', isRequired: true, estimatedTime: 60 }
+        skillLevel: "expert",
+        requiredCertifications: [
+          "Wireless Charging Systems",
+          "Electrical Installation",
         ],
-        warranty: { duration: 365, description: '1 year warranty on wireless charging system' },
-        tags: ['wireless', 'charging', 'installation', 'inductive']
-      }
+        checklist: [
+          {
+            step: "Site preparation and marking",
+            category: "preparation",
+            isRequired: true,
+            estimatedTime: 60,
+          },
+          {
+            step: "Ground pad installation",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 120,
+          },
+          {
+            step: "Vehicle receiver installation",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 60,
+          },
+        ],
+        warranty: {
+          duration: 365,
+          description: "1 year warranty on wireless charging system",
+        },
+        tags: ["wireless", "charging", "installation", "inductive"],
+      },
     ];
 
     const createdServices = [];
@@ -386,7 +716,7 @@ const createServices = async () => {
     console.log(`✅ ${createdServices.length} services created successfully`);
     return createdServices;
   } catch (error) {
-    console.error('Error creating services:', error);
+    console.error("Error creating services:", error);
     throw error;
   }
 };
@@ -396,102 +726,117 @@ const createServiceCenters = async (services) => {
   try {
     const serviceCenters = [
       {
-        name: 'EV Central Service Hub',
-        code: 'SC001',
+        name: "EV Central Service Hub",
+        code: "SC001",
         address: {
-          street: '123 Nguyen Hue Boulevard',
-          city: 'Ho Chi Minh City',
-          state: 'Ho Chi Minh',
-          zipCode: '70000',
-          country: 'Vietnam'
+          street: "123 Nguyen Hue Boulevard",
+          city: "Ho Chi Minh City",
+          state: "Ho Chi Minh",
+          zipCode: "70000",
+          country: "Vietnam",
         },
         contact: {
-          phone: '+84-28-1234-5678',
-          email: 'central@evservice.com',
-          website: 'https://evservice.com'
+          phone: "+84-28-1234-5678",
+          email: "central@evservice.com",
+          website: "https://evservice.com",
         },
         location: {
-          type: 'Point',
-          coordinates: [106.7017, 10.7756] // District 1, HCMC
+          type: "Point",
+          coordinates: [106.7017, 10.7756], // District 1, HCMC
         },
         capacity: {
           totalBays: 15,
           availableBays: 15,
-          maxDailyAppointments: 30
+          maxDailyAppointments: 30,
         },
-        services: services.map(service => service._id),
+        services: services.map((service) => service._id),
         workingHours: {
-          monday: { open: '07:00', close: '18:00', isOpen: true },
-          tuesday: { open: '07:00', close: '18:00', isOpen: true },
-          wednesday: { open: '07:00', close: '18:00', isOpen: true },
-          thursday: { open: '07:00', close: '18:00', isOpen: true },
-          friday: { open: '07:00', close: '18:00', isOpen: true },
-          saturday: { open: '08:00', close: '17:00', isOpen: true },
-          sunday: { open: '09:00', close: '15:00', isOpen: true }
+          monday: { open: "07:00", close: "18:00", isOpen: true },
+          tuesday: { open: "07:00", close: "18:00", isOpen: true },
+          wednesday: { open: "07:00", close: "18:00", isOpen: true },
+          thursday: { open: "07:00", close: "18:00", isOpen: true },
+          friday: { open: "07:00", close: "18:00", isOpen: true },
+          saturday: { open: "08:00", close: "17:00", isOpen: true },
+          sunday: { open: "09:00", close: "15:00", isOpen: true },
         },
-        amenities: ['wifi', 'waiting_area', 'coffee', 'parking', 'shuttle', 'lounge'],
-        certifications: [
-          { name: 'ISO 9001:2015', issuer: 'ISO', validUntil: new Date('2025-12-31') },
-          { name: 'EV Service Excellence', issuer: 'EV Association', validUntil: new Date('2025-06-30') }
+        amenities: [
+          "wifi",
+          "waiting_area",
+          "coffee",
+          "parking",
+          "shuttle",
+          "lounge",
         ],
-        isActive: true
+        certifications: [
+          {
+            name: "ISO 9001:2015",
+            issuer: "ISO",
+            validUntil: new Date("2025-12-31"),
+          },
+          {
+            name: "EV Service Excellence",
+            issuer: "EV Association",
+            validUntil: new Date("2025-06-30"),
+          },
+        ],
+        isActive: true,
       },
       {
-        name: 'EV District 7 Branch',
-        code: 'SC002',
+        name: "EV District 7 Branch",
+        code: "SC002",
         address: {
-          street: '456 Nguyen Thi Thap Street',
-          city: 'Ho Chi Minh City',
-          state: 'Ho Chi Minh',
-          zipCode: '70000',
-          country: 'Vietnam'
+          street: "456 Nguyen Thi Thap Street",
+          city: "Ho Chi Minh City",
+          state: "Ho Chi Minh",
+          zipCode: "70000",
+          country: "Vietnam",
         },
         contact: {
-          phone: '+84-28-2345-6789',
-          email: 'district7@evservice.com',
-          website: 'https://evservice.com'
+          phone: "+84-28-2345-6789",
+          email: "district7@evservice.com",
+          website: "https://evservice.com",
         },
         location: {
-          type: 'Point',
-          coordinates: [106.6954, 10.7355] // District 7, HCMC
+          type: "Point",
+          coordinates: [106.6954, 10.7355], // District 7, HCMC
         },
         capacity: {
           totalBays: 10,
           availableBays: 10,
-          maxDailyAppointments: 20
+          maxDailyAppointments: 20,
         },
-        services: services.filter(s => s.category !== 'motor').map(service => service._id), // Smaller branch, no major motor services
+        services: services
+          .filter((s) => s.category !== "motor")
+          .map((service) => service._id), // Smaller branch, no major motor services
         workingHours: {
-          monday: { open: '08:00', close: '17:00', isOpen: true },
-          tuesday: { open: '08:00', close: '17:00', isOpen: true },
-          wednesday: { open: '08:00', close: '17:00', isOpen: true },
-          thursday: { open: '08:00', close: '17:00', isOpen: true },
-          friday: { open: '08:00', close: '17:00', isOpen: true },
-          saturday: { open: '08:00', close: '14:00', isOpen: true },
-          sunday: { open: '', close: '', isOpen: false }
+          monday: { open: "08:00", close: "17:00", isOpen: true },
+          tuesday: { open: "08:00", close: "17:00", isOpen: true },
+          wednesday: { open: "08:00", close: "17:00", isOpen: true },
+          thursday: { open: "08:00", close: "17:00", isOpen: true },
+          friday: { open: "08:00", close: "17:00", isOpen: true },
+          saturday: { open: "08:00", close: "14:00", isOpen: true },
+          sunday: { open: "", close: "", isOpen: false },
         },
-        amenities: ['wifi', 'waiting_area', 'parking', 'charging_station'],
+        amenities: ["wifi", "waiting_area", "parking", "charging_station"],
         certifications: [
-          { name: 'EV Service Excellence', issuer: 'EV Association', validUntil: new Date('2025-06-30') }
+          {
+            name: "EV Service Excellence",
+            issuer: "EV Association",
+            validUntil: new Date("2025-06-30"),
+          },
         ],
-        isActive: true
-      }
+        isActive: true,
+      },
     ];
 
+    // ServiceCenter creation removed - single center architecture
     const createdServiceCenters = [];
-    for (const center of serviceCenters) {
-      const exists = await ServiceCenter.findOne({ code: center.code });
-      if (!exists) {
-        const newCenter = await ServiceCenter.create(center);
-        createdServiceCenters.push(newCenter);
-      } else {
-        createdServiceCenters.push(exists);
-      }
-    }
-    console.log(`✅ ${createdServiceCenters.length} service centers created successfully`);
+    console.log(
+      `✅ ${createdServiceCenters.length} service centers created successfully`
+    );
     return createdServiceCenters;
   } catch (error) {
-    console.error('Error creating service centers:', error);
+    console.error("Error creating service centers:", error);
     throw error;
   }
 };
@@ -502,170 +847,173 @@ const createUsers = async (serviceCenters) => {
     const users = [
       // Admin User - Enhanced with strong password
       {
-        email: 'admin@evservice.com',
-        password: 'Admin123!@#',
-        firstName: 'System',
-        lastName: 'Administrator',
-        phone: '0901234567', // Vietnamese format
-        role: 'admin',
-        serviceCenterId: serviceCenters[0]._id,
+        email: "admin@evservice.com",
+        password: "Admin123!@#",
+        firstName: "System",
+        lastName: "Administrator",
+        phone: "0901234567", // Vietnamese format
+        role: "admin",
+        // serviceCenterId removed - single center architecture
         isActive: true,
-        lastLogin: new Date()
+        lastLogin: new Date(),
       },
 
       // Staff Users - Enhanced with Vietnamese names and proper phone format
       {
-        email: 'staff.central@evservice.com',
-        password: 'Staff123!@#',
-        firstName: 'Nguyễn Thị',
-        lastName: 'Mai',
-        phone: '0902345678', // Vietnamese format
-        role: 'staff',
-        serviceCenterId: serviceCenters[0]._id,
+        email: "staff.central@evservice.com",
+        password: "Staff123!@#",
+        firstName: "Nguyễn Thị",
+        lastName: "Mai",
+        phone: "0902345678", // Vietnamese format
+        role: "staff",
+        // serviceCenterId removed - single center architecture
         isActive: true,
-        lastLogin: new Date(Date.now() - 24 * 60 * 60 * 1000) // 1 day ago
+        lastLogin: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
       },
       {
-        email: 'staff.d7@evservice.com',
-        password: 'Staff123!@#',
-        firstName: 'Trần Văn',
-        lastName: 'Đức',
-        phone: '0903456789', // Vietnamese format
-        role: 'staff',
-        serviceCenterId: serviceCenters[1]._id,
+        email: "staff.d7@evservice.com",
+        password: "Staff123!@#",
+        firstName: "Trần Văn",
+        lastName: "Đức",
+        phone: "0903456789", // Vietnamese format
+        role: "staff",
+        // serviceCenterId removed - single center architecture
         isActive: true,
-        lastLogin: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
+        lastLogin: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
       },
 
       // Technician Users - Enhanced with proper certifications structure
       {
-        email: 'tech1@evservice.com',
-        password: 'Tech123!@#',
-        firstName: 'Lê Minh',
-        lastName: 'An',
-        phone: '0904567890', // Vietnamese format
-        role: 'technician',
-        serviceCenterId: serviceCenters[0]._id,
-        specializations: ['battery', 'motor', 'charging'],
+        email: "tech1@evservice.com",
+        password: "Tech123!@#",
+        firstName: "Lê Minh",
+        lastName: "An",
+        phone: "0904567890", // Vietnamese format
+        role: "technician",
+        // serviceCenterId removed - single center architecture
+        specializations: ["battery", "motor", "charging"],
         certifications: [
           {
-            name: 'EV Battery Certification',
-            issuer: 'EV Institute Vietnam',
-            issueDate: new Date('2023-01-01'),
-            expiryDate: new Date('2026-01-01'),
-            certificateUrl: 'https://certificates.evinstitute.vn/battery/cert-001'
+            name: "EV Battery Certification",
+            issuer: "EV Institute Vietnam",
+            issueDate: new Date("2023-01-01"),
+            expiryDate: new Date("2026-01-01"),
+            certificateUrl:
+              "https://certificates.evinstitute.vn/battery/cert-001",
           },
           {
-            name: 'High Voltage Safety Level 3',
-            issuer: 'Vietnam Safety Council',
-            issueDate: new Date('2023-06-01'),
-            expiryDate: new Date('2025-06-01'),
-            certificateUrl: 'https://certificates.safety.vn/hv3/cert-001'
-          }
+            name: "High Voltage Safety Level 3",
+            issuer: "Vietnam Safety Council",
+            issueDate: new Date("2023-06-01"),
+            expiryDate: new Date("2025-06-01"),
+            certificateUrl: "https://certificates.safety.vn/hv3/cert-001",
+          },
         ],
         isActive: true,
-        lastLogin: new Date(Date.now() - 30 * 60 * 1000) // 30 minutes ago
+        lastLogin: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
       },
       {
-        email: 'tech2@evservice.com',
-        password: 'Tech123!@#',
-        firstName: 'Phạm Thị',
-        lastName: 'Linh',
-        phone: '0905678901', // Vietnamese format
-        role: 'technician',
-        serviceCenterId: serviceCenters[0]._id,
-        specializations: ['electronics', 'general'],
+        email: "tech2@evservice.com",
+        password: "Tech123!@#",
+        firstName: "Phạm Thị",
+        lastName: "Linh",
+        phone: "0905678901", // Vietnamese format
+        role: "technician",
+        // serviceCenterId removed - single center architecture
+        specializations: ["electronics", "general"],
         certifications: [
           {
-            name: 'EV Electronics Specialist',
-            issuer: 'EV Institute Vietnam',
-            issueDate: new Date('2023-03-01'),
-            expiryDate: new Date('2026-03-01'),
-            certificateUrl: 'https://certificates.evinstitute.vn/electronics/cert-002'
+            name: "EV Electronics Specialist",
+            issuer: "EV Institute Vietnam",
+            issueDate: new Date("2023-03-01"),
+            expiryDate: new Date("2026-03-01"),
+            certificateUrl:
+              "https://certificates.evinstitute.vn/electronics/cert-002",
           },
           {
-            name: 'Automotive Diagnostics Advanced',
-            issuer: 'Vietnam Auto Academy',
-            issueDate: new Date('2022-12-01'),
-            expiryDate: new Date('2025-12-01'),
-            certificateUrl: 'https://certificates.autoacademy.vn/diag/cert-002'
-          }
+            name: "Automotive Diagnostics Advanced",
+            issuer: "Vietnam Auto Academy",
+            issueDate: new Date("2022-12-01"),
+            expiryDate: new Date("2025-12-01"),
+            certificateUrl: "https://certificates.autoacademy.vn/diag/cert-002",
+          },
         ],
         isActive: true,
-        lastLogin: new Date(Date.now() - 60 * 60 * 1000) // 1 hour ago
+        lastLogin: new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
       },
       {
-        email: 'tech3@evservice.com',
-        password: 'Tech123!@#',
-        firstName: 'Võ Minh',
-        lastName: 'Khang',
-        phone: '0906789012', // Vietnamese format
-        role: 'technician',
-        serviceCenterId: serviceCenters[1]._id,
-        specializations: ['charging', 'electronics', 'general'],
+        email: "tech3@evservice.com",
+        password: "Tech123!@#",
+        firstName: "Võ Minh",
+        lastName: "Khang",
+        phone: "0906789012", // Vietnamese format
+        role: "technician",
+        // serviceCenterId removed - single center architecture
+        specializations: ["charging", "electronics", "general"],
         certifications: [
           {
-            name: 'EV Charging Systems Expert',
-            issuer: 'EV Institute Vietnam',
-            issueDate: new Date('2023-02-01'),
-            expiryDate: new Date('2026-02-01'),
-            certificateUrl: 'https://certificates.evinstitute.vn/charging/cert-003'
-          }
+            name: "EV Charging Systems Expert",
+            issuer: "EV Institute Vietnam",
+            issueDate: new Date("2023-02-01"),
+            expiryDate: new Date("2026-02-01"),
+            certificateUrl:
+              "https://certificates.evinstitute.vn/charging/cert-003",
+          },
         ],
-        isActive: true
+        isActive: true,
       },
 
       // Customer Users - Enhanced with Vietnamese customer profiles
       {
-        email: 'customer1@gmail.com',
-        password: 'Customer123!@#',
-        firstName: 'Nguyễn Văn',
-        lastName: 'Hùng',
-        phone: '0907890123', // Vietnamese format
-        role: 'customer',
+        email: "customer1@gmail.com",
+        password: "Customer123!@#",
+        firstName: "Nguyễn Văn",
+        lastName: "Hùng",
+        phone: "0907890123", // Vietnamese format
+        role: "customer",
         isActive: true,
-        lastLogin: new Date(Date.now() - 3 * 60 * 60 * 1000) // 3 hours ago
+        lastLogin: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
       },
       {
-        email: 'customer2@gmail.com',
-        password: 'Customer123!@#',
-        firstName: 'Trần Thị',
-        lastName: 'Lan',
-        phone: '0908901234', // Vietnamese format
-        role: 'customer',
+        email: "customer2@gmail.com",
+        password: "Customer123!@#",
+        firstName: "Trần Thị",
+        lastName: "Lan",
+        phone: "0908901234", // Vietnamese format
+        role: "customer",
         isActive: true,
-        lastLogin: new Date(Date.now() - 6 * 60 * 60 * 1000) // 6 hours ago
+        lastLogin: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
       },
       {
-        email: 'customer3@gmail.com',
-        password: 'Customer123!@#',
-        firstName: 'Lê Minh',
-        lastName: 'Tuấn',
-        phone: '0909012345', // Vietnamese format
-        role: 'customer',
+        email: "customer3@gmail.com",
+        password: "Customer123!@#",
+        firstName: "Lê Minh",
+        lastName: "Tuấn",
+        phone: "0909012345", // Vietnamese format
+        role: "customer",
         isActive: true,
-        lastLogin: new Date(Date.now() - 12 * 60 * 60 * 1000) // 12 hours ago
+        lastLogin: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
       },
       {
-        email: 'customer4@gmail.com',
-        password: 'Customer123!@#',
-        firstName: 'Phạm Thị',
-        lastName: 'Hoa',
-        phone: '0930123456', // Vietnamese format
-        role: 'customer',
+        email: "customer4@gmail.com",
+        password: "Customer123!@#",
+        firstName: "Phạm Thị",
+        lastName: "Hoa",
+        phone: "0930123456", // Vietnamese format
+        role: "customer",
         isActive: true,
-        lastLogin: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) // 2 days ago
+        lastLogin: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
       },
       {
-        email: 'customer5@gmail.com',
-        password: 'Customer123!@#',
-        firstName: 'Hoàng Văn',
-        lastName: 'Nam',
-        phone: '0931234567', // Vietnamese format
-        role: 'customer',
+        email: "customer5@gmail.com",
+        password: "Customer123!@#",
+        firstName: "Hoàng Văn",
+        lastName: "Nam",
+        phone: "0931234567", // Vietnamese format
+        role: "customer",
         isActive: true,
-        lastLogin: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 1 week ago
-      }
+        lastLogin: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
+      },
     ];
 
     const createdUsers = [];
@@ -681,22 +1029,21 @@ const createUsers = async (serviceCenters) => {
 
     // Update service center managers
     if (createdUsers.length > 0) {
-      const adminUser = createdUsers.find(u => u.role === 'admin');
-      const staff1 = createdUsers.find(u => u.email === 'staff.central@evservice.com');
-      const staff2 = createdUsers.find(u => u.email === 'staff.d7@evservice.com');
+      const adminUser = createdUsers.find((u) => u.role === "admin");
+      const staff1 = createdUsers.find(
+        (u) => u.email === "staff.central@evservice.com"
+      );
+      const staff2 = createdUsers.find(
+        (u) => u.email === "staff.d7@evservice.com"
+      );
 
-      if (adminUser && staff1) {
-        await ServiceCenter.findByIdAndUpdate(serviceCenters[0]._id, { manager: staff1._id });
-      }
-      if (adminUser && staff2) {
-        await ServiceCenter.findByIdAndUpdate(serviceCenters[1]._id, { manager: staff2._id });
-      }
+      // ServiceCenter manager assignments removed - single center architecture
     }
 
     console.log(`✅ ${createdUsers.length} users created successfully`);
     return createdUsers;
   } catch (error) {
-    console.error('Error creating users:', error);
+    console.error("Error creating users:", error);
     throw error;
   }
 };
@@ -704,107 +1051,167 @@ const createUsers = async (serviceCenters) => {
 // Create technician profiles for technician users
 const createTechnicianProfiles = async (users) => {
   try {
-    const technicians = users.filter(u => u.role === 'technician');
-    
+    const technicians = users.filter((u) => u.role === "technician");
+
     const profiles = [
       {
         technicianId: technicians[0]._id,
-        employeeId: 'TECH0001',
+        employeeId: "TECH0001",
         workShift: {
-          type: 'morning',
-          startTime: '07:00',
-          endTime: '16:00',
-          daysOfWeek: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
+          type: "morning",
+          startTime: "07:00",
+          endTime: "16:00",
+          daysOfWeek: ["monday", "tuesday", "wednesday", "thursday", "friday"],
         },
         skillMatrix: [
-          { serviceCategory: 'battery', proficiencyLevel: 5, certifiedAt: new Date('2023-01-01'), lastAssessment: new Date('2024-11-01') },
-          { serviceCategory: 'motor', proficiencyLevel: 4, certifiedAt: new Date('2023-01-01'), lastAssessment: new Date('2024-11-01') },
-          { serviceCategory: 'charging', proficiencyLevel: 5, certifiedAt: new Date('2023-01-01'), lastAssessment: new Date('2024-11-01') }
+          {
+            serviceCategory: "battery",
+            proficiencyLevel: 5,
+            certifiedAt: new Date("2023-01-01"),
+            lastAssessment: new Date("2024-11-01"),
+          },
+          {
+            serviceCategory: "motor",
+            proficiencyLevel: 4,
+            certifiedAt: new Date("2023-01-01"),
+            lastAssessment: new Date("2024-11-01"),
+          },
+          {
+            serviceCategory: "charging",
+            proficiencyLevel: 5,
+            certifiedAt: new Date("2023-01-01"),
+            lastAssessment: new Date("2024-11-01"),
+          },
         ],
         performance: {
           efficiency: 85,
           qualityRating: 4.8,
           customerRating: 4.9,
           completedJobs: 156,
-          averageCompletionTime: 95
+          averageCompletionTime: 95,
         },
         workload: {
           current: 3,
           capacity: 8,
-          queuedAppointments: []
+          queuedAppointments: [],
         },
         availability: {
-          status: 'available',
-          scheduleNotes: 'Available for all EV services'
-        }
+          status: "available",
+          scheduleNotes: "Available for all EV services",
+        },
       },
       {
         technicianId: technicians[1]._id,
-        employeeId: 'TECH0002',
+        employeeId: "TECH0002",
         workShift: {
-          type: 'flexible',
-          startTime: '08:00',
-          endTime: '17:00',
-          daysOfWeek: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+          type: "flexible",
+          startTime: "08:00",
+          endTime: "17:00",
+          daysOfWeek: [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+          ],
         },
         skillMatrix: [
-          { serviceCategory: 'electronics', proficiencyLevel: 5, certifiedAt: new Date('2023-03-01'), lastAssessment: new Date('2024-11-01') },
-          { serviceCategory: 'general', proficiencyLevel: 4, certifiedAt: new Date('2023-03-01'), lastAssessment: new Date('2024-11-01') },
-          { serviceCategory: 'charging', proficiencyLevel: 3, certifiedAt: new Date('2023-06-01'), lastAssessment: new Date('2024-11-01') }
+          {
+            serviceCategory: "electronics",
+            proficiencyLevel: 5,
+            certifiedAt: new Date("2023-03-01"),
+            lastAssessment: new Date("2024-11-01"),
+          },
+          {
+            serviceCategory: "general",
+            proficiencyLevel: 4,
+            certifiedAt: new Date("2023-03-01"),
+            lastAssessment: new Date("2024-11-01"),
+          },
+          {
+            serviceCategory: "charging",
+            proficiencyLevel: 3,
+            certifiedAt: new Date("2023-06-01"),
+            lastAssessment: new Date("2024-11-01"),
+          },
         ],
         performance: {
           efficiency: 92,
           qualityRating: 4.9,
           customerRating: 4.7,
           completedJobs: 203,
-          averageCompletionTime: 88
+          averageCompletionTime: 88,
         },
         workload: {
           current: 2,
           capacity: 6,
-          queuedAppointments: []
+          queuedAppointments: [],
         },
         availability: {
-          status: 'available',
-          scheduleNotes: 'Specializes in electronics and diagnostics'
-        }
+          status: "available",
+          scheduleNotes: "Specializes in electronics and diagnostics",
+        },
       },
       {
         technicianId: technicians[2]._id,
-        employeeId: 'TECH0003',
+        employeeId: "TECH0003",
         workShift: {
-          type: 'afternoon',
-          startTime: '08:00',
-          endTime: '17:00',
-          daysOfWeek: ['tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+          type: "afternoon",
+          startTime: "08:00",
+          endTime: "17:00",
+          daysOfWeek: [
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+          ],
         },
         skillMatrix: [
-          { serviceCategory: 'charging', proficiencyLevel: 5, certifiedAt: new Date('2023-02-01'), lastAssessment: new Date('2024-11-01') },
-          { serviceCategory: 'electronics', proficiencyLevel: 3, certifiedAt: new Date('2023-08-01'), lastAssessment: new Date('2024-11-01') },
-          { serviceCategory: 'general', proficiencyLevel: 4, certifiedAt: new Date('2023-02-01'), lastAssessment: new Date('2024-11-01') }
+          {
+            serviceCategory: "charging",
+            proficiencyLevel: 5,
+            certifiedAt: new Date("2023-02-01"),
+            lastAssessment: new Date("2024-11-01"),
+          },
+          {
+            serviceCategory: "electronics",
+            proficiencyLevel: 3,
+            certifiedAt: new Date("2023-08-01"),
+            lastAssessment: new Date("2024-11-01"),
+          },
+          {
+            serviceCategory: "general",
+            proficiencyLevel: 4,
+            certifiedAt: new Date("2023-02-01"),
+            lastAssessment: new Date("2024-11-01"),
+          },
         ],
         performance: {
           efficiency: 78,
           qualityRating: 4.6,
           customerRating: 4.5,
           completedJobs: 89,
-          averageCompletionTime: 102
+          averageCompletionTime: 102,
         },
         workload: {
           current: 1,
           capacity: 5,
-          queuedAppointments: []
+          queuedAppointments: [],
         },
         availability: {
-          status: 'available',
-          scheduleNotes: 'Part-time schedule, charging specialist'
-        }
-      }
+          status: "available",
+          scheduleNotes: "Part-time schedule, charging specialist",
+        },
+      },
     ];
 
     const createdProfiles = [];
     for (const profile of profiles) {
-      const exists = await TechnicianProfile.findOne({ technicianId: profile.technicianId });
+      const exists = await TechnicianProfile.findOne({
+        technicianId: profile.technicianId,
+      });
       if (!exists) {
         const newProfile = await TechnicianProfile.create(profile);
         createdProfiles.push(newProfile);
@@ -812,11 +1219,13 @@ const createTechnicianProfiles = async (users) => {
         createdProfiles.push(exists);
       }
     }
-    
-    console.log(`✅ ${createdProfiles.length} technician profiles created successfully`);
+
+    console.log(
+      `✅ ${createdProfiles.length} technician profiles created successfully`
+    );
     return createdProfiles;
   } catch (error) {
-    console.error('Error creating technician profiles:', error);
+    console.error("Error creating technician profiles:", error);
     throw error;
   }
 };
@@ -826,145 +1235,188 @@ const createEVChecklists = async () => {
   try {
     const checklists = [
       {
-        name: 'Battery Health Assessment',
-        code: 'CHK-BAT-001',
-        description: 'Comprehensive battery health check and diagnostic procedure',
-        category: 'battery_check',
-        serviceTypes: ['battery'],
+        name: "Battery Health Assessment",
+        code: "CHK-BAT-001",
+        description:
+          "Comprehensive battery health check and diagnostic procedure",
+        category: "battery_check",
+        serviceTypes: ["battery"],
         applicableVehicleTypes: [
-          { make: 'Tesla', model: 'Model 3', year: { from: 2020, to: 2024 }, batteryType: 'lithium-ion' },
-          { make: 'Tesla', model: 'Model Y', year: { from: 2020, to: 2024 }, batteryType: 'lithium-ion' },
-          { make: 'VinFast', model: 'VF e34', year: { from: 2022, to: 2024 }, batteryType: 'lithium-ion' },
-          { make: 'Hyundai', model: 'IONIQ 5', year: { from: 2022, to: 2024 }, batteryType: 'lithium-ion' }
+          {
+            make: "Tesla",
+            model: "Model 3",
+            year: { from: 2020, to: 2024 },
+            batteryType: "lithium-ion",
+          },
+          {
+            make: "Tesla",
+            model: "Model Y",
+            year: { from: 2020, to: 2024 },
+            batteryType: "lithium-ion",
+          },
+          {
+            make: "VinFast",
+            model: "VF e34",
+            year: { from: 2022, to: 2024 },
+            batteryType: "lithium-ion",
+          },
+          {
+            make: "Hyundai",
+            model: "IONIQ 5",
+            year: { from: 2022, to: 2024 },
+            batteryType: "lithium-ion",
+          },
         ],
         estimatedDuration: 60,
-        skillLevel: 'intermediate',
+        skillLevel: "intermediate",
         safetyRequirements: [
-          'High voltage safety certification required',
-          'Insulated gloves mandatory',
-          'Safety glasses required',
-          'Fire extinguisher on standby'
+          "High voltage safety certification required",
+          "Insulated gloves mandatory",
+          "Safety glasses required",
+          "Fire extinguisher on standby",
         ],
         checklistItems: [
           {
             stepNumber: 1,
-            title: 'Safety Protocol Setup',
-            description: 'Establish safety perimeter and don protective equipment',
-            category: 'safety',
+            title: "Safety Protocol Setup",
+            description:
+              "Establish safety perimeter and don protective equipment",
+            category: "safety",
             isRequired: true,
             estimatedTime: 10,
-            qualityCriteria: 'All safety equipment properly worn and tested',
-            skillLevel: 'beginner'
+            qualityCriteria: "All safety equipment properly worn and tested",
+            skillLevel: "beginner",
           },
           {
             stepNumber: 2,
-            title: 'Battery Voltage Check',
-            description: 'Measure battery pack voltage using calibrated multimeter',
-            category: 'testing',
+            title: "Battery Voltage Check",
+            description:
+              "Measure battery pack voltage using calibrated multimeter",
+            category: "testing",
             isRequired: true,
             estimatedTime: 15,
-            qualityCriteria: 'Voltage within manufacturer specifications',
-            skillLevel: 'intermediate'
+            qualityCriteria: "Voltage within manufacturer specifications",
+            skillLevel: "intermediate",
           },
           {
             stepNumber: 3,
-            title: 'Cell Balance Analysis',
-            description: 'Check individual cell voltages for balance and degradation',
-            category: 'inspection',
+            title: "Cell Balance Analysis",
+            description:
+              "Check individual cell voltages for balance and degradation",
+            category: "inspection",
             isRequired: true,
             estimatedTime: 20,
-            qualityCriteria: 'Cell voltage variance less than 50mV',
-            skillLevel: 'intermediate'
+            qualityCriteria: "Cell voltage variance less than 50mV",
+            skillLevel: "intermediate",
           },
           {
             stepNumber: 4,
-            title: 'Charging Capacity Test',
-            description: 'Test battery charging capacity and efficiency',
-            category: 'testing',
+            title: "Charging Capacity Test",
+            description: "Test battery charging capacity and efficiency",
+            category: "testing",
             isRequired: true,
             estimatedTime: 10,
-            qualityCriteria: 'Charging capacity within 95% of rated capacity',
-            skillLevel: 'intermediate'
+            qualityCriteria: "Charging capacity within 95% of rated capacity",
+            skillLevel: "intermediate",
           },
           {
             stepNumber: 5,
-            title: 'Thermal Management Check',
-            description: 'Verify cooling system operation and thermal sensors',
-            category: 'verification',
+            title: "Thermal Management Check",
+            description: "Verify cooling system operation and thermal sensors",
+            category: "verification",
             isRequired: true,
             estimatedTime: 5,
-            qualityCriteria: 'All thermal sensors responding within normal range',
-            skillLevel: 'beginner'
-          }
+            qualityCriteria:
+              "All thermal sensors responding within normal range",
+            skillLevel: "beginner",
+          },
         ],
-        version: '2.1',
-        effectiveDate: new Date('2024-01-01'),
-        createdBy: 'System Administrator'
+        version: "2.1",
+        effectiveDate: new Date("2024-01-01"),
+        createdBy: "System Administrator",
       },
       {
-        name: 'Motor Performance Diagnostic',
-        code: 'CHK-MOT-001',
-        description: 'Electric motor performance analysis and diagnostic procedure',
-        category: 'motor_check',
-        serviceTypes: ['motor'],
+        name: "Motor Performance Diagnostic",
+        code: "CHK-MOT-001",
+        description:
+          "Electric motor performance analysis and diagnostic procedure",
+        category: "motor_check",
+        serviceTypes: ["motor"],
         applicableVehicleTypes: [
-          { make: 'Tesla', model: 'Model 3', year: { from: 2020, to: 2024 }, batteryType: 'lithium-ion' },
-          { make: 'Tesla', model: 'Model Y', year: { from: 2020, to: 2024 }, batteryType: 'lithium-ion' },
-          { make: 'VinFast', model: 'VF e34', year: { from: 2022, to: 2024 }, batteryType: 'lithium-ion' }
+          {
+            make: "Tesla",
+            model: "Model 3",
+            year: { from: 2020, to: 2024 },
+            batteryType: "lithium-ion",
+          },
+          {
+            make: "Tesla",
+            model: "Model Y",
+            year: { from: 2020, to: 2024 },
+            batteryType: "lithium-ion",
+          },
+          {
+            make: "VinFast",
+            model: "VF e34",
+            year: { from: 2022, to: 2024 },
+            batteryType: "lithium-ion",
+          },
         ],
         estimatedDuration: 90,
-        skillLevel: 'advanced',
+        skillLevel: "advanced",
         safetyRequirements: [
-          'Motor systems certification required',
-          'Vehicle must be properly secured',
-          'High voltage disconnection required'
+          "Motor systems certification required",
+          "Vehicle must be properly secured",
+          "High voltage disconnection required",
         ],
         checklistItems: [
           {
             stepNumber: 1,
-            title: 'Pre-Test Safety Check',
-            description: 'Ensure vehicle is secure and high voltage is disconnected',
-            category: 'safety',
+            title: "Pre-Test Safety Check",
+            description:
+              "Ensure vehicle is secure and high voltage is disconnected",
+            category: "safety",
             isRequired: true,
             estimatedTime: 15,
-            qualityCriteria: 'High voltage isolation confirmed',
-            skillLevel: 'intermediate'
+            qualityCriteria: "High voltage isolation confirmed",
+            skillLevel: "intermediate",
           },
           {
             stepNumber: 2,
-            title: 'Motor Mount Inspection',
-            description: 'Check motor mounting points for wear and proper torque',
-            category: 'inspection',
+            title: "Motor Mount Inspection",
+            description:
+              "Check motor mounting points for wear and proper torque",
+            category: "inspection",
             isRequired: true,
             estimatedTime: 20,
-            qualityCriteria: 'All mounts secure, no visible wear or damage',
-            skillLevel: 'beginner'
+            qualityCriteria: "All mounts secure, no visible wear or damage",
+            skillLevel: "beginner",
           },
           {
             stepNumber: 3,
-            title: 'Performance Analysis',
-            description: 'Test motor performance under various load conditions',
-            category: 'testing',
+            title: "Performance Analysis",
+            description: "Test motor performance under various load conditions",
+            category: "testing",
             isRequired: true,
             estimatedTime: 45,
-            qualityCriteria: 'Performance within manufacturer specifications',
-            skillLevel: 'advanced'
+            qualityCriteria: "Performance within manufacturer specifications",
+            skillLevel: "advanced",
           },
           {
             stepNumber: 4,
-            title: 'Vibration Analysis',
-            description: 'Check for abnormal vibrations during operation',
-            category: 'inspection',
+            title: "Vibration Analysis",
+            description: "Check for abnormal vibrations during operation",
+            category: "inspection",
             isRequired: true,
             estimatedTime: 10,
-            qualityCriteria: 'Vibration levels within acceptable range',
-            skillLevel: 'intermediate'
-          }
+            qualityCriteria: "Vibration levels within acceptable range",
+            skillLevel: "intermediate",
+          },
         ],
-        version: '1.8',
-        effectiveDate: new Date('2024-01-15'),
-        createdBy: 'Motor Systems Team'
-      }
+        version: "1.8",
+        effectiveDate: new Date("2024-01-15"),
+        createdBy: "Motor Systems Team",
+      },
     ];
 
     const createdChecklists = [];
@@ -977,11 +1429,13 @@ const createEVChecklists = async () => {
         createdChecklists.push(exists);
       }
     }
-    
-    console.log(`✅ ${createdChecklists.length} EV checklists created successfully`);
+
+    console.log(
+      `✅ ${createdChecklists.length} EV checklists created successfully`
+    );
     return createdChecklists;
   } catch (error) {
-    console.error('Error creating EV checklists:', error);
+    console.error("Error creating EV checklists:", error);
     throw error;
   }
 };
@@ -991,93 +1445,99 @@ const createServiceReceptions = async (vehicles, appointments, users) => {
   try {
     const receptions = [
       {
-        receptionNumber: 'REC-241201-001',
+        receptionNumber: "REC-241201-001",
         appointmentId: appointments[0]._id,
         vehicleId: vehicles[0]._id,
         customerId: appointments[0].customerId,
         serviceCenterId: appointments[0].serviceCenterId,
-        receivedBy: users.find(u => u.role === 'staff')._id,
+        receivedBy: users.find((u) => u.role === "staff")._id,
         vehicleCondition: {
           exterior: {
-            condition: 'good',
-            damages: [{
-              location: 'front bumper',
-              type: 'scratch',
-              severity: 'minor',
-              description: 'Small scratch on lower front bumper',
-              photoUrl: '/uploads/damage_photos/front_bumper_scratch.jpg'
-            }],
-            notes: 'Minor cosmetic damage only'
+            condition: "good",
+            damages: [
+              {
+                location: "front bumper",
+                type: "scratch",
+                severity: "minor",
+                description: "Small scratch on lower front bumper",
+                photoUrl: "/uploads/damage_photos/front_bumper_scratch.jpg",
+              },
+            ],
+            notes: "Minor cosmetic damage only",
           },
           interior: {
-            condition: 'excellent',
-            cleanliness: 'clean',
+            condition: "excellent",
+            cleanliness: "clean",
             damages: [],
-            notes: 'Interior in excellent condition'
+            notes: "Interior in excellent condition",
           },
           battery: {
             level: 45,
-            health: 'good',
+            health: "good",
             temperature: 25,
-            chargingStatus: 'not_charging',
+            chargingStatus: "not_charging",
             lastChargeDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
             cycleCount: 420,
-            notes: 'Battery drains faster than expected according to customer'
+            notes: "Battery drains faster than expected according to customer",
           },
           mileage: {
             current: 15250,
             lastService: 10000,
-            mileageSinceLastService: 5250
+            mileageSinceLastService: 5250,
           },
           fluids: {
             washerFluid: {
-              level: 'adequate'
+              level: "adequate",
             },
             brakeFluid: {
-              level: 'full',
-              condition: 'clear'
+              level: "full",
+              condition: "clear",
             },
             coolant: {
-              level: 'adequate',
-              condition: 'clean'
-            }
+              level: "adequate",
+              condition: "clean",
+            },
           },
           tires: {
-            frontLeft: { treadDepth: 6.5, pressure: 42, condition: 'good' },
-            frontRight: { treadDepth: 6.8, pressure: 43, condition: 'good' },
-            rearLeft: { treadDepth: 5.2, pressure: 41, condition: 'fair' },
-            rearRight: { treadDepth: 5.5, pressure: 42, condition: 'fair' },
-            spare: { condition: 'good', pressure: 42 }
+            frontLeft: { treadDepth: 6.5, pressure: 42, condition: "good" },
+            frontRight: { treadDepth: 6.8, pressure: 43, condition: "good" },
+            rearLeft: { treadDepth: 5.2, pressure: 41, condition: "fair" },
+            rearRight: { treadDepth: 5.5, pressure: 42, condition: "fair" },
+            spare: { condition: "good", pressure: 42 },
           },
           lights: {
-            headlights: 'working',
-            taillights: 'working',
-            indicators: 'working',
-            interiorLights: 'working'
+            headlights: "working",
+            taillights: "working",
+            indicators: "working",
+            interiorLights: "working",
           },
-          generalIssues: [{
-            category: 'electrical',
-            issue: 'Battery efficiency degradation',
-            severity: 'medium',
-            customerReported: true
-          }]
+          generalIssues: [
+            {
+              category: "electrical",
+              issue: "Battery efficiency degradation",
+              severity: "medium",
+              customerReported: true,
+            },
+          ],
         },
         diagnosticCodes: [],
         estimatedServiceTime: 60,
         estimatedCompletionTime: new Date(Date.now() + 2 * 60 * 60 * 1000),
         specialInstructions: {
-          fromCustomer: 'Please check battery performance',
-          fromStaff: 'Perform comprehensive battery diagnostic',
-          safetyPrecautions: ['High voltage safety protocols'],
-          warningNotes: ['Customer reports unusual battery behavior']
+          fromCustomer: "Please check battery performance",
+          fromStaff: "Perform comprehensive battery diagnostic",
+          safetyPrecautions: ["High voltage safety protocols"],
+          warningNotes: ["Customer reports unusual battery behavior"],
         },
-        status: 'received'
-      }
+        status: "received",
+      },
     ];
 
     const createdReceptions = [];
     for (const reception of receptions) {
-      const exists = await ServiceReception.findOne({ receptionNumber: reception.receptionNumber });
+      const exists = await ServiceReception.findOne({
+        receptionNumber: reception.receptionNumber,
+      });
       if (!exists) {
         const newReception = await ServiceReception.create(reception);
         createdReceptions.push(newReception);
@@ -1085,11 +1545,13 @@ const createServiceReceptions = async (vehicles, appointments, users) => {
         createdReceptions.push(exists);
       }
     }
-    
-    console.log(`✅ ${createdReceptions.length} service receptions created successfully`);
+
+    console.log(
+      `✅ ${createdReceptions.length} service receptions created successfully`
+    );
     return createdReceptions;
   } catch (error) {
-    console.error('Error creating service receptions:', error);
+    console.error("Error creating service receptions:", error);
     throw error;
   }
 };
@@ -1097,135 +1559,149 @@ const createServiceReceptions = async (vehicles, appointments, users) => {
 // Create sample vehicles for customers
 const createVehicles = async (users) => {
   try {
-    const customers = users.filter(u => u.role === 'customer');
+    const customers = users.filter((u) => u.role === "customer");
     const vehicles = [
       {
         customerId: customers[0]._id,
-        vin: '5YJ3E1EA4NF123456', // Valid Tesla Model 3 VIN
-        make: 'Tesla',
-        model: 'Model 3',
+        vin: "5YJ3E1EA4NF123456", // Valid Tesla Model 3 VIN
+        make: "Tesla",
+        model: "Model 3",
         year: 2023,
-        color: 'Pearl White',
-        batteryType: 'lithium-ion',
+        color: "Pearl White",
+        batteryType: "lithium-ion",
         batteryCapacity: 75,
         maxChargingPower: 250,
         range: 500,
-        purchaseDate: new Date('2023-01-15'),
+        purchaseDate: new Date("2023-01-15"),
         mileage: 15000,
-        lastMaintenanceDate: new Date('2024-01-15'),
-        nextMaintenanceDate: new Date('2024-07-15'),
+        lastMaintenanceDate: new Date("2024-01-15"),
+        nextMaintenanceDate: new Date("2024-07-15"),
         maintenanceInterval: 15000,
         timeBasedInterval: 12,
-        warrantyExpiry: new Date('2026-01-15'),
+        warrantyExpiry: new Date("2026-01-15"),
         images: [
-          { url: '/uploads/vehicles/tesla-model3-front.jpg', description: 'Front view', uploadDate: new Date() }
+          {
+            url: "/uploads/vehicles/tesla-model3-front.jpg",
+            description: "Front view",
+            uploadDate: new Date(),
+          },
         ],
         documents: [
-          { name: 'Vehicle Registration', url: '/uploads/documents/reg1.pdf', type: 'registration', uploadDate: new Date() },
-          { name: 'Insurance Certificate', url: '/uploads/documents/ins1.pdf', type: 'insurance', uploadDate: new Date() }
+          {
+            name: "Vehicle Registration",
+            url: "/uploads/documents/reg1.pdf",
+            type: "registration",
+            uploadDate: new Date(),
+          },
+          {
+            name: "Insurance Certificate",
+            url: "/uploads/documents/ins1.pdf",
+            type: "insurance",
+            uploadDate: new Date(),
+          },
         ],
-        isActive: true
+        isActive: true,
       },
       {
         customerId: customers[0]._id,
-        vin: '5YJYGDEE8MF789123', // Valid Tesla Model Y VIN
-        make: 'Tesla',
-        model: 'Model Y',
+        vin: "5YJYGDEE8MF789123", // Valid Tesla Model Y VIN
+        make: "Tesla",
+        model: "Model Y",
         year: 2022,
-        color: 'Midnight Silver Metallic',
-        batteryType: 'lithium-ion',
+        color: "Midnight Silver Metallic",
+        batteryType: "lithium-ion",
         batteryCapacity: 80,
         maxChargingPower: 250,
         range: 525,
-        purchaseDate: new Date('2022-06-20'),
+        purchaseDate: new Date("2022-06-20"),
         mileage: 28000,
-        lastMaintenanceDate: new Date('2023-12-20'),
-        nextMaintenanceDate: new Date('2024-06-20'),
+        lastMaintenanceDate: new Date("2023-12-20"),
+        nextMaintenanceDate: new Date("2024-06-20"),
         maintenanceInterval: 15000,
         timeBasedInterval: 12,
-        warrantyExpiry: new Date('2025-06-20'),
-        isActive: true
+        warrantyExpiry: new Date("2025-06-20"),
+        isActive: true,
       },
       {
         customerId: customers[1]._id,
-        vin: 'LVVDB11B5NE456789', // Valid VinFast VIN format
-        make: 'VinFast',
-        model: 'VF e34',
+        vin: "LVVDB11B5NE456789", // Valid VinFast VIN format
+        make: "VinFast",
+        model: "VF e34",
         year: 2023,
-        color: 'Ocean Blue',
-        batteryType: 'lithium-ion',
+        color: "Ocean Blue",
+        batteryType: "lithium-ion",
         batteryCapacity: 42,
         maxChargingPower: 80,
         range: 285,
-        purchaseDate: new Date('2023-03-10'),
+        purchaseDate: new Date("2023-03-10"),
         mileage: 8500,
-        lastMaintenanceDate: new Date('2023-09-10'),
-        nextMaintenanceDate: new Date('2024-03-10'),
+        lastMaintenanceDate: new Date("2023-09-10"),
+        nextMaintenanceDate: new Date("2024-03-10"),
         maintenanceInterval: 10000,
         timeBasedInterval: 6,
-        warrantyExpiry: new Date('2026-03-10'),
-        isActive: true
+        warrantyExpiry: new Date("2026-03-10"),
+        isActive: true,
       },
       {
         customerId: customers[2]._id,
-        vin: 'KMHL14JA7PA345678', // Valid Hyundai IONIQ 5 VIN
-        make: 'Hyundai',
-        model: 'IONIQ 5',
+        vin: "KMHL14JA7PA345678", // Valid Hyundai IONIQ 5 VIN
+        make: "Hyundai",
+        model: "IONIQ 5",
         year: 2023,
-        color: 'Gravity Gold Matte',
-        batteryType: 'lithium-ion',
+        color: "Gravity Gold Matte",
+        batteryType: "lithium-ion",
         batteryCapacity: 72.6,
         maxChargingPower: 220,
         range: 450,
-        purchaseDate: new Date('2023-08-05'),
+        purchaseDate: new Date("2023-08-05"),
         mileage: 5200,
-        lastMaintenanceDate: new Date('2024-02-05'),
-        nextMaintenanceDate: new Date('2024-08-05'),
+        lastMaintenanceDate: new Date("2024-02-05"),
+        nextMaintenanceDate: new Date("2024-08-05"),
         maintenanceInterval: 12000,
         timeBasedInterval: 12,
-        warrantyExpiry: new Date('2031-08-05'), // 8 year battery warranty
-        isActive: true
+        warrantyExpiry: new Date("2031-08-05"), // 8 year battery warranty
+        isActive: true,
       },
       {
         customerId: customers[3]._id,
-        vin: 'WBY8P8C59KV567890', // Valid BMW i4 VIN
-        make: 'BMW',
-        model: 'i4 eDrive40',
+        vin: "WBY8P8C59KV567890", // Valid BMW i4 VIN
+        make: "BMW",
+        model: "i4 eDrive40",
         year: 2024,
-        color: 'Storm Bay',
-        batteryType: 'lithium-ion',
+        color: "Storm Bay",
+        batteryType: "lithium-ion",
         batteryCapacity: 83.9,
         maxChargingPower: 200,
         range: 590,
-        purchaseDate: new Date('2024-01-10'),
+        purchaseDate: new Date("2024-01-10"),
         mileage: 2100,
         lastMaintenanceDate: null,
-        nextMaintenanceDate: new Date('2024-07-10'),
+        nextMaintenanceDate: new Date("2024-07-10"),
         maintenanceInterval: 15000,
         timeBasedInterval: 12,
-        warrantyExpiry: new Date('2032-01-10'), // 8 year battery warranty
-        isActive: true
+        warrantyExpiry: new Date("2032-01-10"), // 8 year battery warranty
+        isActive: true,
       },
       {
         customerId: customers[4]._id,
-        vin: 'WMEEJ9AA2NK234567', // Valid Mercedes EQS VIN
-        make: 'Mercedes-Benz',
-        model: 'EQS 450+',
+        vin: "WMEEJ9AA2NK234567", // Valid Mercedes EQS VIN
+        make: "Mercedes-Benz",
+        model: "EQS 450+",
         year: 2023,
-        color: 'Obsidian Black Metallic',
-        batteryType: 'lithium-ion',
+        color: "Obsidian Black Metallic",
+        batteryType: "lithium-ion",
         batteryCapacity: 107.8,
         maxChargingPower: 200,
         range: 770,
-        purchaseDate: new Date('2023-05-20'),
+        purchaseDate: new Date("2023-05-20"),
         mileage: 12300,
-        lastMaintenanceDate: new Date('2023-11-20'),
-        nextMaintenanceDate: new Date('2024-05-20'),
+        lastMaintenanceDate: new Date("2023-11-20"),
+        nextMaintenanceDate: new Date("2024-05-20"),
         maintenanceInterval: 20000,
         timeBasedInterval: 12,
-        warrantyExpiry: new Date('2031-05-20'), // 8 year battery warranty
-        isActive: true
-      }
+        warrantyExpiry: new Date("2031-05-20"), // 8 year battery warranty
+        isActive: true,
+      },
     ];
 
     const createdVehicles = [];
@@ -1244,7 +1720,7 @@ const createVehicles = async (users) => {
     console.log(`✅ ${createdVehicles.length} vehicles created successfully`);
     return createdVehicles;
   } catch (error) {
-    console.error('Error creating vehicles:', error);
+    console.error("Error creating vehicles:", error);
     throw error;
   }
 };
@@ -1255,13 +1731,13 @@ const createParts = async () => {
     const parts = [
       // Battery Parts
       {
-        partNumber: 'BAT-TESLA-M3-001',
-        name: 'Tesla Model 3 Battery Pack',
-        description: '75kWh Lithium-ion battery pack for Tesla Model 3',
-        category: 'battery',
-        subcategory: 'battery-pack',
-        brand: 'Tesla',
-        model: 'Model 3',
+        partNumber: "BAT-TESLA-M3-001",
+        name: "Tesla Model 3 Battery Pack",
+        description: "75kWh Lithium-ion battery pack for Tesla Model 3",
+        category: "battery",
+        subcategory: "battery-pack",
+        brand: "Tesla",
+        model: "Model 3",
         specifications: {
           voltage: 400,
           capacity: 75,
@@ -1269,32 +1745,32 @@ const createParts = async () => {
           dimensions: {
             length: 1500,
             width: 800,
-            height: 150
+            height: 150,
           },
           other: {
             cells: 4416,
-            chemistry: 'NCA'
-          }
+            chemistry: "NCA",
+          },
         },
         compatibility: {
-          makes: ['Tesla'],
-          models: ['Model 3'],
+          makes: ["Tesla"],
+          models: ["Model 3"],
           years: {
             min: 2020,
-            max: 2024
+            max: 2024,
           },
-          batteryTypes: ['lithium-ion']
+          batteryTypes: ["lithium-ion"],
         },
         pricing: {
           cost: 12000000,
           retail: 18000000,
           wholesale: 15000000,
-          currency: 'VND'
+          currency: "VND",
         },
         supplierInfo: {
-          name: 'Tesla Parts Division',
-          contact: 'parts@tesla.com',
-          notes: 'Original equipment manufacturer'
+          name: "Tesla Parts Division",
+          contact: "parts@tesla.com",
+          notes: "Original equipment manufacturer",
         },
         inventory: {
           currentStock: 5,
@@ -1304,31 +1780,31 @@ const createParts = async () => {
           maxStockLevel: 10,
           reorderPoint: 3,
           averageUsage: 1,
-          reservations: []
+          reservations: [],
         },
         leadTime: 14,
         warranty: {
           duration: 365,
-          type: 'manufacturer',
-          description: '1 year full replacement warranty'
+          type: "manufacturer",
+          description: "1 year full replacement warranty",
         },
         usage: {
           totalUsed: 8,
           lastUsed: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-          averageMonthlyUsage: 2
+          averageMonthlyUsage: 2,
         },
         isRecommended: true,
         isActive: true,
-        tags: ['tesla', 'battery', 'model-3', 'lithium-ion']
+        tags: ["tesla", "battery", "model-3", "lithium-ion"],
       },
       {
-        partNumber: 'BAT-VINFAST-E34-001',
-        name: 'VinFast VF e34 Battery Module',
-        description: '42kWh Battery module for VinFast VF e34',
-        category: 'battery',
-        subcategory: 'battery-module',
-        brand: 'VinFast',
-        model: 'VF e34',
+        partNumber: "BAT-VINFAST-E34-001",
+        name: "VinFast VF e34 Battery Module",
+        description: "42kWh Battery module for VinFast VF e34",
+        category: "battery",
+        subcategory: "battery-module",
+        brand: "VinFast",
+        model: "VF e34",
         specifications: {
           voltage: 350,
           capacity: 42,
@@ -1336,28 +1812,28 @@ const createParts = async () => {
           dimensions: {
             length: 1200,
             width: 600,
-            height: 120
-          }
+            height: 120,
+          },
         },
         compatibility: {
-          makes: ['VinFast'],
-          models: ['VF e34'],
+          makes: ["VinFast"],
+          models: ["VF e34"],
           years: {
             min: 2022,
-            max: 2024
+            max: 2024,
           },
-          batteryTypes: ['lithium-ion']
+          batteryTypes: ["lithium-ion"],
         },
         pricing: {
           cost: 8000000,
           retail: 12000000,
           wholesale: 10000000,
-          currency: 'VND'
+          currency: "VND",
         },
         supplierInfo: {
-          name: 'VinFast Service Parts',
-          contact: 'parts@vinfast.vn',
-          notes: 'Authorized dealer parts'
+          name: "VinFast Service Parts",
+          contact: "parts@vinfast.vn",
+          notes: "Authorized dealer parts",
         },
         inventory: {
           currentStock: 8,
@@ -1367,33 +1843,33 @@ const createParts = async () => {
           maxStockLevel: 15,
           reorderPoint: 5,
           averageUsage: 2,
-          reservations: []
+          reservations: [],
         },
         leadTime: 7,
         warranty: {
           duration: 180,
-          type: 'manufacturer',
-          description: '6 months manufacturer warranty'
+          type: "manufacturer",
+          description: "6 months manufacturer warranty",
         },
         usage: {
           totalUsed: 12,
           lastUsed: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
-          averageMonthlyUsage: 3
+          averageMonthlyUsage: 3,
         },
         isRecommended: true,
         isActive: true,
-        tags: ['vinfast', 'battery', 'module', 'e34']
+        tags: ["vinfast", "battery", "module", "e34"],
       },
 
       // Motor Parts
       {
-        partNumber: 'MOT-TESLA-3-REAR-001',
-        name: 'Tesla Model 3 Rear Motor',
-        description: 'Permanent magnet rear motor for Tesla Model 3',
-        category: 'motor',
-        subcategory: 'drive-motor',
-        brand: 'Tesla',
-        model: 'Model 3',
+        partNumber: "MOT-TESLA-3-REAR-001",
+        name: "Tesla Model 3 Rear Motor",
+        description: "Permanent magnet rear motor for Tesla Model 3",
+        category: "motor",
+        subcategory: "drive-motor",
+        brand: "Tesla",
+        model: "Model 3",
         specifications: {
           power: 211,
           voltage: 400,
@@ -1401,32 +1877,32 @@ const createParts = async () => {
           dimensions: {
             length: 220,
             width: 220,
-            height: 200
+            height: 200,
           },
           other: {
-            type: 'permanent_magnet',
-            maxRPM: 18000
-          }
+            type: "permanent_magnet",
+            maxRPM: 18000,
+          },
         },
         compatibility: {
-          makes: ['Tesla'],
-          models: ['Model 3'],
+          makes: ["Tesla"],
+          models: ["Model 3"],
           years: {
             min: 2020,
-            max: 2024
+            max: 2024,
           },
-          batteryTypes: ['lithium-ion']
+          batteryTypes: ["lithium-ion"],
         },
         pricing: {
           cost: 8000000,
           retail: 12000000,
           wholesale: 10000000,
-          currency: 'VND'
+          currency: "VND",
         },
         supplierInfo: {
-          name: 'Tesla Motors',
-          contact: 'service@tesla.com',
-          notes: 'OEM replacement motor'
+          name: "Tesla Motors",
+          contact: "service@tesla.com",
+          notes: "OEM replacement motor",
         },
         inventory: {
           currentStock: 3,
@@ -1436,65 +1912,65 @@ const createParts = async () => {
           maxStockLevel: 5,
           reorderPoint: 2,
           averageUsage: 0,
-          reservations: []
+          reservations: [],
         },
         leadTime: 21,
         warranty: {
           duration: 365,
-          type: 'manufacturer',
-          description: '1 year motor replacement warranty'
+          type: "manufacturer",
+          description: "1 year motor replacement warranty",
         },
         usage: {
           totalUsed: 2,
           lastUsed: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
-          averageMonthlyUsage: 0
+          averageMonthlyUsage: 0,
         },
         isRecommended: false,
         isActive: true,
-        tags: ['tesla', 'motor', 'rear', 'permanent-magnet']
+        tags: ["tesla", "motor", "rear", "permanent-magnet"],
       },
 
       // Charging Parts
       {
-        partNumber: 'CHG-UNI-TYPE2-001',
-        name: 'Type 2 Charging Port',
-        description: 'Universal Type 2 charging port for electric vehicles',
-        category: 'charging',
-        subcategory: 'charging-port',
-        brand: 'Universal',
+        partNumber: "CHG-UNI-TYPE2-001",
+        name: "Type 2 Charging Port",
+        description: "Universal Type 2 charging port for electric vehicles",
+        category: "charging",
+        subcategory: "charging-port",
+        brand: "Universal",
         specifications: {
           voltage: 400,
           power: 22,
           dimensions: {
             length: 100,
             width: 80,
-            height: 60
+            height: 60,
           },
-          material: 'Thermoplastic',
+          material: "Thermoplastic",
           other: {
-            connector: 'Type 2',
-            phases: 3
-          }
+            connector: "Type 2",
+            phases: 3,
+          },
         },
         compatibility: {
-          makes: ['Tesla', 'VinFast', 'Hyundai', 'BMW', 'Audi'],
-          models: ['Model 3', 'Model Y', 'VF e34', 'IONIQ 5'],
+          makes: ["Tesla", "VinFast", "Hyundai", "BMW", "Audi"],
+          models: ["Model 3", "Model Y", "VF e34", "IONIQ 5"],
           years: {
             min: 2020,
-            max: 2024
+            max: 2024,
           },
-          batteryTypes: ['lithium-ion', 'lithium-iron-phosphate']
+          batteryTypes: ["lithium-ion", "lithium-iron-phosphate"],
         },
         pricing: {
           cost: 500000,
           retail: 800000,
           wholesale: 650000,
-          currency: 'VND'
+          currency: "VND",
         },
         supplierInfo: {
-          name: 'EV Components Ltd',
-          contact: 'sales@evcomponents.com',
-          notes: 'Universal charging components supplier'
+          name: "EV Components Ltd",
+          contact: "sales@evcomponents.com",
+          notes: "Universal charging components supplier",
         },
         inventory: {
           currentStock: 25,
@@ -1504,30 +1980,30 @@ const createParts = async () => {
           maxStockLevel: 50,
           reorderPoint: 15,
           averageUsage: 8,
-          reservations: []
+          reservations: [],
         },
         leadTime: 3,
         warranty: {
           duration: 90,
-          type: 'supplier',
-          description: '3 months parts warranty'
+          type: "supplier",
+          description: "3 months parts warranty",
         },
         usage: {
           totalUsed: 45,
           lastUsed: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-          averageMonthlyUsage: 12
+          averageMonthlyUsage: 12,
         },
         isRecommended: true,
         isActive: true,
-        tags: ['charging', 'type-2', 'universal', 'port']
+        tags: ["charging", "type-2", "universal", "port"],
       },
       {
-        partNumber: 'CHG-ONBOARD-22KW-001',
-        name: '22kW Onboard Charger',
-        description: 'High-efficiency 22kW onboard charging unit',
-        category: 'charging',
-        subcategory: 'onboard-charger',
-        brand: 'ChargeMax',
+        partNumber: "CHG-ONBOARD-22KW-001",
+        name: "22kW Onboard Charger",
+        description: "High-efficiency 22kW onboard charging unit",
+        category: "charging",
+        subcategory: "onboard-charger",
+        brand: "ChargeMax",
         specifications: {
           power: 22,
           voltage: 400,
@@ -1535,32 +2011,32 @@ const createParts = async () => {
           dimensions: {
             length: 400,
             width: 300,
-            height: 150
+            height: 150,
           },
           other: {
             efficiency: 95,
-            cooling: 'liquid'
-          }
+            cooling: "liquid",
+          },
         },
         compatibility: {
-          makes: ['VinFast', 'Hyundai', 'BMW'],
-          models: ['VF e34', 'IONIQ 5'],
+          makes: ["VinFast", "Hyundai", "BMW"],
+          models: ["VF e34", "IONIQ 5"],
           years: {
             min: 2022,
-            max: 2024
+            max: 2024,
           },
-          batteryTypes: ['lithium-ion']
+          batteryTypes: ["lithium-ion"],
         },
         pricing: {
           cost: 3500000,
           retail: 5500000,
           wholesale: 4500000,
-          currency: 'VND'
+          currency: "VND",
         },
         supplierInfo: {
-          name: 'ChargeMax Technologies',
-          contact: 'info@chargemax.com',
-          notes: 'Specialized charging equipment manufacturer'
+          name: "ChargeMax Technologies",
+          contact: "info@chargemax.com",
+          notes: "Specialized charging equipment manufacturer",
         },
         inventory: {
           currentStock: 12,
@@ -1570,66 +2046,66 @@ const createParts = async () => {
           maxStockLevel: 20,
           reorderPoint: 8,
           averageUsage: 3,
-          reservations: []
+          reservations: [],
         },
         leadTime: 10,
         warranty: {
           duration: 180,
-          type: 'manufacturer',
-          description: '6 months manufacturer warranty'
+          type: "manufacturer",
+          description: "6 months manufacturer warranty",
         },
         usage: {
           totalUsed: 18,
           lastUsed: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
-          averageMonthlyUsage: 4
+          averageMonthlyUsage: 4,
         },
         isRecommended: true,
         isActive: true,
-        tags: ['charging', 'onboard', '22kw', 'charger']
+        tags: ["charging", "onboard", "22kw", "charger"],
       },
 
       // Electronics Parts
       {
-        partNumber: 'ELC-TESLA-MCU-001',
-        name: 'Tesla MCU (Media Control Unit)',
-        description: 'Media Control Unit for Tesla vehicles',
-        category: 'electronics',
-        subcategory: 'control-unit',
-        brand: 'Tesla',
+        partNumber: "ELC-TESLA-MCU-001",
+        name: "Tesla MCU (Media Control Unit)",
+        description: "Media Control Unit for Tesla vehicles",
+        category: "electronics",
+        subcategory: "control-unit",
+        brand: "Tesla",
         specifications: {
           voltage: 12,
           weight: 2.5,
           dimensions: {
             length: 200,
             width: 150,
-            height: 50
+            height: 50,
           },
           other: {
-            processor: 'Intel Atom',
-            memory: '8GB RAM',
-            storage: '64GB eMMC',
-            display: '15-inch touchscreen'
-          }
+            processor: "Intel Atom",
+            memory: "8GB RAM",
+            storage: "64GB eMMC",
+            display: "15-inch touchscreen",
+          },
         },
         compatibility: {
-          makes: ['Tesla'],
-          models: ['Model 3', 'Model Y'],
+          makes: ["Tesla"],
+          models: ["Model 3", "Model Y"],
           years: {
             min: 2021,
-            max: 2024
+            max: 2024,
           },
-          batteryTypes: ['lithium-ion']
+          batteryTypes: ["lithium-ion"],
         },
         pricing: {
           cost: 8000000,
           retail: 12000000,
           wholesale: 10000000,
-          currency: 'VND'
+          currency: "VND",
         },
         supplierInfo: {
-          name: 'Tesla Electronics',
-          contact: 'electronics@tesla.com',
-          notes: 'Original Tesla electronics'
+          name: "Tesla Electronics",
+          contact: "electronics@tesla.com",
+          notes: "Original Tesla electronics",
         },
         inventory: {
           currentStock: 6,
@@ -1639,30 +2115,30 @@ const createParts = async () => {
           maxStockLevel: 10,
           reorderPoint: 4,
           averageUsage: 1,
-          reservations: []
+          reservations: [],
         },
         leadTime: 21,
         warranty: {
           duration: 180,
-          type: 'manufacturer',
-          description: '6 months limited warranty'
+          type: "manufacturer",
+          description: "6 months limited warranty",
         },
         usage: {
           totalUsed: 5,
           lastUsed: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000),
-          averageMonthlyUsage: 1
+          averageMonthlyUsage: 1,
         },
         isRecommended: false,
         isActive: true,
-        tags: ['tesla', 'electronics', 'mcu', 'touchscreen']
+        tags: ["tesla", "electronics", "mcu", "touchscreen"],
       },
       {
-        partNumber: 'ELC-DC-CONVERTER-001',
-        name: 'DC-DC Converter 12V',
-        description: 'High voltage to 12V DC converter for auxiliary systems',
-        category: 'electronics',
-        subcategory: 'power-converter',
-        brand: 'PowerTech',
+        partNumber: "ELC-DC-CONVERTER-001",
+        name: "DC-DC Converter 12V",
+        description: "High voltage to 12V DC converter for auxiliary systems",
+        category: "electronics",
+        subcategory: "power-converter",
+        brand: "PowerTech",
         specifications: {
           power: 1.5,
           voltage: 12,
@@ -1670,33 +2146,33 @@ const createParts = async () => {
           dimensions: {
             length: 250,
             width: 180,
-            height: 80
+            height: 80,
           },
           other: {
-            inputVoltage: '250-450V',
-            outputCurrent: '125A',
-            efficiency: 92
-          }
+            inputVoltage: "250-450V",
+            outputCurrent: "125A",
+            efficiency: 92,
+          },
         },
         compatibility: {
-          makes: ['Tesla', 'VinFast', 'Hyundai'],
-          models: ['Model 3', 'Model Y', 'VF e34', 'IONIQ 5'],
+          makes: ["Tesla", "VinFast", "Hyundai"],
+          models: ["Model 3", "Model Y", "VF e34", "IONIQ 5"],
           years: {
             min: 2020,
-            max: 2024
+            max: 2024,
           },
-          batteryTypes: ['lithium-ion']
+          batteryTypes: ["lithium-ion"],
         },
         pricing: {
           cost: 2000000,
           retail: 3200000,
           wholesale: 2600000,
-          currency: 'VND'
+          currency: "VND",
         },
         supplierInfo: {
-          name: 'PowerTech Solutions',
-          contact: 'support@powertech.com',
-          notes: 'Automotive power electronics specialist'
+          name: "PowerTech Solutions",
+          contact: "support@powertech.com",
+          notes: "Automotive power electronics specialist",
         },
         inventory: {
           currentStock: 18,
@@ -1706,61 +2182,61 @@ const createParts = async () => {
           maxStockLevel: 30,
           reorderPoint: 12,
           averageUsage: 6,
-          reservations: []
+          reservations: [],
         },
         leadTime: 7,
         warranty: {
           duration: 120,
-          type: 'manufacturer',
-          description: '4 months manufacturer warranty'
+          type: "manufacturer",
+          description: "4 months manufacturer warranty",
         },
         usage: {
           totalUsed: 28,
           lastUsed: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
-          averageMonthlyUsage: 7
+          averageMonthlyUsage: 7,
         },
         isRecommended: true,
         isActive: true,
-        tags: ['electronics', 'dc-converter', '12v', 'power']
+        tags: ["electronics", "dc-converter", "12v", "power"],
       },
 
       // Body Parts
       {
-        partNumber: 'BODY-TESLA-DOOR-001',
-        name: 'Tesla Model 3 Front Door Handle',
-        description: 'Retractable front door handle assembly for Tesla Model 3',
-        category: 'body',
-        subcategory: 'door-handle',
-        brand: 'Tesla',
-        model: 'Model 3',
+        partNumber: "BODY-TESLA-DOOR-001",
+        name: "Tesla Model 3 Front Door Handle",
+        description: "Retractable front door handle assembly for Tesla Model 3",
+        category: "body",
+        subcategory: "door-handle",
+        brand: "Tesla",
+        model: "Model 3",
         specifications: {
           weight: 0.8,
           dimensions: {
             length: 150,
             width: 30,
-            height: 25
+            height: 25,
           },
-          material: 'Aluminum',
-          color: 'Chrome'
+          material: "Aluminum",
+          color: "Chrome",
         },
         compatibility: {
-          makes: ['Tesla'],
-          models: ['Model 3'],
+          makes: ["Tesla"],
+          models: ["Model 3"],
           years: {
             min: 2020,
-            max: 2024
-          }
+            max: 2024,
+          },
         },
         pricing: {
           cost: 800000,
           retail: 1200000,
           wholesale: 1000000,
-          currency: 'VND'
+          currency: "VND",
         },
         supplierInfo: {
-          name: 'Tesla Body Parts',
-          contact: 'bodyparts@tesla.com',
-          notes: 'OEM body components'
+          name: "Tesla Body Parts",
+          contact: "bodyparts@tesla.com",
+          notes: "OEM body components",
         },
         inventory: {
           currentStock: 15,
@@ -1770,58 +2246,59 @@ const createParts = async () => {
           maxStockLevel: 25,
           reorderPoint: 8,
           averageUsage: 4,
-          reservations: []
+          reservations: [],
         },
         leadTime: 14,
         warranty: {
           duration: 90,
-          type: 'manufacturer',
-          description: '3 months parts warranty'
+          type: "manufacturer",
+          description: "3 months parts warranty",
         },
         usage: {
           totalUsed: 22,
           lastUsed: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000),
-          averageMonthlyUsage: 5
+          averageMonthlyUsage: 5,
         },
         isRecommended: false,
         isActive: true,
-        tags: ['tesla', 'body', 'door', 'handle']
+        tags: ["tesla", "body", "door", "handle"],
       },
 
       // Consumables
       {
-        partNumber: 'CONS-BRAKE-FLUID-001',
-        name: 'EV Brake Fluid DOT 4',
-        description: 'High-performance brake fluid suitable for electric vehicles',
-        category: 'consumables',
-        subcategory: 'brake-fluid',
-        brand: 'FluidMax',
+        partNumber: "CONS-BRAKE-FLUID-001",
+        name: "EV Brake Fluid DOT 4",
+        description:
+          "High-performance brake fluid suitable for electric vehicles",
+        category: "consumables",
+        subcategory: "brake-fluid",
+        brand: "FluidMax",
         specifications: {
           weight: 1,
           other: {
-            type: 'DOT 4',
-            boilingPoint: '230°C',
-            viscosity: 'Low temperature stable'
-          }
+            type: "DOT 4",
+            boilingPoint: "230°C",
+            viscosity: "Low temperature stable",
+          },
         },
         compatibility: {
-          makes: ['Tesla', 'VinFast', 'Hyundai', 'BMW', 'Audi'],
-          models: ['Model 3', 'Model Y', 'VF e34', 'IONIQ 5'],
+          makes: ["Tesla", "VinFast", "Hyundai", "BMW", "Audi"],
+          models: ["Model 3", "Model Y", "VF e34", "IONIQ 5"],
           years: {
             min: 2020,
-            max: 2024
-          }
+            max: 2024,
+          },
         },
         pricing: {
           cost: 150000,
           retail: 250000,
           wholesale: 200000,
-          currency: 'VND'
+          currency: "VND",
         },
         supplierInfo: {
-          name: 'FluidMax Automotive',
-          contact: 'orders@fluidmax.com',
-          notes: 'Automotive fluids specialist'
+          name: "FluidMax Automotive",
+          contact: "orders@fluidmax.com",
+          notes: "Automotive fluids specialist",
         },
         inventory: {
           currentStock: 45,
@@ -1831,56 +2308,57 @@ const createParts = async () => {
           maxStockLevel: 100,
           reorderPoint: 30,
           averageUsage: 15,
-          reservations: []
+          reservations: [],
         },
         leadTime: 2,
         warranty: {
           duration: 24,
-          type: 'manufacturer',
-          description: '2 years shelf life'
+          type: "manufacturer",
+          description: "2 years shelf life",
         },
         usage: {
           totalUsed: 85,
           lastUsed: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-          averageMonthlyUsage: 20
+          averageMonthlyUsage: 20,
         },
         isRecommended: true,
         isActive: true,
-        tags: ['consumables', 'brake', 'fluid', 'dot4']
+        tags: ["consumables", "brake", "fluid", "dot4"],
       },
       {
-        partNumber: 'CONS-COOLANT-EV-001',
-        name: 'EV Coolant Concentrate',
-        description: 'Specialized coolant for electric vehicle thermal management',
-        category: 'consumables',
-        subcategory: 'coolant',
-        brand: 'CoolFlow',
+        partNumber: "CONS-COOLANT-EV-001",
+        name: "EV Coolant Concentrate",
+        description:
+          "Specialized coolant for electric vehicle thermal management",
+        category: "consumables",
+        subcategory: "coolant",
+        brand: "CoolFlow",
         specifications: {
           weight: 5,
           other: {
-            type: 'Ethylene Glycol',
-            freezePoint: '-37°C',
-            concentration: '50%'
-          }
+            type: "Ethylene Glycol",
+            freezePoint: "-37°C",
+            concentration: "50%",
+          },
         },
         compatibility: {
-          makes: ['Tesla', 'VinFast', 'Hyundai'],
-          models: ['Model 3', 'Model Y', 'VF e34', 'IONIQ 5'],
+          makes: ["Tesla", "VinFast", "Hyundai"],
+          models: ["Model 3", "Model Y", "VF e34", "IONIQ 5"],
           years: {
             min: 2020,
-            max: 2024
-          }
+            max: 2024,
+          },
         },
         pricing: {
           cost: 300000,
           retail: 500000,
           wholesale: 400000,
-          currency: 'VND'
+          currency: "VND",
         },
         supplierInfo: {
-          name: 'CoolFlow Industries',
-          contact: 'sales@coolflow.com',
-          notes: 'EV thermal management fluids'
+          name: "CoolFlow Industries",
+          contact: "sales@coolflow.com",
+          notes: "EV thermal management fluids",
         },
         inventory: {
           currentStock: 32,
@@ -1890,53 +2368,54 @@ const createParts = async () => {
           maxStockLevel: 60,
           reorderPoint: 25,
           averageUsage: 10,
-          reservations: []
+          reservations: [],
         },
         leadTime: 5,
         warranty: {
           duration: 36,
-          type: 'manufacturer',
-          description: '3 years shelf life'
+          type: "manufacturer",
+          description: "3 years shelf life",
         },
         usage: {
           totalUsed: 58,
           lastUsed: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-          averageMonthlyUsage: 12
+          averageMonthlyUsage: 12,
         },
         isRecommended: true,
         isActive: true,
-        tags: ['consumables', 'coolant', 'thermal', 'ev']
+        tags: ["consumables", "coolant", "thermal", "ev"],
       },
 
       // Additional Parts for Testing Pagination
       {
-        partNumber: 'BAT-CELL-001',
-        name: 'Lithium Battery Cell 18650',
-        description: 'High-capacity lithium-ion battery cell for EV battery packs',
-        category: 'battery',
-        subcategory: 'cells',
-        brand: 'PowerCell',
+        partNumber: "BAT-CELL-001",
+        name: "Lithium Battery Cell 18650",
+        description:
+          "High-capacity lithium-ion battery cell for EV battery packs",
+        category: "battery",
+        subcategory: "cells",
+        brand: "PowerCell",
         specifications: {
           dimensions: { length: 65, width: 18, height: 18 },
           weight: 0.047,
           voltage: 3.7,
-          capacity: 3500
+          capacity: 3500,
         },
         compatibility: {
-          makes: ['Tesla', 'Custom builds'],
-          models: ['Model S', 'Model 3', 'DIY builds'],
-          years: { min: 2018, max: 2024 }
+          makes: ["Tesla", "Custom builds"],
+          models: ["Model S", "Model 3", "DIY builds"],
+          years: { min: 2018, max: 2024 },
         },
         pricing: {
           cost: 120000,
           retail: 180000,
           wholesale: 150000,
-          currency: 'VND'
+          currency: "VND",
         },
         supplierInfo: {
-          name: 'PowerCell Industries',
-          contact: 'sales@powercell.com',
-          notes: 'Premium battery cell manufacturer'
+          name: "PowerCell Industries",
+          contact: "sales@powercell.com",
+          notes: "Premium battery cell manufacturer",
         },
         inventory: {
           currentStock: 250,
@@ -1946,51 +2425,51 @@ const createParts = async () => {
           maxStockLevel: 500,
           reorderPoint: 150,
           averageUsage: 30,
-          reservations: []
+          reservations: [],
         },
         leadTime: 7,
         warranty: {
           duration: 24,
-          type: 'manufacturer',
-          description: '2 years battery cell warranty'
+          type: "manufacturer",
+          description: "2 years battery cell warranty",
         },
         usage: {
           totalUsed: 180,
           lastUsed: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-          averageMonthlyUsage: 35
+          averageMonthlyUsage: 35,
         },
         isRecommended: true,
         isActive: true,
-        tags: ['battery', 'cell', 'lithium', 'high-capacity']
+        tags: ["battery", "cell", "lithium", "high-capacity"],
       },
       {
-        partNumber: 'CHG-CABLE-TYPE2',
-        name: 'Type 2 Charging Cable 32A',
-        description: 'Type 2 to Type 2 EV charging cable, 32 amp capacity',
-        category: 'charging',
-        subcategory: 'cables',
-        brand: 'ChargeMax',
+        partNumber: "CHG-CABLE-TYPE2",
+        name: "Type 2 Charging Cable 32A",
+        description: "Type 2 to Type 2 EV charging cable, 32 amp capacity",
+        category: "charging",
+        subcategory: "cables",
+        brand: "ChargeMax",
         specifications: {
           dimensions: { length: 5000, width: 50, height: 50 },
           weight: 2.5,
           current: 32,
-          voltage: 240
+          voltage: 240,
         },
         compatibility: {
-          makes: ['Tesla', 'VinFast', 'BMW', 'Audi', 'Hyundai'],
-          models: ['Most EVs with Type 2 port'],
-          years: { min: 2020, max: 2024 }
+          makes: ["Tesla", "VinFast", "BMW", "Audi", "Hyundai"],
+          models: ["Most EVs with Type 2 port"],
+          years: { min: 2020, max: 2024 },
         },
         pricing: {
           cost: 2500000,
           retail: 3500000,
           wholesale: 3000000,
-          currency: 'VND'
+          currency: "VND",
         },
         supplierInfo: {
-          name: 'ChargeMax Solutions',
-          contact: 'orders@chargemax.com',
-          notes: 'EV charging accessories specialist'
+          name: "ChargeMax Solutions",
+          contact: "orders@chargemax.com",
+          notes: "EV charging accessories specialist",
         },
         inventory: {
           currentStock: 25,
@@ -2000,51 +2479,51 @@ const createParts = async () => {
           maxStockLevel: 50,
           reorderPoint: 15,
           averageUsage: 8,
-          reservations: []
+          reservations: [],
         },
         leadTime: 10,
         warranty: {
           duration: 12,
-          type: 'manufacturer',
-          description: '1 year charging cable warranty'
+          type: "manufacturer",
+          description: "1 year charging cable warranty",
         },
         usage: {
           totalUsed: 45,
           lastUsed: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-          averageMonthlyUsage: 10
+          averageMonthlyUsage: 10,
         },
         isRecommended: true,
         isActive: true,
-        tags: ['charging', 'cable', 'type2', 'high-current']
+        tags: ["charging", "cable", "type2", "high-current"],
       },
       {
-        partNumber: 'INV-CTRL-MOD',
-        name: 'Inverter Control Module',
-        description: 'Electronic control module for motor inverter system',
-        category: 'electronics',
-        subcategory: 'control-modules',
-        brand: 'ElectroTech',
+        partNumber: "INV-CTRL-MOD",
+        name: "Inverter Control Module",
+        description: "Electronic control module for motor inverter system",
+        category: "electronics",
+        subcategory: "control-modules",
+        brand: "ElectroTech",
         specifications: {
           dimensions: { length: 200, width: 150, height: 50 },
           weight: 1.2,
           voltage: 400,
-          current: 150
+          current: 150,
         },
         compatibility: {
-          makes: ['Tesla', 'VinFast'],
-          models: ['Model 3', 'Model Y', 'VF e34'],
-          years: { min: 2020, max: 2024 }
+          makes: ["Tesla", "VinFast"],
+          models: ["Model 3", "Model Y", "VF e34"],
+          years: { min: 2020, max: 2024 },
         },
         pricing: {
           cost: 8500000,
           retail: 12000000,
           wholesale: 10000000,
-          currency: 'VND'
+          currency: "VND",
         },
         supplierInfo: {
-          name: 'ElectroTech Components',
-          contact: 'support@electrotech.com',
-          notes: 'Advanced automotive electronics'
+          name: "ElectroTech Components",
+          contact: "support@electrotech.com",
+          notes: "Advanced automotive electronics",
         },
         inventory: {
           currentStock: 8,
@@ -2054,51 +2533,52 @@ const createParts = async () => {
           maxStockLevel: 15,
           reorderPoint: 5,
           averageUsage: 2,
-          reservations: []
+          reservations: [],
         },
         leadTime: 21,
         warranty: {
           duration: 36,
-          type: 'manufacturer',
-          description: '3 years electronic component warranty'
+          type: "manufacturer",
+          description: "3 years electronic component warranty",
         },
         usage: {
           totalUsed: 12,
           lastUsed: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
-          averageMonthlyUsage: 3
+          averageMonthlyUsage: 3,
         },
         isRecommended: false,
         isActive: true,
-        tags: ['electronics', 'inverter', 'control', 'high-tech']
+        tags: ["electronics", "inverter", "control", "high-tech"],
       },
       {
-        partNumber: 'TIRE-EV-ECO',
-        name: 'EV Eco Tire 225/50R18',
-        description: 'Low rolling resistance tire designed for electric vehicles',
-        category: 'body',
-        subcategory: 'summer',
-        brand: 'EcoTread',
+        partNumber: "TIRE-EV-ECO",
+        name: "EV Eco Tire 225/50R18",
+        description:
+          "Low rolling resistance tire designed for electric vehicles",
+        category: "body",
+        subcategory: "summer",
+        brand: "EcoTread",
         specifications: {
           dimensions: { diameter: 660, width: 225, sidewall: 50 },
           weight: 12,
           loadIndex: 95,
-          speedRating: 'V'
+          speedRating: "V",
         },
         compatibility: {
-          makes: ['Tesla', 'VinFast', 'BMW', 'Hyundai'],
-          models: ['Model 3', 'VF e34', 'i4', 'IONIQ 5'],
-          years: { min: 2020, max: 2024 }
+          makes: ["Tesla", "VinFast", "BMW", "Hyundai"],
+          models: ["Model 3", "VF e34", "i4", "IONIQ 5"],
+          years: { min: 2020, max: 2024 },
         },
         pricing: {
           cost: 1800000,
           retail: 2500000,
           wholesale: 2200000,
-          currency: 'VND'
+          currency: "VND",
         },
         supplierInfo: {
-          name: 'EcoTread Tire Co.',
-          contact: 'sales@ecotread.com',
-          notes: 'Specialized EV tire manufacturer'
+          name: "EcoTread Tire Co.",
+          contact: "sales@ecotread.com",
+          notes: "Specialized EV tire manufacturer",
         },
         inventory: {
           currentStock: 40,
@@ -2108,51 +2588,51 @@ const createParts = async () => {
           maxStockLevel: 80,
           reorderPoint: 30,
           averageUsage: 12,
-          reservations: []
+          reservations: [],
         },
         leadTime: 5,
         warranty: {
           duration: 6,
-          type: 'manufacturer',
-          description: '6 months tire warranty'
+          type: "manufacturer",
+          description: "6 months tire warranty",
         },
         usage: {
           totalUsed: 68,
           lastUsed: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-          averageMonthlyUsage: 15
+          averageMonthlyUsage: 15,
         },
         isRecommended: true,
         isActive: true,
-        tags: ['tires', 'eco', 'low-resistance', 'performance']
+        tags: ["tires", "eco", "low-resistance", "performance"],
       },
       {
-        partNumber: 'FILT-CABIN-HEPA',
-        name: 'HEPA Cabin Air Filter',
-        description: 'High-efficiency cabin air filter with HEPA technology',
-        category: 'interior',
-        subcategory: 'cabin',
-        brand: 'PureAir',
+        partNumber: "FILT-CABIN-HEPA",
+        name: "HEPA Cabin Air Filter",
+        description: "High-efficiency cabin air filter with HEPA technology",
+        category: "interior",
+        subcategory: "cabin",
+        brand: "PureAir",
         specifications: {
           dimensions: { length: 280, width: 200, height: 30 },
           weight: 0.5,
           efficiency: 99.97,
-          airflow: 500
+          airflow: 500,
         },
         compatibility: {
-          makes: ['Tesla', 'VinFast', 'BMW', 'Audi'],
-          models: ['Model 3', 'Model Y', 'VF e34', 'i4', 'e-tron'],
-          years: { min: 2019, max: 2024 }
+          makes: ["Tesla", "VinFast", "BMW", "Audi"],
+          models: ["Model 3", "Model Y", "VF e34", "i4", "e-tron"],
+          years: { min: 2019, max: 2024 },
         },
         pricing: {
           cost: 450000,
           retail: 650000,
           wholesale: 550000,
-          currency: 'VND'
+          currency: "VND",
         },
         supplierInfo: {
-          name: 'PureAir Filtration',
-          contact: 'info@pureair.com',
-          notes: 'Premium air filtration systems'
+          name: "PureAir Filtration",
+          contact: "info@pureair.com",
+          notes: "Premium air filtration systems",
         },
         inventory: {
           currentStock: 35,
@@ -2162,23 +2642,23 @@ const createParts = async () => {
           maxStockLevel: 60,
           reorderPoint: 25,
           averageUsage: 10,
-          reservations: []
+          reservations: [],
         },
         leadTime: 3,
         warranty: {
           duration: 6,
-          type: 'manufacturer',
-          description: '6 months filter performance warranty'
+          type: "manufacturer",
+          description: "6 months filter performance warranty",
         },
         usage: {
           totalUsed: 55,
           lastUsed: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-          averageMonthlyUsage: 12
+          averageMonthlyUsage: 12,
         },
         isRecommended: true,
         isActive: true,
-        tags: ['filter', 'cabin', 'hepa', 'air-quality']
-      }
+        tags: ["filter", "cabin", "hepa", "air-quality"],
+      },
     ];
 
     const createdParts = [];
@@ -2194,360 +2674,476 @@ const createParts = async () => {
     console.log(`✅ ${createdParts.length} parts created successfully`);
     return createdParts;
   } catch (error) {
-    console.error('Error creating parts:', error);
+    console.error("Error creating parts:", error);
     throw error;
   }
 };
 
 // Create sample appointments
-const createAppointments = async (users, vehicles, services, serviceCenters) => {
+const createAppointments = async (
+  users,
+  vehicles,
+  services,
+  serviceCenters
+) => {
   try {
-    const customers = users.filter(u => u.role === 'customer');
-    const technicians = users.filter(u => u.role === 'technician');
-    
+    const customers = users.filter((u) => u.role === "customer");
+    const technicians = users.filter((u) => u.role === "technician");
+
     const appointments = [
       // Confirmed appointment with full workflow tracking
       {
-        appointmentNumber: 'APT251201001',
+        appointmentNumber: "APT251201001",
         customerId: customers[0]._id,
         vehicleId: vehicles[0]._id,
-        serviceCenterId: serviceCenters[0]._id,
+        // serviceCenterId removed - single center architecture
         services: [
-          { serviceId: services[0]._id, quantity: 1, price: services[0].basePrice, estimatedDuration: services[0].estimatedDuration }
+          {
+            serviceId: services[0]._id,
+            quantity: 1,
+            price: services[0].basePrice,
+            estimatedDuration: services[0].estimatedDuration,
+          },
         ],
         scheduledDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
-        scheduledTime: '09:00',
-        status: 'confirmed',
-        priority: 'normal',
-        customerNotes: 'Battery seems to be draining faster than usual. Please check charging efficiency.',
+        scheduledTime: "09:00",
+        status: "confirmed",
+        priority: "normal",
+        customerNotes:
+          "Battery seems to be draining faster than usual. Please check charging efficiency.",
         assignedTechnician: technicians[0]._id,
-        estimatedCompletion: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000),
+        estimatedCompletion: new Date(
+          Date.now() + 2 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000
+        ),
         workflowHistory: [
           {
-            status: 'pending',
+            status: "pending",
             changedBy: customers[0]._id,
             changedAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-            reason: 'appointment_created',
-            notes: 'Customer booked appointment online'
+            reason: "appointment_created",
+            notes: "Customer booked appointment online",
           },
           {
-            status: 'confirmed',
-            changedBy: users.find(u => u.role === 'staff')._id,
+            status: "confirmed",
+            changedBy: users.find((u) => u.role === "staff")._id,
             changedAt: new Date(Date.now() - 23 * 60 * 60 * 1000),
-            reason: 'staff_confirmation',
-            notes: 'Appointment confirmed and technician assigned'
-          }
+            reason: "staff_confirmation",
+            notes: "Appointment confirmed and technician assigned",
+          },
         ],
         customerArrival: {
           expectedAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-          arrivedAt: null
-        }
+          arrivedAt: null,
+        },
       },
 
       // Pending appointment awaiting staff confirmation
       {
-        appointmentNumber: 'APT251201002',
+        appointmentNumber: "APT251201002",
         customerId: customers[1]._id,
         vehicleId: vehicles[2]._id,
-        serviceCenterId: serviceCenters[1]._id,
+        // serviceCenterId removed - single center architecture
         services: [
-          { serviceId: services[2]._id, quantity: 1, price: services[2].basePrice, estimatedDuration: services[2].estimatedDuration }
+          {
+            serviceId: services[2]._id,
+            quantity: 1,
+            price: services[2].basePrice,
+            estimatedDuration: services[2].estimatedDuration,
+          },
         ],
         scheduledDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day from now
-        scheduledTime: '14:00',
-        status: 'pending',
-        priority: 'high',
-        customerNotes: 'Charging port not working properly. Urgent repair needed for business use.',
-        estimatedCompletion: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000 + 75 * 60 * 1000),
+        scheduledTime: "14:00",
+        status: "pending",
+        priority: "high",
+        customerNotes:
+          "Charging port not working properly. Urgent repair needed for business use.",
+        estimatedCompletion: new Date(
+          Date.now() + 1 * 24 * 60 * 60 * 1000 + 75 * 60 * 1000
+        ),
         workflowHistory: [
           {
-            status: 'pending',
+            status: "pending",
             changedBy: customers[1]._id,
             changedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-            reason: 'appointment_created',
-            notes: 'Customer booked appointment with high priority'
-          }
+            reason: "appointment_created",
+            notes: "Customer booked appointment with high priority",
+          },
         ],
         customerArrival: {
-          expectedAt: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000)
-        }
+          expectedAt: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+        },
       },
 
       // Completed appointment with full service history
       {
-        appointmentNumber: 'APT251201003',
+        appointmentNumber: "APT251201003",
         customerId: customers[0]._id,
         vehicleId: vehicles[1]._id,
-        serviceCenterId: serviceCenters[0]._id,
+        // serviceCenterId removed - single center architecture
         services: [
-          { serviceId: services[6]._id, quantity: 1, price: services[6].basePrice, estimatedDuration: services[6].estimatedDuration }
+          {
+            serviceId: services[6]._id,
+            quantity: 1,
+            price: services[6].basePrice,
+            estimatedDuration: services[6].estimatedDuration,
+          },
         ],
         scheduledDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-        scheduledTime: '10:00',
-        status: 'completed',
-        priority: 'normal',
-        customerNotes: 'Annual maintenance service. Please check all systems thoroughly.',
+        scheduledTime: "10:00",
+        status: "completed",
+        priority: "normal",
+        customerNotes:
+          "Annual maintenance service. Please check all systems thoroughly.",
         assignedTechnician: technicians[1]._id,
-        actualCompletion: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 180 * 60 * 1000),
+        actualCompletion: new Date(
+          Date.now() - 7 * 24 * 60 * 60 * 1000 + 180 * 60 * 1000
+        ),
         workflowHistory: [
           {
-            status: 'pending',
+            status: "pending",
             changedBy: customers[0]._id,
             changedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
-            reason: 'appointment_created',
-            notes: 'Annual maintenance scheduled'
+            reason: "appointment_created",
+            notes: "Annual maintenance scheduled",
           },
           {
-            status: 'confirmed',
-            changedBy: users.find(u => u.role === 'staff')._id,
-            changedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 - 30 * 60 * 1000),
-            reason: 'staff_confirmation',
-            notes: 'Appointment confirmed, technician assigned'
+            status: "confirmed",
+            changedBy: users.find((u) => u.role === "staff")._id,
+            changedAt: new Date(
+              Date.now() - 7 * 24 * 60 * 60 * 1000 - 30 * 60 * 1000
+            ),
+            reason: "staff_confirmation",
+            notes: "Appointment confirmed, technician assigned",
           },
           {
-            status: 'customer_arrived',
-            changedBy: users.find(u => u.role === 'staff')._id,
+            status: "customer_arrived",
+            changedBy: users.find((u) => u.role === "staff")._id,
             changedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-            reason: 'customer_arrival',
-            notes: 'Customer arrived on time'
+            reason: "customer_arrival",
+            notes: "Customer arrived on time",
           },
           {
-            status: 'in_progress',
+            status: "in_progress",
             changedBy: technicians[1]._id,
-            changedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 15 * 60 * 1000),
-            reason: 'service_started',
-            notes: 'Started comprehensive maintenance check'
+            changedAt: new Date(
+              Date.now() - 7 * 24 * 60 * 60 * 1000 + 15 * 60 * 1000
+            ),
+            reason: "service_started",
+            notes: "Started comprehensive maintenance check",
           },
           {
-            status: 'completed',
+            status: "completed",
             changedBy: technicians[1]._id,
-            changedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 180 * 60 * 1000),
-            reason: 'service_completed',
-            notes: 'All maintenance tasks completed successfully'
-          }
+            changedAt: new Date(
+              Date.now() - 7 * 24 * 60 * 60 * 1000 + 180 * 60 * 1000
+            ),
+            reason: "service_completed",
+            notes: "All maintenance tasks completed successfully",
+          },
         ],
         customerArrival: {
           expectedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-          arrivedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+          arrivedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
         },
         serviceNotes: [
           {
-            note: 'Battery health: 98% - Excellent condition',
+            note: "Battery health: 98% - Excellent condition",
             addedBy: technicians[1]._id,
-            addedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 30 * 60 * 1000)
+            addedAt: new Date(
+              Date.now() - 7 * 24 * 60 * 60 * 1000 + 30 * 60 * 1000
+            ),
           },
           {
-            note: 'Motor performance: All parameters within normal range',
+            note: "Motor performance: All parameters within normal range",
             addedBy: technicians[1]._id,
-            addedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000)
+            addedAt: new Date(
+              Date.now() - 7 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000
+            ),
           },
           {
-            note: 'Charging system: Functioning optimally, no issues detected',
+            note: "Charging system: Functioning optimally, no issues detected",
             addedBy: technicians[1]._id,
-            addedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 120 * 60 * 1000)
-          }
+            addedAt: new Date(
+              Date.now() - 7 * 24 * 60 * 60 * 1000 + 120 * 60 * 1000
+            ),
+          },
         ],
         feedback: {
           rating: 5,
-          comment: 'Excellent service! Very thorough inspection and clear explanation of results.',
-          submittedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000)
-        }
+          comment:
+            "Excellent service! Very thorough inspection and clear explanation of results.",
+          submittedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+        },
       },
 
       // Customer arrived and waiting for reception
       {
-        appointmentNumber: 'APT251201004',
+        appointmentNumber: "APT251201004",
         customerId: customers[1]._id,
         vehicleId: vehicles[3]._id,
-        serviceCenterId: serviceCenters[0]._id,
+        // serviceCenterId removed - single center architecture
         services: [
-          { serviceId: services[1]._id, quantity: 1, price: services[1].basePrice, estimatedDuration: services[1].estimatedDuration }
+          {
+            serviceId: services[1]._id,
+            quantity: 1,
+            price: services[1].basePrice,
+            estimatedDuration: services[1].estimatedDuration,
+          },
         ],
         scheduledDate: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-        scheduledTime: '11:00',
-        status: 'customer_arrived',
-        priority: 'normal',
-        customerNotes: 'Motor making unusual noise during acceleration. Need diagnostic check.',
+        scheduledTime: "11:00",
+        status: "customer_arrived",
+        priority: "normal",
+        customerNotes:
+          "Motor making unusual noise during acceleration. Need diagnostic check.",
         assignedTechnician: technicians[0]._id,
         workflowHistory: [
           {
-            status: 'pending',
+            status: "pending",
             changedBy: customers[1]._id,
             changedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-            reason: 'appointment_created',
-            notes: 'Customer reported motor noise issue'
+            reason: "appointment_created",
+            notes: "Customer reported motor noise issue",
           },
           {
-            status: 'confirmed',
-            changedBy: users.find(u => u.role === 'staff')._id,
+            status: "confirmed",
+            changedBy: users.find((u) => u.role === "staff")._id,
             changedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-            reason: 'staff_confirmation',
-            notes: 'Confirmed for motor diagnostic service'
+            reason: "staff_confirmation",
+            notes: "Confirmed for motor diagnostic service",
           },
           {
-            status: 'customer_arrived',
-            changedBy: users.find(u => u.role === 'staff')._id,
+            status: "customer_arrived",
+            changedBy: users.find((u) => u.role === "staff")._id,
             changedAt: new Date(Date.now() - 30 * 60 * 1000),
-            reason: 'customer_arrival',
-            notes: 'Customer checked in, ready for service reception'
-          }
+            reason: "customer_arrival",
+            notes: "Customer checked in, ready for service reception",
+          },
         ],
         customerArrival: {
           expectedAt: new Date(Date.now() - 30 * 60 * 1000),
-          arrivedAt: new Date(Date.now() - 30 * 60 * 1000)
-        }
+          arrivedAt: new Date(Date.now() - 30 * 60 * 1000),
+        },
       },
       {
-        appointmentNumber: 'APT251201005',
+        appointmentNumber: "APT251201005",
         customerId: customers[0]._id,
         vehicleId: vehicles[3]._id,
-        serviceCenterId: serviceCenters[1]._id,
+        // serviceCenterId removed - single center architecture
         services: [
-          { serviceId: services[3]._id, quantity: 1, price: services[3].basePrice, estimatedDuration: services[3].estimatedDuration }
+          {
+            serviceId: services[3]._id,
+            quantity: 1,
+            price: services[3].basePrice,
+            estimatedDuration: services[3].estimatedDuration,
+          },
         ],
         scheduledDate: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-        scheduledTime: '13:30',
-        status: 'in_progress', // InService core status
-        priority: 'high',
-        customerNotes: 'Motor making unusual noises during acceleration',
+        scheduledTime: "13:30",
+        status: "in_progress", // InService core status
+        priority: "high",
+        customerNotes: "Motor making unusual noises during acceleration",
         assignedTechnician: technicians[1]._id,
         serviceNotes: [
-          { note: 'Started diagnostic tests on motor system', addedBy: technicians[1]._id, addedAt: new Date() }
-        ]
+          {
+            note: "Started diagnostic tests on motor system",
+            addedBy: technicians[1]._id,
+            addedAt: new Date(),
+          },
+        ],
       },
       {
-        appointmentNumber: 'APT251201006',
+        appointmentNumber: "APT251201006",
         customerId: customers[1]._id,
         vehicleId: vehicles[2]._id,
-        serviceCenterId: serviceCenters[0]._id,
+        // serviceCenterId removed - single center architecture
         services: [
-          { serviceId: services[4]._id, quantity: 1, price: services[4].basePrice, estimatedDuration: services[4].estimatedDuration }
+          {
+            serviceId: services[4]._id,
+            quantity: 1,
+            price: services[4].basePrice,
+            estimatedDuration: services[4].estimatedDuration,
+          },
         ],
         scheduledDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // Yesterday
-        scheduledTime: '15:00',
-        status: 'parts_insufficient', // OnHold core status
-        priority: 'normal',
-        customerNotes: 'Need brake pad replacement',
+        scheduledTime: "15:00",
+        status: "parts_insufficient", // OnHold core status
+        priority: "normal",
+        customerNotes: "Need brake pad replacement",
         assignedTechnician: technicians[0]._id,
         serviceNotes: [
-          { note: 'Brake pads out of stock, waiting for customer decision', addedBy: technicians[0]._id, addedAt: new Date() }
-        ]
+          {
+            note: "Brake pads out of stock, waiting for customer decision",
+            addedBy: technicians[0]._id,
+            addedAt: new Date(),
+          },
+        ],
       },
       {
-        appointmentNumber: 'APT251201007',
+        appointmentNumber: "APT251201007",
         customerId: customers[0]._id,
         vehicleId: vehicles[1]._id,
-        serviceCenterId: serviceCenters[1]._id,
+        // serviceCenterId removed - single center architecture
         services: [
-          { serviceId: services[5]._id, quantity: 1, price: services[5].basePrice, estimatedDuration: services[5].estimatedDuration }
+          {
+            serviceId: services[5]._id,
+            quantity: 1,
+            price: services[5].basePrice,
+            estimatedDuration: services[5].estimatedDuration,
+          },
         ],
         scheduledDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-        scheduledTime: '09:30',
-        status: 'invoiced', // ReadyForPickup core status
-        priority: 'normal',
-        customerNotes: 'AC system not cooling properly',
+        scheduledTime: "09:30",
+        status: "invoiced", // ReadyForPickup core status
+        priority: "normal",
+        customerNotes: "AC system not cooling properly",
         assignedTechnician: technicians[1]._id,
-        actualCompletion: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 120 * 60 * 1000),
+        actualCompletion: new Date(
+          Date.now() - 3 * 24 * 60 * 60 * 1000 + 120 * 60 * 1000
+        ),
         serviceNotes: [
-          { note: 'AC system cleaned and recharged', addedBy: technicians[1]._id, addedAt: new Date() }
-        ]
+          {
+            note: "AC system cleaned and recharged",
+            addedBy: technicians[1]._id,
+            addedAt: new Date(),
+          },
+        ],
       },
       {
-        appointmentNumber: 'APT251201008',
+        appointmentNumber: "APT251201008",
         customerId: customers[1]._id,
         vehicleId: vehicles[0]._id,
-        serviceCenterId: serviceCenters[0]._id,
+        // serviceCenterId removed - single center architecture
         services: [
-          { serviceId: services[7]._id, quantity: 1, price: services[7].basePrice, estimatedDuration: services[7].estimatedDuration }
+          {
+            serviceId: services[7]._id,
+            quantity: 1,
+            price: services[7].basePrice,
+            estimatedDuration: services[7].estimatedDuration,
+          },
         ],
         scheduledDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
-        scheduledTime: '08:00',
-        status: 'cancelled', // Closed core status
-        priority: 'low',
-        customerNotes: 'Customer cancelled due to travel plans'
+        scheduledTime: "08:00",
+        status: "cancelled", // Closed core status
+        priority: "low",
+        customerNotes: "Customer cancelled due to travel plans",
       },
       {
-        appointmentNumber: 'APT251201009',
+        appointmentNumber: "APT251201009",
         customerId: customers[0]._id,
         vehicleId: vehicles[2]._id,
-        serviceCenterId: serviceCenters[1]._id,
+        // serviceCenterId removed - single center architecture
         services: [
-          { serviceId: services[8]._id, quantity: 1, price: services[8].basePrice, estimatedDuration: services[8].estimatedDuration }
+          {
+            serviceId: services[8]._id,
+            quantity: 1,
+            price: services[8].basePrice,
+            estimatedDuration: services[8].estimatedDuration,
+          },
         ],
         scheduledDate: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-        scheduledTime: '16:00',
-        status: 'waiting_for_parts', // OnHold core status
-        priority: 'high',
-        customerNotes: 'Charging cable needs replacement',
+        scheduledTime: "16:00",
+        status: "waiting_for_parts", // OnHold core status
+        priority: "high",
+        customerNotes: "Charging cable needs replacement",
         assignedTechnician: technicians[0]._id,
         serviceNotes: [
-          { note: 'Customer agreed to wait for new charging cable, ETA 2 days', addedBy: technicians[0]._id, addedAt: new Date() }
-        ]
+          {
+            note: "Customer agreed to wait for new charging cable, ETA 2 days",
+            addedBy: technicians[0]._id,
+            addedAt: new Date(),
+          },
+        ],
       },
       // Additional statuses to cover full workflow
       {
-        appointmentNumber: 'APT251201010',
+        appointmentNumber: "APT251201010",
         customerId: customers[1]._id,
         vehicleId: vehicles[1]._id,
-        serviceCenterId: serviceCenters[0]._id,
+        // serviceCenterId removed - single center architecture
         services: [
-          { serviceId: services[0]._id, quantity: 1, price: services[0].basePrice, estimatedDuration: services[0].estimatedDuration }
+          {
+            serviceId: services[0]._id,
+            quantity: 1,
+            price: services[0].basePrice,
+            estimatedDuration: services[0].estimatedDuration,
+          },
         ],
         scheduledDate: new Date(Date.now() + 4 * 60 * 60 * 1000), // 4 hours from now
-        scheduledTime: '14:30',
-        status: 'reception_created', // CheckedIn core status
-        priority: 'normal',
-        customerNotes: 'Service reception form created, waiting for staff approval',
-        assignedTechnician: technicians[1]._id
+        scheduledTime: "14:30",
+        status: "reception_created", // CheckedIn core status
+        priority: "normal",
+        customerNotes:
+          "Service reception form created, waiting for staff approval",
+        assignedTechnician: technicians[1]._id,
       },
       {
-        appointmentNumber: 'APT251201011',
+        appointmentNumber: "APT251201011",
         customerId: customers[0]._id,
         vehicleId: vehicles[0]._id,
-        serviceCenterId: serviceCenters[1]._id,
+        // serviceCenterId removed - single center architecture
         services: [
-          { serviceId: services[1]._id, quantity: 1, price: services[1].basePrice, estimatedDuration: services[1].estimatedDuration }
+          {
+            serviceId: services[1]._id,
+            quantity: 1,
+            price: services[1].basePrice,
+            estimatedDuration: services[1].estimatedDuration,
+          },
         ],
         scheduledDate: new Date(Date.now() + 5 * 60 * 60 * 1000), // 5 hours from now
-        scheduledTime: '16:00',
-        status: 'reception_approved', // CheckedIn core status
-        priority: 'normal',
-        customerNotes: 'Parts approved, ready to start work',
-        assignedTechnician: technicians[0]._id
+        scheduledTime: "16:00",
+        status: "reception_approved", // CheckedIn core status
+        priority: "normal",
+        customerNotes: "Parts approved, ready to start work",
+        assignedTechnician: technicians[0]._id,
       },
       {
-        appointmentNumber: 'APT251201012',
+        appointmentNumber: "APT251201012",
         customerId: customers[1]._id,
         vehicleId: vehicles[2]._id,
-        serviceCenterId: serviceCenters[0]._id,
+        // serviceCenterId removed - single center architecture
         services: [
-          { serviceId: services[2]._id, quantity: 1, price: services[2].basePrice, estimatedDuration: services[2].estimatedDuration }
+          {
+            serviceId: services[2]._id,
+            quantity: 1,
+            price: services[2].basePrice,
+            estimatedDuration: services[2].estimatedDuration,
+          },
         ],
         scheduledDate: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour from now
-        scheduledTime: '10:30',
-        status: 'parts_requested', // OnHold core status
-        priority: 'high',
-        customerNotes: 'Additional parts requested during service',
+        scheduledTime: "10:30",
+        status: "parts_requested", // OnHold core status
+        priority: "high",
+        customerNotes: "Additional parts requested during service",
         assignedTechnician: technicians[1]._id,
         serviceNotes: [
-          { note: 'Found additional issue, waiting for extra part approval', addedBy: technicians[1]._id, addedAt: new Date() }
-        ]
+          {
+            note: "Found additional issue, waiting for extra part approval",
+            addedBy: technicians[1]._id,
+            addedAt: new Date(),
+          },
+        ],
       },
       {
-        appointmentNumber: 'APT251201013',
+        appointmentNumber: "APT251201013",
         customerId: customers[0]._id,
         vehicleId: vehicles[1]._id,
-        serviceCenterId: serviceCenters[1]._id,
+        // serviceCenterId removed - single center architecture
         services: [
-          { serviceId: services[3]._id, quantity: 1, price: services[3].basePrice, estimatedDuration: services[3].estimatedDuration }
+          {
+            serviceId: services[3]._id,
+            quantity: 1,
+            price: services[3].basePrice,
+            estimatedDuration: services[3].estimatedDuration,
+          },
         ],
         scheduledDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-        scheduledTime: '11:00',
-        status: 'no_show', // Closed core status
-        priority: 'low',
-        customerNotes: 'Customer did not arrive for scheduled appointment',
-        reasonCode: 'no_show'
-      }
+        scheduledTime: "11:00",
+        status: "no_show", // Closed core status
+        priority: "low",
+        customerNotes: "Customer did not arrive for scheduled appointment",
+        reasonCode: "no_show",
+      },
     ];
 
     const createdAppointments = [];
@@ -2557,10 +3153,12 @@ const createAppointments = async (users, vehicles, services, serviceCenters) => 
       await newAppointment.save();
       createdAppointments.push(newAppointment);
     }
-    console.log(`✅ ${createdAppointments.length} appointments created successfully`);
+    console.log(
+      `✅ ${createdAppointments.length} appointments created successfully`
+    );
     return createdAppointments;
   } catch (error) {
-    console.error('Error creating appointments:', error);
+    console.error("Error creating appointments:", error);
     throw error;
   }
 };
@@ -2568,98 +3166,116 @@ const createAppointments = async (users, vehicles, services, serviceCenters) => 
 // Create part requests for testing workflow
 const createPartRequests = async (appointments, parts, users) => {
   try {
-    const technicians = users.filter(u => u.role === 'technician');
-    const staff = users.filter(u => u.role === 'staff');
-    
+    const technicians = users.filter((u) => u.role === "technician");
+    const staff = users.filter((u) => u.role === "staff");
+
     // Get completed and in-progress appointments that would have part requests
-    const relevantAppointments = appointments.filter(apt => 
-      ['reception_created', 'reception_approved', 'in_progress', 'parts_requested', 'completed'].includes(apt.status)
+    const relevantAppointments = appointments.filter((apt) =>
+      [
+        "reception_created",
+        "reception_approved",
+        "in_progress",
+        "parts_requested",
+        "completed",
+      ].includes(apt.status)
     );
-    
+
     const partRequests = [];
-    
+
     // Create initial service part requests
     for (let i = 0; i < Math.min(3, relevantAppointments.length); i++) {
       const appointment = relevantAppointments[i];
-      const selectedParts = parts.slice(i * 2, (i * 2) + 2); // Select different parts for each request
-      
+      const selectedParts = parts.slice(i * 2, i * 2 + 2); // Select different parts for each request
+
       // Generate request number manually
       const date = new Date();
       const year = date.getFullYear().toString().slice(-2);
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const day = date.getDate().toString().padStart(2, '0');
-      const requestNumber = `PRQ${year}${month}${day}${(i + 1).toString().padStart(3, '0')}`;
-      
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
+      const day = date.getDate().toString().padStart(2, "0");
+      const requestNumber = `PRQ${year}${month}${day}${(i + 1)
+        .toString()
+        .padStart(3, "0")}`;
+
       const partRequest = await PartRequest.create({
         requestNumber,
         appointmentId: appointment._id,
         requestedBy: technicians[i % technicians.length]._id,
-        type: 'initial_service',
-        requestedParts: selectedParts.map(part => ({
+        type: "initial_service",
+        requestedParts: selectedParts.map((part) => ({
           partId: part._id,
           quantity: Math.floor(Math.random() * 3) + 1,
-          reason: `Required for ${appointment.services[0]?.serviceId ? 'service' : 'maintenance'}`,
-          priority: ['normal', 'high'][Math.floor(Math.random() * 2)],
+          reason: `Required for ${
+            appointment.services[0]?.serviceId ? "service" : "maintenance"
+          }`,
+          priority: ["normal", "high"][Math.floor(Math.random() * 2)],
           partInfo: {
             name: part.name,
             partNumber: part.partNumber,
-            category: part.category
-          }
+            category: part.category,
+          },
         })),
-        urgency: ['normal', 'high'][Math.floor(Math.random() * 2)],
-        requestNotes: 'Parts needed for scheduled service',
-        status: ['approved', 'pending', 'fulfilled'][Math.floor(Math.random() * 3)]
+        urgency: ["normal", "high"][Math.floor(Math.random() * 2)],
+        requestNotes: "Parts needed for scheduled service",
+        status: ["approved", "pending", "fulfilled"][
+          Math.floor(Math.random() * 3)
+        ],
       });
-      
+
       // Add review details for approved/rejected requests
-      if (partRequest.status === 'approved') {
+      if (partRequest.status === "approved") {
         partRequest.reviewDetails = {
           reviewedBy: staff[0]._id,
           reviewedAt: new Date(),
-          decision: 'approve_all',
-          staffNotes: 'All parts available in stock'
+          decision: "approve_all",
+          staffNotes: "All parts available in stock",
         };
         await partRequest.save();
       }
-      
+
       partRequests.push(partRequest);
     }
-    
+
     // Create additional part requests during service
     if (relevantAppointments.length > 0) {
       const date2 = new Date();
       const year2 = date2.getFullYear().toString().slice(-2);
-      const month2 = (date2.getMonth() + 1).toString().padStart(2, '0');
-      const day2 = date2.getDate().toString().padStart(2, '0');
-      const additionalRequestNumber = `PRQ${year2}${month2}${day2}${(partRequests.length + 1).toString().padStart(3, '0')}`;
-      
+      const month2 = (date2.getMonth() + 1).toString().padStart(2, "0");
+      const day2 = date2.getDate().toString().padStart(2, "0");
+      const additionalRequestNumber = `PRQ${year2}${month2}${day2}${(
+        partRequests.length + 1
+      )
+        .toString()
+        .padStart(3, "0")}`;
+
       const additionalRequest = await PartRequest.create({
         requestNumber: additionalRequestNumber,
         appointmentId: relevantAppointments[0]._id,
         requestedBy: technicians[0]._id,
-        type: 'additional_during_service',
-        requestedParts: [{
-          partId: parts[5]._id,
-          quantity: 1,
-          reason: 'Additional part needed after inspection',
-          priority: 'high',
-          partInfo: {
-            name: parts[5].name,
-            partNumber: parts[5].partNumber,
-            category: parts[5].category
-          }
-        }],
-        urgency: 'high',
-        requestNotes: 'Found additional issue during service',
-        status: 'pending'
+        type: "additional_during_service",
+        requestedParts: [
+          {
+            partId: parts[5]._id,
+            quantity: 1,
+            reason: "Additional part needed after inspection",
+            priority: "high",
+            partInfo: {
+              name: parts[5].name,
+              partNumber: parts[5].partNumber,
+              category: parts[5].category,
+            },
+          },
+        ],
+        urgency: "high",
+        requestNotes: "Found additional issue during service",
+        status: "pending",
       });
-      
+
       partRequests.push(additionalRequest);
     }
-    
+
     return partRequests;
   } catch (error) {
-    console.error('Error creating part requests:', error);
+    console.error("Error creating part requests:", error);
     throw error;
   }
 };
@@ -2667,25 +3283,27 @@ const createPartRequests = async (appointments, parts, users) => {
 // Create invoices for completed appointments
 const createInvoices = async (appointments, users, parts) => {
   try {
-    const staff = users.filter(u => u.role === 'staff');
-    
+    const staff = users.filter((u) => u.role === "staff");
+
     // Get completed appointments that should have invoices
-    const completedAppointments = appointments.filter(apt => 
-      ['completed', 'invoiced'].includes(apt.status)
+    const completedAppointments = appointments.filter((apt) =>
+      ["completed", "invoiced"].includes(apt.status)
     );
-    
+
     const invoices = [];
-    
+
     for (let i = 0; i < completedAppointments.length; i++) {
       const appointment = completedAppointments[i];
-      
+
       // Generate invoice number manually
       const date = new Date();
       const year = date.getFullYear().toString().slice(-2);
-      const month = (date.getMonth() + 1).toString().padStart(2, '0');
-      const day = date.getDate().toString().padStart(2, '0');
-      const invoiceNumber = `INV${year}${month}${day}${(i + 1).toString().padStart(3, '0')}`;
-      
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
+      const day = date.getDate().toString().padStart(2, "0");
+      const invoiceNumber = `INV${year}${month}${day}${(i + 1)
+        .toString()
+        .padStart(3, "0")}`;
+
       const invoice = await Invoice.create({
         invoiceNumber,
         appointmentId: appointment._id,
@@ -2695,21 +3313,22 @@ const createInvoices = async (appointments, users, parts) => {
         generatedBy: staff[0]._id,
         services: [
           {
-            name: 'EV Battery Health Check',
-            description: 'Comprehensive battery diagnostic and health assessment',
+            name: "EV Battery Health Check",
+            description:
+              "Comprehensive battery diagnostic and health assessment",
             quantity: 1,
             unitPrice: 500000,
             totalPrice: 500000,
-            category: 'diagnostic'
+            category: "diagnostic",
           },
           {
-            name: 'Charging System Inspection',
-            description: 'Charging port and cable inspection',
+            name: "Charging System Inspection",
+            description: "Charging port and cable inspection",
             quantity: 1,
             unitPrice: 300000,
             totalPrice: 300000,
-            category: 'inspection'
-          }
+            category: "inspection",
+          },
         ],
         parts: [
           {
@@ -2717,39 +3336,41 @@ const createInvoices = async (appointments, users, parts) => {
             name: parts[0].name,
             quantity: 1,
             unitPrice: parts[0].pricing.retail,
-            totalPrice: parts[0].pricing.retail
-          }
+            totalPrice: parts[0].pricing.retail,
+          },
         ],
         labor: {
           hours: 2.5,
           hourlyRate: 200000,
-          totalCost: 500000
+          totalCost: 500000,
         },
-        notes: 'Service completed successfully with Vietnamese VAT compliance',
-        status: appointment.status === 'invoiced' ? 'sent' : 'draft'
+        notes: "Service completed successfully with Vietnamese VAT compliance",
+        status: appointment.status === "invoiced" ? "sent" : "draft",
       });
-      
+
       // Calculate totals using the model method
       invoice.calculateTotals();
-      
+
       // Add payment for some invoices
       if (Math.random() > 0.5) {
         invoice.payment = {
-          method: ['cash', 'bank_transfer', 'card'][Math.floor(Math.random() * 3)],
-          status: 'paid',
+          method: ["cash", "bank_transfer", "card"][
+            Math.floor(Math.random() * 3)
+          ],
+          status: "paid",
           amountPaid: invoice.totals.grandTotal,
           paidAt: new Date(),
-          notes: 'Paid in full at service completion'
+          notes: "Paid in full at service completion",
         };
       }
-      
+
       await invoice.save();
       invoices.push(invoice);
     }
-    
+
     return invoices;
   } catch (error) {
-    console.error('Error creating invoices:', error);
+    console.error("Error creating invoices:", error);
     throw error;
   }
 };
@@ -2757,102 +3378,122 @@ const createInvoices = async (appointments, users, parts) => {
 // Run seeder
 const seedData = async () => {
   try {
-    console.log('🌱 Starting database seeding...\n');
-    
+    console.log("🌱 Starting database seeding...\n");
+
     await connectDB();
-    
+
     // Optional: Clear existing data (uncomment if needed)
     await clearData();
-    
-    console.log('📝 Creating services...');
+
+    console.log("📝 Creating services...");
     const services = await createServices();
-    
-    console.log('🏢 Creating service centers...');
-    const serviceCenters = await createServiceCenters(services);
-    
-    console.log('👥 Creating users...');
+
+    console.log("🏢 Creating service centers...");
+    // ServiceCenter creation removed - single center architecture
+    const serviceCenters = [];
+
+    console.log("👥 Creating users...");
     const users = await createUsers(serviceCenters);
-    
-    console.log('🚗 Creating vehicles...');
+
+    console.log("🚗 Creating vehicles...");
     const vehicles = await createVehicles(users);
-    
-    console.log('🔧 Creating parts...');
+
+    console.log("🔧 Creating parts...");
     const parts = await createParts();
-    
-    console.log('📅 Creating appointments...');
-    const appointments = await createAppointments(users, vehicles, services, serviceCenters);
-    
-    console.log('👨‍🔧 Creating technician profiles...');
+
+    console.log("📅 Creating appointments...");
+    const appointments = await createAppointments(
+      users,
+      vehicles,
+      services,
+      serviceCenters
+    );
+
+    console.log("👨‍🔧 Creating technician profiles...");
     const technicianProfiles = await createTechnicianProfiles(users);
-    
-    console.log('✅ Creating EV checklists...');
+
+    console.log("✅ Creating EV checklists...");
     const evChecklists = await createEVChecklists();
-    
-    console.log('📋 Creating service receptions...');
-    const serviceReceptions = await createServiceReceptions(vehicles, appointments, users);
-    
-    console.log('📦 Creating part requests...');
+
+    console.log("📋 Creating service receptions...");
+    const serviceReceptions = await createServiceReceptions(
+      vehicles,
+      appointments,
+      users
+    );
+
+    console.log("📦 Creating part requests...");
     const partRequests = await createPartRequests(appointments, parts, users);
-    
-    console.log('💰 Creating invoices...');
+
+    console.log("💰 Creating invoices...");
     const invoices = await createInvoices(appointments, users, parts);
-    
-    console.log('\n✅ Database seeding completed successfully!');
-    console.log('\n📊 Summary:');
-    console.log(`   - Services: ${services.length} (EV-specific service catalog)`);
-    console.log(`   - Service Centers: ${serviceCenters.length} (Vietnamese locations)`);
+
+    console.log("\n✅ Database seeding completed successfully!");
+    console.log("\n📊 Summary:");
+    console.log(
+      `   - Services: ${services.length} (EV-specific service catalog)`
+    );
+    console.log(
+      `   - Service Centers: ${serviceCenters.length} (Vietnamese locations)`
+    );
     console.log(`   - Users: ${users.length} (All roles with Vietnamese data)`);
-    console.log(`   - Vehicles: ${vehicles.length} (Valid VINs, Vietnamese EV brands)`);
+    console.log(
+      `   - Vehicles: ${vehicles.length} (Valid VINs, Vietnamese EV brands)`
+    );
     console.log(`   - Parts: ${parts.length} (Enhanced inventory management)`);
-    console.log(`   - Appointments: ${appointments.length} (Complete workflow states)`);
+    console.log(
+      `   - Appointments: ${appointments.length} (Complete workflow states)`
+    );
     console.log(`   - Technician Profiles: ${technicianProfiles.length}`);
     console.log(`   - EV Checklists: ${evChecklists.length}`);
     console.log(`   - Service Receptions: ${serviceReceptions.length}`);
     console.log(`   - Part Requests: ${partRequests.length}`);
-    console.log(`   - Invoices: ${invoices.length} (Vietnamese VAT compliance)`);
+    console.log(
+      `   - Invoices: ${invoices.length} (Vietnamese VAT compliance)`
+    );
 
-    console.log('\n🔑 Enhanced Test Accounts (Strong Passwords):');
-    console.log('   Admin:      admin@evservice.com      / Admin123!@#');
-    console.log('   Staff 1:    staff.central@evservice.com / Staff123!@#');
-    console.log('   Staff 2:    staff.d7@evservice.com   / Staff123!@#');
-    console.log('   Tech 1:     tech1@evservice.com      / Tech123!@#');
-    console.log('   Tech 2:     tech2@evservice.com      / Tech123!@#');
-    console.log('   Tech 3:     tech3@evservice.com      / Tech123!@#');
-    console.log('   Customer 1: customer1@gmail.com      / Customer123!@#');
-    console.log('   Customer 2: customer2@gmail.com      / Customer123!@#');
-    console.log('   Customer 3: customer3@gmail.com      / Customer123!@#');
-    console.log('   Customer 4: customer4@gmail.com      / Customer123!@#');
-    console.log('   Customer 5: customer5@gmail.com      / Customer123!@#');
+    console.log("\n🔑 Enhanced Test Accounts (Strong Passwords):");
+    console.log("   Admin:      admin@evservice.com      / Admin123!@#");
+    console.log("   Staff 1:    staff.central@evservice.com / Staff123!@#");
+    console.log("   Staff 2:    staff.d7@evservice.com   / Staff123!@#");
+    console.log("   Tech 1:     tech1@evservice.com      / Tech123!@#");
+    console.log("   Tech 2:     tech2@evservice.com      / Tech123!@#");
+    console.log("   Tech 3:     tech3@evservice.com      / Tech123!@#");
+    console.log("   Customer 1: customer1@gmail.com      / Customer123!@#");
+    console.log("   Customer 2: customer2@gmail.com      / Customer123!@#");
+    console.log("   Customer 3: customer3@gmail.com      / Customer123!@#");
+    console.log("   Customer 4: customer4@gmail.com      / Customer123!@#");
+    console.log("   Customer 5: customer5@gmail.com      / Customer123!@#");
 
-    console.log('\n🚗 Vehicle Data:');
-    console.log('   - Valid 17-character VINs (no I/O/Q characters)');
-    console.log('   - Tesla Model 3, Model Y');
-    console.log('   - VinFast VF e34');
-    console.log('   - Hyundai IONIQ 5');
-    console.log('   - BMW i4 eDrive40');
-    console.log('   - Mercedes EQS 450+');
+    console.log("\n🚗 Vehicle Data:");
+    console.log("   - Valid 17-character VINs (no I/O/Q characters)");
+    console.log("   - Tesla Model 3, Model Y");
+    console.log("   - VinFast VF e34");
+    console.log("   - Hyundai IONIQ 5");
+    console.log("   - BMW i4 eDrive40");
+    console.log("   - Mercedes EQS 450+");
 
-    console.log('\n📋 Appointment Workflow States:');
-    console.log('   - pending: Awaiting staff confirmation');
-    console.log('   - confirmed: Staff confirmed, technician assigned');
-    console.log('   - customer_arrived: Customer checked in');
-    console.log('   - reception_created: Service reception form created');
-    console.log('   - in_progress: Service work started');
-    console.log('   - completed: Service work finished');
-    console.log('   - invoiced: Invoice generated');
+    console.log("\n📋 Appointment Workflow States:");
+    console.log("   - pending: Awaiting staff confirmation");
+    console.log("   - confirmed: Staff confirmed, technician assigned");
+    console.log("   - customer_arrived: Customer checked in");
+    console.log("   - reception_created: Service reception form created");
+    console.log("   - in_progress: Service work started");
+    console.log("   - completed: Service work finished");
+    console.log("   - invoiced: Invoice generated");
 
-    console.log('\n🔧 Enhanced Features:');
-    console.log('   - Vietnamese phone number format (09xxxxxxxx)');
-    console.log('   - VND currency pricing throughout');
-    console.log('   - Comprehensive workflow history tracking');
-    console.log('   - Parts inventory with reservation system');
-    console.log('   - Role-based access control');
-    console.log('   - Enhanced validation patterns');
-    console.log('   - Socket.IO ready data structure');
-    
+    console.log("\n🔧 Enhanced Features:");
+    console.log("   - Vietnamese phone number format (09xxxxxxxx)");
+    console.log("   - VND currency pricing throughout");
+    console.log("   - Comprehensive workflow history tracking");
+    console.log("   - Parts inventory with reservation system");
+    console.log("   - Role-based access control");
+    console.log("   - Enhanced validation patterns");
+    console.log("   - Socket.IO ready data structure");
+
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error seeding data:', error);
+    console.error("❌ Error seeding data:", error);
     process.exit(1);
   }
 };

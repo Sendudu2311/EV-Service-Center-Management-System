@@ -1,327 +1,403 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const appointmentSchema = new mongoose.Schema({
-  appointmentNumber: {
-    type: String,
-    unique: true,
-    required: true
-  },
-  customerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  vehicleId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Vehicle',
-    required: true
-  },
-  serviceCenterId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ServiceCenter',
-    required: true
-  },
-  services: [{
-    serviceId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Service',
-      required: true
-    },
-    quantity: {
-      type: Number,
-      default: 1,
-      min: 1
-    },
-    price: {
-      type: Number,
-      required: true
-    },
-    estimatedDuration: Number // minutes
-  }],
-  scheduledDate: {
-    type: Date,
-    required: true
-  },
-  scheduledTime: {
-    type: String,
-    required: true
-  },
-  status: {
-    type: String,
-    enum: [
-      'pending',           // Khách vừa đặt
-      'confirmed',         // Auto-confirmed when technician assigned
-      'customer_arrived',  // Khách đã mang xe đến
-      'reception_created', // Technician đã tạo phiếu tiếp nhận
-      'reception_approved',// Staff đã duyệt phiếu + parts
-      'parts_insufficient',// Thiếu parts, chờ quyết định
-      'waiting_for_parts', // Đồng ý chờ order parts
-      'rescheduled',       // Đã dời lịch do thiếu parts
-      'in_progress',       // Đang thực hiện service
-      'parts_requested',   // Yêu cầu thêm parts trong lúc làm
-      'completed',         // Hoàn thành tất cả
-      'invoiced',          // Đã xuất hóa đơn
-      'cancelled',         // Hủy bỏ
-      'no_show'           // Khách không đến
-    ],
-    default: 'pending'
-  },
-  // Core Status - 6 trạng thái cốt lõi cho reporting và UI đơn giản
-  coreStatus: {
-    type: String,
-    enum: ['Scheduled', 'CheckedIn', 'InService', 'OnHold', 'ReadyForPickup', 'Closed'],
-    required: true,
-    default: 'Scheduled'
-  },
-  // Reason code cho OnHold và Closed states
-  reasonCode: {
-    type: String,
-    enum: [
-      // OnHold reasons
-      'insufficient_parts', 'customer_decision', 'technician_unavailable', 'equipment_issue',
-      // Closed reasons  
-      'completed', 'cancelled', 'no_show', 'rescheduled'
-    ]
-  },
-  priority: {
-    type: String,
-    enum: ['low', 'normal', 'high', 'urgent'],
-    default: 'normal'
-  },
-  assignedTechnician: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
-  estimatedCompletion: Date,
-  actualCompletion: Date,
-  customerNotes: String,
-  internalNotes: String,
-  serviceNotes: [{
-    note: String,
-    addedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    addedAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
-  checklistItems: [{
-    item: String,
-    category: {
+const appointmentSchema = new mongoose.Schema(
+  {
+    appointmentNumber: {
       type: String,
-      enum: ['battery', 'motor', 'charging', 'safety', 'general']
-    },
-    isCompleted: {
-      type: Boolean,
-      default: false
-    },
-    completedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    completedAt: Date,
-    notes: String
-  }],
-  partsUsed: [{
-    partId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Part'
-    },
-    quantity: {
-      type: Number,
+      unique: true,
       required: true,
-      min: 1
     },
-    unitPrice: {
-      type: Number,
-      required: true
-    },
-    totalPrice: {
-      type: Number,
-      required: true
-    }
-  }],
-  images: [{
-    url: String,
-    description: String,
-    category: {
-      type: String,
-      enum: ['before', 'during', 'after', 'issue', 'completed']
-    },
-    uploadedBy: {
+    customerId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      ref: "User",
+      required: true,
     },
-    uploadedAt: {
+    vehicleId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Vehicle",
+      required: true,
+    },
+    // serviceCenterId removed - single center architecture
+    services: [
+      {
+        serviceId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Service",
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          default: 1,
+          min: 1,
+        },
+        price: {
+          type: Number,
+          required: true,
+        },
+        estimatedDuration: Number, // minutes
+      },
+    ],
+    scheduledDate: {
       type: Date,
-      default: Date.now
-    }
-  }],
-  totalAmount: {
-    type: Number,
-    default: 0
-  },
-  paymentStatus: {
-    type: String,
-    enum: ['pending', 'partial', 'paid', 'refunded'],
-    default: 'pending'
-  },
-  remindersSent: {
-    type: Number,
-    default: 0
-  },
-  lastReminderSent: Date,
-  feedback: {
-    rating: {
-      type: Number,
-      min: 1,
-      max: 5
+      required: true,
     },
-    comment: String,
-    submittedAt: Date
-  },
-  
-  // Thông tin rescheduling và alternative flows
-  reschedulingInfo: {
-    reason: {
+    scheduledTime: {
       type: String,
-      enum: ['insufficient_parts', 'customer_request', 'technician_unavailable', 'equipment_issue', 'other']
+      required: true,
     },
-    originalDate: Date,
-    newScheduledDate: Date,
-    rescheduledBy: {
+    status: {
+      type: String,
+      enum: [
+        "pending", // Khách vừa đặt
+        "confirmed", // Auto-confirmed when technician assigned
+        "customer_arrived", // Khách đã mang xe đến
+        "reception_created", // Technician đã tạo phiếu tiếp nhận
+        "reception_approved", // Staff đã duyệt phiếu + parts
+        "parts_insufficient", // Thiếu parts, chờ quyết định
+        "waiting_for_parts", // Đồng ý chờ order parts
+        "rescheduled", // Đã dời lịch do thiếu parts
+        "in_progress", // Đang thực hiện service
+        "parts_requested", // Yêu cầu thêm parts trong lúc làm
+        "completed", // Hoàn thành tất cả
+        "invoiced", // Đã xuất hóa đơn
+        "cancelled", // Hủy bỏ
+        "no_show", // Khách không đến
+      ],
+      default: "pending",
+    },
+    // Core Status - 6 trạng thái cốt lõi cho reporting và UI đơn giản
+    coreStatus: {
+      type: String,
+      enum: [
+        "Scheduled",
+        "CheckedIn",
+        "InService",
+        "OnHold",
+        "ReadyForPickup",
+        "Closed",
+      ],
+      required: true,
+      default: "Scheduled",
+    },
+    // Reason code cho OnHold và Closed states
+    reasonCode: {
+      type: String,
+      enum: [
+        // OnHold reasons
+        "insufficient_parts",
+        "customer_decision",
+        "technician_unavailable",
+        "equipment_issue",
+        // Closed reasons
+        "completed",
+        "cancelled",
+        "no_show",
+        "rescheduled",
+      ],
+    },
+    priority: {
+      type: String,
+      enum: ["low", "normal", "high", "urgent"],
+      default: "normal",
+    },
+    assignedTechnician: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      ref: "User",
     },
-    rescheduledAt: Date,
-    customerAgreed: {
-      type: Boolean,
-      default: false
+    estimatedCompletion: Date,
+    actualCompletion: Date,
+    customerNotes: String,
+    internalNotes: String,
+    serviceNotes: [
+      {
+        note: String,
+        addedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        addedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    checklistItems: [
+      {
+        item: String,
+        category: {
+          type: String,
+          enum: ["battery", "motor", "charging", "safety", "general"],
+        },
+        isCompleted: {
+          type: Boolean,
+          default: false,
+        },
+        completedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        completedAt: Date,
+        notes: String,
+      },
+    ],
+    partsUsed: [
+      {
+        partId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Part",
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
+        unitPrice: {
+          type: Number,
+          required: true,
+        },
+        totalPrice: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
+    images: [
+      {
+        url: String,
+        description: String,
+        category: {
+          type: String,
+          enum: ["before", "during", "after", "issue", "completed"],
+        },
+        uploadedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        uploadedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+    totalAmount: {
+      type: Number,
+      default: 0,
     },
-    estimatedPartsArrival: Date,
-    reschedulingNotes: String
-  },
-  
-  // References to related documents
-  serviceReceptionId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ServiceReception'
-  },
-  invoiceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Invoice'
-  },
-  
-  // Staff confirmation details
-  staffConfirmation: {
-    confirmedBy: {
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "partial", "paid", "refunded"],
+      default: "pending",
+    },
+    paymentInfo: {
+      transactionRef: String,
+      paymentMethod: String,
+      paidAmount: Number,
+      paymentDate: Date,
+      vnpayTransactionId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "VNPAYTransaction",
+      },
+    },
+    remindersSent: {
+      type: Number,
+      default: 0,
+    },
+    lastReminderSent: Date,
+    feedback: {
+      rating: {
+        type: Number,
+        min: 1,
+        max: 5,
+      },
+      comment: String,
+      submittedAt: Date,
+    },
+
+    // Thông tin rescheduling và alternative flows
+    reschedulingInfo: {
+      reason: {
+        type: String,
+        enum: [
+          "insufficient_parts",
+          "customer_request",
+          "technician_unavailable",
+          "equipment_issue",
+          "other",
+        ],
+      },
+      originalDate: Date,
+      newScheduledDate: Date,
+      rescheduledBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      rescheduledAt: Date,
+      customerAgreed: {
+        type: Boolean,
+        default: false,
+      },
+      estimatedPartsArrival: Date,
+      reschedulingNotes: String,
+    },
+
+    // References to related documents
+    serviceReceptionId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      ref: "ServiceReception",
     },
-    confirmedAt: Date,
-    confirmationNotes: String,
-    modificationsRequired: [{
-      field: String,
-      originalValue: String,
-      newValue: String,
-      reason: String
-    }]
-  },
-  
-  // Customer arrival tracking
-  customerArrival: {
-    arrivedAt: Date,
-    receivedBy: {
+    invoiceId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
+      ref: "Invoice",
     },
-    vehicleConditionNotes: String,
-    customerItems: [{
-      item: String,
-      location: String,
-      value: Number
-    }]
+
+    // Staff confirmation details
+    staffConfirmation: {
+      confirmedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      confirmedAt: Date,
+      confirmationNotes: String,
+      modificationsRequired: [
+        {
+          field: String,
+          originalValue: String,
+          newValue: String,
+          reason: String,
+        },
+      ],
+    },
+
+    // Customer arrival tracking
+    customerArrival: {
+      arrivedAt: Date,
+      receivedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      vehicleConditionNotes: String,
+      customerItems: [
+        {
+          item: String,
+          location: String,
+          value: Number,
+        },
+      ],
+    },
+
+    // Workflow tracking
+    workflowHistory: [
+      {
+        status: String,
+        changedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        changedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        reason: String,
+        notes: String,
+      },
+    ],
   },
-  
-  // Workflow tracking
-  workflowHistory: [{
-    status: String,
-    changedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    changedAt: {
-      type: Date,
-      default: Date.now
-    },
-    reason: String,
-    notes: String
-  }]
-}, {
-  timestamps: true
-});
+  {
+    timestamps: true,
+  }
+);
 
 // Generate appointment number
-appointmentSchema.pre('save', async function(next) {
+appointmentSchema.pre("save", async function (next) {
   if (!this.appointmentNumber) {
     const date = new Date();
     const year = date.getFullYear().toString().slice(-2);
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+
     const count = await this.constructor.countDocuments({
       createdAt: {
         $gte: new Date(date.getFullYear(), date.getMonth(), date.getDate()),
-        $lt: new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1)
-      }
+        $lt: new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1),
+      },
     });
-    
-    this.appointmentNumber = `APT${year}${month}${day}${(count + 1).toString().padStart(3, '0')}`;
+
+    this.appointmentNumber = `APT${year}${month}${day}${(count + 1)
+      .toString()
+      .padStart(3, "0")}`;
   }
   next();
 });
 
 // Calculate total amount
-appointmentSchema.methods.calculateTotal = function() {
+appointmentSchema.methods.calculateTotal = function () {
   let total = 0;
-  
+
   // Add service costs
-  this.services.forEach(service => {
+  this.services.forEach((service) => {
     total += service.price * service.quantity;
   });
-  
+
   // Add parts costs
-  this.partsUsed.forEach(part => {
+  this.partsUsed.forEach((part) => {
     total += part.totalPrice;
   });
-  
+
   this.totalAmount = total;
   return total;
 };
 
 // State transition validation with role-based checks
-appointmentSchema.methods.canTransitionTo = function(newStatus, userRole = null, userId = null) {
+appointmentSchema.methods.canTransitionTo = function (
+  newStatus,
+  userRole = null,
+  userId = null
+) {
   const allowedTransitions = {
-    pending: ['confirmed', 'cancelled', 'no_show'],
-    confirmed: ['customer_arrived', 'cancelled', 'rescheduled', 'no_show'],
-    customer_arrived: ['reception_created', 'cancelled'],
-    reception_created: ['reception_approved', 'parts_insufficient', 'cancelled'],
-    reception_approved: ['in_progress', 'cancelled'],
-    parts_insufficient: ['waiting_for_parts', 'in_progress', 'rescheduled', 'cancelled'],
-    waiting_for_parts: ['reception_approved', 'in_progress', 'parts_insufficient', 'cancelled', 'rescheduled'],
-    rescheduled: ['confirmed'], // New appointment cycle
-    in_progress: ['parts_requested', 'parts_insufficient', 'completed', 'cancelled'],
-    parts_requested: ['in_progress', 'parts_insufficient', 'waiting_for_parts', 'cancelled'],
-    completed: ['invoiced'],
+    pending: ["confirmed", "cancelled", "no_show"],
+    confirmed: ["customer_arrived", "cancelled", "rescheduled", "no_show"],
+    customer_arrived: ["reception_created", "cancelled"],
+    reception_created: [
+      "reception_approved",
+      "parts_insufficient",
+      "cancelled",
+    ],
+    reception_approved: ["in_progress", "cancelled"],
+    parts_insufficient: [
+      "waiting_for_parts",
+      "in_progress",
+      "rescheduled",
+      "cancelled",
+    ],
+    waiting_for_parts: [
+      "reception_approved",
+      "in_progress",
+      "parts_insufficient",
+      "cancelled",
+      "rescheduled",
+    ],
+    rescheduled: ["confirmed"], // New appointment cycle
+    in_progress: [
+      "parts_requested",
+      "parts_insufficient",
+      "completed",
+      "cancelled",
+    ],
+    parts_requested: [
+      "in_progress",
+      "parts_insufficient",
+      "waiting_for_parts",
+      "cancelled",
+    ],
+    completed: ["invoiced"],
     invoiced: [], // Terminal state
     cancelled: [], // Terminal state
-    no_show: [] // Terminal state
+    no_show: [], // Terminal state
   };
 
   // Check basic transition rules
-  const isValidTransition = allowedTransitions[this.status]?.includes(newStatus) || false;
+  const isValidTransition =
+    allowedTransitions[this.status]?.includes(newStatus) || false;
   if (!isValidTransition) {
     return false;
   }
@@ -329,18 +405,25 @@ appointmentSchema.methods.canTransitionTo = function(newStatus, userRole = null,
   // Role-based validation
   if (userRole) {
     // Customers can only cancel their own appointments
-    if (userRole === 'customer') {
-      return newStatus === 'cancelled' && userId?.toString() === this.customerId?.toString();
+    if (userRole === "customer") {
+      return (
+        newStatus === "cancelled" &&
+        userId?.toString() === this.customerId?.toString()
+      );
     }
 
     // Technicians can handle reception creation and service progression
-    if (userRole === 'technician') {
+    if (userRole === "technician") {
       const technicianTransitions = [
-        'reception_created', 'in_progress', 'parts_requested', 'parts_insufficient', 'completed'
+        "reception_created",
+        "in_progress",
+        "parts_requested",
+        "parts_insufficient",
+        "completed",
       ];
       if (technicianTransitions.includes(newStatus)) {
         // For technicians, must be assigned technician except for parts_insufficient and completed
-        if (['parts_insufficient', 'completed'].includes(newStatus)) {
+        if (["parts_insufficient", "completed"].includes(newStatus)) {
           return true; // Any technician can mark parts insufficient or complete work
         }
         return userId?.toString() === this.assignedTechnician?.toString();
@@ -348,20 +431,32 @@ appointmentSchema.methods.canTransitionTo = function(newStatus, userRole = null,
     }
 
     // Staff and admin can handle confirmations, arrivals, approvals, and work management
-    if (userRole === 'staff' || userRole === 'admin') {
+    if (userRole === "staff" || userRole === "admin") {
       const staffTransitions = [
-        'confirmed', 'customer_arrived', 'reception_approved', 'in_progress', 'parts_insufficient',
-        'waiting_for_parts', 'parts_requested', 'completed', 'cancelled', 'rescheduled', 'no_show', 'invoiced'
+        "confirmed",
+        "customer_arrived",
+        "reception_approved",
+        "in_progress",
+        "parts_insufficient",
+        "waiting_for_parts",
+        "parts_requested",
+        "completed",
+        "cancelled",
+        "rescheduled",
+        "no_show",
+        "invoiced",
       ];
       return staffTransitions.includes(newStatus);
     }
   }
 
   return true;
-};;;;;;
+};
 
 // Enhanced validation for specific transitions
-appointmentSchema.methods.validateTransitionRequirements = function(newStatus) {
+appointmentSchema.methods.validateTransitionRequirements = function (
+  newStatus
+) {
   const requirements = {
     confirmed: () => {
       // Staff can confirm appointments without assigned technician
@@ -370,81 +465,109 @@ appointmentSchema.methods.validateTransitionRequirements = function(newStatus) {
     },
     customer_arrived: () => {
       // Must be confirmed first
-      return this.status === 'confirmed';
+      return this.status === "confirmed";
     },
     reception_created: () => {
       // Must have customer arrived and assigned technician
-      return this.status === 'customer_arrived' && !!this.assignedTechnician;
+      return this.status === "customer_arrived" && !!this.assignedTechnician;
     },
     reception_approved: () => {
       // Normal flow: Must have service reception created
-      if (this.status === 'reception_created') {
+      if (this.status === "reception_created") {
         return !!this.serviceReceptionId;
       }
       // Resume flow: Coming from waiting_for_parts (parts now available)
-      if (this.status === 'waiting_for_parts') {
+      if (this.status === "waiting_for_parts") {
         return true;
       }
       return false;
     },
     in_progress: () => {
       // Can start from multiple statuses - very flexible for parts workflow
-      return ['reception_approved', 'waiting_for_parts', 'parts_insufficient', 'parts_requested'].includes(this.status);
+      return [
+        "reception_approved",
+        "waiting_for_parts",
+        "parts_insufficient",
+        "parts_requested",
+      ].includes(this.status);
     },
     parts_insufficient: () => {
       // Can happen during work, when parts requested, or when resuming work
-      return ['in_progress', 'reception_approved', 'waiting_for_parts', 'parts_requested'].includes(this.status);
+      return [
+        "in_progress",
+        "reception_approved",
+        "waiting_for_parts",
+        "parts_requested",
+      ].includes(this.status);
     },
     waiting_for_parts: () => {
       // Parts have been ordered/requested or marked insufficient
-      return ['parts_insufficient', 'parts_requested'].includes(this.status);
+      return ["parts_insufficient", "parts_requested"].includes(this.status);
     },
     parts_requested: () => {
       // Can request parts during work
-      return ['in_progress'].includes(this.status);
+      return ["in_progress"].includes(this.status);
     },
     cancelled: () => {
       // Can be cancelled from most statuses (business decision)
       const cancellableStatuses = [
-        'pending', 'confirmed', 'customer_arrived', 'reception_created', 
-        'reception_approved', 'parts_insufficient', 'waiting_for_parts', 
-        'parts_requested', 'in_progress'
+        "pending",
+        "confirmed",
+        "customer_arrived",
+        "reception_created",
+        "reception_approved",
+        "parts_insufficient",
+        "waiting_for_parts",
+        "parts_requested",
+        "in_progress",
       ];
       return cancellableStatuses.includes(this.status);
     },
     completed: () => {
       // Must be in progress - remove strict requirements for serviceNotes/checklistItems
-      if (this.status !== 'in_progress') {
+      if (this.status !== "in_progress") {
         return false;
       }
-      
+
       // Optional validation - completion is allowed even without notes/checklist
       // In practice, these should be filled, but we don't want to block completion for testing
       const hasServiceNotes = this.serviceNotes && this.serviceNotes.length > 0;
-      const hasChecklistItems = this.checklistItems && this.checklistItems.some(item => item.isCompleted);
-      
+      const hasChecklistItems =
+        this.checklistItems &&
+        this.checklistItems.some((item) => item.isCompleted);
+
       // Allow completion but log a warning if no documentation
       if (!hasServiceNotes && !hasChecklistItems) {
-        console.warn(`Appointment ${this._id} completed without service notes or checklist items`);
+        console.warn(
+          `Appointment ${this._id} completed without service notes or checklist items`
+        );
       }
-      
+
       return true; // Allow completion from in_progress
     },
     invoiced: () => {
       // Must be completed
-      return this.status === 'completed';
-    }
+      return this.status === "completed";
+    },
   };
 
   const validator = requirements[newStatus];
   return !validator || validator();
-};;;;;;;;
+};
 
 // Update status with enhanced validation and history tracking
-appointmentSchema.methods.updateStatus = function(newStatus, userId, userRole = null, reason = '', notes = '') {
+appointmentSchema.methods.updateStatus = function (
+  newStatus,
+  userId,
+  userRole = null,
+  reason = "",
+  notes = ""
+) {
   // Check if transition is allowed
   if (!this.canTransitionTo(newStatus, userRole, userId)) {
-    throw new Error(`Cannot transition from ${this.status} to ${newStatus}. User role: ${userRole}`);
+    throw new Error(
+      `Cannot transition from ${this.status} to ${newStatus}. User role: ${userRole}`
+    );
   }
 
   // Check business requirements
@@ -458,7 +581,7 @@ appointmentSchema.methods.updateStatus = function(newStatus, userId, userRole = 
     changedBy: userId,
     changedAt: new Date(),
     reason,
-    notes
+    notes,
   });
 
   // Update status
@@ -471,20 +594,20 @@ appointmentSchema.methods.updateStatus = function(newStatus, userId, userRole = 
 };
 
 // Auto-update related fields when status changes
-appointmentSchema.methods.updateRelatedFields = function(newStatus) {
+appointmentSchema.methods.updateRelatedFields = function (newStatus) {
   const now = new Date();
 
   switch (newStatus) {
-    case 'customer_arrived':
+    case "customer_arrived":
       if (!this.customerArrival.arrivedAt) {
         this.customerArrival.arrivedAt = now;
       }
       break;
-    case 'completed':
+    case "completed":
       this.actualCompletion = now;
       break;
-    case 'cancelled':
-    case 'no_show':
+    case "cancelled":
+    case "no_show":
       // Clear any future estimated completion
       this.estimatedCompletion = undefined;
       break;
@@ -492,32 +615,40 @@ appointmentSchema.methods.updateRelatedFields = function(newStatus) {
 };
 
 // Check if appointment can be modified
-appointmentSchema.methods.canBeModified = function() {
-  const modifiableStatuses = ['pending', 'confirmed', 'customer_arrived', 'reception_created'];
+appointmentSchema.methods.canBeModified = function () {
+  const modifiableStatuses = [
+    "pending",
+    "confirmed",
+    "customer_arrived",
+    "reception_created",
+  ];
   return modifiableStatuses.includes(this.status);
 };
 
 // Check if technician can start work
-appointmentSchema.methods.canStartWork = function() {
-  return this.status === 'reception_approved';
+appointmentSchema.methods.canStartWork = function () {
+  return this.status === "reception_approved";
 };
 
 // Check if appointment can be completed
-appointmentSchema.methods.canBeCompleted = function() {
-  return this.status === 'in_progress';
+appointmentSchema.methods.canBeCompleted = function () {
+  return this.status === "in_progress";
 };
 
 // Check if customer can cancel appointment
-appointmentSchema.methods.canBeCancelledByCustomer = function(customerId) {
+appointmentSchema.methods.canBeCancelledByCustomer = function (customerId) {
   // Check if it's the right customer
   if (this.customerId.toString() !== customerId.toString()) {
-    return { canCancel: false, reason: 'Not your appointment' };
+    return { canCancel: false, reason: "Not your appointment" };
   }
 
   // Check if status allows cancellation
-  const cancellableStatuses = ['pending', 'confirmed'];
+  const cancellableStatuses = ["pending", "confirmed"];
   if (!cancellableStatuses.includes(this.status)) {
-    return { canCancel: false, reason: `Cannot cancel appointment with status: ${this.status}` };
+    return {
+      canCancel: false,
+      reason: `Cannot cancel appointment with status: ${this.status}`,
+    };
   }
 
   // Check time restriction - must be at least 24 hours before appointment
@@ -529,25 +660,32 @@ appointmentSchema.methods.canBeCancelledByCustomer = function(customerId) {
   if (hoursUntilAppointment < 24) {
     return {
       canCancel: false,
-      reason: 'Cannot cancel within 24 hours of appointment. Please contact the service center.',
-      hoursLeft: Math.round(hoursUntilAppointment * 10) / 10
+      reason:
+        "Cannot cancel within 24 hours of appointment. Please contact the service center.",
+      hoursLeft: Math.round(hoursUntilAppointment * 10) / 10,
     };
   }
 
-  return { canCancel: true, hoursLeft: Math.round(hoursUntilAppointment * 10) / 10 };
+  return {
+    canCancel: true,
+    hoursLeft: Math.round(hoursUntilAppointment * 10) / 10,
+  };
 };
 
 // Check if customer can reschedule appointment
-appointmentSchema.methods.canBeRescheduledByCustomer = function(customerId) {
+appointmentSchema.methods.canBeRescheduledByCustomer = function (customerId) {
   // Check if it's the right customer
   if (this.customerId.toString() !== customerId.toString()) {
-    return { canReschedule: false, reason: 'Not your appointment' };
+    return { canReschedule: false, reason: "Not your appointment" };
   }
 
   // Check if status allows rescheduling
-  const reschedulableStatuses = ['pending', 'confirmed'];
+  const reschedulableStatuses = ["pending", "confirmed"];
   if (!reschedulableStatuses.includes(this.status)) {
-    return { canReschedule: false, reason: `Cannot reschedule appointment with status: ${this.status}` };
+    return {
+      canReschedule: false,
+      reason: `Cannot reschedule appointment with status: ${this.status}`,
+    };
   }
 
   // Check time restriction - must be at least 24 hours before appointment
@@ -559,8 +697,9 @@ appointmentSchema.methods.canBeRescheduledByCustomer = function(customerId) {
   if (hoursUntilAppointment < 24) {
     return {
       canReschedule: false,
-      reason: 'Cannot reschedule within 24 hours of appointment. Please contact the service center.',
-      hoursLeft: Math.round(hoursUntilAppointment * 10) / 10
+      reason:
+        "Cannot reschedule within 24 hours of appointment. Please contact the service center.",
+      hoursLeft: Math.round(hoursUntilAppointment * 10) / 10,
     };
   }
 
@@ -569,8 +708,9 @@ appointmentSchema.methods.canBeRescheduledByCustomer = function(customerId) {
   if (rescheduleCount >= 2) {
     return {
       canReschedule: false,
-      reason: 'Maximum reschedule limit reached (2 times). Please contact the service center.',
-      rescheduleCount
+      reason:
+        "Maximum reschedule limit reached (2 times). Please contact the service center.",
+      rescheduleCount,
     };
   }
 
@@ -578,12 +718,12 @@ appointmentSchema.methods.canBeRescheduledByCustomer = function(customerId) {
     canReschedule: true,
     hoursLeft: Math.round(hoursUntilAppointment * 10) / 10,
     rescheduleCount,
-    remainingReschedules: 2 - rescheduleCount
+    remainingReschedules: 2 - rescheduleCount,
   };
 };
 
 // Get available customer actions
-appointmentSchema.methods.getCustomerActions = function(customerId) {
+appointmentSchema.methods.getCustomerActions = function (customerId) {
   const cancelCheck = this.canBeCancelledByCustomer(customerId);
   const rescheduleCheck = this.canBeRescheduledByCustomer(customerId);
 
@@ -594,12 +734,17 @@ appointmentSchema.methods.getCustomerActions = function(customerId) {
     rescheduleReason: rescheduleCheck.reason,
     hoursLeft: cancelCheck.hoursLeft || rescheduleCheck.hoursLeft,
     rescheduleCount: rescheduleCheck.rescheduleCount || 0,
-    remainingReschedules: rescheduleCheck.remainingReschedules || 0
+    remainingReschedules: rescheduleCheck.remainingReschedules || 0,
   };
 };
 
 // Handle rescheduling
-appointmentSchema.methods.reschedule = function(newDate, reason, userId, customerAgreed = false) {
+appointmentSchema.methods.reschedule = function (
+  newDate,
+  reason,
+  userId,
+  customerAgreed = false
+) {
   // Increment reschedule count
   const currentCount = this.reschedulingInfo?.rescheduleCount || 0;
 
@@ -611,78 +756,87 @@ appointmentSchema.methods.reschedule = function(newDate, reason, userId, custome
     rescheduledBy: userId,
     rescheduledAt: new Date(),
     customerAgreed,
-    rescheduleCount: currentCount + 1
+    rescheduleCount: currentCount + 1,
   };
 
   if (customerAgreed) {
     this.scheduledDate = newDate;
-    this.status = 'confirmed'; // Reset to confirmed status
+    this.status = "confirmed"; // Reset to confirmed status
   } else {
-    this.status = 'rescheduled';
+    this.status = "rescheduled";
   }
 
   return this.save();
 };
 
 // Static method để compute core status từ detailed status
-appointmentSchema.statics.getCoreStatus = function(detailedStatus) {
+appointmentSchema.statics.getCoreStatus = function (detailedStatus) {
   const mapping = {
-    'pending': 'Scheduled',
-    'confirmed': 'Scheduled',
-    'customer_arrived': 'CheckedIn', 
-    'reception_created': 'CheckedIn',
-    'reception_approved': 'InService',  // Fixed: reception approved should move to InService
-    'in_progress': 'InService',
-    'parts_insufficient': 'OnHold',
-    'waiting_for_parts': 'OnHold',
-    'parts_requested': 'OnHold',
-    'completed': 'ReadyForPickup',
-    'invoiced': 'ReadyForPickup',
-    'cancelled': 'Closed',
-    'no_show': 'Closed',
-    'rescheduled': 'Closed'
+    pending: "Scheduled",
+    confirmed: "Scheduled",
+    customer_arrived: "CheckedIn",
+    reception_created: "CheckedIn",
+    reception_approved: "InService", // Fixed: reception approved should move to InService
+    in_progress: "InService",
+    parts_insufficient: "OnHold",
+    waiting_for_parts: "OnHold",
+    parts_requested: "OnHold",
+    completed: "ReadyForPickup",
+    invoiced: "ReadyForPickup",
+    cancelled: "Closed",
+    no_show: "Closed",
+    rescheduled: "Closed",
   };
-  return mapping[detailedStatus] || 'Scheduled';
-};;
+  return mapping[detailedStatus] || "Scheduled";
+};
 
 // Static method để determine reason code
-appointmentSchema.statics.getReasonCode = function(detailedStatus, coreStatus) {
-  if (coreStatus === 'OnHold') {
-    if (detailedStatus === 'parts_insufficient' || detailedStatus === 'waiting_for_parts') {
-      return 'insufficient_parts';
+appointmentSchema.statics.getReasonCode = function (
+  detailedStatus,
+  coreStatus
+) {
+  if (coreStatus === "OnHold") {
+    if (
+      detailedStatus === "parts_insufficient" ||
+      detailedStatus === "waiting_for_parts"
+    ) {
+      return "insufficient_parts";
     }
-    if (detailedStatus === 'parts_requested') {
-      return 'insufficient_parts';
+    if (detailedStatus === "parts_requested") {
+      return "insufficient_parts";
     }
     // Default OnHold reason
-    return 'insufficient_parts';
+    return "insufficient_parts";
   }
-  
-  if (coreStatus === 'Closed') {
-    if (detailedStatus === 'completed' || detailedStatus === 'invoiced') {
-      return 'completed';
+
+  if (coreStatus === "Closed") {
+    if (detailedStatus === "completed" || detailedStatus === "invoiced") {
+      return "completed";
     }
-    if (detailedStatus === 'cancelled') {
-      return 'cancelled';
+    if (detailedStatus === "cancelled") {
+      return "cancelled";
     }
-    if (detailedStatus === 'no_show') {
-      return 'no_show';
+    if (detailedStatus === "no_show") {
+      return "no_show";
     }
-    if (detailedStatus === 'rescheduled') {
-      return 'rescheduled';
+    if (detailedStatus === "rescheduled") {
+      return "rescheduled";
     }
   }
-  
+
   return null; // No reason code needed for other states
 };
 
 // Pre-save middleware để auto-update coreStatus và reasonCode
-appointmentSchema.pre('save', function() {
+appointmentSchema.pre("save", function () {
   // Auto-compute coreStatus từ detailed status
   this.coreStatus = this.constructor.getCoreStatus(this.status);
 
   // Auto-set reasonCode cho OnHold và Closed states
-  this.reasonCode = this.constructor.getReasonCode(this.status, this.coreStatus);
+  this.reasonCode = this.constructor.getReasonCode(
+    this.status,
+    this.coreStatus
+  );
 });
 
 // Indexes for performance optimization (appointmentNumber already has unique index from schema)
@@ -690,7 +844,7 @@ appointmentSchema.index({ customerId: 1, scheduledDate: -1 });
 appointmentSchema.index({ serviceCenterId: 1, status: 1 });
 appointmentSchema.index({ assignedTechnician: 1, status: 1 });
 appointmentSchema.index({ status: 1, scheduledDate: 1 });
-appointmentSchema.index({ 'workflowHistory.changedAt': -1 });
+appointmentSchema.index({ "workflowHistory.changedAt": -1 });
 appointmentSchema.index({ coreStatus: 1, reasonCode: 1 });
 
-export default mongoose.model('Appointment', appointmentSchema);
+export default mongoose.model("Appointment", appointmentSchema);

@@ -69,4 +69,80 @@ router.get(
   vnpayController.debugPendingPayments
 );
 
+/**
+ * @route   GET /api/vnpay/transactions
+ * @desc    Get user transaction history
+ * @access  Private
+ */
+router.get("/transactions", protect, vnpayController.getUserTransactions);
+
+/**
+ * @route   GET /api/vnpay/transactions/:transactionId
+ * @desc    Get transaction by ID
+ * @access  Private
+ */
+router.get(
+  "/transactions/:transactionId",
+  protect,
+  vnpayController.getTransactionById
+);
+
+/**
+ * @route   GET /api/vnpay/transactions/stats
+ * @desc    Get transaction statistics
+ * @access  Private
+ */
+router.get("/transactions/stats", protect, vnpayController.getTransactionStats);
+
+/**
+ * @route   PUT /api/vnpay/transactions/:transactionId/status
+ * @desc    Update transaction status (admin only)
+ * @access  Private/Admin
+ */
+router.put(
+  "/transactions/:transactionId/status",
+  protect,
+  vnpayController.updateTransactionStatus
+);
+
+/**
+ * @route   POST /api/vnpay/transactions/:transactionId/refund
+ * @desc    Refund transaction (admin only)
+ * @access  Private/Admin
+ */
+router.post(
+  "/transactions/:transactionId/refund",
+  protect,
+  vnpayController.refundTransaction
+);
+
+/**
+ * @route   GET /api/vnpay/transactions/expired
+ * @desc    Get expired transactions (admin only)
+ * @access  Private/Admin
+ */
+router.get(
+  "/transactions/expired",
+  protect,
+  vnpayController.getExpiredTransactions
+);
+
+/**
+ * @route   POST /api/vnpay/transactions/cleanup-expired
+ * @desc    Clean up expired transactions (admin only)
+ * @access  Private/Admin
+ */
+router.post(
+  "/transactions/cleanup-expired",
+  protect,
+  vnpayController.cleanupExpiredTransactions
+);
+
+/**
+ * @route   GET /api/vnpay/transactions/all
+ * @desc    Get all transactions with filtering (admin only)
+ * @access  Private/Admin
+ */
+router.get("/transactions/all", protect, vnpayController.getAllTransactions);
+
 export default router;

@@ -30,11 +30,7 @@ const invoiceSchema = new mongoose.Schema({
     required: true
   },
   
-  serviceCenterId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ServiceCenter',
-    required: true
-  },
+  // serviceCenterId removed - single center architecture
   
   // Service items from appointment
   serviceItems: [{

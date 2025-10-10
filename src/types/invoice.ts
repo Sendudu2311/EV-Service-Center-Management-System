@@ -44,9 +44,15 @@ export interface LaborCharges {
 export interface AdditionalCharge {
   description: string;
   amount: number;
-  type: 'fee' | 'discount' | 'tax' | 'environmental_fee' | 'disposal_fee' | 'other';
+  type:
+    | "fee"
+    | "discount"
+    | "tax"
+    | "environmental_fee"
+    | "disposal_fee"
+    | "other";
   isPercentage: boolean;
-  applyTo: 'services' | 'parts' | 'labor' | 'subtotal';
+  applyTo: "services" | "parts" | "labor" | "subtotal";
 }
 
 export interface InvoiceTotals {
@@ -62,8 +68,14 @@ export interface InvoiceTotals {
 }
 
 export interface PaymentInfo {
-  method: 'cash' | 'card' | 'bank_transfer' | 'e_wallet' | 'cheque' | 'installment';
-  status: 'unpaid' | 'partially_paid' | 'paid' | 'overdue' | 'refunded';
+  method:
+    | "cash"
+    | "card"
+    | "bank_transfer"
+    | "e_wallet"
+    | "cheque"
+    | "installment";
+  status: "unpaid" | "partially_paid" | "paid" | "overdue" | "refunded";
   dueDate?: string;
   paidAmount: number;
   remainingAmount: number;
@@ -121,7 +133,7 @@ export interface Invoice {
   serviceReceptionId?: string;
   customerId: string;
   vehicleId: string;
-  serviceCenterId: string;
+  // serviceCenterId removed - single center architecture
 
   // Invoice Items
   serviceItems: InvoiceServiceItem[];
@@ -154,7 +166,7 @@ export interface Invoice {
 
   sentToCustomer: boolean;
   sentAt?: string;
-  sentVia: 'email' | 'sms' | 'print' | 'portal';
+  sentVia: "email" | "sms" | "print" | "portal";
 
   customerViewed: boolean;
   customerViewedAt?: string;
@@ -166,7 +178,16 @@ export interface Invoice {
   terms: InvoiceTerms;
 
   // Status
-  status: 'draft' | 'pending_approval' | 'approved' | 'sent' | 'viewed' | 'paid' | 'overdue' | 'cancelled' | 'refunded';
+  status:
+    | "draft"
+    | "pending_approval"
+    | "approved"
+    | "sent"
+    | "viewed"
+    | "paid"
+    | "overdue"
+    | "cancelled"
+    | "refunded";
 
   // Revision Tracking
   revisionNumber: number;
@@ -186,7 +207,7 @@ export interface InvoiceFormData {
   serviceReceptionId?: string;
   customerId: string;
   vehicleId: string;
-  serviceCenterId: string;
+  // serviceCenterId removed - single center architecture
   serviceItems: InvoiceServiceItem[];
   partItems: InvoicePartItem[];
   laborCharges: LaborCharges;
@@ -200,7 +221,7 @@ export interface InvoiceFormData {
 
 export interface PaymentData {
   amount: number;
-  method: PaymentInfo['method'];
+  method: PaymentInfo["method"];
   transactionRef?: string;
   notes?: string;
 }
@@ -209,7 +230,7 @@ export interface InvoiceFilters {
   status?: string;
   paymentStatus?: string;
   customerId?: string;
-  serviceCenterId?: string;
+  // serviceCenterId removed - single center architecture
   dateRange?: {
     start: string;
     end: string;
@@ -223,59 +244,61 @@ export interface InvoiceFilters {
 
 // Vietnamese translations
 export const invoiceStatusTranslations: Record<string, string> = {
-  'draft': 'Bản nháp',
-  'pending_approval': 'Chờ phê duyệt',
-  'approved': 'Đã phê duyệt',
-  'sent': 'Đã gửi',
-  'viewed': 'Đã xem',
-  'paid': 'Đã thanh toán',
-  'overdue': 'Quá hạn',
-  'cancelled': 'Đã hủy',
-  'refunded': 'Đã hoàn tiền',
+  draft: "Bản nháp",
+  pending_approval: "Chờ phê duyệt",
+  approved: "Đã phê duyệt",
+  sent: "Đã gửi",
+  viewed: "Đã xem",
+  paid: "Đã thanh toán",
+  overdue: "Quá hạn",
+  cancelled: "Đã hủy",
+  refunded: "Đã hoàn tiền",
 };
 
 export const paymentMethodTranslations: Record<string, string> = {
-  'cash': 'Tiền mặt',
-  'card': 'Thẻ ngân hàng',
-  'bank_transfer': 'Chuyển khoản',
-  'e_wallet': 'Ví điện tử',
-  'cheque': 'Séc',
-  'installment': 'Trả góp',
+  cash: "Tiền mặt",
+  card: "Thẻ ngân hàng",
+  bank_transfer: "Chuyển khoản",
+  e_wallet: "Ví điện tử",
+  cheque: "Séc",
+  installment: "Trả góp",
 };
 
 export const paymentStatusTranslations: Record<string, string> = {
-  'unpaid': 'Chưa thanh toán',
-  'partially_paid': 'Thanh toán một phần',
-  'paid': 'Đã thanh toán',
-  'overdue': 'Quá hạn',
-  'refunded': 'Đã hoàn tiền',
+  unpaid: "Chưa thanh toán",
+  partially_paid: "Thanh toán một phần",
+  paid: "Đã thanh toán",
+  overdue: "Quá hạn",
+  refunded: "Đã hoàn tiền",
 };
 
 export const additionalChargeTypeTranslations: Record<string, string> = {
-  'fee': 'Phí dịch vụ',
-  'discount': 'Giảm giá',
-  'tax': 'Thuế',
-  'environmental_fee': 'Phí môi trường',
-  'disposal_fee': 'Phí xử lý',
-  'other': 'Khác',
+  fee: "Phí dịch vụ",
+  discount: "Giảm giá",
+  tax: "Thuế",
+  environmental_fee: "Phí môi trường",
+  disposal_fee: "Phí xử lý",
+  other: "Khác",
 };
 
 // Vietnamese VAT rate
 export const VIETNAMESE_VAT_RATE = 10;
 
 // Default payment terms in Vietnamese
-export const DEFAULT_PAYMENT_TERMS = 'Thanh toán ngay khi nhận hóa đơn';
+export const DEFAULT_PAYMENT_TERMS = "Thanh toán ngay khi nhận hóa đơn";
 
 // Default warranty terms
-export const DEFAULT_WARRANTY_TERMS = 'Bảo hành theo quy định của nhà sản xuất';
+export const DEFAULT_WARRANTY_TERMS = "Bảo hành theo quy định của nhà sản xuất";
 
 // Invoice number format: INV241218001 (INV + YYMMDD + sequence)
 export const generateInvoiceNumber = (): string => {
   const now = new Date();
   const year = now.getFullYear().toString().slice(-2);
-  const month = (now.getMonth() + 1).toString().padStart(2, '0');
-  const day = now.getDate().toString().padStart(2, '0');
-  const sequence = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  const month = (now.getMonth() + 1).toString().padStart(2, "0");
+  const day = now.getDate().toString().padStart(2, "0");
+  const sequence = Math.floor(Math.random() * 1000)
+    .toString()
+    .padStart(3, "0");
 
   return `INV${year}${month}${day}${sequence}`;
 };

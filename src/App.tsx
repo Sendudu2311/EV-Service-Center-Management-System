@@ -26,6 +26,8 @@ import PartsPage from "./pages/PartsPage";
 import ServicesPage from "./pages/ServicesPage";
 import InvoicesPage from "./pages/InvoicesPage";
 import PaymentResult from "./pages/PaymentResult";
+import CustomerTransactionsPage from "./pages/CustomerTransactionsPage";
+import StaffTransactionsPage from "./pages/StaffTransactionsPage";
 
 function App() {
   return (
@@ -61,6 +63,16 @@ function App() {
                   element={
                     <ProtectedRoute roles={["customer"]}>
                       <VehiclesPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Customer Transactions */}
+                <Route
+                  path="/transactions"
+                  element={
+                    <ProtectedRoute roles={["customer"]}>
+                      <CustomerTransactionsPage />
                     </ProtectedRoute>
                   }
                 />
@@ -141,6 +153,16 @@ function App() {
                   element={
                     <ProtectedRoute roles={["staff", "admin"]}>
                       <InvoicesPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Staff Transaction Management */}
+                <Route
+                  path="/manage-transactions"
+                  element={
+                    <ProtectedRoute roles={["staff", "admin"]}>
+                      <StaffTransactionsPage />
                     </ProtectedRoute>
                   }
                 />

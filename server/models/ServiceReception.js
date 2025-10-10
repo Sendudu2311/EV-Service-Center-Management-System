@@ -21,11 +21,7 @@ const serviceReceptionSchema = new mongoose.Schema({
     ref: 'Vehicle',
     required: true
   },
-  serviceCenterId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ServiceCenter',
-    required: true
-  },
+  // serviceCenterId removed - single center architecture
   vehicleCondition: {
     exterior: {
       condition: {
