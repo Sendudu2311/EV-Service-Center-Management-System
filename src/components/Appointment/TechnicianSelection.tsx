@@ -36,6 +36,7 @@ interface TechnicianSelectionProps {
   disabled?: boolean;
   appointmentDate?: string;
   appointmentTime?: string;
+  selectedSlotId?: string | null;
   estimatedDuration?: number;
 }
 
@@ -46,6 +47,7 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
   disabled = false,
   appointmentDate,
   appointmentTime,
+  selectedSlotId,
   estimatedDuration = 60,
 }) => {
   const [technicians, setTechnicians] = useState<Technician[]>([]);
@@ -64,7 +66,7 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
   const serviceCategories = useMemo(() => {
     return selectedServices
       .map((service) => service.category)
-      .filter(Boolean)
+      .filter((category): category is string => category !== undefined && category !== null && category !== '')
       .filter((category, index, array) => array.indexOf(category) === index);
   }, [selectedServices]);
 
@@ -118,61 +120,92 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
 
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      params.append("date", appointmentDate);
-      params.append("time", appointmentTime);
-      params.append("duration", estimatedDuration.toString());
+      let techniciansData: Technician[] = [];
 
-      // Add service categories for skill matching
-      if (serviceCategories.length > 0) {
-        serviceCategories.forEach((category) => {
-          if (category) params.append("serviceCategories", category);
-        });
-      }
+      if (selectedSlotId) {
+        // Get technicians directly from the selected slot
+        console.log("🔍 [TechnicianSelection] Getting technicians from slot:", selectedSlotId);
+        const slotResponse = await api.get(`/api/slots/${selectedSlotId}`);
+        const slot = slotResponse.data?.data;
 
-      // Add filtering parameters
-      if (filter.availability)
-        params.append("availability", filter.availability);
-      if (filter.specialization)
-        params.append("specialization", filter.specialization);
-
-      // Log: Parameters being sent to the API
-      console.log(
-        "📤 [TechnicianSelection] Requesting technicians with params:",
-        params.toString()
-      );
-      console.log(
-        "🌐 [TechnicianSelection] Full URL:",
-        `/api/appointments/available-technicians?${params.toString()}`
-      );
-
-      const response = await api.get(
-        `/api/appointments/available-technicians?${params.toString()}`
-      );
-
-      console.log("📥 [TechnicianSelection] Response received:", response.data);
-
-      if (response.data.success) {
-        setTechnicians(response.data.data);
-        // Set all fetched technicians as available since they're pre-filtered
-        const availabilityMap = response.data.data.reduce(
-          (acc: Record<string, boolean>, technician: any) => {
-            acc[technician.id] = true;
-            return acc;
-          },
-          {}
-        );
-        setTechnicianAvailability(availabilityMap);
-        console.log(
-          "✅ [TechnicianSelection] Successfully fetched technicians:",
-          response.data.data.length
-        );
+        if (slot && slot.technicianIds && slot.technicianIds.length > 0) {
+          // Transform slot technicians to match Technician interface
+          techniciansData = slot.technicianIds.map((tech: any) => ({
+            id: tech._id,
+            name: `${tech.firstName || ''} ${tech.lastName || ''}`.trim() || tech.email || tech._id,
+            specializations: tech.specializations || [],
+            availability: {
+              status: 'available', // Assume available since they're assigned to slot
+              workloadPercentage: 0 // Not available from slot data
+            },
+            performance: {
+              customerRating: 0, // Not available from slot data
+              completedJobs: 0, // Not available from slot data
+              efficiency: 0 // Not available from slot data
+            },
+            skills: [], // Not available from slot data
+            isRecommended: true, // All slot-assigned technicians are recommended
+            yearsExperience: 0, // Not available from slot data
+            isAssignedToSlot: true,
+            availableSlots: 1,
+            isPreferredSlotTechnician: true
+          }));
+        }
+        console.log("✅ [TechnicianSelection] Found technicians from slot:", techniciansData.length);
       } else {
-        console.error(
-          "❌ [TechnicianSelection] API returned success: false",
-          response.data
+        // Fallback to available technicians API if no slot selected
+        const params = new URLSearchParams();
+        params.append("date", appointmentDate);
+        params.append("time", appointmentTime);
+        params.append("duration", estimatedDuration.toString());
+
+        // Add service categories for skill matching
+        if (serviceCategories.length > 0) {
+          serviceCategories.forEach((category) => {
+            params.append("serviceCategories", category);
+          });
+        }
+
+        // Log: Parameters being sent to the API
+        console.log(
+          "📤 [TechnicianSelection] Requesting technicians with params:",
+          params.toString()
         );
+        console.log(
+          "🌐 [TechnicianSelection] Full URL:",
+          `/api/appointments/available-technicians?${params.toString()}`
+        );
+
+        const response = await api.get(
+          `/api/appointments/available-technicians?${params.toString()}`
+        );
+
+        console.log("📥 [TechnicianSelection] Response received:", response.data);
+
+        if (response.data.success) {
+          techniciansData = response.data.data;
+          console.log(
+            "✅ [TechnicianSelection] Successfully fetched technicians:",
+            response.data.data.length
+          );
+        } else {
+          console.error(
+            "❌ [TechnicianSelection] API returned success: false",
+            response.data
+          );
+        }
       }
+
+      setTechnicians(techniciansData);
+      // Set all fetched technicians as available since they're pre-filtered
+      const availabilityMap = techniciansData.reduce(
+        (acc: Record<string, boolean>, technician: any) => {
+          acc[technician.id] = true;
+          return acc;
+        },
+        {}
+      );
+      setTechnicianAvailability(availabilityMap);
     } catch (error: any) {
       console.error(
         "❌ [TechnicianSelection] Error fetching available technicians:",

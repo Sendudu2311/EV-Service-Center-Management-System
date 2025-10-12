@@ -252,9 +252,9 @@ export const appointmentsAPI = {
       })
       .catch(handleApiError),
 
-  assignTechnician: (id: string, technicianId: string) =>
+  assignTechnicians: (id: string, technicianIds: string[]) =>
     api
-      .put<ApiResponse<any>>(`/api/appointments/${id}/assign`, { technicianId })
+      .put<ApiResponse<any>>(`/api/appointments/${id}/assign`, { technicianId: technicianIds[0] })
       .catch(handleApiError),
 
   // New: Smart status mapping to specific workflow endpoints
@@ -641,33 +641,6 @@ export const servicesAPI = {
     api.get<ApiResponse<any[]>>("/api/services", { params: { category } }),
 };
 
-// Service Centers API
-export const serviceCentersAPI = {
-  getAll: (params?: any) =>
-    api.get<ApiResponse<any[]>>("/api/service-centers", { params }),
-
-  getById: (id: string) =>
-    api.get<ApiResponse<any>>(`/api/service-centers/${id}`),
-
-  // Fixed: Map to correct backend route
-  getAvailableSlots: (id: string, date: string) =>
-    api.get<ApiResponse<any[]>>(`/api/service-centers/${id}/availability`, {
-      params: { date },
-    }),
-
-  // New: Backend-specific operations
-  getNearby: (lat: number, lng: number, radius?: number) =>
-    api.get<ApiResponse<any[]>>("/api/service-centers/nearby", {
-      params: { lat, lng, radius },
-    }),
-
-  getServices: (id: string) =>
-    api.get<ApiResponse<any[]>>(`/api/service-centers/${id}/services`),
-
-  getTechnicians: (id: string) =>
-    api.get<ApiResponse<any[]>>(`/api/service-centers/${id}/technicians`),
-};
-
 // Technicians API
 export const techniciansAPI = {
   getAll: (params?: any) =>
@@ -686,7 +659,7 @@ export const techniciansAPI = {
     }),
 
   // Note: Backend doesn't have individual availability update
-  updateAvailability: (id: string, status: string) =>
+  updateAvailability: (status: string) =>
     api.put<ApiResponse<any>>("/api/technicians/profile", {
       availability: status,
     }),
@@ -710,6 +683,31 @@ export const techniciansAPI = {
     api.get<ApiResponse<any>>("/api/technicians", {
       params: { ...criteria, findBest: true },
     }),
+};
+
+// Slots API - new endpoints for full time-slot booking system
+export const slotsAPI = {
+  // List slots with optional filters (date, technicianId, duration)
+  list: (params?: any) =>
+    api.get<ApiResponse<any[]>>("/api/slots", { params }).catch(handleApiError),
+
+  // Reserve a slot (increment bookedCount)
+  reserve: (slotId: string) =>
+    api.post<ApiResponse<any>>(`/api/slots/${slotId}/reserve`).catch(handleApiError),
+
+  // Release a previously reserved slot
+  release: (slotId: string) =>
+    api.post<ApiResponse<any>>(`/api/slots/${slotId}/release`).catch(handleApiError),
+  
+  // Staff: create a slot
+  create: (slotData: any) => api.post<ApiResponse<any>>('/api/slots', slotData).catch(handleApiError),
+
+  // Staff: update a slot
+  update: (slotId: string, updateData: any) => api.put<ApiResponse<any>>(`/api/slots/${slotId}`, updateData).catch(handleApiError),
+
+  // Staff: assign/unassign technicians to a slot
+  assignTechnicians: (slotId: string, technicianIds?: string[]) =>
+    api.put<ApiResponse<any>>(`/api/slots/${slotId}/assign`, { technicianIds }).catch(handleApiError),
 };
 
 // Dashboard API

@@ -627,13 +627,9 @@ export const getUsers = async (req, res) => {
   try {
     const { role, search, isActive, page = 1, limit = 10 } = req.query;
 
-    // Check if user has permission
-    if (!["staff", "admin"].includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to access user data",
-      });
-    }
+      // Previously this endpoint enforced staff/admin roles. Authorization middleware
+      // now allows any authenticated user; keep column-level filtering but do not
+      // block callers here. If future restrictions are desired, enforce via middleware.
 
     let filter = {};
 
@@ -682,6 +678,26 @@ export const getUsers = async (req, res) => {
       success: false,
       message: "Server error while fetching users",
     });
+  }
+};
+
+// @desc    Get single user by id
+// @route   GET /api/auth/users/:id
+// @access  Private (authenticated)
+export const getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
+      .select('-password -resetPasswordToken -resetPasswordExpire')
+      .populate('serviceCenterId', 'name code');
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.json({ success: true, data: user });
+  } catch (error) {
+    console.error('Get user by id error:', error);
+    res.status(500).json({ success: false, message: 'Server error while fetching user' });
   }
 };
 

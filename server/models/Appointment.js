@@ -241,6 +241,10 @@ const appointmentSchema = new mongoose.Schema(
     },
 
     // References to related documents
+    slotId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Slot",
+    },
     serviceReceptionId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "ServiceReception",

@@ -772,7 +772,7 @@ export const verifyAppointmentPayment = async (req, res, next) => {
         scheduledDate: pendingPayment.appointmentData?.scheduledDate,
         scheduledTime: pendingPayment.appointmentData?.scheduledTime,
         services: servicesWithDetails,
-        serviceCenterId: pendingPayment.appointmentData?.serviceCenterId,
+        // serviceCenterId removed - single center architecture
         customerName: `${user.firstName} ${user.lastName}`,
       };
 

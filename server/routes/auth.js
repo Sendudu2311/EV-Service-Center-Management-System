@@ -9,6 +9,7 @@ import {
   resetPassword,
   logout,
   getUsers,
+  getUserById,
   updateUser,
   verifyEmail,
   resendOTP,
@@ -34,6 +35,7 @@ router.put("/change-password", protect, changePassword);
 
 // User management routes (all authenticated users)
 router.get("/users", protect, getUsers);
+router.get("/users/:id", protect, getUserById);
 router.put("/users/:id", protect, updateUser);
 
 export default router;

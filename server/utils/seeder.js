@@ -11,6 +11,7 @@ import EVChecklist from "../models/EVChecklist.js";
 import ChecklistInstance from "../models/ChecklistInstance.js";
 import PartRequest from "../models/PartRequest.js";
 import Invoice from "../models/Invoice.js";
+import Slot from "../models/Slot.js";
 
 // Load env vars
 dotenv.config();
@@ -37,6 +38,7 @@ const clearData = async () => {
     await TechnicianProfile.deleteMany({});
     await Appointment.deleteMany({});
     await Vehicle.deleteMany({});
+    await Slot.deleteMany({});
     await User.deleteMany({});
     // ServiceCenter operations removed - single center architecture
     await Service.deleteMany({});
@@ -1063,42 +1065,102 @@ const createTechnicianProfiles = async (users) => {
           endTime: "16:00",
           daysOfWeek: ["monday", "tuesday", "wednesday", "thursday", "friday"],
         },
+        workingHours: {
+          weeklyLimit: 40,
+          currentWeekHours: 32,
+          overtime: 2,
+          lastWeekReset: new Date("2024-11-25"),
+        },
         skillMatrix: [
           {
             serviceCategory: "battery",
             proficiencyLevel: 5,
-            certifiedAt: new Date("2023-01-01"),
             lastAssessment: new Date("2024-11-01"),
+            trainingNeeded: false,
+            certificationRequired: true,
           },
           {
             serviceCategory: "motor",
             proficiencyLevel: 4,
-            certifiedAt: new Date("2023-01-01"),
             lastAssessment: new Date("2024-11-01"),
+            trainingNeeded: false,
+            certificationRequired: true,
           },
           {
             serviceCategory: "charging",
             proficiencyLevel: 5,
-            certifiedAt: new Date("2023-01-01"),
             lastAssessment: new Date("2024-11-01"),
+            trainingNeeded: false,
+            certificationRequired: true,
           },
         ],
         performance: {
-          efficiency: 85,
-          qualityRating: 4.8,
-          customerRating: 4.9,
           completedJobs: 156,
           averageCompletionTime: 95,
+          qualityRating: 4.8,
+          customerRating: 4.9,
+          efficiency: 85,
+          lastUpdated: new Date("2024-11-26"),
+        },
+        availability: {
+          status: "available",
+          currentAppointment: null,
+          scheduleNotes: "Available for all EV services",
+          lastStatusUpdate: new Date("2024-11-26T08:00:00Z"),
+          autoStatusChange: true,
         },
         workload: {
           current: 3,
           capacity: 8,
           queuedAppointments: [],
+          estimatedWorkHours: 24,
         },
-        availability: {
-          status: "available",
-          scheduleNotes: "Available for all EV services",
+        certificationTracking: {
+          renewalReminders: [],
+          trainingHours: {
+            completed: 80,
+            required: 40,
+            currentYear: 2024,
+          },
+          mandatoryTraining: [],
         },
+        preferences: {
+          preferredServiceTypes: ["battery", "charging"],
+          workloadPreference: "moderate",
+          notifications: {
+            email: true,
+            sms: true,
+            push: true,
+          },
+        },
+        tools: [
+          {
+            name: "Battery Diagnostic Tool",
+            serialNumber: "BDT-001-TECH1",
+            assignedDate: new Date("2024-01-01"),
+            condition: "excellent",
+            lastMaintenance: new Date("2024-10-01"),
+            nextMaintenance: new Date("2025-04-01"),
+          },
+          {
+            name: "Multimeter",
+            serialNumber: "MULT-001-TECH1",
+            assignedDate: new Date("2024-01-01"),
+            condition: "good",
+            lastMaintenance: new Date("2024-09-01"),
+            nextMaintenance: new Date("2025-03-01"),
+          },
+        ],
+        statistics: {
+          totalAppointments: 180,
+          appointmentsThisMonth: 15,
+          appointmentsThisWeek: 4,
+          averageRating: 4.85,
+          onTimeCompletionRate: 0.95,
+          lastStatUpdate: new Date("2024-11-26"),
+        },
+        yearsExperience: 5,
+        isActive: true,
       },
       {
         technicianId: technicians[1]._id,
@@ -1116,42 +1178,102 @@ const createTechnicianProfiles = async (users) => {
             "saturday",
           ],
         },
+        workingHours: {
+          weeklyLimit: 45,
+          currentWeekHours: 38,
+          overtime: 0,
+          lastWeekReset: new Date("2024-11-25"),
+        },
         skillMatrix: [
           {
             serviceCategory: "electronics",
             proficiencyLevel: 5,
-            certifiedAt: new Date("2023-03-01"),
             lastAssessment: new Date("2024-11-01"),
+            trainingNeeded: false,
+            certificationRequired: true,
           },
           {
             serviceCategory: "general",
             proficiencyLevel: 4,
-            certifiedAt: new Date("2023-03-01"),
             lastAssessment: new Date("2024-11-01"),
+            trainingNeeded: false,
+            certificationRequired: false,
           },
           {
             serviceCategory: "charging",
             proficiencyLevel: 3,
-            certifiedAt: new Date("2023-06-01"),
             lastAssessment: new Date("2024-11-01"),
+            trainingNeeded: true,
+            certificationRequired: true,
           },
         ],
         performance: {
-          efficiency: 92,
-          qualityRating: 4.9,
-          customerRating: 4.7,
           completedJobs: 203,
           averageCompletionTime: 88,
+          qualityRating: 4.9,
+          customerRating: 4.7,
+          efficiency: 92,
+          lastUpdated: new Date("2024-11-26"),
+        },
+        availability: {
+          status: "available",
+          currentAppointment: null,
+          scheduleNotes: "Specializes in electronics and diagnostics",
+          lastStatusUpdate: new Date("2024-11-26T08:30:00Z"),
+          autoStatusChange: true,
         },
         workload: {
           current: 2,
           capacity: 6,
           queuedAppointments: [],
+          estimatedWorkHours: 16,
         },
-        availability: {
-          status: "available",
-          scheduleNotes: "Specializes in electronics and diagnostics",
+        certificationTracking: {
+          renewalReminders: [],
+          trainingHours: {
+            completed: 95,
+            required: 40,
+            currentYear: 2024,
+          },
+          mandatoryTraining: [],
         },
+        preferences: {
+          preferredServiceTypes: ["electronics", "general"],
+          workloadPreference: "moderate",
+          notifications: {
+            email: true,
+            sms: false,
+            push: true,
+          },
+        },
+        tools: [
+          {
+            name: "Oscilloscope",
+            serialNumber: "OSC-001-TECH2",
+            assignedDate: new Date("2024-02-01"),
+            condition: "excellent",
+            lastMaintenance: new Date("2024-10-15"),
+            nextMaintenance: new Date("2025-04-15"),
+          },
+          {
+            name: "Diagnostic Scanner",
+            serialNumber: "DSC-001-TECH2",
+            assignedDate: new Date("2024-02-01"),
+            condition: "good",
+            lastMaintenance: new Date("2024-09-15"),
+            nextMaintenance: new Date("2025-03-15"),
+          },
+        ],
+        statistics: {
+          totalAppointments: 230,
+          appointmentsThisMonth: 18,
+          appointmentsThisWeek: 3,
+          averageRating: 4.8,
+          onTimeCompletionRate: 0.98,
+          lastStatUpdate: new Date("2024-11-26"),
+        },
+        yearsExperience: 7,
+        isActive: true,
       },
       {
         technicianId: technicians[2]._id,
@@ -1168,42 +1290,94 @@ const createTechnicianProfiles = async (users) => {
             "saturday",
           ],
         },
+        workingHours: {
+          weeklyLimit: 30,
+          currentWeekHours: 22,
+          overtime: 0,
+          lastWeekReset: new Date("2024-11-25"),
+        },
         skillMatrix: [
           {
             serviceCategory: "charging",
             proficiencyLevel: 5,
-            certifiedAt: new Date("2023-02-01"),
             lastAssessment: new Date("2024-11-01"),
+            trainingNeeded: false,
+            certificationRequired: true,
           },
           {
             serviceCategory: "electronics",
             proficiencyLevel: 3,
-            certifiedAt: new Date("2023-08-01"),
             lastAssessment: new Date("2024-11-01"),
+            trainingNeeded: true,
+            certificationRequired: false,
           },
           {
             serviceCategory: "general",
             proficiencyLevel: 4,
-            certifiedAt: new Date("2023-02-01"),
             lastAssessment: new Date("2024-11-01"),
+            trainingNeeded: false,
+            certificationRequired: false,
           },
         ],
         performance: {
-          efficiency: 78,
-          qualityRating: 4.6,
-          customerRating: 4.5,
           completedJobs: 89,
           averageCompletionTime: 102,
+          qualityRating: 4.6,
+          customerRating: 4.5,
+          efficiency: 78,
+          lastUpdated: new Date("2024-11-26"),
+        },
+        availability: {
+          status: "available",
+          currentAppointment: null,
+          scheduleNotes: "Part-time schedule, charging specialist",
+          lastStatusUpdate: new Date("2024-11-26T09:00:00Z"),
+          autoStatusChange: true,
         },
         workload: {
           current: 1,
           capacity: 5,
           queuedAppointments: [],
+          estimatedWorkHours: 8,
         },
-        availability: {
-          status: "available",
-          scheduleNotes: "Part-time schedule, charging specialist",
+        certificationTracking: {
+          renewalReminders: [],
+          trainingHours: {
+            completed: 45,
+            required: 40,
+            currentYear: 2024,
+          },
+          mandatoryTraining: [],
         },
+        preferences: {
+          preferredServiceTypes: ["charging"],
+          workloadPreference: "light",
+          notifications: {
+            email: true,
+            sms: true,
+            push: false,
+          },
+        },
+        tools: [
+          {
+            name: "Charging Station Tester",
+            serialNumber: "CST-001-TECH3",
+            assignedDate: new Date("2024-03-01"),
+            condition: "good",
+            lastMaintenance: new Date("2024-10-20"),
+            nextMaintenance: new Date("2025-04-20"),
+          },
+        ],
+        statistics: {
+          totalAppointments: 95,
+          appointmentsThisMonth: 8,
+          appointmentsThisWeek: 2,
+          averageRating: 4.55,
+          onTimeCompletionRate: 0.92,
+          lastStatUpdate: new Date("2024-11-26"),
+        },
+        yearsExperience: 3,
+        isActive: true,
       },
     ];
 
@@ -2684,7 +2858,8 @@ const createAppointments = async (
   users,
   vehicles,
   services,
-  serviceCenters
+  serviceCenters,
+  slots
 ) => {
   try {
     const customers = users.filter((u) => u.role === "customer");
@@ -2706,7 +2881,7 @@ const createAppointments = async (
           },
         ],
         scheduledDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
-        scheduledTime: "09:00",
+        scheduledTime: "08:00",
         status: "confirmed",
         priority: "normal",
         customerNotes:
@@ -2752,7 +2927,7 @@ const createAppointments = async (
           },
         ],
         scheduledDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day from now
-        scheduledTime: "14:00",
+        scheduledTime: "10:00",
         status: "pending",
         priority: "high",
         customerNotes:
@@ -2891,7 +3066,7 @@ const createAppointments = async (
           },
         ],
         scheduledDate: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-        scheduledTime: "11:00",
+        scheduledTime: "10:00",
         status: "customer_arrived",
         priority: "normal",
         customerNotes:
@@ -3042,7 +3217,7 @@ const createAppointments = async (
           },
         ],
         scheduledDate: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-        scheduledTime: "16:00",
+        scheduledTime: "15:00",
         status: "waiting_for_parts", // OnHold core status
         priority: "high",
         customerNotes: "Charging cable needs replacement",
@@ -3091,7 +3266,7 @@ const createAppointments = async (
           },
         ],
         scheduledDate: new Date(Date.now() + 5 * 60 * 60 * 1000), // 5 hours from now
-        scheduledTime: "16:00",
+        scheduledTime: "15:00",
         status: "reception_approved", // CheckedIn core status
         priority: "normal",
         customerNotes: "Parts approved, ready to start work",
@@ -3138,7 +3313,7 @@ const createAppointments = async (
           },
         ],
         scheduledDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-        scheduledTime: "11:00",
+        scheduledTime: "10:00",
         status: "no_show", // Closed core status
         priority: "low",
         customerNotes: "Customer did not arrive for scheduled appointment",
@@ -3148,6 +3323,17 @@ const createAppointments = async (
 
     const createdAppointments = [];
     for (const appointment of appointments) {
+      // Randomly assign a slot to some appointments (30% chance)
+      if (slots && slots.length > 0 && Math.random() < 0.3) {
+        const randomSlot = slots[Math.floor(Math.random() * slots.length)];
+        appointment.slotId = randomSlot._id;
+        
+        // If slot has technicians, assign one as the primary technician
+        if (randomSlot.technicianIds && randomSlot.technicianIds.length > 0 && !appointment.assignedTechnician) {
+          appointment.assignedTechnician = randomSlot.technicianIds[0];
+        }
+      }
+      
       const newAppointment = await Appointment.create(appointment);
       newAppointment.calculateTotal();
       await newAppointment.save();
@@ -3159,6 +3345,101 @@ const createAppointments = async (
     return createdAppointments;
   } catch (error) {
     console.error("Error creating appointments:", error);
+    throw error;
+  }
+};
+
+// Create sample slots for testing
+const createSlots = async (users) => {
+  try {
+    const technicians = users.filter((u) => u.role === "technician");
+
+    // Create slots for the next 7 days, 4 slots per day
+    const slots = [];
+    const now = new Date();
+    
+    for (let day = 1; day <= 7; day++) {
+      const date = new Date(now);
+      date.setDate(now.getDate() + day);
+      
+      // Slot 1: 8:00-10:00
+      const slot1Start = new Date(date);
+      slot1Start.setHours(8, 0, 0, 0);
+      const slot1End = new Date(date);
+      slot1End.setHours(10, 0, 0, 0);
+      
+      slots.push({
+        technicianIds: [technicians[0]._id, technicians[1]._id], // Multiple technicians per slot
+        date: date.toISOString().split('T')[0], // YYYY-MM-DD format
+        startTime: '08:00',
+        endTime: '10:00',
+        start: slot1Start,
+        end: slot1End,
+        capacity: 2,
+        status: 'available'
+      });
+      
+      // Slot 2: 10:00-12:00
+      const slot2Start = new Date(date);
+      slot2Start.setHours(10, 0, 0, 0);
+      const slot2End = new Date(date);
+      slot2End.setHours(12, 0, 0, 0);
+      
+      slots.push({
+        technicianIds: [technicians[1]._id, technicians[2]._id],
+        date: date.toISOString().split('T')[0], // YYYY-MM-DD format
+        startTime: '10:00',
+        endTime: '12:00',
+        start: slot2Start,
+        end: slot2End,
+        capacity: 2,
+        status: 'available'
+      });
+      
+      // Slot 3: 13:00-15:00
+      const slot3Start = new Date(date);
+      slot3Start.setHours(13, 0, 0, 0);
+      const slot3End = new Date(date);
+      slot3End.setHours(15, 0, 0, 0);
+      
+      slots.push({
+        technicianIds: [technicians[0]._id, technicians[2]._id],
+        date: date.toISOString().split('T')[0], // YYYY-MM-DD format
+        startTime: '13:00',
+        endTime: '15:00',
+        start: slot3Start,
+        end: slot3End,
+        capacity: 2,
+        status: 'available'
+      });
+      
+      // Slot 4: 15:00-17:00
+      const slot4Start = new Date(date);
+      slot4Start.setHours(15, 0, 0, 0);
+      const slot4End = new Date(date);
+      slot4End.setHours(17, 0, 0, 0);
+      
+      slots.push({
+        technicianIds: [technicians[1]._id],
+        date: date.toISOString().split('T')[0], // YYYY-MM-DD format
+        startTime: '15:00',
+        endTime: '17:00',
+        start: slot4Start,
+        end: slot4End,
+        capacity: 1,
+        status: 'available'
+      });
+    }
+
+    const createdSlots = [];
+    for (const slotData of slots) {
+      const slot = await Slot.create(slotData);
+      createdSlots.push(slot);
+    }
+    console.log(`✅ ${createdSlots.length} slots created successfully`);
+    return createdSlots;
+  } catch (error) {
+    console.error("Error creating slots:", error);
     throw error;
   }
 };
@@ -3395,7 +3676,10 @@ const seedData = async () => {
     console.log("👥 Creating users...");
     const users = await createUsers(serviceCenters);
 
-    console.log("🚗 Creating vehicles...");
+    console.log("� Creating slots...");
+    const slots = await createSlots(users);
+
+    console.log("�🚗 Creating vehicles...");
     const vehicles = await createVehicles(users);
 
     console.log("🔧 Creating parts...");
@@ -3406,7 +3690,8 @@ const seedData = async () => {
       users,
       vehicles,
       services,
-      serviceCenters
+      serviceCenters,
+      slots
     );
 
     console.log("👨‍🔧 Creating technician profiles...");

@@ -28,6 +28,7 @@ import InvoicesPage from "./pages/InvoicesPage";
 import PaymentResult from "./pages/PaymentResult";
 import CustomerTransactionsPage from "./pages/CustomerTransactionsPage";
 import StaffTransactionsPage from "./pages/StaffTransactionsPage";
+import SlotManagerPage from "./pages/SlotManagerPage";
 
 function App() {
   return (
@@ -93,6 +94,15 @@ function App() {
                   element={
                     <ProtectedRoute roles={["staff", "admin"]}>
                       <UsersPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/slots"
+                  element={
+                    <ProtectedRoute roles={["staff", "admin"]}>
+                      <SlotManagerPage />
                     </ProtectedRoute>
                   }
                 />

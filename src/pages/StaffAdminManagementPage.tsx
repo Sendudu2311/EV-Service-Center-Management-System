@@ -12,7 +12,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { appointmentsAPI, techniciansAPI, partRequestsAPI } from '../services/api';
 import toast from 'react-hot-toast';
-import { formatVietnameseDateTime, formatVND } from '../utils/vietnamese';
+import { formatVietnameseDateTime, formatVND, combineDateTime } from '../utils/vietnamese';
 import { appointmentStatusTranslations } from '../types/appointment';
 
 interface PendingAppointment {
@@ -138,7 +138,6 @@ const StaffAdminManagementPage: React.FC = () => {
     try {
       const serviceCategories = appointment.services.map(s => s.name);
       const response = await appointmentsAPI.getAvailableTechnicians(
-        '6507f1f4e1b8a1234567890a', // Default service center ID
         appointment.scheduledDate,
         appointment.scheduledTime,
         appointment.services.reduce((total, s) => total + s.estimatedDuration, 0),
@@ -403,7 +402,7 @@ const StaffAdminManagementPage: React.FC = () => {
                           </div>
                           <div>
                             <p className="text-sm text-gray-600">
-                              <span className="font-medium">Ngày hẹn:</span> {formatVietnameseDateTime(appointment.scheduledDate, appointment.scheduledTime)}
+                              <span className="font-medium">Ngày hẹn:</span> {formatVietnameseDateTime(combineDateTime(appointment.scheduledDate, appointment.scheduledTime))}
                             </p>
                             <div className="mt-2">
                               <p className="text-sm font-medium text-gray-600 mb-1">Dịch vụ:</p>
@@ -627,7 +626,7 @@ const StaffAdminManagementPage: React.FC = () => {
                   <span className="font-medium">Khách hàng:</span> {selectedAppointment.customer.name}
                 </p>
                 <p className="text-sm text-gray-600">
-                  <span className="font-medium">Thời gian:</span> {formatVietnameseDateTime(selectedAppointment.scheduledDate, selectedAppointment.scheduledTime)}
+                  <span className="font-medium">Thời gian:</span> {formatVietnameseDateTime(combineDateTime(selectedAppointment.scheduledDate, selectedAppointment.scheduledTime))}
                 </p>
                 <p className="text-sm text-gray-600">
                   <span className="font-medium">Dịch vụ:</span> {selectedAppointment.services.map(s => s.name).join(', ')}

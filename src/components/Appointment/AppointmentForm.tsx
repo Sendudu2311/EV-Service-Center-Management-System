@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon, ClockIcon } from "@heroicons/react/24/outline";
 import {
   appointmentsAPI,
   vehiclesAPI,
   servicesAPI,
   techniciansAPI,
   vnpayAPI,
+  slotsAPI,
 } from "../../services/api";
 import toast from "react-hot-toast";
 import TechnicianSelection from "./TechnicianSelection";
 import AppointmentConfirmation from "./AppointmentConfirmation";
+import { utcToVietnameseDateTime } from "../../utils/timezone";
 
 interface Vehicle {
   _id: string;
@@ -41,7 +43,11 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+
   // serviceCenters removed - single center architecture
+  const [slots, setSlots] = useState<any[]>([]);
+  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+  const [reservedSlotId, setReservedSlotId] = useState<string | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -68,6 +74,78 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
     fetchServices();
     fetchTechnicians();
   }, []);
+
+  // Fetch slots when date is selected
+  useEffect(() => {
+    if (!formData.scheduledDate) {
+      setSlots([]);
+      // Don't clear selectedSlotId or scheduledTime if payment is verified (restoring from payment)
+      if (!paymentVerified) {
+        setSelectedSlotId(null);
+        setFormData(prev => ({ ...prev, scheduledTime: '' }));
+      }
+      return;
+    }
+
+    const fetchSlots = async () => {
+      try {
+        const response = await slotsAPI.list({
+          from: formData.scheduledDate,
+          to: formData.scheduledDate,
+        });
+
+        const slotData = response.data?.data || response.data || [];
+        setSlots(Array.isArray(slotData) ? slotData : []);
+      } catch (err) {
+        console.error("Error fetching slots:", err);
+        setSlots([]);
+      }
+    };
+
+    fetchSlots();
+  }, [formData.scheduledDate, paymentVerified]);
+
+  // Update scheduledTime when slot is selected
+  useEffect(() => {
+    if (selectedSlotId && slots.length > 0) {
+      const slot = slots.find(s => s._id === selectedSlotId);
+      if (slot) {
+        const startTime = new Date(slot.start).toTimeString().slice(0, 5);
+        // Only update if time is different to avoid infinite loops
+        if (formData.scheduledTime !== startTime) {
+          setFormData(prev => ({ ...prev, scheduledTime: startTime }));
+        }
+      }
+    }
+  }, [selectedSlotId, slots, formData.scheduledTime]);
+
+  // Get available slot times - fixed 4 slots per day
+  const getAvailableSlotTimes = () => {
+    // Return the 4 standard time slots per day
+    return ['08:00', '10:00', '13:00', '15:00'];
+  };
+
+  // Auto-select slot when time is selected
+  const handleTimeChange = (timeValue: string) => {
+    // Update form data
+    setFormData(prev => ({ ...prev, scheduledTime: timeValue }));
+
+    // Find and select corresponding slot
+    if (timeValue && slots.length > 0) {
+      const selectedSlot = slots.find(slot => {
+        const vietnameseTime = utcToVietnameseDateTime(new Date(slot.start));
+        return vietnameseTime.time === timeValue && slot.canBook && slot.status !== 'full';
+      });
+
+      if (selectedSlot) {
+        setSelectedSlotId(selectedSlot._id);
+      } else {
+        setSelectedSlotId(null);
+      }
+    } else {
+      setSelectedSlotId(null);
+    }
+  };
 
   const fetchVehicles = async () => {
     try {
@@ -166,6 +244,12 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
       return;
     }
 
+    console.log("💳 [AppointmentForm] Starting payment creation");
+    console.log("📋 Current formData:", formData);
+    console.log("📅 scheduledDate:", formData.scheduledDate);
+    console.log("⏰ scheduledTime:", formData.scheduledTime);
+    console.log("🎰 selectedSlotId:", selectedSlotId);
+
     setLoading(true);
     try {
       const appointmentData = {
@@ -185,23 +269,42 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
         appointmentData: appointmentData,
       };
 
+      // If user selected a slot, reserve it first to hold during payment
+      if (selectedSlotId && !reservedSlotId) {
+        try {
+          const r = await slotsAPI.reserve(selectedSlotId);
+          setReservedSlotId(r.data?.data?._id || r.data?.data?._id || selectedSlotId);
+        } catch (reserveErr: any) {
+          console.error('Failed to reserve slot before payment', reserveErr);
+          toast.error(reserveErr.response?.data?.message || 'Selected time slot is no longer available');
+          setLoading(false);
+          return;
+        }
+      }
+
       const response = await vnpayAPI.createPayment(paymentData);
 
-      if (response.data?.paymentUrl) {
+      if ((response.data as any)?.paymentUrl) {
         // Store pending appointment data for after payment
         const appointmentData = {
           ...formData,
+          selectedSlotId, // Include the selected slot ID
           services: formData.services.map((serviceId) => ({
             serviceId,
             quantity: 1,
           })),
           ...(formData.technicianId && { technicianId: formData.technicianId }),
           paymentInfo: {
-            transactionRef: response.data.transactionRef,
+            transactionRef: (response.data as any).transactionRef,
             amount: totalAmount,
             method: "vnpay",
           },
         };
+
+        console.log("💾 [AppointmentForm] Storing appointment data before payment:", appointmentData);
+        console.log("📅 scheduledDate:", appointmentData.scheduledDate);
+        console.log("⏰ scheduledTime:", appointmentData.scheduledTime);
+        console.log("🎰 selectedSlotId:", appointmentData.selectedSlotId);
 
         setPendingAppointment(appointmentData);
         localStorage.setItem(
@@ -210,7 +313,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
         );
 
         // Redirect to VNPay payment page
-        window.location.href = response.data.paymentUrl;
+        window.location.href = (response.data as any).paymentUrl;
       } else {
         throw new Error("Failed to create payment URL");
       }
@@ -263,9 +366,27 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   };
 
   const handleDirectBooking = async () => {
+    // Guard: Prevent booking if scheduledTime is missing
+    if (!formData.scheduledTime) {
+      toast.error("Please select a valid time before booking.");
+      return;
+    }
     setLoading(true);
 
     try {
+      // If a slot was selected and not yet reserved, reserve it first.
+      if (selectedSlotId && !reservedSlotId) {
+        try {
+          const r = await slotsAPI.reserve(selectedSlotId);
+          setReservedSlotId(r.data?.data?._id || r.data?.data?._id || selectedSlotId);
+        } catch (reserveErr: any) {
+          console.error('Failed to reserve slot', reserveErr);
+          toast.error(reserveErr.response?.data?.message || 'Selected time slot is no longer available');
+          setLoading(false);
+          return;
+        }
+      }
+
       const appointmentData = {
         ...formData,
         services: formData.services.map((serviceId) => ({
@@ -277,10 +398,19 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
           pendingAppointment?.paymentInfo && {
             paymentInfo: pendingAppointment.paymentInfo,
           }),
+        ...(selectedSlotId && { slotId: selectedSlotId, skipSlotReservation: !!reservedSlotId }),
       };
+
+      console.log("🚀 [AppointmentForm] Creating appointment with data:", appointmentData);
+      console.log("📅 scheduledDate:", appointmentData.scheduledDate);
+      console.log("⏰ scheduledTime:", appointmentData.scheduledTime);
+      console.log("🎰 slotId:", appointmentData.slotId);
 
       // Create appointment FIRST
       await appointmentsAPI.create(appointmentData);
+
+      // Clear reservedSlotId (we consumed the reservation)
+      setReservedSlotId(null);
 
       // THEN trigger post-payment workflow (emails) AFTER appointment is created
       if (paymentVerified && pendingAppointment?.paymentInfo) {
@@ -309,6 +439,15 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
       toast.error(
         error.response?.data?.message || "Failed to book appointment"
       );
+      // If we had pre-reserved a slot and booking failed, release it
+      if (reservedSlotId) {
+        try {
+          await slotsAPI.release(reservedSlotId);
+        } catch (releaseErr) {
+          console.error('Failed to release slot after booking failure', releaseErr);
+        }
+        setReservedSlotId(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -324,14 +463,43 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
         transactionRef: pendingAppointment.paymentInfo.transactionRef,
       });
 
-      if (verifyResponse.data?.success) {
+  if ((verifyResponse.data as any)?.success) {
+        // If slot selected and not reserved, reserve now before creating
+        if (selectedSlotId && !reservedSlotId) {
+          try {
+            const r = await slotsAPI.reserve(selectedSlotId);
+            setReservedSlotId(r.data?.data?._id || r.data?.data?._id || selectedSlotId);
+          } catch (reserveErr: any) {
+            console.error('Failed to reserve slot after payment', reserveErr);
+            toast.error(reserveErr.response?.data?.message || 'Selected time slot is no longer available');
+            setLoading(false);
+            return;
+          }
+        }
+
         // Create appointment with verified payment info
         const appointmentData = {
           ...pendingAppointment,
-          paymentInfo: verifyResponse.data.paymentInfo,
+          paymentInfo: (verifyResponse.data as any).paymentInfo,
+          ...(selectedSlotId && { slotId: selectedSlotId, skipSlotReservation: !!reservedSlotId }),
         };
 
-        await appointmentsAPI.create(appointmentData);
+        try {
+          await appointmentsAPI.create(appointmentData);
+          // Clear reserved slot after success
+          setReservedSlotId(null);
+        } catch (createErr: any) {
+          // Release reserved slot on failure
+          if (reservedSlotId) {
+            try {
+              await slotsAPI.release(reservedSlotId);
+            } catch (releaseErr) {
+              console.error('Failed to release slot after create failure', releaseErr);
+            }
+            setReservedSlotId(null);
+          }
+          throw createErr;
+        }
         toast.success("Appointment booked successfully after payment");
         localStorage.removeItem("pendingAppointment");
         onSuccess();
@@ -364,17 +532,30 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 
       if (pendingDataStr) {
         const appointment = JSON.parse(pendingDataStr);
+        
+        // Debug: Log what we're restoring
+        console.log("🔄 [AppointmentForm] Restoring appointment data from localStorage:", appointment);
 
         // Pre-fill the form with the appointment data
-        setFormData({
+        const restoredFormData = {
           vehicleId: appointment.vehicleId || "",
-          services: appointment.services?.map((s: any) => s.serviceId) || [],
+          services: appointment.services?.map((s: any) => 
+            typeof s === 'string' ? s : s.serviceId
+          ) || [],
           scheduledDate: appointment.scheduledDate || "",
           scheduledTime: appointment.scheduledTime || "",
           customerNotes: appointment.customerNotes || "",
           priority: appointment.priority || "normal",
           technicianId: appointment.technicianId || null,
-        });
+        };
+        
+        console.log("✅ [AppointmentForm] Restored form data:", restoredFormData);
+        setFormData(restoredFormData);
+
+        // Restore the selected slot ID if available
+        if (appointment.selectedSlotId) {
+          setSelectedSlotId(appointment.selectedSlotId);
+        }
 
         // Set the pending appointment with payment info
         setPendingAppointment({
@@ -384,6 +565,9 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 
         // Set payment verified flag
         setPaymentVerified(true);
+
+        // DON'T show confirmation yet - wait for formData to update via useEffect below
+        // setShowConfirmation(true);
 
         // Clean up localStorage
         localStorage.removeItem("pendingAppointment");
@@ -405,6 +589,15 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
       }
     }
   }, []);
+
+  // Show confirmation after payment verified and formData is restored
+  useEffect(() => {
+    if (paymentVerified && formData.scheduledDate && formData.scheduledTime && !showConfirmation) {
+      console.log("✅ [AppointmentForm] FormData restored, showing confirmation");
+      console.log("📋 FormData at confirmation:", formData);
+      setShowConfirmation(true);
+    }
+  }, [paymentVerified, formData.scheduledDate, formData.scheduledTime, showConfirmation, formData]);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -446,6 +639,18 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                   totalAmount={calculateTotalAmount()}
                   onConfirm={handleConfirmationConfirm}
                   onBack={handleConfirmationBack}
+                  loading={loading}
+                  paymentVerified={paymentVerified}
+                />
+              ) : paymentVerified ? (
+                <AppointmentConfirmation
+                  formData={formData}
+                  vehicles={vehicles}
+                  services={services}
+                  technicians={technicians}
+                  totalAmount={calculateTotalAmount()}
+                  onConfirm={handleDirectBooking}
+                  onBack={() => setShowConfirmation(false)}
                   loading={loading}
                   paymentVerified={paymentVerified}
                 />
@@ -630,7 +835,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                           name="scheduledTime"
                           required
                           value={formData.scheduledTime}
-                          onChange={handleChange}
+                          onChange={(e) => handleTimeChange(e.target.value)}
                           disabled={paymentVerified}
                           className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
                             paymentVerified
@@ -639,25 +844,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                           }`}
                         >
                           <option value="">Select time</option>
-                          {[
-                            "08:00",
-                            "08:30",
-                            "09:00",
-                            "09:30",
-                            "10:00",
-                            "10:30",
-                            "11:00",
-                            "11:30",
-                            "13:00",
-                            "13:30",
-                            "14:00",
-                            "14:30",
-                            "15:00",
-                            "15:30",
-                            "16:00",
-                            "16:30",
-                            "17:00",
-                          ].map((time) => (
+                          {getAvailableSlotTimes().map((time) => (
                             <option key={time} value={time}>
                               {time}
                             </option>
@@ -665,6 +852,103 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                         </select>
                       </div>
                     </div>
+
+                    {/* Available Time Slots */}
+                    {formData.scheduledDate && formData.scheduledTime && slots.length > 0 && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                          Available Time Slots
+                        </label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {slots.map((slot) => {
+                            const isSelected = selectedSlotId === slot._id;
+                            const isAvailable = slot.status === 'available' || slot.status === 'partially_booked';
+                            const technicianNames = slot.technicianIds?.map((tech: any) =>
+                              typeof tech === 'object' ? `${tech.firstName} ${tech.lastName}` : tech
+                            ).join(', ') || 'No technicians assigned';
+
+                            return (
+                              <div
+                                key={slot._id}
+                                onClick={() => !paymentVerified && isAvailable && setSelectedSlotId(slot._id)}
+                                className={`border rounded-lg p-3 cursor-pointer transition-all ${
+                                  isSelected
+                                    ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                                    : isAvailable
+                                    ? 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                                    : 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
+                                } ${paymentVerified ? 'cursor-not-allowed' : ''}`}
+                              >
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="text-sm font-medium text-gray-900">
+                                    {(() => {
+                                      const startTime = utcToVietnameseDateTime(new Date(slot.start));
+                                      const endTime = utcToVietnameseDateTime(new Date(slot.end));
+                                      return `${startTime.time} - ${endTime.time}`;
+                                    })()}
+                                  </div>
+                                  <div className={`text-xs px-2 py-1 rounded-full ${
+                                    slot.status === 'available'
+                                      ? 'bg-green-100 text-green-800'
+                                      : slot.status === 'partially_booked'
+                                      ? 'bg-yellow-100 text-yellow-800'
+                                      : 'bg-red-100 text-red-800'
+                                  }`}>
+                                    {slot.status === 'available' ? 'Available' :
+                                     slot.status === 'partially_booked' ? 'Limited' : 'Full'}
+                                  </div>
+                                </div>
+                                <div className="text-xs text-gray-600 mb-1">
+                                  Capacity: {slot.capacity - (slot.bookedCount || 0)}/{slot.capacity} spots
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  Technicians: {technicianNames}
+                                </div>
+                                {isSelected && (
+                                  <div className="mt-2 text-xs text-blue-600 font-medium">
+                                    ✓ Selected
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {selectedSlotId && (
+                          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="text-sm text-blue-800">
+                              <strong>Selected Time Slot:</strong> {
+                                (() => {
+                                  const slot = slots.find(s => s._id === selectedSlotId);
+                                  if (slot) {
+                                    const startTime = utcToVietnameseDateTime(new Date(slot.start));
+                                    const endTime = utcToVietnameseDateTime(new Date(slot.end));
+                                    return `${startTime.time} - ${endTime.time}`;
+                                  }
+                                  return 'Unknown';
+                                })()
+                              }
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Info message when slots are not available yet */}
+                    {formData.scheduledDate && formData.scheduledTime && slots.length === 0 && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0">
+                            <ClockIcon className="h-5 w-5 text-yellow-400" />
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-sm text-yellow-700">
+                              No time slots are currently available for the selected date and time.
+                              Please try a different date or time, or contact the service center directly.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Services */}
                     {services.length > 0 && (
@@ -741,6 +1025,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                             disabled={loading || paymentVerified}
                             appointmentDate={formData.scheduledDate}
                             appointmentTime={formData.scheduledTime}
+                            selectedSlotId={selectedSlotId}
                             estimatedDuration={formData.services.reduce(
                               (total, serviceId) => {
                                 const service = services.find(
@@ -909,7 +1194,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
               {!showPayment ? (
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !formData.scheduledTime}
                   className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:ml-3 sm:w-auto disabled:opacity-50"
                 >
                   {loading

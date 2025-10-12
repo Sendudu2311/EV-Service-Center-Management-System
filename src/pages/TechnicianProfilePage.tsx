@@ -12,43 +12,127 @@ import { useAuth } from '../contexts/AuthContext';
 import { techniciansAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
-interface WorkingHours {
-  dayOfWeek: number; // 0 = Sunday, 1 = Monday, etc.
-  startTime: string; // HH:mm format
-  endTime: string; // HH:mm format
-  isActive: boolean;
+interface NewSkillForm {
+  serviceCategory: string;
+  proficiencyLevel: number;
+  trainingNeeded: boolean;
+  certificationRequired: boolean;
 }
 
-interface Skill {
-  category: string;
-  level: number; // 1-5 scale
-  certified: boolean;
-  certificationDate?: string;
-  expiryDate?: string;
+interface WorkShift {
+  type: 'morning' | 'afternoon' | 'night' | 'flexible';
+  startTime: string;
+  endTime: string;
+  daysOfWeek: string[];
+  breakTime?: {
+    start: string;
+    end: string;
+    duration: number;
+  };
+}
+
+interface SkillMatrixItem {
+  serviceCategory: string;
+  proficiencyLevel: number;
+  lastAssessment: string;
+  trainingNeeded: boolean;
+  certificationRequired: boolean;
+}
+
+interface Performance {
+  completedJobs: number;
+  averageCompletionTime: number;
+  qualityRating: number;
+  customerRating: number;
+  efficiency: number;
+  lastUpdated: string;
+}
+
+interface Availability {
+  status: 'available' | 'busy' | 'break' | 'offline' | 'sick_leave' | 'vacation';
+  currentAppointment?: any;
+  scheduleNotes?: string;
+  lastStatusUpdate: string;
+  autoStatusChange: boolean;
+}
+
+interface Workload {
+  current: number;
+  capacity: number;
+  queuedAppointments: any[];
+  estimatedWorkHours: number;
+}
+
+interface CertificationTracking {
+  renewalReminders: any[];
+  trainingHours: {
+    completed: number;
+    required: number;
+    currentYear: number;
+  };
+  mandatoryTraining: any[];
+}
+
+interface Preferences {
+  preferredServiceTypes: string[];
+  workloadPreference: 'light' | 'moderate' | 'heavy';
+  notifications: {
+    email: boolean;
+    sms: boolean;
+    push: boolean;
+  };
+}
+
+interface Tool {
+  name: string;
+  serialNumber: string;
+  assignedDate: string;
+  condition: 'excellent' | 'good' | 'fair' | 'needs_replacement';
+  lastMaintenance?: string;
+  nextMaintenance?: string;
+}
+
+interface Statistics {
+  totalAppointments: number;
+  appointmentsThisMonth: number;
+  appointmentsThisWeek: number;
+  averageRating: number;
+  onTimeCompletionRate: number;
+  lastStatUpdate: string;
 }
 
 interface TechnicianProfile {
   _id: string;
-  name: string;
-  email: string;
-  phone: string;
-  specializations: string[];
-  workingHours: WorkingHours[];
-  skills: Skill[];
-  availability: {
-    status: 'available' | 'busy' | 'break' | 'offline';
-    workloadPercentage: number;
+  technicianId: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    specializations: string[];
+    certifications: any[];
   };
-  stats: {
-    completedAppointments: number;
-    averageRating: number;
-    totalWorkHours: number;
+  employeeId: string;
+  workShift: WorkShift;
+  workingHours: {
+    weeklyLimit: number;
+    currentWeekHours: number;
+    overtime: number;
+    lastWeekReset: string;
   };
+  performance: Performance;
+  availability: Availability;
+  skillMatrix: SkillMatrixItem[];
+  workload: Workload;
+  certificationTracking: CertificationTracking;
+  preferences: Preferences;
+  tools: Tool[];
+  statistics: Statistics;
+  yearsExperience: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
-
-const DAYS_OF_WEEK = [
-  'Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'
-];
 
 const SKILL_CATEGORIES = [
   'Bảo dưỡng pin',
@@ -65,7 +149,9 @@ const AVAILABILITY_STATUS = {
   available: { label: 'Sẵn sàng', color: 'bg-green-100 text-green-800' },
   busy: { label: 'Bận', color: 'bg-yellow-100 text-yellow-800' },
   break: { label: 'Nghỉ giải lao', color: 'bg-blue-100 text-blue-800' },
-  offline: { label: 'Ngoại tuyến', color: 'bg-gray-100 text-gray-800' }
+  offline: { label: 'Ngoại tuyến', color: 'bg-gray-100 text-gray-800' },
+  sick_leave: { label: 'Nghỉ ốm', color: 'bg-red-100 text-red-800' },
+  vacation: { label: 'Nghỉ phép', color: 'bg-purple-100 text-purple-800' }
 };
 
 const TechnicianProfilePage: React.FC = () => {
@@ -77,11 +163,11 @@ const TechnicianProfilePage: React.FC = () => {
 
   // Form states
   const [editingHours, setEditingHours] = useState(false);
-  const [workingHours, setWorkingHours] = useState<WorkingHours[]>([]);
-  const [newSkill, setNewSkill] = useState<Partial<Skill>>({
-    category: '',
-    level: 1,
-    certified: false
+  const [newSkill, setNewSkill] = useState<Partial<NewSkillForm>>({
+    serviceCategory: '',
+    proficiencyLevel: 1,
+    trainingNeeded: false,
+    certificationRequired: false
   });
   const [showAddSkill, setShowAddSkill] = useState(false);
 
@@ -95,7 +181,7 @@ const TechnicianProfilePage: React.FC = () => {
       const profileData = response.data.data as TechnicianProfile;
 
       setProfile(profileData);
-      setWorkingHours(profileData.workingHours || getDefaultWorkingHours());
+      // Note: workingHours is now part of the profile structure, not a separate state
     } catch (error: unknown) {
       console.error('Error fetching profile:', error);
       toast.error('Không thể tải thông tin hồ sơ');
@@ -105,24 +191,12 @@ const TechnicianProfilePage: React.FC = () => {
   }, []);
 
   /**
-   * Get default working hours (Monday-Friday 8:00-17:00)
-   */
-  const getDefaultWorkingHours = (): WorkingHours[] => {
-    return Array.from({ length: 7 }, (_, index) => ({
-      dayOfWeek: index,
-      startTime: index >= 1 && index <= 5 ? '08:00' : '08:00',
-      endTime: index >= 1 && index <= 5 ? '17:00' : '17:00',
-      isActive: index >= 1 && index <= 5 // Monday to Friday active by default
-    }));
-  };
-
-  /**
    * Update working hours
    */
   const updateWorkingHours = useCallback(async () => {
     try {
       setUpdating(true);
-      await techniciansAPI.updateProfile({ workingHours });
+      await techniciansAPI.updateProfile({ workShift: profile?.workShift });
 
       toast.success('Đã cập nhật giờ làm việc thành công');
       setEditingHours(false);
@@ -133,25 +207,32 @@ const TechnicianProfilePage: React.FC = () => {
     } finally {
       setUpdating(false);
     }
-  }, [workingHours, fetchProfile]);
+  }, [profile?.workShift, fetchProfile]);
 
   /**
    * Add new skill
    */
   const addSkill = useCallback(async () => {
-    if (!newSkill.category || !newSkill.level) {
+    if (!newSkill.serviceCategory || !newSkill.proficiencyLevel) {
       toast.error('Vui lòng điền đầy đủ thông tin kỹ năng');
       return;
     }
 
     try {
       setUpdating(true);
-      const updatedSkills = [...(profile?.skills || []), newSkill as Skill];
-      await techniciansAPI.updateProfile({ skills: updatedSkills });
+      const newSkillMatrixItem = {
+        serviceCategory: newSkill.serviceCategory,
+        proficiencyLevel: newSkill.proficiencyLevel,
+        lastAssessment: new Date().toISOString(),
+        trainingNeeded: newSkill.trainingNeeded || false,
+        certificationRequired: newSkill.certificationRequired || false
+      };
+      const updatedSkillMatrix = [...(profile?.skillMatrix || []), newSkillMatrixItem];
+      await techniciansAPI.updateProfile({ skillMatrix: updatedSkillMatrix });
 
       toast.success('Đã thêm kỹ năng thành công');
       setShowAddSkill(false);
-      setNewSkill({ category: '', level: 1, certified: false });
+      setNewSkill({ serviceCategory: '', proficiencyLevel: 1, trainingNeeded: false, certificationRequired: false });
       fetchProfile(); // Refresh data
     } catch (error: unknown) {
       console.error('Error adding skill:', error);
@@ -159,7 +240,7 @@ const TechnicianProfilePage: React.FC = () => {
     } finally {
       setUpdating(false);
     }
-  }, [newSkill, profile?.skills, fetchProfile]);
+  }, [newSkill, profile?.skillMatrix, fetchProfile]);
 
   /**
    * Update availability status
@@ -167,7 +248,7 @@ const TechnicianProfilePage: React.FC = () => {
   const updateAvailability = useCallback(async (status: string) => {
     try {
       setUpdating(true);
-      await techniciansAPI.updateAvailability(profile?._id || '', status);
+      await techniciansAPI.updateAvailability(status);
 
       toast.success(`Đã cập nhật trạng thái: ${AVAILABILITY_STATUS[status as keyof typeof AVAILABILITY_STATUS]?.label}`);
       fetchProfile(); // Refresh data
@@ -185,8 +266,8 @@ const TechnicianProfilePage: React.FC = () => {
   const removeSkill = useCallback(async (skillIndex: number) => {
     try {
       setUpdating(true);
-      const updatedSkills = profile?.skills.filter((_, index) => index !== skillIndex) || [];
-      await techniciansAPI.updateProfile({ skills: updatedSkills });
+      const updatedSkillMatrix = profile?.skillMatrix.filter((_, index) => index !== skillIndex) || [];
+      await techniciansAPI.updateProfile({ skillMatrix: updatedSkillMatrix });
 
       toast.success('Đã xóa kỹ năng thành công');
       fetchProfile(); // Refresh data
@@ -196,7 +277,7 @@ const TechnicianProfilePage: React.FC = () => {
     } finally {
       setUpdating(false);
     }
-  }, [profile?.skills, fetchProfile]);
+  }, [profile?.skillMatrix, fetchProfile]);
 
   // Effects
   useEffect(() => {
@@ -245,8 +326,8 @@ const TechnicianProfilePage: React.FC = () => {
                 <UserIcon className="h-12 w-12 text-gray-400" />
               </div>
               <div className="ml-4">
-                <h1 className="text-2xl font-bold text-gray-900">{profile.name}</h1>
-                <p className="text-gray-500">{profile.email}</p>
+                <h1 className="text-2xl font-bold text-gray-900">{`${profile.technicianId.firstName} ${profile.technicianId.lastName}`}</h1>
+                <p className="text-gray-500">{profile.technicianId.email}</p>
                 <div className="mt-2 flex items-center space-x-4">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                     AVAILABILITY_STATUS[profile.availability.status]?.color
@@ -254,7 +335,7 @@ const TechnicianProfilePage: React.FC = () => {
                     {AVAILABILITY_STATUS[profile.availability.status]?.label}
                   </span>
                   <span className="text-sm text-gray-500">
-                    Tỷ lệ công việc: {profile.availability.workloadPercentage}%
+                    Tỷ lệ công việc: {Math.round((profile.workload.current / profile.workload.capacity) * 100)}%
                   </span>
                 </div>
               </div>
@@ -286,7 +367,7 @@ const TechnicianProfilePage: React.FC = () => {
             <CheckIcon className="h-8 w-8 text-green-600" />
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Lịch hẹn hoàn thành</p>
-              <p className="text-2xl font-bold text-gray-900">{profile.stats.completedAppointments}</p>
+              <p className="text-2xl font-bold text-gray-900">{profile.performance.completedJobs}</p>
             </div>
           </div>
         </div>
@@ -295,7 +376,7 @@ const TechnicianProfilePage: React.FC = () => {
             <WrenchScrewdriverIcon className="h-8 w-8 text-blue-600" />
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Đánh giá trung bình</p>
-              <p className="text-2xl font-bold text-gray-900">{(profile.stats.averageRating || 0).toFixed(1)}/5</p>
+              <p className="text-2xl font-bold text-gray-900">{(profile.performance.customerRating || 0).toFixed(1)}/5</p>
             </div>
           </div>
         </div>
@@ -304,7 +385,7 @@ const TechnicianProfilePage: React.FC = () => {
             <ClockIcon className="h-8 w-8 text-purple-600" />
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-500">Tổng giờ làm việc</p>
-              <p className="text-2xl font-bold text-gray-900">{profile.stats.totalWorkHours}h</p>
+              <p className="text-2xl font-bold text-gray-900">{profile.workingHours.currentWeekHours}h</p>
             </div>
           </div>
         </div>
@@ -344,18 +425,18 @@ const TechnicianProfilePage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <p className="mt-1 text-sm text-gray-900">{profile.email}</p>
+                    <p className="mt-1 text-sm text-gray-900">{profile.technicianId.email}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
-                    <p className="mt-1 text-sm text-gray-900">{profile.phone}</p>
+                    <p className="mt-1 text-sm text-gray-900">{profile.technicianId.phone}</p>
                   </div>
                 </div>
               </div>
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Chuyên môn</h3>
                 <div className="flex flex-wrap gap-2">
-                  {profile.specializations.map((spec, index) => (
+                  {profile.technicianId.specializations.map((spec: string, index: number) => (
                     <span
                       key={index}
                       className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
@@ -371,8 +452,8 @@ const TechnicianProfilePage: React.FC = () => {
           {/* Schedule Tab */}
           {activeTab === 'schedule' && (
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">Lịch làm việc hàng tuần</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-medium text-gray-900">Lịch làm việc</h3>
                 <div className="flex space-x-2">
                   {editingHours ? (
                     <>
@@ -384,10 +465,7 @@ const TechnicianProfilePage: React.FC = () => {
                         {updating ? 'Đang lưu...' : 'Lưu'}
                       </button>
                       <button
-                        onClick={() => {
-                          setEditingHours(false);
-                          setWorkingHours(profile.workingHours || getDefaultWorkingHours());
-                        }}
+                        onClick={() => setEditingHours(false)}
                         className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                       >
                         Hủy
@@ -404,68 +482,80 @@ const TechnicianProfilePage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-4">
-                {workingHours.map((hours, index) => (
-                  <div key={index} className="flex items-center justify-between py-3 border-b border-gray-200">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-20">
-                        <span className="text-sm font-medium text-gray-900">
-                          {DAYS_OF_WEEK[hours.dayOfWeek]}
-                        </span>
-                      </div>
-                      {editingHours ? (
-                        <>
-                          <input
-                            type="checkbox"
-                            checked={hours.isActive}
-                            onChange={(e) => {
-                              const updated = [...workingHours];
-                              updated[index].isActive = e.target.checked;
-                              setWorkingHours(updated);
-                            }}
-                            className="h-4 w-4 text-blue-600 rounded border-gray-300"
-                          />
-                          <input
-                            type="time"
-                            value={hours.startTime}
-                            onChange={(e) => {
-                              const updated = [...workingHours];
-                              updated[index].startTime = e.target.value;
-                              setWorkingHours(updated);
-                            }}
-                            disabled={!hours.isActive}
-                            className="border border-gray-300 rounded px-2 py-1 text-sm disabled:bg-gray-100"
-                          />
-                          <span className="text-gray-500">đến</span>
-                          <input
-                            type="time"
-                            value={hours.endTime}
-                            onChange={(e) => {
-                              const updated = [...workingHours];
-                              updated[index].endTime = e.target.value;
-                              setWorkingHours(updated);
-                            }}
-                            disabled={!hours.isActive}
-                            className="border border-gray-300 rounded px-2 py-1 text-sm disabled:bg-gray-100"
-                          />
-                        </>
-                      ) : (
-                        <>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${
-                            hours.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'
-                          }`}>
-                            {hours.isActive ? 'Hoạt động' : 'Nghỉ'}
-                          </span>
-                          {hours.isActive && (
-                            <span className="text-sm text-gray-900">
-                              {hours.startTime} - {hours.endTime}
-                            </span>
-                          )}
-                        </>
-                      )}
-                    </div>
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Loại ca làm việc</label>
+                    <select
+                      value={profile?.workShift?.type || 'flexible'}
+                      onChange={(e) => {
+                        // This would need to be implemented to update the workShift
+                        console.log('Update workShift type:', e.target.value);
+                      }}
+                      disabled={!editingHours}
+                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="morning">Sáng</option>
+                      <option value="afternoon">Chiều</option>
+                      <option value="night">Tối</option>
+                      <option value="flexible">Linh hoạt</option>
+                    </select>
                   </div>
-                ))}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Giờ bắt đầu</label>
+                    <input
+                      type="time"
+                      value={profile?.workShift?.startTime || '08:00'}
+                      onChange={(e) => {
+                        // This would need to be implemented to update the workShift
+                        console.log('Update start time:', e.target.value);
+                      }}
+                      disabled={!editingHours}
+                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Giờ kết thúc</label>
+                    <input
+                      type="time"
+                      value={profile?.workShift?.endTime || '17:00'}
+                      onChange={(e) => {
+                        // This would need to be implemented to update the workShift
+                        console.log('Update end time:', e.target.value);
+                      }}
+                      disabled={!editingHours}
+                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Ngày làm việc trong tuần</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
+                      <label key={day} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={profile?.workShift?.daysOfWeek?.includes(day) || false}
+                          onChange={(e) => {
+                            // This would need to be implemented to update the workShift
+                            console.log('Update day:', day, e.target.checked);
+                          }}
+                          disabled={!editingHours}
+                          className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">
+                          {day === 'monday' ? 'Thứ hai' :
+                           day === 'tuesday' ? 'Thứ ba' :
+                           day === 'wednesday' ? 'Thứ tư' :
+                           day === 'thursday' ? 'Thứ năm' :
+                           day === 'friday' ? 'Thứ sáu' :
+                           day === 'saturday' ? 'Thứ bảy' : 'Chủ nhật'}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -494,8 +584,8 @@ const TechnicianProfilePage: React.FC = () => {
                         Danh mục
                       </label>
                       <select
-                        value={newSkill.category}
-                        onChange={(e) => setNewSkill({ ...newSkill, category: e.target.value })}
+                        value={newSkill.serviceCategory}
+                        onChange={(e) => setNewSkill({ ...newSkill, serviceCategory: e.target.value })}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                       >
                         <option value="">Chọn danh mục</option>
@@ -509,8 +599,8 @@ const TechnicianProfilePage: React.FC = () => {
                         Trình độ (1-5)
                       </label>
                       <select
-                        value={newSkill.level}
-                        onChange={(e) => setNewSkill({ ...newSkill, level: Number(e.target.value) })}
+                        value={newSkill.proficiencyLevel}
+                        onChange={(e) => setNewSkill({ ...newSkill, proficiencyLevel: Number(e.target.value) })}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                       >
                         {[1, 2, 3, 4, 5].map((level) => (
@@ -523,8 +613,8 @@ const TechnicianProfilePage: React.FC = () => {
                     <div className="flex items-center">
                       <input
                         type="checkbox"
-                        checked={newSkill.certified || false}
-                        onChange={(e) => setNewSkill({ ...newSkill, certified: e.target.checked })}
+                        checked={newSkill.certificationRequired || false}
+                        onChange={(e) => setNewSkill({ ...newSkill, certificationRequired: e.target.checked })}
                         className="h-4 w-4 text-blue-600 rounded border-gray-300 mr-2"
                       />
                       <label className="text-sm font-medium text-gray-700">
@@ -542,7 +632,7 @@ const TechnicianProfilePage: React.FC = () => {
                       <button
                         onClick={() => {
                           setShowAddSkill(false);
-                          setNewSkill({ category: '', level: 1, certified: false });
+                          setNewSkill({ serviceCategory: '', proficiencyLevel: 1, trainingNeeded: false, certificationRequired: false });
                         }}
                         className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
                       >
@@ -555,29 +645,28 @@ const TechnicianProfilePage: React.FC = () => {
 
               {/* Skills List */}
               <div className="space-y-4">
-                {profile.skills.map((skill, index) => (
+                {profile.skillMatrix.map((skill, index) => (
                   <div key={index} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg">
                     <div className="flex items-center space-x-4">
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900">{skill.category}</h4>
+                        <h4 className="text-sm font-medium text-gray-900">{skill.serviceCategory}</h4>
                         <div className="flex items-center space-x-2 mt-1">
                           <div className="flex space-x-1">
                             {[1, 2, 3, 4, 5].map((level) => (
                               <div
                                 key={level}
                                 className={`w-3 h-3 rounded-full ${
-                                  level <= skill.level ? 'bg-blue-500' : 'bg-gray-200'
+                                  level <= skill.proficiencyLevel ? 'bg-blue-500' : 'bg-gray-200'
                                 }`}
                               />
                             ))}
                           </div>
                           <span className="text-xs text-gray-500">
-                            Trình độ {skill.level}/5
+                            Trình độ {skill.proficiencyLevel}/5
                           </span>
-                          {skill.certified && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                              <CheckIcon className="h-3 w-3 mr-1" />
-                              Có chứng chỉ
+                          {skill.certificationRequired && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                              Cần chứng chỉ
                             </span>
                           )}
                         </div>
@@ -592,7 +681,7 @@ const TechnicianProfilePage: React.FC = () => {
                     </button>
                   </div>
                 ))}
-                {profile.skills.length === 0 && (
+                {profile.skillMatrix.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
                     <WrenchScrewdriverIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
                     <p>Chưa có kỹ năng nào được thêm.</p>

@@ -55,9 +55,10 @@ const Navbar: React.FC = () => {
         return [
           ...baseLinks,
           { name: 'Users', href: '/users' },
+          { name: 'Slots', href: '/slots' },
           { name: 'Services', href: '/services' },
           { name: 'Parts', href: '/parts' },
-          { name: 'All Vehicles', href: '/manage-vehicles' },
+          { name: 'Vehicles', href: '/manage-vehicles' },
           { name: 'Appointments', href: '/appointments' },
           { name: 'Transactions', href: '/manage-transactions' },
         ];
@@ -65,14 +66,15 @@ const Navbar: React.FC = () => {
         return [
           ...baseLinks,
           { name: 'Work Queue', href: '/work-queue' },
-          { name: 'All Vehicles', href: '/manage-vehicles' },
+          { name: 'Vehicles', href: '/manage-vehicles' },
           { name: 'Parts', href: '/parts' },
         ];
       case 'admin':
         return [
           ...baseLinks,
+          { name: 'Slots', href: '/slots' },
           { name: 'Users', href: '/users' },
-          { name: 'All Vehicles', href: '/manage-vehicles' },
+          { name: 'Vehicles', href: '/manage-vehicles' },
           { name: 'Service Centers', href: '/service-centers' },
           { name: 'Transactions', href: '/manage-transactions' },
           { name: 'Reports', href: '/admin/reports' },
