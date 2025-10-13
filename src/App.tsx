@@ -29,6 +29,7 @@ import PaymentResult from "./pages/PaymentResult";
 import CustomerTransactionsPage from "./pages/CustomerTransactionsPage";
 import StaffTransactionsPage from "./pages/StaffTransactionsPage";
 import SlotManagerPage from "./pages/SlotManagerPage";
+import TechnicianSlotsPage from "./pages/TechnicianSlotsPage";
 
 function App() {
   return (
@@ -123,6 +124,15 @@ function App() {
                   element={
                     <ProtectedRoute roles={["technician"]}>
                       <WorkQueuePage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/my-slots"
+                  element={
+                    <ProtectedRoute roles={["technician"]}>
+                      <TechnicianSlotsPage />
                     </ProtectedRoute>
                   }
                 />

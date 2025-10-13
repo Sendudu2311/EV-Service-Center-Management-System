@@ -65,6 +65,7 @@ const Navbar: React.FC = () => {
       case 'technician':
         return [
           ...baseLinks,
+          { name: 'My Slots', href: '/my-slots' },
           { name: 'Work Queue', href: '/work-queue' },
           { name: 'Vehicles', href: '/manage-vehicles' },
           { name: 'Parts', href: '/parts' },
