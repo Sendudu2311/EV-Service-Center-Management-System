@@ -118,7 +118,7 @@ const TechnicianSlots: React.FC = () => {
     const days = getWeekDates();
 
     return (
-        <div className="p-4">
+        <div className="bg-white p-4">
             <h3 className="text-lg font-semibold mb-4">My Working Slots — Weekly Timetable</h3>
 
             <div className="flex items-center gap-4 mb-4">
