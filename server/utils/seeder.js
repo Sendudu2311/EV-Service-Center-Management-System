@@ -12,6 +12,7 @@ import ChecklistInstance from "../models/ChecklistInstance.js";
 import PartRequest from "../models/PartRequest.js";
 import Invoice from "../models/Invoice.js";
 import Slot from "../models/Slot.js";
+import { is } from "zod/v4/locales";
 
 // Load env vars
 dotenv.config();
@@ -857,6 +858,7 @@ const createUsers = async (serviceCenters) => {
         role: "admin",
         // serviceCenterId removed - single center architecture
         isActive: true,
+        isEmailVerified: true,
         lastLogin: new Date(),
       },
 
@@ -870,6 +872,7 @@ const createUsers = async (serviceCenters) => {
         role: "staff",
         // serviceCenterId removed - single center architecture
         isActive: true,
+        isEmailVerified: true,
         lastLogin: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
       },
       {
@@ -881,6 +884,7 @@ const createUsers = async (serviceCenters) => {
         role: "staff",
         // serviceCenterId removed - single center architecture
         isActive: true,
+        isEmailVerified: true,
         lastLogin: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
       },
 
@@ -911,6 +915,7 @@ const createUsers = async (serviceCenters) => {
             certificateUrl: "https://certificates.safety.vn/hv3/cert-001",
           },
         ],
+        isEmailVerified: true,
         isActive: true,
         lastLogin: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
       },
@@ -940,6 +945,7 @@ const createUsers = async (serviceCenters) => {
             certificateUrl: "https://certificates.autoacademy.vn/diag/cert-002",
           },
         ],
+        isEmailVerified: true,
         isActive: true,
         lastLogin: new Date(Date.now() - 60 * 60 * 1000), // 1 hour ago
       },
@@ -962,6 +968,7 @@ const createUsers = async (serviceCenters) => {
               "https://certificates.evinstitute.vn/charging/cert-003",
           },
         ],
+        isEmailVerified: true,
         isActive: true,
       },
 
@@ -973,6 +980,7 @@ const createUsers = async (serviceCenters) => {
         lastName: "Hùng",
         phone: "0907890123", // Vietnamese format
         role: "customer",
+        isEmailVerified: true,
         isActive: true,
         lastLogin: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
       },
@@ -983,6 +991,7 @@ const createUsers = async (serviceCenters) => {
         lastName: "Lan",
         phone: "0908901234", // Vietnamese format
         role: "customer",
+        isEmailVerified: true,
         isActive: true,
         lastLogin: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
       },
@@ -993,6 +1002,7 @@ const createUsers = async (serviceCenters) => {
         lastName: "Tuấn",
         phone: "0909012345", // Vietnamese format
         role: "customer",
+        isEmailVerified: true,
         isActive: true,
         lastLogin: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
       },
@@ -1003,6 +1013,7 @@ const createUsers = async (serviceCenters) => {
         lastName: "Hoa",
         phone: "0930123456", // Vietnamese format
         role: "customer",
+        isEmailVerified: true,
         isActive: true,
         lastLogin: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
       },
@@ -1013,6 +1024,7 @@ const createUsers = async (serviceCenters) => {
         lastName: "Nam",
         phone: "0931234567", // Vietnamese format
         role: "customer",
+        isEmailVerified: true,
         isActive: true,
         lastLogin: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
       },
@@ -3327,13 +3339,17 @@ const createAppointments = async (
       if (slots && slots.length > 0 && Math.random() < 0.3) {
         const randomSlot = slots[Math.floor(Math.random() * slots.length)];
         appointment.slotId = randomSlot._id;
-        
+
         // If slot has technicians, assign one as the primary technician
-        if (randomSlot.technicianIds && randomSlot.technicianIds.length > 0 && !appointment.assignedTechnician) {
+        if (
+          randomSlot.technicianIds &&
+          randomSlot.technicianIds.length > 0 &&
+          !appointment.assignedTechnician
+        ) {
           appointment.assignedTechnician = randomSlot.technicianIds[0];
         }
       }
-      
+
       const newAppointment = await Appointment.create(appointment);
       newAppointment.calculateTotal();
       await newAppointment.save();
@@ -3357,77 +3373,77 @@ const createSlots = async (users) => {
     // Create slots for the next 7 days, 4 slots per day
     const slots = [];
     const now = new Date();
-    
+
     for (let day = 1; day <= 7; day++) {
       const date = new Date(now);
       date.setDate(now.getDate() + day);
-      
+
       // Slot 1: 8:00-10:00
       const slot1Start = new Date(date);
       slot1Start.setHours(8, 0, 0, 0);
       const slot1End = new Date(date);
       slot1End.setHours(10, 0, 0, 0);
-      
+
       slots.push({
         technicianIds: [technicians[0]._id, technicians[1]._id], // Multiple technicians per slot
-        date: date.toISOString().split('T')[0], // YYYY-MM-DD format
-        startTime: '08:00',
-        endTime: '10:00',
+        date: date.toISOString().split("T")[0], // YYYY-MM-DD format
+        startTime: "08:00",
+        endTime: "10:00",
         start: slot1Start,
         end: slot1End,
         capacity: 2,
-        status: 'available'
+        status: "available",
       });
-      
+
       // Slot 2: 10:00-12:00
       const slot2Start = new Date(date);
       slot2Start.setHours(10, 0, 0, 0);
       const slot2End = new Date(date);
       slot2End.setHours(12, 0, 0, 0);
-      
+
       slots.push({
         technicianIds: [technicians[1]._id, technicians[2]._id],
-        date: date.toISOString().split('T')[0], // YYYY-MM-DD format
-        startTime: '10:00',
-        endTime: '12:00',
+        date: date.toISOString().split("T")[0], // YYYY-MM-DD format
+        startTime: "10:00",
+        endTime: "12:00",
         start: slot2Start,
         end: slot2End,
         capacity: 2,
-        status: 'available'
+        status: "available",
       });
-      
+
       // Slot 3: 13:00-15:00
       const slot3Start = new Date(date);
       slot3Start.setHours(13, 0, 0, 0);
       const slot3End = new Date(date);
       slot3End.setHours(15, 0, 0, 0);
-      
+
       slots.push({
         technicianIds: [technicians[0]._id, technicians[2]._id],
-        date: date.toISOString().split('T')[0], // YYYY-MM-DD format
-        startTime: '13:00',
-        endTime: '15:00',
+        date: date.toISOString().split("T")[0], // YYYY-MM-DD format
+        startTime: "13:00",
+        endTime: "15:00",
         start: slot3Start,
         end: slot3End,
         capacity: 2,
-        status: 'available'
+        status: "available",
       });
-      
+
       // Slot 4: 15:00-17:00
       const slot4Start = new Date(date);
       slot4Start.setHours(15, 0, 0, 0);
       const slot4End = new Date(date);
       slot4End.setHours(17, 0, 0, 0);
-      
+
       slots.push({
         technicianIds: [technicians[1]._id],
-        date: date.toISOString().split('T')[0], // YYYY-MM-DD format
-        startTime: '15:00',
-        endTime: '17:00',
+        date: date.toISOString().split("T")[0], // YYYY-MM-DD format
+        startTime: "15:00",
+        endTime: "17:00",
         start: slot4Start,
         end: slot4End,
         capacity: 1,
-        status: 'available'
+        status: "available",
       });
     }
 

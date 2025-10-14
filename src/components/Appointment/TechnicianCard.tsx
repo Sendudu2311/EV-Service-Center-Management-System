@@ -104,7 +104,11 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
       )}
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-3">
+      <div
+        className={`flex items-start justify-between mb-3 ${
+          technician.isRecommended ? "mt-8" : ""
+        }`}
+      >
         <div className="flex items-center">
           <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
             <UserIcon className="w-6 h-6 text-gray-600" />
@@ -130,7 +134,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
             {getAvailabilityText(technician.availability.status)}
           </span>
           <span className="text-sm text-gray-600">
-            {technician.availability.workloadPercentage}% workload
+            {Math.round(technician.availability.workloadPercentage)}% workload
           </span>
         </div>
         {!isAvailableForSlot && (
@@ -160,7 +164,7 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
         </div>
         <div className="bg-gray-50 rounded p-2">
           <div className="font-semibold text-sm mb-1">
-            {technician.performance.efficiency}%
+            {Math.round(technician.performance.efficiency)}%
           </div>
           <div className="text-xs text-gray-600">Efficiency</div>
         </div>

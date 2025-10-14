@@ -21,8 +21,6 @@ interface Vehicle {
   vin: string;
 }
 
-// ServiceCenter interface removed - single center architecture
-
 interface Service {
   _id: string;
   name: string;
@@ -32,54 +30,137 @@ interface Service {
   estimatedDuration: number;
 }
 
-interface AppointmentFormProps {
+interface AppointmentFormCleanProps {
   onSuccess: () => void;
   onCancel: () => void;
+  restorationData?: {
+    formData?: {
+      vehicleId: string;
+      services: string[];
+      scheduledDate: string;
+      scheduledTime: string;
+      customerNotes: string;
+      priority: string;
+      technicianId: string | null;
+    };
+    selectedSlotId?: string | null;
+    reservedSlotId?: string | null;
+    paymentInfo?: {
+      transactionRef: string;
+      amount: number;
+      paymentDate: Date;
+    };
+    paymentVerified?: boolean;
+  };
 }
 
-const AppointmentForm: React.FC<AppointmentFormProps> = ({
+const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
   onSuccess,
   onCancel,
+  restorationData,
 }) => {
+  // Initialize all state with restoration data if available
   const [loading, setLoading] = useState(false);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-
-  // serviceCenters removed - single center architecture
-  const [slots, setSlots] = useState<any[]>([]);
-  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
-  const [reservedSlotId, setReservedSlotId] = useState<string | null>(null);
+  const [slots, setSlots] = useState<
+    Array<{
+      _id: string;
+      start: string;
+      end: string;
+      status: string;
+      capacity: number;
+      bookedCount: number;
+      technicianIds?: Array<{ firstName: string; lastName: string } | string>;
+      canBook?: boolean;
+    }>
+  >([]);
+  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(
+    restorationData?.selectedSlotId || null
+  );
+  const [reservedSlotId, setReservedSlotId] = useState<string | null>(
+    restorationData?.reservedSlotId || null
+  );
   const [services, setServices] = useState<Service[]>([]);
-  const [technicians, setTechnicians] = useState<any[]>([]);
+  const [technicians, setTechnicians] = useState<
+    Array<{
+      _id: string;
+      firstName: string;
+      lastName: string;
+      specializations: string[];
+    }>
+  >([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
-  const [paymentVerified, setPaymentVerified] = useState(false);
-  const [pendingAppointment, setPendingAppointment] = useState<any>(null);
+  const [paymentVerified] = useState(restorationData?.paymentVerified || false);
+  const [pendingAppointment, setPendingAppointment] = useState<{
+    paymentInfo?: {
+      transactionRef: string;
+      amount: number;
+      method: string;
+    };
+  } | null>(
+    restorationData?.paymentInfo
+      ? { paymentInfo: { ...restorationData.paymentInfo, method: "vnpay" } }
+      : null
+  );
   const [selectedBank, setSelectedBank] = useState("");
+
+  // Initialize formData with restoration data
   const [formData, setFormData] = useState({
-    vehicleId: "",
-    services: [] as string[],
-    scheduledDate: "",
-    scheduledTime: "",
-    customerNotes: "",
-    priority: "normal",
-    technicianId: null as string | null,
+    vehicleId: restorationData?.formData?.vehicleId || "",
+    services: restorationData?.formData?.services || ([] as string[]),
+    scheduledDate: restorationData?.formData?.scheduledDate || "",
+    scheduledTime: restorationData?.formData?.scheduledTime || "",
+    customerNotes: restorationData?.formData?.customerNotes || "",
+    priority: restorationData?.formData?.priority || "normal",
+    technicianId:
+      restorationData?.formData?.technicianId || (null as string | null),
   });
 
+  // Fetch initial data only once
   useEffect(() => {
-    fetchVehicles();
+    const fetchInitialData = async () => {
+      try {
+        const [vehiclesRes, servicesRes, techniciansRes] = await Promise.all([
+          vehiclesAPI.getAll(),
+          servicesAPI.getAll(),
+          techniciansAPI.getAll(),
+        ]);
+
+        setVehicles(
+          Array.isArray(vehiclesRes.data?.data)
+            ? vehiclesRes.data.data
+            : Array.isArray(vehiclesRes.data)
+            ? vehiclesRes.data
+            : []
+        );
+        setServices(
+          Array.isArray(servicesRes.data?.data)
+            ? servicesRes.data.data
+            : Array.isArray(servicesRes.data)
+            ? servicesRes.data
+            : []
+        );
+        setTechnicians(
+          Array.isArray(techniciansRes.data?.data)
+            ? techniciansRes.data.data
+            : Array.isArray(techniciansRes.data)
+            ? techniciansRes.data
+            : []
+        );
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+        toast.error("Failed to load initial data");
+      }
+    };
+
+    fetchInitialData();
   }, []);
 
-  useEffect(() => {
-    // Single center architecture - always fetch services and technicians
-    fetchServices();
-    fetchTechnicians();
-  }, []);
-
-  // Fetch slots when date is selected
+  // Fetch slots when date changes
   useEffect(() => {
     if (!formData.scheduledDate) {
       setSlots([]);
-      // Don't clear selectedSlotId or scheduledTime if payment is verified (restoring from payment)
       if (!paymentVerified) {
         setSelectedSlotId(null);
         setFormData((prev) => ({ ...prev, scheduledTime: "" }));
@@ -89,13 +170,58 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 
     const fetchSlots = async () => {
       try {
+        console.log(
+          "🔍 [AppointmentFormClean] Fetching slots for date:",
+          formData.scheduledDate
+        );
         const response = await slotsAPI.list({
           from: formData.scheduledDate,
           to: formData.scheduledDate,
         });
 
-        const slotData = response.data?.data || response.data || [];
-        setSlots(Array.isArray(slotData) ? slotData : []);
+        console.log("🔍 [AppointmentFormClean] Slots API response:", response);
+
+        let slotData: unknown[] = [];
+        if (
+          response.data &&
+          typeof response.data === "object" &&
+          "data" in response.data &&
+          response.data.data &&
+          typeof response.data.data === "object" &&
+          "data" in response.data.data
+        ) {
+          slotData = response.data.data.data as unknown[];
+        } else if (
+          response.data &&
+          typeof response.data === "object" &&
+          "data" in response.data
+        ) {
+          slotData = response.data.data as unknown[];
+        } else if (response.data) {
+          slotData = response.data as unknown as unknown[];
+        }
+
+        console.log("🔍 [AppointmentFormClean] Extracted slot data:", slotData);
+        const slotsArray = Array.isArray(slotData)
+          ? (slotData as Array<{
+              _id: string;
+              start: string;
+              end: string;
+              status: string;
+              capacity: number;
+              bookedCount: number;
+              technicianIds?: Array<
+                { firstName: string; lastName: string } | string
+              >;
+              canBook?: boolean;
+            }>)
+          : [];
+        console.log(
+          "🔍 [AppointmentFormClean] Setting slots:",
+          slotsArray.length,
+          "slots"
+        );
+        setSlots(slotsArray);
       } catch (err) {
         console.error("Error fetching slots:", err);
         setSlots([]);
@@ -105,19 +231,52 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
     fetchSlots();
   }, [formData.scheduledDate, paymentVerified]);
 
-  // Update scheduledTime when slot is selected
+  // Show confirmation immediately if payment is verified and we have restoration data
   useEffect(() => {
-    if (selectedSlotId && slots.length > 0) {
-      const slot = slots.find((s) => s._id === selectedSlotId);
-      if (slot) {
-        const startTime = new Date(slot.start).toTimeString().slice(0, 5);
-        // Only update if time is different to avoid infinite loops
-        if (formData.scheduledTime !== startTime) {
-          setFormData((prev) => ({ ...prev, scheduledTime: startTime }));
-        }
-      }
+    if (
+      restorationData?.paymentVerified &&
+      restorationData?.formData?.scheduledDate &&
+      restorationData?.formData?.scheduledTime
+    ) {
+      console.log(
+        "✅ [AppointmentFormClean] Payment verified with restoration data, showing confirmation"
+      );
+      setShowConfirmation(true);
     }
-  }, [selectedSlotId, slots, formData.scheduledTime]);
+  }, [restorationData]);
+
+  // Handle slot selection from cards
+  const handleSlotSelect = (slotId: string) => {
+    if (paymentVerified) return;
+
+    console.log("🔍 [handleSlotSelect] Selecting slot:", slotId);
+    const slot = slots.find((s) => s._id === slotId);
+    console.log("🔍 [handleSlotSelect] Found slot:", slot);
+    console.log("🔍 [handleSlotSelect] Slot status:", slot?.status);
+    console.log("🔍 [handleSlotSelect] Slot bookedCount:", slot?.bookedCount);
+    console.log("🔍 [handleSlotSelect] Slot capacity:", slot?.capacity);
+
+    if (
+      slot &&
+      (slot.status === "available" || slot.status === "partially_booked")
+    ) {
+      console.log("✅ [handleSlotSelect] Slot is available, selecting...");
+      setSelectedSlotId(slotId);
+
+      // Auto-select the time in the dropdown
+      const vietnameseTime = utcToVietnameseDateTime(new Date(slot.start));
+      console.log(
+        "🔍 [handleSlotSelect] Setting time to:",
+        vietnameseTime.time
+      );
+      setFormData((prev) => ({
+        ...prev,
+        scheduledTime: vietnameseTime.time,
+      }));
+    } else {
+      console.log("❌ [handleSlotSelect] Slot not available or invalid");
+    }
+  };
 
   // Get available slot times - fixed 4 slots per day
   const getAvailableSlotTimes = () => {
@@ -151,43 +310,6 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
     }
   };
 
-  const fetchVehicles = async () => {
-    try {
-      const response = await vehiclesAPI.getAll();
-      const vehicleData = response.data?.data || response.data || [];
-      setVehicles(Array.isArray(vehicleData) ? vehicleData : []);
-    } catch (error) {
-      console.error("Error fetching vehicles:", error);
-      toast.error("Failed to load vehicles");
-      setVehicles([]);
-    }
-  };
-
-  // fetchServiceCenters removed - single center architecture
-
-  const fetchServices = async () => {
-    try {
-      const response = await servicesAPI.getAll();
-      const serviceData = response.data?.data || response.data || [];
-      setServices(Array.isArray(serviceData) ? serviceData : []);
-    } catch (error) {
-      console.error("Error fetching services:", error);
-      toast.error("Failed to load services");
-      setServices([]);
-    }
-  };
-
-  const fetchTechnicians = async () => {
-    try {
-      const response = await techniciansAPI.getAll();
-      const technicianData = response.data?.data || response.data || [];
-      setTechnicians(Array.isArray(technicianData) ? technicianData : []);
-    } catch (error) {
-      console.error("Error fetching technicians:", error);
-      setTechnicians([]);
-    }
-  };
-
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -212,11 +334,11 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
         }));
       }
     } else {
-      const updates: any = { [name]: value };
+      const updates: Record<string, string> = { [name]: value };
 
       // Reset technician selection when critical fields change
       if (["scheduledDate", "scheduledTime"].includes(name)) {
-        updates.technicianId = null;
+        updates.technicianId = null as unknown as string;
       }
 
       setFormData((prev) => ({
@@ -234,7 +356,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   };
 
   const calculateTotalAmount = () => {
-    return formData.services.reduce((total, serviceId) => {
+    return formData.services.reduce((total: number, serviceId: string) => {
       const service = services.find((s) => s._id === serviceId);
       return total + (service?.basePrice || 0);
     }, 0);
@@ -248,7 +370,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
       return;
     }
 
-    console.log("💳 [AppointmentForm] Starting payment creation");
+    console.log("💳 [AppointmentFormClean] Starting payment creation");
     console.log("📋 Current formData:", formData);
     console.log("📅 scheduledDate:", formData.scheduledDate);
     console.log("⏰ scheduledTime:", formData.scheduledTime);
@@ -258,7 +380,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
     try {
       const appointmentData = {
         ...formData,
-        services: formData.services.map((serviceId) => ({
+        services: formData.services.map((serviceId: string) => ({
           serviceId,
           quantity: 1,
         })),
@@ -280,10 +402,11 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
           setReservedSlotId(
             r.data?.data?._id || r.data?.data?._id || selectedSlotId
           );
-        } catch (reserveErr: any) {
+        } catch (reserveErr: unknown) {
           console.error("Failed to reserve slot before payment", reserveErr);
           toast.error(
-            reserveErr.response?.data?.message ||
+            (reserveErr as { response?: { data?: { message?: string } } })
+              .response?.data?.message ||
               "Selected time slot is no longer available"
           );
           setLoading(false);
@@ -293,7 +416,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 
       const response = await vnpayAPI.createPayment(paymentData);
 
-      if ((response.data as any)?.paymentUrl) {
+      if ((response.data as { paymentUrl?: string })?.paymentUrl) {
         // Store pending appointment data for after payment
         const appointmentData = {
           ...formData,
@@ -304,14 +427,16 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
           })),
           ...(formData.technicianId && { technicianId: formData.technicianId }),
           paymentInfo: {
-            transactionRef: (response.data as any).transactionRef,
+            transactionRef:
+              (response.data as { transactionRef?: string }).transactionRef ||
+              "",
             amount: totalAmount,
             method: "vnpay",
           },
         };
 
         console.log(
-          "💾 [AppointmentForm] Storing appointment data before payment:",
+          "💾 [AppointmentFormClean] Storing appointment data before payment:",
           appointmentData
         );
         console.log("📅 scheduledDate:", appointmentData.scheduledDate);
@@ -325,13 +450,17 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
         );
 
         // Redirect to VNPay payment page
-        window.location.href = (response.data as any).paymentUrl;
+        window.location.href =
+          (response.data as { paymentUrl?: string }).paymentUrl || "";
       } else {
         throw new Error("Failed to create payment URL");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating payment:", error);
-      toast.error(error.response?.data?.message || "Failed to create payment");
+      toast.error(
+        (error as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || "Failed to create payment"
+      );
     } finally {
       setLoading(false);
     }
@@ -377,44 +506,25 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
     setShowConfirmation(false);
   };
 
+  // Handle direct booking (when payment is already verified)
   const handleDirectBooking = async () => {
-    // Guard: Prevent booking if scheduledTime is missing
-    if (!formData.scheduledTime) {
-      toast.error("Please select a valid time before booking.");
-      return;
-    }
     setLoading(true);
 
     try {
-      // If a slot was selected and not yet reserved, reserve it first.
-      if (selectedSlotId && !reservedSlotId) {
-        try {
-          const r = await slotsAPI.reserve(selectedSlotId);
-          setReservedSlotId(
-            r.data?.data?._id || r.data?.data?._id || selectedSlotId
-          );
-        } catch (reserveErr: any) {
-          console.error("Failed to reserve slot", reserveErr);
-          toast.error(
-            reserveErr.response?.data?.message ||
-              "Selected time slot is no longer available"
-          );
-          setLoading(false);
-          return;
-        }
-      }
-
       const appointmentData = {
-        ...formData,
-        services: formData.services.map((serviceId) => ({
+        vehicleId: formData.vehicleId,
+        services: formData.services.map((serviceId: string) => ({
           serviceId,
           quantity: 1,
         })),
-        ...(formData.technicianId && { technicianId: formData.technicianId }),
-        ...(paymentVerified &&
-          pendingAppointment?.paymentInfo && {
-            paymentInfo: pendingAppointment.paymentInfo,
-          }),
+        scheduledDate: formData.scheduledDate,
+        scheduledTime: formData.scheduledTime,
+        customerNotes: formData.customerNotes,
+        priority: formData.priority,
+        technicianId: formData.technicianId,
+        ...(pendingAppointment?.paymentInfo && {
+          paymentInfo: pendingAppointment.paymentInfo,
+        }),
         ...(selectedSlotId && {
           slotId: selectedSlotId,
           skipSlotReservation: !!reservedSlotId,
@@ -422,20 +532,22 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
       };
 
       console.log(
-        "🚀 [AppointmentForm] Creating appointment with data:",
+        "🚀 [AppointmentFormClean] Creating appointment with data:",
         appointmentData
       );
-      console.log("📅 scheduledDate:", appointmentData.scheduledDate);
-      console.log("⏰ scheduledTime:", appointmentData.scheduledTime);
-      console.log("🎰 slotId:", appointmentData.slotId);
-
-      // Create appointment FIRST
+      console.log("🔍 [AppointmentFormClean] reservedSlotId:", reservedSlotId);
+      console.log(
+        "🔍 [AppointmentFormClean] skipSlotReservation:",
+        !!reservedSlotId
+      );
+      console.log("🔍 [AppointmentFormClean] selectedSlotId:", selectedSlotId);
+      console.log(
+        "🔍 [AppointmentFormClean] paymentVerified:",
+        paymentVerified
+      );
       await appointmentsAPI.create(appointmentData);
-
-      // Clear reservedSlotId (we consumed the reservation)
       setReservedSlotId(null);
 
-      // THEN trigger post-payment workflow (emails) AFTER appointment is created
       if (paymentVerified && pendingAppointment?.paymentInfo) {
         try {
           await vnpayAPI.verifyAppointmentPayment({
@@ -446,23 +558,19 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
             "Failed to send post-payment notifications:",
             verifyError
           );
-          // Don't fail the booking if notifications fail
         }
       }
 
       toast.success("Appointment booked successfully!");
-
-      // Clean up
       localStorage.removeItem("pendingAppointment");
       localStorage.removeItem("paymentVerified");
-
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating appointment:", error);
       toast.error(
-        error.response?.data?.message || "Failed to book appointment"
+        (error as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || "Failed to book appointment"
       );
-      // If we had pre-reserved a slot and booking failed, release it
       if (reservedSlotId) {
         try {
           await slotsAPI.release(reservedSlotId);
@@ -478,183 +586,6 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
       setLoading(false);
     }
   };
-
-  const handlePaymentSuccess = async () => {
-    if (!pendingAppointment) return;
-
-    setLoading(true);
-    try {
-      // First verify the payment
-      const verifyResponse = await vnpayAPI.verifyAppointmentPayment({
-        transactionRef: pendingAppointment.paymentInfo.transactionRef,
-      });
-
-      if ((verifyResponse.data as any)?.success) {
-        // If slot selected and not reserved, reserve now before creating
-        if (selectedSlotId && !reservedSlotId) {
-          try {
-            const r = await slotsAPI.reserve(selectedSlotId);
-            setReservedSlotId(
-              r.data?.data?._id || r.data?.data?._id || selectedSlotId
-            );
-          } catch (reserveErr: any) {
-            console.error("Failed to reserve slot after payment", reserveErr);
-            toast.error(
-              reserveErr.response?.data?.message ||
-                "Selected time slot is no longer available"
-            );
-            setLoading(false);
-            return;
-          }
-        }
-
-        // Create appointment with verified payment info
-        const appointmentData = {
-          ...pendingAppointment,
-          paymentInfo: (verifyResponse.data as any).paymentInfo,
-          ...(selectedSlotId && {
-            slotId: selectedSlotId,
-            skipSlotReservation: !!reservedSlotId,
-          }),
-        };
-
-        try {
-          await appointmentsAPI.create(appointmentData);
-          // Clear reserved slot after success
-          setReservedSlotId(null);
-        } catch (createErr: any) {
-          // Release reserved slot on failure
-          if (reservedSlotId) {
-            try {
-              await slotsAPI.release(reservedSlotId);
-            } catch (releaseErr) {
-              console.error(
-                "Failed to release slot after create failure",
-                releaseErr
-              );
-            }
-            setReservedSlotId(null);
-          }
-          throw createErr;
-        }
-        toast.success("Appointment booked successfully after payment");
-        localStorage.removeItem("pendingAppointment");
-        onSuccess();
-      } else {
-        throw new Error("Payment verification failed");
-      }
-    } catch (error: any) {
-      console.error("Error creating appointment after payment:", error);
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to book appointment after payment"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Check for successful payment on component mount
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const success = urlParams.get("success");
-    const transactionRef = urlParams.get("transactionRef");
-
-    // Check for payment verification data
-    const paymentVerifiedStr = localStorage.getItem("paymentVerified");
-    const pendingDataStr = localStorage.getItem("pendingAppointment");
-
-    if (paymentVerifiedStr) {
-      const paymentData = JSON.parse(paymentVerifiedStr);
-
-      if (pendingDataStr) {
-        const appointment = JSON.parse(pendingDataStr);
-
-        // Debug: Log what we're restoring
-        console.log(
-          "🔄 [AppointmentForm] Restoring appointment data from localStorage:",
-          appointment
-        );
-
-        // Pre-fill the form with the appointment data
-        const restoredFormData = {
-          vehicleId: appointment.vehicleId || "",
-          services:
-            appointment.services?.map((s: any) =>
-              typeof s === "string" ? s : s.serviceId
-            ) || [],
-          scheduledDate: appointment.scheduledDate || "",
-          scheduledTime: appointment.scheduledTime || "",
-          customerNotes: appointment.customerNotes || "",
-          priority: appointment.priority || "normal",
-          technicianId: appointment.technicianId || null,
-        };
-
-        console.log(
-          "✅ [AppointmentForm] Restored form data:",
-          restoredFormData
-        );
-        setFormData(restoredFormData);
-
-        // Restore the selected slot ID if available
-        if (appointment.selectedSlotId) {
-          setSelectedSlotId(appointment.selectedSlotId);
-        }
-
-        // Set the pending appointment with payment info
-        setPendingAppointment({
-          ...appointment,
-          paymentInfo: paymentData,
-        });
-
-        // Set payment verified flag
-        setPaymentVerified(true);
-
-        // DON'T show confirmation yet - wait for formData to update via useEffect below
-        // setShowConfirmation(true);
-
-        // Clean up localStorage
-        localStorage.removeItem("pendingAppointment");
-        localStorage.removeItem("paymentVerified");
-
-        // Show success message
-        toast.success(
-          "Payment verified! Please complete your appointment booking."
-        );
-      }
-    } else if (success === "true" && transactionRef) {
-      const pendingData = localStorage.getItem("pendingAppointment");
-      if (pendingData) {
-        const appointment = JSON.parse(pendingData);
-        if (appointment.paymentInfo?.transactionRef === transactionRef) {
-          setPendingAppointment(appointment);
-          handlePaymentSuccess();
-        }
-      }
-    }
-  }, []);
-
-  // Show confirmation after payment verified and formData is restored
-  useEffect(() => {
-    if (
-      paymentVerified &&
-      formData.scheduledDate &&
-      formData.scheduledTime &&
-      !showConfirmation
-    ) {
-      console.log(
-        "✅ [AppointmentForm] FormData restored, showing confirmation"
-      );
-      console.log("📋 FormData at confirmation:", formData);
-      setShowConfirmation(true);
-    }
-  }, [
-    paymentVerified,
-    formData.scheduledDate,
-    formData.scheduledTime,
-    showConfirmation,
-    formData,
-  ]);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -692,7 +623,15 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                   formData={formData}
                   vehicles={vehicles}
                   services={services}
-                  technicians={technicians}
+                  technicians={
+                    technicians as Array<{
+                      _id: string;
+                      firstName: string;
+                      lastName: string;
+                      specializations: string[];
+                      specialization: string[];
+                    }>
+                  }
                   totalAmount={calculateTotalAmount()}
                   onConfirm={handleConfirmationConfirm}
                   onBack={handleConfirmationBack}
@@ -704,7 +643,15 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                   formData={formData}
                   vehicles={vehicles}
                   services={services}
-                  technicians={technicians}
+                  technicians={
+                    technicians as Array<{
+                      _id: string;
+                      firstName: string;
+                      lastName: string;
+                      specializations: string[];
+                      specialization: string[];
+                    }>
+                  }
                   totalAmount={calculateTotalAmount()}
                   onConfirm={handleDirectBooking}
                   onBack={() => setShowConfirmation(false)}
@@ -793,7 +740,11 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                             <span className="font-medium">
                               {(() => {
                                 const technician = technicians.find(
-                                  (t) => t._id === formData.technicianId
+                                  (t: {
+                                    _id: string;
+                                    firstName: string;
+                                    lastName: string;
+                                  }) => t._id === formData.technicianId
                                 );
                                 return technician
                                   ? `${technician.firstName} ${technician.lastName}`
@@ -852,8 +803,6 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                         ))}
                       </select>
                     </div>
-
-                    {/* Service Center Selection removed - single center architecture */}
 
                     {/* Date and Time */}
                     <div className="grid grid-cols-2 gap-4">
@@ -926,10 +875,18 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                                 slot.status === "partially_booked";
                               const technicianNames =
                                 slot.technicianIds
-                                  ?.map((tech: any) =>
-                                    typeof tech === "object"
-                                      ? `${tech.firstName} ${tech.lastName}`
-                                      : tech
+                                  ?.map(
+                                    (
+                                      tech:
+                                        | {
+                                            firstName: string;
+                                            lastName: string;
+                                          }
+                                        | string
+                                    ) =>
+                                      typeof tech === "object"
+                                        ? `${tech.firstName} ${tech.lastName}`
+                                        : tech
                                   )
                                   .join(", ") || "No technicians assigned";
 
@@ -939,7 +896,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                                   onClick={() =>
                                     !paymentVerified &&
                                     isAvailable &&
-                                    setSelectedSlotId(slot._id)
+                                    handleSlotSelect(slot._id)
                                   }
                                   className={`border rounded-lg p-3 cursor-pointer transition-all ${
                                     isSelected
@@ -1103,7 +1060,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                         <div>
                           <TechnicianSelection
                             selectedServices={formData.services.map(
-                              (serviceId) => {
+                              (serviceId: string) => {
                                 const service = services.find(
                                   (s) => s._id === serviceId
                                 );
@@ -1120,7 +1077,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                             appointmentTime={formData.scheduledTime}
                             selectedSlotId={selectedSlotId}
                             estimatedDuration={formData.services.reduce(
-                              (total, serviceId) => {
+                              (total: number, serviceId: string) => {
                                 const service = services.find(
                                   (s) => s._id === serviceId
                                 );
@@ -1337,4 +1294,4 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   );
 };
 
-export default AppointmentForm;
+export default AppointmentFormClean;
