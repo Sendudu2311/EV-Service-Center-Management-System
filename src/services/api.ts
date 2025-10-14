@@ -813,4 +813,34 @@ export const vnpayAPI = {
     api.post<ApiResponse<any>>("/api/vnpay/transactions/cleanup-expired"),
 };
 
+// Chatbot API
+export const chatbotAPI = {
+  sendMessage: (messageData: {
+    message: string;
+    language?: 'en' | 'vi';
+    chatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  }) =>
+    api.post<ApiResponse<{
+      message: string;
+      blocked: boolean;
+      timestamp?: Date;
+      reason?: string;
+      error?: boolean;
+    }>>("/api/chatbot/message", messageData),
+
+  getStatus: () =>
+    api.get<ApiResponse<{
+      available: boolean;
+      model: string;
+      features: string[];
+      languages: string[];
+    }>>("/api/chatbot/status"),
+
+  clearHistory: () =>
+    api.post<ApiResponse<{
+      cleared: boolean;
+      timestamp: Date;
+    }>>("/api/chatbot/clear"),
+};
+
 export default api;
