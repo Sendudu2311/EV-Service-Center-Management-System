@@ -35,42 +35,34 @@ interface Service {
 interface AppointmentFormProps {
   onSuccess: () => void;
   onCancel: () => void;
-  initialData?: any;
-  paymentInfo?: any;
 }
 
 const AppointmentForm: React.FC<AppointmentFormProps> = ({
   onSuccess,
   onCancel,
-  initialData,
-  paymentInfo,
 }) => {
   const [loading, setLoading] = useState(false);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
   // serviceCenters removed - single center architecture
   const [slots, setSlots] = useState<any[]>([]);
-  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(
-    initialData?.selectedSlotId || null
-  );
+  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   const [reservedSlotId, setReservedSlotId] = useState<string | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
-  const [paymentVerified, setPaymentVerified] = useState(!!paymentInfo);
-  const [pendingAppointment, setPendingAppointment] = useState<any>(
-    paymentInfo ? { paymentInfo } : null
-  );
+  const [paymentVerified, setPaymentVerified] = useState(false);
+  const [pendingAppointment, setPendingAppointment] = useState<any>(null);
   const [selectedBank, setSelectedBank] = useState("");
   const [formData, setFormData] = useState({
-    vehicleId: initialData?.vehicleId || "",
-    services: initialData?.services || ([] as string[]),
-    scheduledDate: initialData?.scheduledDate || "",
-    scheduledTime: initialData?.scheduledTime || "",
-    customerNotes: initialData?.customerNotes || "",
-    priority: initialData?.priority || "normal",
-    technicianId: initialData?.technicianId || (null as string | null),
+    vehicleId: "",
+    services: [] as string[],
+    scheduledDate: "",
+    scheduledTime: "",
+    customerNotes: "",
+    priority: "normal",
+    technicianId: null as string | null,
   });
 
   useEffect(() => {
@@ -97,38 +89,13 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 
     const fetchSlots = async () => {
       try {
-        console.log(
-          "🔍 [AppointmentForm] Fetching slots for date:",
-          formData.scheduledDate
-        );
         const response = await slotsAPI.list({
           from: formData.scheduledDate,
           to: formData.scheduledDate,
         });
 
-        console.log("🔍 [AppointmentForm] Slots API response:", response);
-
-        // Fix: Handle the correct data structure
-        let slotData = [];
-        if (response.data?.data?.data) {
-          // Structure: {success: true, data: {count: 4, data: Array(4)}}
-          slotData = response.data.data.data;
-        } else if (response.data?.data) {
-          // Structure: {success: true, data: Array(4)}
-          slotData = response.data.data;
-        } else if (response.data) {
-          // Structure: {success: true, data: Array(4)}
-          slotData = response.data;
-        }
-
-        console.log("🔍 [AppointmentForm] Extracted slot data:", slotData);
-        const slotsArray = Array.isArray(slotData) ? slotData : [];
-        console.log(
-          "🔍 [AppointmentForm] Setting slots:",
-          slotsArray.length,
-          "slots"
-        );
-        setSlots(slotsArray);
+        const slotData = response.data?.data || response.data || [];
+        setSlots(Array.isArray(slotData) ? slotData : []);
       } catch (err) {
         console.error("Error fetching slots:", err);
         setSlots([]);
@@ -167,14 +134,11 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
     if (timeValue && slots.length > 0) {
       const selectedSlot = slots.find((slot) => {
         const vietnameseTime = utcToVietnameseDateTime(new Date(slot.start));
-        const slotStartTime = vietnameseTime.time;
-        const slotEndTime = utcToVietnameseDateTime(new Date(slot.end)).time;
-
-        // Check if the requested time falls within the slot's time range
-        const isTimeInSlot =
-          timeValue >= slotStartTime && timeValue < slotEndTime;
-
-        return isTimeInSlot && slot.canBook && slot.status !== "full";
+        return (
+          vietnameseTime.time === timeValue &&
+          slot.canBook &&
+          slot.status !== "full"
+        );
       });
 
       if (selectedSlot) {
@@ -692,37 +656,6 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
     formData,
   ]);
 
-  // Debug slots rendering
-  useEffect(() => {
-    if (formData.scheduledDate) {
-      console.log("🔍 [AppointmentForm] Rendering slots section:", {
-        scheduledDate: formData.scheduledDate,
-        slotsLength: slots.length,
-        slots: slots,
-      });
-    }
-  }, [formData.scheduledDate, slots]);
-
-  // Show confirmation when payment is verified and form data is ready
-  useEffect(() => {
-    if (
-      paymentVerified &&
-      formData.scheduledDate &&
-      formData.scheduledTime &&
-      !showConfirmation
-    ) {
-      console.log(
-        "✅ [AppointmentForm] Payment verified, showing confirmation"
-      );
-      setShowConfirmation(true);
-    }
-  }, [
-    paymentVerified,
-    formData.scheduledDate,
-    formData.scheduledTime,
-    showConfirmation,
-  ]);
-
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
@@ -978,12 +911,13 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                     </div>
 
                     {/* Available Time Slots */}
-                    {formData.scheduledDate && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-3">
-                          Available Time Slots
-                        </label>
-                        {slots.length > 0 ? (
+                    {formData.scheduledDate &&
+                      formData.scheduledTime &&
+                      slots.length > 0 && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-3">
+                            Available Time Slots
+                          </label>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {slots.map((slot) => {
                               const isSelected = selectedSlotId === slot._id;
@@ -1063,46 +997,51 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                               );
                             })}
                           </div>
-                        ) : (
-                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                            <div className="flex items-center">
-                              <div className="flex-shrink-0">
-                                <ClockIcon className="h-5 w-5 text-yellow-400" />
-                              </div>
-                              <div className="ml-3">
-                                <p className="text-sm text-yellow-700">
-                                  No time slots are currently available for the
-                                  selected date. Please try a different date or
-                                  contact the service center directly.
-                                </p>
+                          {selectedSlotId && (
+                            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                              <div className="text-sm text-blue-800">
+                                <strong>Selected Time Slot:</strong>{" "}
+                                {(() => {
+                                  const slot = slots.find(
+                                    (s) => s._id === selectedSlotId
+                                  );
+                                  if (slot) {
+                                    const startTime = utcToVietnameseDateTime(
+                                      new Date(slot.start)
+                                    );
+                                    const endTime = utcToVietnameseDateTime(
+                                      new Date(slot.end)
+                                    );
+                                    return `${startTime.time} - ${endTime.time}`;
+                                  }
+                                  return "Unknown";
+                                })()}
                               </div>
                             </div>
-                          </div>
-                        )}
-                        {selectedSlotId && (
-                          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                            <div className="text-sm text-blue-800">
-                              <strong>Selected Time Slot:</strong>{" "}
-                              {(() => {
-                                const slot = slots.find(
-                                  (s) => s._id === selectedSlotId
-                                );
-                                if (slot) {
-                                  const startTime = utcToVietnameseDateTime(
-                                    new Date(slot.start)
-                                  );
-                                  const endTime = utcToVietnameseDateTime(
-                                    new Date(slot.end)
-                                  );
-                                  return `${startTime.time} - ${endTime.time}`;
-                                }
-                                return "Unknown";
-                              })()}
+                          )}
+                        </div>
+                      )}
+
+                    {/* Info message when slots are not available yet */}
+                    {formData.scheduledDate &&
+                      formData.scheduledTime &&
+                      slots.length === 0 && (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0">
+                              <ClockIcon className="h-5 w-5 text-yellow-400" />
+                            </div>
+                            <div className="ml-3">
+                              <p className="text-sm text-yellow-700">
+                                No time slots are currently available for the
+                                selected date and time. Please try a different
+                                date or time, or contact the service center
+                                directly.
+                              </p>
                             </div>
                           </div>
-                        )}
-                      </div>
-                    )}
+                        </div>
+                      )}
 
                     {/* Services */}
                     {services.length > 0 && (

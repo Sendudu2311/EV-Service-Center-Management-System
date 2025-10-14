@@ -242,7 +242,12 @@ export const createAppointment = async (req, res) => {
         appointmentDateTime.getTime() + totalDuration * 60000
       );
 
-      // Check for time slot conflicts - simplified check for same date
+      // Check for time slot conflicts - proper time overlap check
+      console.log("🔍 [createAppointment] Checking technician availability:");
+      console.log("- Technician ID:", technicianId);
+      console.log("- Appointment time:", appointmentDateTime);
+      console.log("- Estimated completion:", estimatedCompletion);
+
       const conflictingAppointments = await Appointment.find({
         assignedTechnician: technicianId,
         scheduledDate: {
@@ -252,11 +257,63 @@ export const createAppointment = async (req, res) => {
         status: { $in: ["confirmed", "in_progress"] },
       });
 
-      if (conflictingAppointments.length > 0) {
+      console.log(
+        "🔍 [createAppointment] Found appointments for technician on this date:",
+        conflictingAppointments.length
+      );
+      conflictingAppointments.forEach((appointment, index) => {
+        console.log(
+          `  ${index + 1}. ${appointment.scheduledDate} ${
+            appointment.scheduledTime
+          } (${appointment.status})`
+        );
+      });
+
+      // Filter for actual time conflicts
+      const actualConflicts = conflictingAppointments.filter((existing) => {
+        const existingStart = new Date(
+          `${existing.scheduledDate}T${existing.scheduledTime}`
+        );
+        const existingEnd = existing.estimatedCompletion
+          ? new Date(existing.estimatedCompletion)
+          : new Date(existingStart.getTime() + 60 * 60 * 1000); // Default 1 hour if no estimatedCompletion
+
+        console.log("🔍 [createAppointment] Checking time overlap:");
+        console.log(`  Existing: ${existingStart} to ${existingEnd}`);
+        console.log(
+          `  Requested: ${appointmentDateTime} to ${estimatedCompletion}`
+        );
+
+        // Check for time overlap
+        const hasOverlap =
+          appointmentDateTime < existingEnd &&
+          estimatedCompletion > existingStart;
+
+        console.log(`  Has overlap: ${hasOverlap}`);
+        return hasOverlap;
+      });
+
+      if (actualConflicts.length > 0) {
+        console.log("🔍 [createAppointment] Time conflict detected:");
+        console.log(
+          "- Requested time:",
+          appointmentDateTime,
+          "to",
+          estimatedCompletion
+        );
+        console.log("- Conflicting appointments:", actualConflicts.length);
+        actualConflicts.forEach((conflict, index) => {
+          console.log(
+            `  ${index + 1}. ${conflict.scheduledDate} ${
+              conflict.scheduledTime
+            } (${conflict.status})`
+          );
+        });
+
         return res.status(400).json({
           success: false,
           message: "Selected technician is not available during this time slot",
-          conflictingAppointments: conflictingAppointments.length,
+          conflictingAppointments: actualConflicts.length,
         });
       }
 
@@ -447,6 +504,63 @@ export const createAppointment = async (req, res) => {
       } catch (error) {
         console.error("Error updating technician workload:", error);
         // Don't fail the appointment creation, just log the error
+      }
+    }
+
+    // Send appointment confirmation email if appointment is confirmed (payment completed)
+    if (appointment.status === "confirmed" && req.body.paymentInfo) {
+      try {
+        console.log(
+          "📧 [createAppointment] Sending appointment confirmation email..."
+        );
+
+        // Get user data for email
+        const user = await User.findById(req.user._id);
+        if (user && user.email) {
+          // Get service details for email
+          const serviceDetails = await Service.find({
+            _id: { $in: serviceIds },
+          });
+
+          // Prepare appointment data for email
+          const appointmentData = {
+            appointmentNumber: appointment.appointmentNumber,
+            scheduledDate: appointment.scheduledDate,
+            scheduledTime: appointment.scheduledTime,
+            services: serviceDetails.map((service) => ({
+              serviceName: service.name,
+              estimatedDuration: service.estimatedDuration,
+              basePrice: service.basePrice,
+            })),
+            serviceCenter: {
+              name: "EV Service Center",
+              address: "123 Main Street, Ho Chi Minh City",
+              phone: "+84 28 1234 5678",
+            },
+          };
+
+          const userData = {
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+          };
+
+          // Import email functions
+          const { sendAppointmentConfirmation } = await import(
+            "../utils/paymentNotifications.js"
+          );
+
+          await sendAppointmentConfirmation(appointmentData, userData);
+          console.log(
+            "✅ [createAppointment] Appointment confirmation email sent"
+          );
+        }
+      } catch (emailError) {
+        console.error(
+          "❌ [createAppointment] Failed to send appointment confirmation email:",
+          emailError
+        );
+        // Don't fail the appointment creation if email fails
       }
     }
 
