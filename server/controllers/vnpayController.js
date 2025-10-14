@@ -5,6 +5,8 @@ import User from "../models/User.js";
 import Service from "../models/Service.js";
 import VNPAYTransaction from "../models/VNPAYTransaction.js";
 import { executePaymentSuccessWorkflow } from "../utils/paymentNotifications.js";
+import { sendEmail } from "../utils/email.js";
+import { generateRefundNotificationTemplate } from "../utils/emailTemplates.js";
 
 /**
  * Create VNPay payment URL for appointment booking
@@ -886,6 +888,7 @@ export const debugPendingPayments = async (req, res) => {
  */
 export const getUserTransactions = async (req, res, next) => {
   try {
+    console.log("🔍 Debug - Transaction API query params:", req.query);
     const userId = req.user._id;
     const {
       page = 1,
@@ -908,6 +911,7 @@ export const getUserTransactions = async (req, res, next) => {
 
     const skip = (page - 1) * limit;
 
+    console.log("🔍 Debug - Transaction filter:", filter);
     const [transactions, total] = await Promise.all([
       VNPAYTransaction.find(filter)
         .sort({ createdAt: -1 })
@@ -917,6 +921,12 @@ export const getUserTransactions = async (req, res, next) => {
         .populate("invoiceId", "invoiceNumber status totals"),
       VNPAYTransaction.countDocuments(filter),
     ]);
+    console.log(
+      "🔍 Debug - Found transactions:",
+      transactions.length,
+      "Total:",
+      total
+    );
 
     res.json({
       success: true,
@@ -978,6 +988,8 @@ export const getTransactionById = async (req, res, next) => {
  */
 export const getTransactionStats = async (req, res, next) => {
   try {
+    console.log("🔍 Debug - Stats API query params:", req.query);
+    console.log("🔍 Debug - User role:", req.user.role);
     const { startDate, endDate, paymentType } = req.query;
     const dateRange = {};
 
@@ -1028,16 +1040,33 @@ export const getTransactionStats = async (req, res, next) => {
           $group: {
             _id: null,
             total: { $sum: 1 },
-            completed: { $sum: { $cond: ["$status", "completed", 0] } },
+            completed: {
+              $sum: {
+                $cond: [{ $eq: ["$status", "completed"] }, 1, 0],
+              },
+            },
           },
         },
         {
           $project: {
-            successRate: { $divide: ["$completed", "$total"] },
+            successRate: {
+              $cond: [
+                { $gt: ["$total", 0] },
+                { $divide: ["$completed", "$total"] },
+                0,
+              ],
+            },
           },
         },
       ]),
     ]);
+
+    console.log("🔍 Debug - Stats calculation results:");
+    console.log("  - byStatus:", stats);
+    console.log("  - totalTransactions:", totalTransactions);
+    console.log("  - totalRevenue:", totalRevenue[0]?.total || 0);
+    console.log("  - successRate raw:", successRate[0]);
+    console.log("  - successRate final:", successRate[0]?.successRate || 0);
 
     res.json({
       success: true,
@@ -1183,6 +1212,57 @@ export const refundTransaction = async (req, res, next) => {
       },
     });
 
+    // Send refund notification email to customer
+    try {
+      // Get customer information
+      const customer = await User.findById(transaction.userId);
+
+      if (customer && customer.email) {
+        const refundData = {
+          refundAmount: refundAmount || transaction.paidAmount,
+          refundPercentage: 100, // Full refund for admin refunds
+          refundTransactionRef,
+          refundDate: new Date(),
+          refundReason: reason,
+        };
+
+        const userData = {
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+        };
+
+        // Get appointment data if available
+        let appointmentData = {};
+        if (transaction.appointmentId) {
+          const appointment = await Appointment.findById(
+            transaction.appointmentId
+          );
+          if (appointment) {
+            appointmentData = {
+              appointmentNumber: appointment.appointmentNumber,
+              scheduledDate: appointment.scheduledDate,
+              scheduledTime: appointment.scheduledTime,
+            };
+          }
+        }
+
+        const emailContent = generateRefundNotificationTemplate(
+          refundData,
+          userData,
+          appointmentData
+        );
+
+        await sendEmail({
+          to: customer.email,
+          subject: `Refund Processed - Transaction ${transaction.transactionRef}`,
+          html: emailContent,
+        });
+      }
+    } catch (emailError) {
+      console.error("Error sending refund notification email:", emailError);
+      // Don't fail the refund process if email fails
+    }
+
     res.json({
       success: true,
       message: "Transaction refunded successfully",
@@ -1255,11 +1335,12 @@ export const cleanupExpiredTransactions = async (req, res, next) => {
 };
 
 /**
- * Get all transactions with filtering (admin only)
+ * Get all transactions with filtering (admin/staff only)
  */
 export const getAllTransactions = async (req, res, next) => {
   try {
-    if (req.user.role !== "admin") {
+    // Allow both admin and staff to view all transactions
+    if (req.user.role !== "admin" && req.user.role !== "staff") {
       return res.status(403).json({
         success: false,
         message: "Unauthorized to view all transactions",

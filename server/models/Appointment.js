@@ -61,6 +61,9 @@ const appointmentSchema = new mongoose.Schema(
         "completed", // Hoàn thành tất cả
         "invoiced", // Đã xuất hóa đơn
         "cancelled", // Hủy bỏ
+        "cancel_requested", // Khách yêu cầu hủy, chờ staff duyệt
+        "cancel_approved", // Staff đã duyệt hủy, chờ xác nhận hoàn tiền
+        "cancel_refunded", // Đã hoàn tiền thành công
         "no_show", // Khách không đến
       ],
       default: "pending",
@@ -252,6 +255,37 @@ const appointmentSchema = new mongoose.Schema(
     invoiceId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Invoice",
+    },
+
+    // Cancel request tracking
+    cancelRequest: {
+      requestedAt: Date,
+      requestedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      reason: String,
+      refundPercentage: {
+        type: Number,
+        default: 100,
+        min: 0,
+        max: 100,
+      },
+      approvedAt: Date,
+      approvedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      approvedNotes: String,
+      refundProcessedAt: Date,
+      refundProcessedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      refundTransactionId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "VNPAYTransaction",
+      },
     },
 
     // Staff confirmation details
@@ -655,24 +689,33 @@ appointmentSchema.methods.canBeCancelledByCustomer = function (customerId) {
     };
   }
 
-  // Check time restriction - must be at least 24 hours before appointment
+  // Check if already has cancel request
+  if (this.status === "cancel_requested" || this.status === "cancel_approved") {
+    return {
+      canCancel: false,
+      reason: "Cancel request already submitted",
+    };
+  }
+
+  // Calculate refund percentage based on time
   const appointmentDateTime = new Date(this.scheduledDate);
   const now = new Date();
   const timeDifference = appointmentDateTime.getTime() - now.getTime();
   const hoursUntilAppointment = timeDifference / (1000 * 60 * 60);
 
+  let refundPercentage = 100;
+  let refundMessage = "100% refund";
+
   if (hoursUntilAppointment < 24) {
-    return {
-      canCancel: false,
-      reason:
-        "Cannot cancel within 24 hours of appointment. Please contact the service center.",
-      hoursLeft: Math.round(hoursUntilAppointment * 10) / 10,
-    };
+    refundPercentage = 80;
+    refundMessage = "80% refund (less than 24 hours)";
   }
 
   return {
     canCancel: true,
     hoursLeft: Math.round(hoursUntilAppointment * 10) / 10,
+    refundPercentage,
+    refundMessage,
   };
 };
 
@@ -773,6 +816,84 @@ appointmentSchema.methods.reschedule = function (
   return this.save();
 };
 
+// Request cancellation
+appointmentSchema.methods.requestCancellation = function (reason, userId) {
+  const appointmentDateTime = new Date(this.scheduledDate);
+  const now = new Date();
+  const timeDifference = appointmentDateTime.getTime() - now.getTime();
+  const hoursUntilAppointment = timeDifference / (1000 * 60 * 60);
+
+  // Calculate refund percentage
+  let refundPercentage = 100;
+  if (hoursUntilAppointment < 24) {
+    refundPercentage = 80;
+  }
+
+  this.cancelRequest = {
+    requestedAt: new Date(),
+    requestedBy: userId,
+    reason,
+    refundPercentage,
+  };
+
+  this.status = "cancel_requested";
+
+  // Add to workflow history
+  this.workflowHistory.push({
+    status: this.status,
+    changedBy: userId,
+    changedAt: new Date(),
+    reason: `Cancel requested - ${refundPercentage}% refund`,
+    notes: reason,
+  });
+
+  return this.save();
+};
+
+// Approve cancellation
+appointmentSchema.methods.approveCancellation = function (userId, notes = "") {
+  this.cancelRequest.approvedAt = new Date();
+  this.cancelRequest.approvedBy = userId;
+  this.cancelRequest.approvedNotes = notes;
+
+  this.status = "cancel_approved";
+
+  // Add to workflow history
+  this.workflowHistory.push({
+    status: this.status,
+    changedBy: userId,
+    changedAt: new Date(),
+    reason: "Cancel request approved",
+    notes,
+  });
+
+  return this.save();
+};
+
+// Process refund
+appointmentSchema.methods.processRefund = function (
+  userId,
+  refundTransactionId
+) {
+  this.cancelRequest.refundProcessedAt = new Date();
+  this.cancelRequest.refundProcessedBy = userId;
+  this.cancelRequest.refundTransactionId = refundTransactionId;
+
+  // After successful refund, change status to cancelled
+  this.status = "cancelled";
+
+  // Add to workflow history
+  this.workflowHistory.push({
+    status: this.status,
+    changedBy: userId,
+    changedAt: new Date(),
+    reason: "Refund processed successfully - appointment cancelled",
+    notes: `Refund transaction: ${refundTransactionId}`,
+  });
+
+  return this.save();
+};
+
 // Static method để compute core status từ detailed status
 appointmentSchema.statics.getCoreStatus = function (detailedStatus) {
   const mapping = {
@@ -788,6 +909,9 @@ appointmentSchema.statics.getCoreStatus = function (detailedStatus) {
     completed: "ReadyForPickup",
     invoiced: "ReadyForPickup",
     cancelled: "Closed",
+    cancel_requested: "OnHold",
+    cancel_approved: "OnHold",
+    cancel_refunded: "Closed",
     no_show: "Closed",
     rescheduled: "Closed",
   };
@@ -818,6 +942,9 @@ appointmentSchema.statics.getReasonCode = function (
       return "completed";
     }
     if (detailedStatus === "cancelled") {
+      return "cancelled";
+    }
+    if (detailedStatus === "cancel_refunded") {
       return "cancelled";
     }
     if (detailedStatus === "no_show") {

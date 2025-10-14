@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 import {
   Bars3Icon,
   XMarkIcon,
@@ -8,9 +8,9 @@ import {
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
   BellIcon,
-  ChevronDownIcon
-} from '@heroicons/react/24/outline';
-import { Menu, Transition } from '@headlessui/react';
+  ChevronDownIcon,
+} from "@heroicons/react/24/outline";
+import { Menu, Transition } from "@headlessui/react";
 
 const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -19,65 +19,63 @@ const Navbar: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/");
   };
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'admin':
-        return 'bg-red-100 text-red-800';
-      case 'staff':
-        return 'bg-blue-100 text-blue-800';
-      case 'technician':
-        return 'bg-green-100 text-green-800';
+      case "admin":
+        return "bg-red-100 text-red-800";
+      case "staff":
+        return "bg-blue-100 text-blue-800";
+      case "technician":
+        return "bg-green-100 text-green-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getNavLinks = () => {
     if (!isAuthenticated) return [];
 
-    const baseLinks = [
-      { name: 'Dashboard', href: '/dashboard' },
-    ];
+    const baseLinks = [{ name: "Dashboard", href: "/dashboard" }];
 
     switch (user?.role) {
-      case 'customer':
+      case "customer":
         return [
           ...baseLinks,
-          { name: 'My Vehicles', href: '/vehicles' },
-          { name: 'Appointments', href: '/appointments' },
-          { name: 'Transactions', href: '/transactions' },
-          { name: 'Service History', href: '/service-history' },
+          { name: "My Vehicles", href: "/vehicles" },
+          { name: "Appointments", href: "/appointments" },
+          { name: "Transactions", href: "/transactions" },
+          { name: "Service History", href: "/service-history" },
         ];
-      case 'staff':
+      case "staff":
         return [
           ...baseLinks,
-          { name: 'Users', href: '/users' },
-          { name: 'Slots', href: '/slots' },
-          { name: 'Services', href: '/services' },
-          { name: 'Parts', href: '/parts' },
-          { name: 'Vehicles', href: '/manage-vehicles' },
-          { name: 'Appointments', href: '/appointments' },
-          { name: 'Transactions', href: '/manage-transactions' },
+          { name: "Users", href: "/users" },
+          { name: "Slots", href: "/slots" },
+          { name: "Services", href: "/services" },
+          { name: "Parts", href: "/parts" },
+          { name: "Vehicles", href: "/manage-vehicles" },
+          { name: "Appointments", href: "/appointments" },
+          { name: "Transactions", href: "/manage-transactions" },
         ];
-      case 'technician':
+      case "technician":
         return [
           ...baseLinks,
-          { name: 'Work Queue', href: '/work-queue' },
-          { name: 'Vehicles', href: '/manage-vehicles' },
-          { name: 'Parts', href: '/parts' },
+          { name: "Work Queue", href: "/work-queue" },
+          { name: "Vehicles", href: "/manage-vehicles" },
+          { name: "Parts", href: "/parts" },
         ];
-      case 'admin':
+      case "admin":
         return [
           ...baseLinks,
-          { name: 'Slots', href: '/slots' },
-          { name: 'Users', href: '/users' },
-          { name: 'Vehicles', href: '/manage-vehicles' },
-          { name: 'Service Centers', href: '/service-centers' },
-          { name: 'Transactions', href: '/manage-transactions' },
-          { name: 'Reports', href: '/admin/reports' },
+          { name: "Slots", href: "/slots" },
+          { name: "Users", href: "/users" },
+          { name: "Vehicles", href: "/manage-vehicles" },
+          { name: "Service Centers", href: "/service-centers" },
+          { name: "Transactions", href: "/manage-transactions" },
+          { name: "Reports", href: "/admin/reports" },
         ];
       default:
         return baseLinks;
@@ -142,7 +140,11 @@ const Navbar: React.FC = () => {
                           {user?.fullName}
                         </div>
                         <div className="flex items-center space-x-2">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getRoleColor(user?.role || '')}`}>
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getRoleColor(
+                              user?.role || ""
+                            )}`}
+                          >
                             {user?.role}
                           </span>
                         </div>
@@ -165,7 +167,7 @@ const Navbar: React.FC = () => {
                           <Link
                             to="/profile"
                             className={`${
-                              active ? 'bg-gray-100' : ''
+                              active ? "bg-gray-100" : ""
                             } flex items-center px-4 py-2 text-sm text-gray-700`}
                           >
                             <UserCircleIcon className="mr-3 h-4 w-4" />
@@ -178,7 +180,7 @@ const Navbar: React.FC = () => {
                           <Link
                             to="/settings"
                             className={`${
-                              active ? 'bg-gray-100' : ''
+                              active ? "bg-gray-100" : ""
                             } flex items-center px-4 py-2 text-sm text-gray-700`}
                           >
                             <Cog6ToothIcon className="mr-3 h-4 w-4" />
@@ -191,7 +193,7 @@ const Navbar: React.FC = () => {
                           <button
                             onClick={handleLogout}
                             className={`${
-                              active ? 'bg-gray-100' : ''
+                              active ? "bg-gray-100" : ""
                             } flex w-full items-center px-4 py-2 text-sm text-gray-700`}
                           >
                             <ArrowRightOnRectangleIcon className="mr-3 h-4 w-4" />

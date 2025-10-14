@@ -254,7 +254,9 @@ export const appointmentsAPI = {
 
   assignTechnicians: (id: string, technicianIds: string[]) =>
     api
-      .put<ApiResponse<any>>(`/api/appointments/${id}/assign`, { technicianId: technicianIds[0] })
+      .put<ApiResponse<any>>(`/api/appointments/${id}/assign`, {
+        technicianId: technicianIds[0],
+      })
       .catch(handleApiError),
 
   // New: Smart status mapping to specific workflow endpoints
@@ -321,6 +323,20 @@ export const appointmentsAPI = {
 
   getWorkQueue: (params?: any) =>
     api.get<ApiResponse<any[]>>("/api/appointments/work-queue", { params }),
+
+  // Cancel request APIs
+  requestCancellation: (id: string, reason: string) =>
+    api.post<ApiResponse<any>>(`/api/appointments/${id}/request-cancel`, {
+      reason,
+    }),
+
+  approveCancellation: (id: string, notes?: string) =>
+    api.post<ApiResponse<any>>(`/api/appointments/${id}/approve-cancel`, {
+      notes,
+    }),
+
+  processRefund: (id: string) =>
+    api.post<ApiResponse<any>>(`/api/appointments/${id}/process-refund`),
 
   bulkUpdate: (updates: any[]) =>
     api.put<ApiResponse<any>>("/api/appointments/bulk-update", { updates }),
@@ -693,21 +709,31 @@ export const slotsAPI = {
 
   // Reserve a slot (increment bookedCount)
   reserve: (slotId: string) =>
-    api.post<ApiResponse<any>>(`/api/slots/${slotId}/reserve`).catch(handleApiError),
+    api
+      .post<ApiResponse<any>>(`/api/slots/${slotId}/reserve`)
+      .catch(handleApiError),
 
   // Release a previously reserved slot
   release: (slotId: string) =>
-    api.post<ApiResponse<any>>(`/api/slots/${slotId}/release`).catch(handleApiError),
-  
+    api
+      .post<ApiResponse<any>>(`/api/slots/${slotId}/release`)
+      .catch(handleApiError),
+
   // Staff: create a slot
-  create: (slotData: any) => api.post<ApiResponse<any>>('/api/slots', slotData).catch(handleApiError),
+  create: (slotData: any) =>
+    api.post<ApiResponse<any>>("/api/slots", slotData).catch(handleApiError),
 
   // Staff: update a slot
-  update: (slotId: string, updateData: any) => api.put<ApiResponse<any>>(`/api/slots/${slotId}`, updateData).catch(handleApiError),
+  update: (slotId: string, updateData: any) =>
+    api
+      .put<ApiResponse<any>>(`/api/slots/${slotId}`, updateData)
+      .catch(handleApiError),
 
   // Staff: assign/unassign technicians to a slot
   assignTechnicians: (slotId: string, technicianIds?: string[]) =>
-    api.put<ApiResponse<any>>(`/api/slots/${slotId}/assign`, { technicianIds }).catch(handleApiError),
+    api
+      .put<ApiResponse<any>>(`/api/slots/${slotId}/assign`, { technicianIds })
+      .catch(handleApiError),
 };
 
 // Dashboard API
@@ -787,6 +813,9 @@ export const vnpayAPI = {
   // Transaction Management APIs
   getUserTransactions: (params?: any) =>
     api.get<ApiResponse<any>>("/api/vnpay/transactions", { params }),
+
+  getAllTransactions: (params?: any) =>
+    api.get<ApiResponse<any>>("/api/vnpay/transactions/all", { params }),
 
   getTransactionById: (transactionId: string) =>
     api.get<ApiResponse<any>>(`/api/vnpay/transactions/${transactionId}`),

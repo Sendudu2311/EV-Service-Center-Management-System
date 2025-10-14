@@ -269,3 +269,108 @@ export const generatePaymentReceiptTemplate = (paymentData, userData) => {
     </html>
   `;
 };
+
+/**
+ * Generate refund notification email template
+ */
+export const generateRefundNotificationTemplate = (
+  refundData,
+  userData,
+  appointmentData
+) => {
+  const {
+    refundAmount,
+    refundPercentage,
+    refundTransactionRef,
+    refundDate,
+    refundReason,
+  } = refundData;
+  const { firstName, lastName } = userData;
+  const { appointmentNumber, scheduledDate, scheduledTime } = appointmentData;
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>Refund Processed - EV Service Center</title>
+        <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background: linear-gradient(135deg, #10b981, #3b82f6); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+            .refund-badge { background: #10b981; color: white; font-size: 18px; font-weight: bold; text-align: center; padding: 15px; border-radius: 8px; margin: 20px 0; }
+            .refund-details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981; }
+            .amount { font-size: 24px; font-weight: bold; color: #10b981; }
+            .appointment-info { background: #f3f4f6; padding: 15px; border-radius: 6px; margin: 15px 0; }
+            .footer { text-align: center; color: #6b7280; font-size: 14px; margin-top: 20px; }
+            .button { display: inline-block; background: #3b82f6; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 20px 0; }
+            .highlight { background: #fef3c7; padding: 10px; border-radius: 6px; margin: 15px 0; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>🚗 EV Service Center</h1>
+                <p>Refund Processed Successfully</p>
+            </div>
+            <div class="content">
+                <div class="refund-badge">💰 Refund Processed Successfully</div>
+                
+                <h2>Hello ${firstName} ${lastName}!</h2>
+                <p>Your refund has been processed successfully for your cancelled appointment. The refund amount will be credited back to your original payment method.</p>
+                
+                <div class="refund-details">
+                    <h3>Refund Details</h3>
+                    <p><strong>Refund Amount:</strong> <span class="amount">${refundAmount.toLocaleString(
+                      "vi-VN"
+                    )} VND</span></p>
+                    <p><strong>Refund Percentage:</strong> ${refundPercentage}%</p>
+                    <p><strong>Transaction Reference:</strong> ${refundTransactionRef}</p>
+                    <p><strong>Processed Date:</strong> ${new Date(
+                      refundDate
+                    ).toLocaleString("vi-VN")}</p>
+                    <p><strong>Reason:</strong> ${refundReason}</p>
+                </div>
+                
+                <div class="appointment-info">
+                    <h4>Cancelled Appointment Details</h4>
+                    <p><strong>Appointment Number:</strong> ${appointmentNumber}</p>
+                    <p><strong>Original Date:</strong> ${new Date(
+                      scheduledDate
+                    ).toLocaleDateString("vi-VN")}</p>
+                    <p><strong>Original Time:</strong> ${scheduledTime}</p>
+                </div>
+                
+                <div class="highlight">
+                    <p><strong>⏰ Processing Time:</strong> Refunds typically take 3-5 business days to appear in your account, depending on your bank's processing time.</p>
+                </div>
+                
+                <p><strong>What's next?</strong></p>
+                <ul>
+                    <li>You will receive the refund amount in your original payment method</li>
+                    <li>Check your bank statement for the refund transaction</li>
+                    <li>Contact us if you don't see the refund within 5 business days</li>
+                </ul>
+                
+                <div style="text-align: center;">
+                    <a href="${
+                      process.env.CLIENT_URL
+                    }/appointments" class="button">View My Appointments</a>
+                </div>
+                
+                <p>If you have any questions about this refund or need to book a new appointment, please don't hesitate to contact our support team.</p>
+                
+                <p>We apologize for any inconvenience and hope to serve you again in the future.</p>
+                
+                <p>Best regards,<br>EV Service Center Team</p>
+            </div>
+            <div class="footer">
+                <p>This is an automated email. Please do not reply to this message.</p>
+                <p>For support, contact us at support@evservicecenter.com</p>
+            </div>
+        </div>
+    </body>
+    </html>
+  `;
+};

@@ -11,9 +11,10 @@ import {
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../contexts/AuthContext";
 import { useSocket, useCustomEvent } from "../contexts/SocketContext";
-import { appointmentsAPI, vehiclesAPI } from "../services/api";
+import { appointmentsAPI, vehiclesAPI, slotsAPI } from "../services/api";
 import toast from "react-hot-toast";
-import AppointmentForm from "../components/Appointment/AppointmentForm";
+import AppointmentFormClean from "../components/Appointment/AppointmentFormClean";
+import PaymentRestorationHandler from "../components/Appointment/PaymentRestorationHandler";
 import AppointmentDetails from "../components/Appointment/AppointmentDetails";
 import {
   Appointment,
@@ -86,6 +87,7 @@ const AppointmentsPage: React.FC = () => {
 
   // Confirmation dialog state
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
   const [appointmentToCancel, setAppointmentToCancel] =
     useState<Appointment | null>(null);
 
@@ -213,6 +215,50 @@ const AppointmentsPage: React.FC = () => {
     if (showFormParam && paymentSuccess) {
       // Show the appointment form automatically
       setShowForm(true);
+
+      // Clean up URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (showFormParam && !paymentSuccess) {
+      // User came back from VNPay but payment was not successful
+      // Check for pending slot and release it
+      const pendingAppointmentStr = localStorage.getItem("pendingAppointment");
+      if (pendingAppointmentStr) {
+        try {
+          const pendingAppointment = JSON.parse(pendingAppointmentStr);
+          if (pendingAppointment.selectedSlotId) {
+            console.log(
+              "⚠️ [AppointmentsPage] User back from VNPay without payment success, releasing slot..."
+            );
+            slotsAPI
+              .release(pendingAppointment.selectedSlotId)
+              .then(() => {
+                console.log("✅ [AppointmentsPage] Slot released successfully");
+                toast.success("Previous slot reservation has been released.");
+              })
+              .catch((error) => {
+                console.error(
+                  "❌ [AppointmentsPage] Failed to release slot:",
+                  error
+                );
+                toast.error(
+                  "Failed to release previous slot. Please contact support."
+                );
+              });
+
+            // Clean up localStorage
+            localStorage.removeItem("pendingAppointment");
+            localStorage.removeItem("paymentVerified");
+          }
+        } catch (error) {
+          console.error(
+            "❌ [AppointmentsPage] Error parsing pending appointment:",
+            error
+          );
+          // Clean up corrupted data
+          localStorage.removeItem("pendingAppointment");
+          localStorage.removeItem("paymentVerified");
+        }
+      }
 
       // Clean up URL parameters
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -365,7 +411,7 @@ const AppointmentsPage: React.FC = () => {
   );
 
   /**
-   * Handle appointment cancellation with proper confirmation
+   * Handle appointment cancellation request
    */
   const handleCancelAppointment = useCallback(
     async (appointmentId: string, reason?: string) => {
@@ -379,19 +425,29 @@ const AppointmentsPage: React.FC = () => {
       }
 
       try {
-        // Use correct API method and parameters
-        await appointmentsAPI.cancel(appointmentId, reason || "Khách hàng hủy");
+        // Use new cancel request API
+        const response = await appointmentsAPI.requestCancellation(
+          appointmentId,
+          reason || "Khách hàng yêu cầu hủy"
+        );
 
-        toast.success("Đã hủy lịch hẹn thành công");
+        // const refundPercentage = response.data.data?.refundPercentage || 100;
+        const refundMessage =
+          response.data.data?.refundMessage || "100% refund";
+
+        toast.success(
+          `Đã gửi yêu cầu hủy thành công! ${refundMessage} sẽ được xử lý sau khi staff duyệt.`,
+          { duration: 6000 }
+        );
         fetchAppointments(false);
       } catch (error: unknown) {
         const err = error as {
           response?: { data?: { message?: string } };
           message?: string;
         };
-        console.error("Error cancelling appointment:", error);
+        console.error("Error requesting cancellation:", error);
         const errorMessage =
-          err.response?.data?.message || "Không thể hủy lịch hẹn";
+          err.response?.data?.message || "Không thể gửi yêu cầu hủy";
         toast.error(errorMessage);
       }
     },
@@ -403,22 +459,21 @@ const AppointmentsPage: React.FC = () => {
    */
   const showCancelConfirmation = useCallback((appointment: Appointment) => {
     setAppointmentToCancel(appointment);
+    setCancelReason(""); // Reset reason
     setShowCancelDialog(true);
   }, []);
 
   /**
    * Handle cancel confirmation
    */
-  const handleCancelConfirmation = useCallback(
-    async (reason?: string) => {
-      if (!appointmentToCancel) return;
+  const handleCancelConfirmation = useCallback(async () => {
+    if (!appointmentToCancel) return;
 
-      setShowCancelDialog(false);
-      await handleCancelAppointment(appointmentToCancel._id, reason);
-      setAppointmentToCancel(null);
-    },
-    [appointmentToCancel, handleCancelAppointment]
-  );
+    setShowCancelDialog(false);
+    await handleCancelAppointment(appointmentToCancel._id, cancelReason);
+    setAppointmentToCancel(null);
+    setCancelReason("");
+  }, [appointmentToCancel, cancelReason, handleCancelAppointment]);
 
   /**
    * Handle cancel dialog close
@@ -426,6 +481,7 @@ const AppointmentsPage: React.FC = () => {
   const handleCancelDialogClose = useCallback(() => {
     setShowCancelDialog(false);
     setAppointmentToCancel(null);
+    setCancelReason("");
   }, []);
 
   /**
@@ -452,6 +508,30 @@ const AppointmentsPage: React.FC = () => {
     setState((prev) => ({ ...prev, selectedAppointment: appointment }));
     setShowDetails(true);
   }, []);
+
+  /**
+   * Handle appointment details update
+   */
+  const handleAppointmentUpdate = useCallback(async () => {
+    if (state.selectedAppointment) {
+      // Fetch updated appointment data
+      try {
+        const response = await appointmentsAPI.getById(
+          state.selectedAppointment._id
+        );
+        setState((prev) => ({
+          ...prev,
+          selectedAppointment: response.data.data,
+        }));
+        // Also refresh the appointments list to keep it in sync
+        fetchAppointments(false);
+      } catch (error) {
+        console.error("Error fetching updated appointment:", error);
+        // Fallback to refresh all appointments
+        fetchAppointments(false);
+      }
+    }
+  }, [state.selectedAppointment, fetchAppointments]);
 
   /**
    * Handle filter changes
@@ -498,6 +578,9 @@ const AppointmentsPage: React.FC = () => {
       completed: "bg-emerald-100 text-emerald-800 border-emerald-200",
       invoiced: "bg-teal-100 text-teal-800 border-teal-200",
       cancelled: "bg-red-100 text-red-800 border-red-200",
+      cancel_requested: "bg-orange-100 text-orange-800 border-orange-200",
+      cancel_approved: "bg-yellow-100 text-yellow-800 border-yellow-200",
+      cancel_refunded: "bg-green-100 text-green-800 border-green-200",
       no_show: "bg-gray-100 text-gray-800 border-gray-200",
     };
 
@@ -621,7 +704,7 @@ const AppointmentsPage: React.FC = () => {
         return null;
       }
 
-      // If appointment is cancelled, show "Da Huy" button
+      // Handle cancellation statuses
       if (appointment.status === "cancelled") {
         return (
           <div
@@ -635,6 +718,90 @@ const AppointmentsPage: React.FC = () => {
               aria-label="Đã hủy"
             >
               Đã hủy
+            </button>
+          </div>
+        );
+      }
+
+      // Handle cancellation request statuses
+      if (appointment.status === "cancel_requested") {
+        return (
+          <div
+            className="flex items-center space-x-1 mt-2"
+            role="group"
+            aria-label="Hành động trạng thái"
+          >
+            <button
+              disabled
+              className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-orange-500 cursor-not-allowed"
+              aria-label="Đã gửi yêu cầu hủy"
+            >
+              Đã gửi yêu cầu hủy
+            </button>
+          </div>
+        );
+      }
+
+      if (appointment.status === "cancel_approved") {
+        return (
+          <div
+            className="flex items-center space-x-1 mt-2"
+            role="group"
+            aria-label="Hành động trạng thái"
+          >
+            <button
+              disabled
+              className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-yellow-500 cursor-not-allowed"
+              aria-label="Đã duyệt hủy"
+            >
+              Đã duyệt hủy
+            </button>
+          </div>
+        );
+      }
+
+      if (appointment.status === "cancel_refunded") {
+        return (
+          <div
+            className="flex items-center space-x-1 mt-2"
+            role="group"
+            aria-label="Hành động trạng thái"
+          >
+            <button
+              disabled
+              className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-green-500 cursor-not-allowed"
+              aria-label="Đã hoàn tiền"
+            >
+              Đã hoàn tiền
+            </button>
+          </div>
+        );
+      }
+
+      // Handle statuses where customer can request cancellation
+      const cancellableStatuses = ["pending", "confirmed", "customer_arrived"];
+      if (
+        cancellableStatuses.includes(appointment.status) &&
+        user?.role === "customer"
+      ) {
+        // Always show cancel button for cancellable appointments
+        return (
+          <div
+            className="flex items-center space-x-1 mt-2"
+            role="group"
+            aria-label="Hành động trạng thái"
+          >
+            <button
+              onClick={() => showCancelConfirmation(appointment)}
+              disabled={state.updatingStatus === appointment._id}
+              className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              aria-label="Yêu cầu hủy lịch hẹn"
+            >
+              {state.updatingStatus === appointment._id ? (
+                <ArrowPathIcon className="w-3 h-3 animate-spin" />
+              ) : (
+                "Yêu cầu hủy"
+              )}
             </button>
           </div>
         );
@@ -1140,17 +1307,19 @@ const AppointmentsPage: React.FC = () => {
 
       {/* Modals */}
       {showForm && (
-        <AppointmentForm
-          onCancel={() => setShowForm(false)}
-          onSuccess={handleFormSuccess}
-        />
+        <PaymentRestorationHandler>
+          <AppointmentFormClean
+            onCancel={() => setShowForm(false)}
+            onSuccess={handleFormSuccess}
+          />
+        </PaymentRestorationHandler>
       )}
 
       {showDetails && state.selectedAppointment && (
         <AppointmentDetails
           appointment={state.selectedAppointment}
           onClose={handleDetailsClose}
-          _onUpdate={() => fetchAppointments(false)}
+          _onUpdate={handleAppointmentUpdate}
         />
       )}
 
@@ -1158,24 +1327,124 @@ const AppointmentsPage: React.FC = () => {
       {showCancelDialog && appointmentToCancel && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3 text-center">
+            <div className="mt-3">
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
                 <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mt-4">
-                Xác nhận hủy lịch hẹn
+              <h3 className="text-lg font-medium text-gray-900 mt-4 text-center">
+                Yêu cầu hủy lịch hẹn
               </h3>
-              <div className="mt-2 px-7 py-3">
-                <p className="text-sm text-gray-500">
-                  Bạn có chắc chắn muốn hủy lịch hẹn{" "}
+              <div className="mt-4">
+                <p className="text-sm text-gray-500 mb-4">
+                  Bạn có chắc chắn muốn yêu cầu hủy lịch hẹn{" "}
                   <span className="font-semibold text-gray-900">
                     #{appointmentToCancel.appointmentNumber}
                   </span>
                   ?
                 </p>
-                <p className="text-xs text-gray-400 mt-2">
-                  Hành động này không thể hoàn tác. Nếu đã thanh toán, tiền sẽ
-                  được hoàn lại trong 3-5 ngày làm việc.
+
+                {/* Business Rule Display */}
+                {(() => {
+                  let appointmentDate;
+                  try {
+                    if (
+                      appointmentToCancel.scheduledDate.includes("T") &&
+                      appointmentToCancel.scheduledDate.includes("Z")
+                    ) {
+                      appointmentDate = new Date(
+                        appointmentToCancel.scheduledDate
+                      );
+                    } else if (
+                      appointmentToCancel.scheduledDate.includes("/")
+                    ) {
+                      const [day, month, year] =
+                        appointmentToCancel.scheduledDate.split("/");
+                      appointmentDate = new Date(
+                        `${year}-${month.padStart(2, "0")}-${day.padStart(
+                          2,
+                          "0"
+                        )}T${appointmentToCancel.scheduledTime}`
+                      );
+                    } else {
+                      appointmentDate = new Date(
+                        `${appointmentToCancel.scheduledDate}T${appointmentToCancel.scheduledTime}`
+                      );
+                    }
+                  } catch {
+                    appointmentDate = new Date(
+                      `${appointmentToCancel.scheduledDate}T${appointmentToCancel.scheduledTime}`
+                    );
+                  }
+
+                  const now = new Date();
+                  const hoursDiff =
+                    (appointmentDate.getTime() - now.getTime()) /
+                    (1000 * 60 * 60);
+                  const isMoreThan24h = hoursDiff > 24;
+                  // const refundPercentage = isMoreThan24h ? 100 : 80;
+
+                  return (
+                    <div
+                      className={`p-3 rounded-md mb-4 ${
+                        isMoreThan24h
+                          ? "bg-green-50 border border-green-200"
+                          : "bg-orange-50 border border-orange-200"
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <div
+                          className={`flex-shrink-0 w-2 h-2 rounded-full mr-2 ${
+                            isMoreThan24h ? "bg-green-400" : "bg-orange-400"
+                          }`}
+                        ></div>
+                        <p
+                          className={`text-sm font-medium ${
+                            isMoreThan24h ? "text-green-800" : "text-orange-800"
+                          }`}
+                        >
+                          {isMoreThan24h ? "100% hoàn tiền" : "80% hoàn tiền"}
+                        </p>
+                      </div>
+                      <p
+                        className={`text-xs mt-1 ${
+                          isMoreThan24h ? "text-green-600" : "text-orange-600"
+                        }`}
+                      >
+                        {isMoreThan24h
+                          ? "Hủy trước 24h sẽ được hoàn 100% tiền"
+                          : "Hủy trong vòng 24h sẽ được hoàn 80% tiền"}
+                      </p>
+                    </div>
+                  );
+                })()}
+
+                {/* Reason Dropdown */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Lý do hủy lịch hẹn
+                  </label>
+                  <select
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  >
+                    <option value="">Chọn lý do hủy...</option>
+                    <option value="Thay đổi kế hoạch">Thay đổi kế hoạch</option>
+                    <option value="Xe gặp sự cố khác">Xe gặp sự cố khác</option>
+                    <option value="Không thể đến đúng giờ">
+                      Không thể đến đúng giờ
+                    </option>
+                    <option value="Tìm được dịch vụ khác">
+                      Tìm được dịch vụ khác
+                    </option>
+                    <option value="Lý do cá nhân">Lý do cá nhân</option>
+                    <option value="Khác">Khác</option>
+                  </select>
+                </div>
+
+                <p className="text-xs text-gray-400 mb-4">
+                  Yêu cầu hủy sẽ được gửi đến staff để xem xét và xử lý hoàn
+                  tiền.
                 </p>
               </div>
               <div className="flex justify-center space-x-3 mt-4">
@@ -1186,10 +1455,11 @@ const AppointmentsPage: React.FC = () => {
                   Hủy bỏ
                 </button>
                 <button
-                  onClick={() => handleCancelConfirmation()}
-                  className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+                  onClick={handleCancelConfirmation}
+                  disabled={!cancelReason}
+                  className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Xác nhận hủy
+                  Gửi yêu cầu hủy
                 </button>
               </div>
             </div>

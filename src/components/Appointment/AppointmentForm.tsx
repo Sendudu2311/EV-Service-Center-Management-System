@@ -35,34 +35,42 @@ interface Service {
 interface AppointmentFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  initialData?: any;
+  paymentInfo?: any;
 }
 
 const AppointmentForm: React.FC<AppointmentFormProps> = ({
   onSuccess,
   onCancel,
+  initialData,
+  paymentInfo,
 }) => {
   const [loading, setLoading] = useState(false);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
   // serviceCenters removed - single center architecture
   const [slots, setSlots] = useState<any[]>([]);
-  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(
+    initialData?.selectedSlotId || null
+  );
   const [reservedSlotId, setReservedSlotId] = useState<string | null>(null);
   const [services, setServices] = useState<Service[]>([]);
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
-  const [paymentVerified, setPaymentVerified] = useState(false);
-  const [pendingAppointment, setPendingAppointment] = useState<any>(null);
+  const [paymentVerified, setPaymentVerified] = useState(!!paymentInfo);
+  const [pendingAppointment, setPendingAppointment] = useState<any>(
+    paymentInfo ? { paymentInfo } : null
+  );
   const [selectedBank, setSelectedBank] = useState("");
   const [formData, setFormData] = useState({
-    vehicleId: "",
-    services: [] as string[],
-    scheduledDate: "",
-    scheduledTime: "",
-    customerNotes: "",
-    priority: "normal",
-    technicianId: null as string | null,
+    vehicleId: initialData?.vehicleId || "",
+    services: initialData?.services || ([] as string[]),
+    scheduledDate: initialData?.scheduledDate || "",
+    scheduledTime: initialData?.scheduledTime || "",
+    customerNotes: initialData?.customerNotes || "",
+    priority: initialData?.priority || "normal",
+    technicianId: initialData?.technicianId || (null as string | null),
   });
 
   useEffect(() => {
@@ -82,20 +90,45 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
       // Don't clear selectedSlotId or scheduledTime if payment is verified (restoring from payment)
       if (!paymentVerified) {
         setSelectedSlotId(null);
-        setFormData(prev => ({ ...prev, scheduledTime: '' }));
+        setFormData((prev) => ({ ...prev, scheduledTime: "" }));
       }
       return;
     }
 
     const fetchSlots = async () => {
       try {
+        console.log(
+          "🔍 [AppointmentForm] Fetching slots for date:",
+          formData.scheduledDate
+        );
         const response = await slotsAPI.list({
           from: formData.scheduledDate,
           to: formData.scheduledDate,
         });
 
-        const slotData = response.data?.data || response.data || [];
-        setSlots(Array.isArray(slotData) ? slotData : []);
+        console.log("🔍 [AppointmentForm] Slots API response:", response);
+
+        // Fix: Handle the correct data structure
+        let slotData = [];
+        if (response.data?.data?.data) {
+          // Structure: {success: true, data: {count: 4, data: Array(4)}}
+          slotData = response.data.data.data;
+        } else if (response.data?.data) {
+          // Structure: {success: true, data: Array(4)}
+          slotData = response.data.data;
+        } else if (response.data) {
+          // Structure: {success: true, data: Array(4)}
+          slotData = response.data;
+        }
+
+        console.log("🔍 [AppointmentForm] Extracted slot data:", slotData);
+        const slotsArray = Array.isArray(slotData) ? slotData : [];
+        console.log(
+          "🔍 [AppointmentForm] Setting slots:",
+          slotsArray.length,
+          "slots"
+        );
+        setSlots(slotsArray);
       } catch (err) {
         console.error("Error fetching slots:", err);
         setSlots([]);
@@ -108,12 +141,12 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   // Update scheduledTime when slot is selected
   useEffect(() => {
     if (selectedSlotId && slots.length > 0) {
-      const slot = slots.find(s => s._id === selectedSlotId);
+      const slot = slots.find((s) => s._id === selectedSlotId);
       if (slot) {
         const startTime = new Date(slot.start).toTimeString().slice(0, 5);
         // Only update if time is different to avoid infinite loops
         if (formData.scheduledTime !== startTime) {
-          setFormData(prev => ({ ...prev, scheduledTime: startTime }));
+          setFormData((prev) => ({ ...prev, scheduledTime: startTime }));
         }
       }
     }
@@ -122,19 +155,26 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   // Get available slot times - fixed 4 slots per day
   const getAvailableSlotTimes = () => {
     // Return the 4 standard time slots per day
-    return ['08:00', '10:00', '13:00', '15:00'];
+    return ["08:00", "10:00", "13:00", "15:00"];
   };
 
   // Auto-select slot when time is selected
   const handleTimeChange = (timeValue: string) => {
     // Update form data
-    setFormData(prev => ({ ...prev, scheduledTime: timeValue }));
+    setFormData((prev) => ({ ...prev, scheduledTime: timeValue }));
 
     // Find and select corresponding slot
     if (timeValue && slots.length > 0) {
-      const selectedSlot = slots.find(slot => {
+      const selectedSlot = slots.find((slot) => {
         const vietnameseTime = utcToVietnameseDateTime(new Date(slot.start));
-        return vietnameseTime.time === timeValue && slot.canBook && slot.status !== 'full';
+        const slotStartTime = vietnameseTime.time;
+        const slotEndTime = utcToVietnameseDateTime(new Date(slot.end)).time;
+
+        // Check if the requested time falls within the slot's time range
+        const isTimeInSlot =
+          timeValue >= slotStartTime && timeValue < slotEndTime;
+
+        return isTimeInSlot && slot.canBook && slot.status !== "full";
       });
 
       if (selectedSlot) {
@@ -273,10 +313,15 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
       if (selectedSlotId && !reservedSlotId) {
         try {
           const r = await slotsAPI.reserve(selectedSlotId);
-          setReservedSlotId(r.data?.data?._id || r.data?.data?._id || selectedSlotId);
+          setReservedSlotId(
+            r.data?.data?._id || r.data?.data?._id || selectedSlotId
+          );
         } catch (reserveErr: any) {
-          console.error('Failed to reserve slot before payment', reserveErr);
-          toast.error(reserveErr.response?.data?.message || 'Selected time slot is no longer available');
+          console.error("Failed to reserve slot before payment", reserveErr);
+          toast.error(
+            reserveErr.response?.data?.message ||
+              "Selected time slot is no longer available"
+          );
           setLoading(false);
           return;
         }
@@ -301,7 +346,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
           },
         };
 
-        console.log("💾 [AppointmentForm] Storing appointment data before payment:", appointmentData);
+        console.log(
+          "💾 [AppointmentForm] Storing appointment data before payment:",
+          appointmentData
+        );
         console.log("📅 scheduledDate:", appointmentData.scheduledDate);
         console.log("⏰ scheduledTime:", appointmentData.scheduledTime);
         console.log("🎰 selectedSlotId:", appointmentData.selectedSlotId);
@@ -378,10 +426,15 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
       if (selectedSlotId && !reservedSlotId) {
         try {
           const r = await slotsAPI.reserve(selectedSlotId);
-          setReservedSlotId(r.data?.data?._id || r.data?.data?._id || selectedSlotId);
+          setReservedSlotId(
+            r.data?.data?._id || r.data?.data?._id || selectedSlotId
+          );
         } catch (reserveErr: any) {
-          console.error('Failed to reserve slot', reserveErr);
-          toast.error(reserveErr.response?.data?.message || 'Selected time slot is no longer available');
+          console.error("Failed to reserve slot", reserveErr);
+          toast.error(
+            reserveErr.response?.data?.message ||
+              "Selected time slot is no longer available"
+          );
           setLoading(false);
           return;
         }
@@ -398,10 +451,16 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
           pendingAppointment?.paymentInfo && {
             paymentInfo: pendingAppointment.paymentInfo,
           }),
-        ...(selectedSlotId && { slotId: selectedSlotId, skipSlotReservation: !!reservedSlotId }),
+        ...(selectedSlotId && {
+          slotId: selectedSlotId,
+          skipSlotReservation: !!reservedSlotId,
+        }),
       };
 
-      console.log("🚀 [AppointmentForm] Creating appointment with data:", appointmentData);
+      console.log(
+        "🚀 [AppointmentForm] Creating appointment with data:",
+        appointmentData
+      );
       console.log("📅 scheduledDate:", appointmentData.scheduledDate);
       console.log("⏰ scheduledTime:", appointmentData.scheduledTime);
       console.log("🎰 slotId:", appointmentData.slotId);
@@ -444,7 +503,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
         try {
           await slotsAPI.release(reservedSlotId);
         } catch (releaseErr) {
-          console.error('Failed to release slot after booking failure', releaseErr);
+          console.error(
+            "Failed to release slot after booking failure",
+            releaseErr
+          );
         }
         setReservedSlotId(null);
       }
@@ -463,15 +525,20 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
         transactionRef: pendingAppointment.paymentInfo.transactionRef,
       });
 
-  if ((verifyResponse.data as any)?.success) {
+      if ((verifyResponse.data as any)?.success) {
         // If slot selected and not reserved, reserve now before creating
         if (selectedSlotId && !reservedSlotId) {
           try {
             const r = await slotsAPI.reserve(selectedSlotId);
-            setReservedSlotId(r.data?.data?._id || r.data?.data?._id || selectedSlotId);
+            setReservedSlotId(
+              r.data?.data?._id || r.data?.data?._id || selectedSlotId
+            );
           } catch (reserveErr: any) {
-            console.error('Failed to reserve slot after payment', reserveErr);
-            toast.error(reserveErr.response?.data?.message || 'Selected time slot is no longer available');
+            console.error("Failed to reserve slot after payment", reserveErr);
+            toast.error(
+              reserveErr.response?.data?.message ||
+                "Selected time slot is no longer available"
+            );
             setLoading(false);
             return;
           }
@@ -481,7 +548,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
         const appointmentData = {
           ...pendingAppointment,
           paymentInfo: (verifyResponse.data as any).paymentInfo,
-          ...(selectedSlotId && { slotId: selectedSlotId, skipSlotReservation: !!reservedSlotId }),
+          ...(selectedSlotId && {
+            slotId: selectedSlotId,
+            skipSlotReservation: !!reservedSlotId,
+          }),
         };
 
         try {
@@ -494,7 +564,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
             try {
               await slotsAPI.release(reservedSlotId);
             } catch (releaseErr) {
-              console.error('Failed to release slot after create failure', releaseErr);
+              console.error(
+                "Failed to release slot after create failure",
+                releaseErr
+              );
             }
             setReservedSlotId(null);
           }
@@ -532,24 +605,31 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 
       if (pendingDataStr) {
         const appointment = JSON.parse(pendingDataStr);
-        
+
         // Debug: Log what we're restoring
-        console.log("🔄 [AppointmentForm] Restoring appointment data from localStorage:", appointment);
+        console.log(
+          "🔄 [AppointmentForm] Restoring appointment data from localStorage:",
+          appointment
+        );
 
         // Pre-fill the form with the appointment data
         const restoredFormData = {
           vehicleId: appointment.vehicleId || "",
-          services: appointment.services?.map((s: any) => 
-            typeof s === 'string' ? s : s.serviceId
-          ) || [],
+          services:
+            appointment.services?.map((s: any) =>
+              typeof s === "string" ? s : s.serviceId
+            ) || [],
           scheduledDate: appointment.scheduledDate || "",
           scheduledTime: appointment.scheduledTime || "",
           customerNotes: appointment.customerNotes || "",
           priority: appointment.priority || "normal",
           technicianId: appointment.technicianId || null,
         };
-        
-        console.log("✅ [AppointmentForm] Restored form data:", restoredFormData);
+
+        console.log(
+          "✅ [AppointmentForm] Restored form data:",
+          restoredFormData
+        );
         setFormData(restoredFormData);
 
         // Restore the selected slot ID if available
@@ -592,12 +672,56 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 
   // Show confirmation after payment verified and formData is restored
   useEffect(() => {
-    if (paymentVerified && formData.scheduledDate && formData.scheduledTime && !showConfirmation) {
-      console.log("✅ [AppointmentForm] FormData restored, showing confirmation");
+    if (
+      paymentVerified &&
+      formData.scheduledDate &&
+      formData.scheduledTime &&
+      !showConfirmation
+    ) {
+      console.log(
+        "✅ [AppointmentForm] FormData restored, showing confirmation"
+      );
       console.log("📋 FormData at confirmation:", formData);
       setShowConfirmation(true);
     }
-  }, [paymentVerified, formData.scheduledDate, formData.scheduledTime, showConfirmation, formData]);
+  }, [
+    paymentVerified,
+    formData.scheduledDate,
+    formData.scheduledTime,
+    showConfirmation,
+    formData,
+  ]);
+
+  // Debug slots rendering
+  useEffect(() => {
+    if (formData.scheduledDate) {
+      console.log("🔍 [AppointmentForm] Rendering slots section:", {
+        scheduledDate: formData.scheduledDate,
+        slotsLength: slots.length,
+        slots: slots,
+      });
+    }
+  }, [formData.scheduledDate, slots]);
+
+  // Show confirmation when payment is verified and form data is ready
+  useEffect(() => {
+    if (
+      paymentVerified &&
+      formData.scheduledDate &&
+      formData.scheduledTime &&
+      !showConfirmation
+    ) {
+      console.log(
+        "✅ [AppointmentForm] Payment verified, showing confirmation"
+      );
+      setShowConfirmation(true);
+    }
+  }, [
+    paymentVerified,
+    formData.scheduledDate,
+    formData.scheduledTime,
+    showConfirmation,
+  ]);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -854,99 +978,129 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                     </div>
 
                     {/* Available Time Slots */}
-                    {formData.scheduledDate && formData.scheduledTime && slots.length > 0 && (
+                    {formData.scheduledDate && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-3">
                           Available Time Slots
                         </label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {slots.map((slot) => {
-                            const isSelected = selectedSlotId === slot._id;
-                            const isAvailable = slot.status === 'available' || slot.status === 'partially_booked';
-                            const technicianNames = slot.technicianIds?.map((tech: any) =>
-                              typeof tech === 'object' ? `${tech.firstName} ${tech.lastName}` : tech
-                            ).join(', ') || 'No technicians assigned';
+                        {slots.length > 0 ? (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {slots.map((slot) => {
+                              const isSelected = selectedSlotId === slot._id;
+                              const isAvailable =
+                                slot.status === "available" ||
+                                slot.status === "partially_booked";
+                              const technicianNames =
+                                slot.technicianIds
+                                  ?.map((tech: any) =>
+                                    typeof tech === "object"
+                                      ? `${tech.firstName} ${tech.lastName}`
+                                      : tech
+                                  )
+                                  .join(", ") || "No technicians assigned";
 
-                            return (
-                              <div
-                                key={slot._id}
-                                onClick={() => !paymentVerified && isAvailable && setSelectedSlotId(slot._id)}
-                                className={`border rounded-lg p-3 cursor-pointer transition-all ${
-                                  isSelected
-                                    ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                                    : isAvailable
-                                    ? 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
-                                    : 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
-                                } ${paymentVerified ? 'cursor-not-allowed' : ''}`}
-                              >
-                                <div className="flex items-center justify-between mb-2">
-                                  <div className="text-sm font-medium text-gray-900">
-                                    {(() => {
-                                      const startTime = utcToVietnameseDateTime(new Date(slot.start));
-                                      const endTime = utcToVietnameseDateTime(new Date(slot.end));
-                                      return `${startTime.time} - ${endTime.time}`;
-                                    })()}
-                                  </div>
-                                  <div className={`text-xs px-2 py-1 rounded-full ${
-                                    slot.status === 'available'
-                                      ? 'bg-green-100 text-green-800'
-                                      : slot.status === 'partially_booked'
-                                      ? 'bg-yellow-100 text-yellow-800'
-                                      : 'bg-red-100 text-red-800'
-                                  }`}>
-                                    {slot.status === 'available' ? 'Available' :
-                                     slot.status === 'partially_booked' ? 'Limited' : 'Full'}
-                                  </div>
-                                </div>
-                                <div className="text-xs text-gray-600 mb-1">
-                                  Capacity: {slot.capacity - (slot.bookedCount || 0)}/{slot.capacity} spots
-                                </div>
-                                <div className="text-xs text-gray-500">
-                                  Technicians: {technicianNames}
-                                </div>
-                                {isSelected && (
-                                  <div className="mt-2 text-xs text-blue-600 font-medium">
-                                    ✓ Selected
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                        {selectedSlotId && (
-                          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                            <div className="text-sm text-blue-800">
-                              <strong>Selected Time Slot:</strong> {
-                                (() => {
-                                  const slot = slots.find(s => s._id === selectedSlotId);
-                                  if (slot) {
-                                    const startTime = utcToVietnameseDateTime(new Date(slot.start));
-                                    const endTime = utcToVietnameseDateTime(new Date(slot.end));
-                                    return `${startTime.time} - ${endTime.time}`;
+                              return (
+                                <div
+                                  key={slot._id}
+                                  onClick={() =>
+                                    !paymentVerified &&
+                                    isAvailable &&
+                                    setSelectedSlotId(slot._id)
                                   }
-                                  return 'Unknown';
-                                })()
-                              }
+                                  className={`border rounded-lg p-3 cursor-pointer transition-all ${
+                                    isSelected
+                                      ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
+                                      : isAvailable
+                                      ? "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+                                      : "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
+                                  } ${
+                                    paymentVerified ? "cursor-not-allowed" : ""
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="text-sm font-medium text-gray-900">
+                                      {(() => {
+                                        const startTime =
+                                          utcToVietnameseDateTime(
+                                            new Date(slot.start)
+                                          );
+                                        const endTime = utcToVietnameseDateTime(
+                                          new Date(slot.end)
+                                        );
+                                        return `${startTime.time} - ${endTime.time}`;
+                                      })()}
+                                    </div>
+                                    <div
+                                      className={`text-xs px-2 py-1 rounded-full ${
+                                        slot.status === "available"
+                                          ? "bg-green-100 text-green-800"
+                                          : slot.status === "partially_booked"
+                                          ? "bg-yellow-100 text-yellow-800"
+                                          : "bg-red-100 text-red-800"
+                                      }`}
+                                    >
+                                      {slot.status === "available"
+                                        ? "Available"
+                                        : slot.status === "partially_booked"
+                                        ? "Limited"
+                                        : "Full"}
+                                    </div>
+                                  </div>
+                                  <div className="text-xs text-gray-600 mb-1">
+                                    Capacity:{" "}
+                                    {slot.capacity - (slot.bookedCount || 0)}/
+                                    {slot.capacity} spots
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    Technicians: {technicianNames}
+                                  </div>
+                                  {isSelected && (
+                                    <div className="mt-2 text-xs text-blue-600 font-medium">
+                                      ✓ Selected
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0">
+                                <ClockIcon className="h-5 w-5 text-yellow-400" />
+                              </div>
+                              <div className="ml-3">
+                                <p className="text-sm text-yellow-700">
+                                  No time slots are currently available for the
+                                  selected date. Please try a different date or
+                                  contact the service center directly.
+                                </p>
+                              </div>
                             </div>
                           </div>
                         )}
-                      </div>
-                    )}
-
-                    {/* Info message when slots are not available yet */}
-                    {formData.scheduledDate && formData.scheduledTime && slots.length === 0 && (
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0">
-                            <ClockIcon className="h-5 w-5 text-yellow-400" />
+                        {selectedSlotId && (
+                          <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="text-sm text-blue-800">
+                              <strong>Selected Time Slot:</strong>{" "}
+                              {(() => {
+                                const slot = slots.find(
+                                  (s) => s._id === selectedSlotId
+                                );
+                                if (slot) {
+                                  const startTime = utcToVietnameseDateTime(
+                                    new Date(slot.start)
+                                  );
+                                  const endTime = utcToVietnameseDateTime(
+                                    new Date(slot.end)
+                                  );
+                                  return `${startTime.time} - ${endTime.time}`;
+                                }
+                                return "Unknown";
+                              })()}
+                            </div>
                           </div>
-                          <div className="ml-3">
-                            <p className="text-sm text-yellow-700">
-                              No time slots are currently available for the selected date and time.
-                              Please try a different date or time, or contact the service center directly.
-                            </p>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     )}
 

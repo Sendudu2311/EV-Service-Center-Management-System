@@ -1,4 +1,3 @@
-import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -234,10 +233,7 @@ function App() {
                 />
 
                 {/* Payment Result */}
-                <Route
-                  path="/payment/result"
-                  element={<PaymentResult />}
-                />
+                <Route path="/payment/result" element={<PaymentResult />} />
 
                 {/* VNPay Return URL */}
                 <Route

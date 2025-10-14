@@ -24,10 +24,16 @@ const getTransporter = () => {
 export const sendEmail = async (options, retries = 3) => {
   const transporter = getTransporter();
 
+  // Validate email options
+  const recipient = options.to || options.email;
+  if (!recipient) {
+    throw new Error("No recipients defined");
+  }
+
   // Define email options
   const mailOptions = {
     from: `EV Service Center <${process.env.EMAIL_USER}>`,
-    to: options.email,
+    to: recipient,
     subject: options.subject,
     text: options.message,
     html: options.html,
