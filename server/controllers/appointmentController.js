@@ -782,6 +782,28 @@ export const cancelAppointment = async (req, res) => {
 
     await appointment.save();
 
+    // Release slot if appointment has one
+    if (appointment.slotId) {
+      try {
+        const Slot = (await import("../models/Slot.js")).default;
+        const slot = await Slot.findById(appointment.slotId);
+
+        if (slot) {
+          console.log(
+            `🔓 [cancelAppointment] Releasing slot ${appointment.slotId} for appointment ${appointment.appointmentNumber}`
+          );
+          await slot.release();
+          console.log(`✅ [cancelAppointment] Slot released successfully`);
+        }
+      } catch (slotError) {
+        console.error(
+          "Error releasing slot during appointment cancellation:",
+          slotError
+        );
+        // Don't fail the cancellation process if slot release fails
+      }
+    }
+
     res.status(200).json({
       success: true,
       message: "Appointment cancelled successfully",
@@ -914,6 +936,28 @@ export const approveCancellation = async (req, res) => {
     // Approve cancellation
     await appointment.approveCancellation(req.user._id, notes || "");
 
+    // Release slot if appointment has one
+    if (appointment.slotId) {
+      try {
+        const Slot = (await import("../models/Slot.js")).default;
+        const slot = await Slot.findById(appointment.slotId);
+
+        if (slot) {
+          console.log(
+            `🔓 [approveCancellation] Releasing slot ${appointment.slotId} for appointment ${appointment.appointmentNumber}`
+          );
+          await slot.release();
+          console.log(`✅ [approveCancellation] Slot released successfully`);
+        }
+      } catch (slotError) {
+        console.error(
+          "Error releasing slot during cancellation approval:",
+          slotError
+        );
+        // Don't fail the cancellation process if slot release fails
+      }
+    }
+
     res.status(200).json({
       success: true,
       message: "Cancel request approved successfully",
@@ -1010,8 +1054,33 @@ export const processRefund = async (req, res) => {
 
     await refundTransaction.save();
 
+    // Get notes from request body
+    const { notes } = req.body;
+
     // Process refund in appointment
-    await appointment.processRefund(req.user._id, refundTransaction._id);
+    await appointment.processRefund(req.user._id, refundTransaction._id, notes);
+
+    // Release slot if appointment has one (in case it wasn't released during approval)
+    if (appointment.slotId) {
+      try {
+        const Slot = (await import("../models/Slot.js")).default;
+        const slot = await Slot.findById(appointment.slotId);
+
+        if (slot) {
+          console.log(
+            `🔓 [processRefund] Releasing slot ${appointment.slotId} for appointment ${appointment.appointmentNumber}`
+          );
+          await slot.release();
+          console.log(`✅ [processRefund] Slot released successfully`);
+        }
+      } catch (slotError) {
+        console.error(
+          "Error releasing slot during refund processing:",
+          slotError
+        );
+        // Don't fail the refund process if slot release fails
+      }
+    }
 
     // Send refund notification email to customer
     try {

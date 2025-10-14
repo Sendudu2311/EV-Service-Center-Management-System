@@ -335,8 +335,10 @@ export const appointmentsAPI = {
       notes,
     }),
 
-  processRefund: (id: string) =>
-    api.post<ApiResponse<any>>(`/api/appointments/${id}/process-refund`),
+  processRefund: (id: string, notes?: string) =>
+    api.post<ApiResponse<any>>(`/api/appointments/${id}/process-refund`, {
+      notes,
+    }),
 
   bulkUpdate: (updates: any[]) =>
     api.put<ApiResponse<any>>("/api/appointments/bulk-update", { updates }),
@@ -846,30 +848,36 @@ export const vnpayAPI = {
 export const chatbotAPI = {
   sendMessage: (messageData: {
     message: string;
-    language?: 'en' | 'vi';
-    chatHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+    language?: "en" | "vi";
+    chatHistory?: Array<{ role: "user" | "assistant"; content: string }>;
   }) =>
-    api.post<ApiResponse<{
-      message: string;
-      blocked: boolean;
-      timestamp?: Date;
-      reason?: string;
-      error?: boolean;
-    }>>("/api/chatbot/message", messageData),
+    api.post<
+      ApiResponse<{
+        message: string;
+        blocked: boolean;
+        timestamp?: Date;
+        reason?: string;
+        error?: boolean;
+      }>
+    >("/api/chatbot/message", messageData),
 
   getStatus: () =>
-    api.get<ApiResponse<{
-      available: boolean;
-      model: string;
-      features: string[];
-      languages: string[];
-    }>>("/api/chatbot/status"),
+    api.get<
+      ApiResponse<{
+        available: boolean;
+        model: string;
+        features: string[];
+        languages: string[];
+      }>
+    >("/api/chatbot/status"),
 
   clearHistory: () =>
-    api.post<ApiResponse<{
-      cleared: boolean;
-      timestamp: Date;
-    }>>("/api/chatbot/clear"),
+    api.post<
+      ApiResponse<{
+        cleared: boolean;
+        timestamp: Date;
+      }>
+    >("/api/chatbot/clear"),
 };
 
 export default api;

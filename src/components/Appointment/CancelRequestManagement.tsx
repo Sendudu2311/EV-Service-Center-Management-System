@@ -13,14 +13,20 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
   onUpdate,
 }) => {
   const [loading, setLoading] = useState(false);
+  const [approveNotes, setApproveNotes] = useState("");
+  const [refundNotes, setRefundNotes] = useState("");
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRefundModal, setShowRefundModal] = useState(false);
   const { user } = useAuth();
   const isStaffOrAdmin = user?.role === "staff" || user?.role === "admin";
 
   const handleApprove = async () => {
     setLoading(true);
     try {
-      await appointmentsAPI.approveCancellation(appointment._id);
+      await appointmentsAPI.approveCancellation(appointment._id, approveNotes);
       toast.success("Đã duyệt yêu cầu hủy lịch hẹn");
+      setShowApproveModal(false);
+      setApproveNotes("");
       onUpdate();
     } catch (error: any) {
       console.error("Error approving cancellation:", error);
@@ -35,8 +41,10 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
   const handleProcessRefund = async () => {
     setLoading(true);
     try {
-      await appointmentsAPI.processRefund(appointment._id);
+      await appointmentsAPI.processRefund(appointment._id, refundNotes);
       toast.success("Đã xử lý hoàn tiền thành công");
+      setShowRefundModal(false);
+      setRefundNotes("");
       onUpdate();
     } catch (error: any) {
       console.error("Error processing refund:", error);
@@ -94,7 +102,7 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
           {appointment.status === "cancel_requested" && isStaffOrAdmin && (
             <div className="mt-3">
               <button
-                onClick={handleApprove}
+                onClick={() => setShowApproveModal(true)}
                 disabled={loading}
                 className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
               >
@@ -111,7 +119,7 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
                     Khách hàng đang chờ hoàn tiền
                   </p>
                   <button
-                    onClick={handleProcessRefund}
+                    onClick={() => setShowRefundModal(true)}
                     disabled={loading}
                     className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                   >
@@ -161,6 +169,92 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
             )}
         </div>
       </div>
+
+      {/* Approve Cancellation Modal */}
+      {showApproveModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Duyệt yêu cầu hủy lịch hẹn
+              </h3>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ghi chú (tùy chọn)
+                </label>
+                <textarea
+                  value={approveNotes}
+                  onChange={(e) => setApproveNotes(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  rows={3}
+                  placeholder="Nhập ghi chú cho việc duyệt yêu cầu hủy..."
+                />
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowApproveModal(false);
+                    setApproveNotes("");
+                  }}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleApprove}
+                  disabled={loading}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
+                >
+                  {loading ? "Đang xử lý..." : "Duyệt"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Process Refund Modal */}
+      {showRefundModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Xác nhận hoàn tiền
+              </h3>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ghi chú (tùy chọn)
+                </label>
+                <textarea
+                  value={refundNotes}
+                  onChange={(e) => setRefundNotes(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={3}
+                  placeholder="Nhập ghi chú cho việc hoàn tiền..."
+                />
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowRefundModal(false);
+                    setRefundNotes("");
+                  }}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleProcessRefund}
+                  disabled={loading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {loading ? "Đang xử lý..." : "Xác nhận hoàn tiền"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

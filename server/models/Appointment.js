@@ -873,7 +873,8 @@ appointmentSchema.methods.approveCancellation = function (userId, notes = "") {
 // Process refund
 appointmentSchema.methods.processRefund = function (
   userId,
-  refundTransactionId
+  refundTransactionId,
+  notes = ""
 ) {
   this.cancelRequest.refundProcessedAt = new Date();
   this.cancelRequest.refundProcessedBy = userId;
@@ -888,7 +889,9 @@ appointmentSchema.methods.processRefund = function (
     changedBy: userId,
     changedAt: new Date(),
     reason: "Refund processed successfully - appointment cancelled",
-    notes: `Refund transaction: ${refundTransactionId}`,
+    notes: `Refund transaction: ${refundTransactionId}${
+      notes ? ` - ${notes}` : ""
+    }`,
   });
 
   return this.save();
