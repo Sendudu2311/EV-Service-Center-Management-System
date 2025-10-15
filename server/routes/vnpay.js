@@ -70,6 +70,20 @@ router.get(
 );
 
 /**
+ * @route   GET /api/vnpay/transactions/stats
+ * @desc    Get transaction statistics
+ * @access  Private
+ */
+router.get("/transactions/stats", protect, vnpayController.getTransactionStats);
+
+/**
+ * @route   GET /api/vnpay/transactions/all
+ * @desc    Get all transactions (admin/staff only)
+ * @access  Private/Admin/Staff
+ */
+router.get("/transactions/all", protect, vnpayController.getAllTransactions);
+
+/**
  * @route   GET /api/vnpay/transactions
  * @desc    Get user transaction history
  * @access  Private
@@ -86,13 +100,6 @@ router.get(
   protect,
   vnpayController.getTransactionById
 );
-
-/**
- * @route   GET /api/vnpay/transactions/stats
- * @desc    Get transaction statistics
- * @access  Private
- */
-router.get("/transactions/stats", protect, vnpayController.getTransactionStats);
 
 /**
  * @route   PUT /api/vnpay/transactions/:transactionId/status

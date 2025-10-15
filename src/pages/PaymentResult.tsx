@@ -1,17 +1,52 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
-import { vnpayAPI } from "../services/api";
-import { useSocket } from "../contexts/SocketContext";
+import { slotsAPI } from "../services/api";
+// import { useSocket } from "../contexts/SocketContext"; // Not used
 
 const PaymentResult: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { socket } = useSocket();
+  // const { socket } = useSocket(); // Not used in this component
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading"
   );
-  const [paymentInfo, setPaymentInfo] = useState<any>(null);
+  const [paymentInfo, setPaymentInfo] = useState<{
+    success: boolean;
+    transactionRef?: string;
+    amount?: string;
+    error?: string;
+    paymentDate?: Date;
+    vnpayTransaction?: {
+      transactionNo?: string;
+      responseCode?: string;
+      bankCode?: string;
+      cardType?: string;
+      payDate?: string;
+    };
+  } | null>(null);
+
+  // Function to release slot when payment fails
+  const releaseSlotOnPaymentFailure = async () => {
+    try {
+      const pendingAppointmentStr = localStorage.getItem("pendingAppointment");
+      if (pendingAppointmentStr) {
+        const pendingAppointment = JSON.parse(pendingAppointmentStr);
+        if (pendingAppointment.selectedSlotId) {
+          console.log(
+            "🔍 [PaymentResult] Releasing slot due to payment failure:",
+            pendingAppointment.selectedSlotId
+          );
+          await slotsAPI.release(pendingAppointment.selectedSlotId);
+          console.log("✅ [PaymentResult] Slot released successfully");
+          toast.success("Previous slot reservation has been released.");
+        }
+      }
+    } catch (error) {
+      console.error("❌ [PaymentResult] Failed to release slot:", error);
+      toast.error("Failed to release previous slot. Please contact support.");
+    }
+  };
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -26,29 +61,28 @@ const PaymentResult: React.FC = () => {
     const success = queryParams.get("success");
     const transactionRef = queryParams.get("transactionRef");
     const amount = queryParams.get("amount");
-    const appointmentId = queryParams.get("appointmentId");
+    // const appointmentId = queryParams.get("appointmentId"); // Not used
     const error = queryParams.get("error");
 
     // Handle VNPay return
     if (vnp_ResponseCode && vnp_TxnRef) {
       const isVnPaySuccess = vnp_ResponseCode === "00";
-      const amountInVND = parseInt(vnp_Amount) / 100; // Convert from VNPay format
+      const amountInVND = parseInt(vnp_Amount || "0") / 100; // Convert from VNPay format
 
       if (isVnPaySuccess) {
         setStatus("success");
         setPaymentInfo({
           success: true,
-          transactionRef: vnp_TxnRef,
+          transactionRef: vnp_TxnRef || "",
           amount: amountInVND.toString(),
           paymentDate: new Date(),
           vnpayTransaction: {
-            transactionNo: vnp_TransactionNo,
-            responseCode: vnp_ResponseCode,
+            transactionNo: vnp_TransactionNo || "",
+            responseCode: vnp_ResponseCode || "",
             bankCode: queryParams.get("vnp_BankCode") || "",
             cardType: queryParams.get("vnp_CardType") || "",
             payDate: queryParams.get("vnp_PayDate") || "",
           },
-          autoCreated: true, // Backend should have created the appointment
         });
 
         toast.success(
@@ -80,7 +114,7 @@ const PaymentResult: React.FC = () => {
         localStorage.setItem(
           "lastPaymentSuccess",
           JSON.stringify({
-            transactionRef: vnp_TxnRef,
+            transactionRef: vnp_TxnRef || "",
             amount: amountInVND,
             timestamp: new Date().toISOString(),
             method: "vnpay",
@@ -88,8 +122,10 @@ const PaymentResult: React.FC = () => {
         );
 
         // Trigger analytics events if available
-        if (window.gtag) {
-          window.gtag("event", "purchase", {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((window as any).gtag && vnp_TxnRef) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (window as any).gtag("event", "purchase", {
             transaction_id: vnp_TxnRef,
             value: amountInVND,
             currency: "VND",
@@ -107,10 +143,13 @@ const PaymentResult: React.FC = () => {
           error: `Payment failed with response code: ${vnp_ResponseCode}`,
           amount: amountInVND.toString(),
         });
+
+        // Release slot when VNPay payment fails
+        releaseSlotOnPaymentFailure();
       }
     }
     // Handle regular payment result (from backend redirect)
-    else if (success === "true" && transactionRef) {
+    else if (success === "true" && transactionRef && amount) {
       setStatus("success");
       setPaymentInfo({
         success: true,
@@ -145,100 +184,18 @@ const PaymentResult: React.FC = () => {
       setPaymentInfo({
         success: false,
         error: error || "Payment failed",
-        amount: amount,
+        amount: amount || "",
       });
+
+      // Release slot when payment fails
+      releaseSlotOnPaymentFailure();
     }
   }, [location, navigate]);
 
   // Note: This function is now a fallback since appointment creation is handled by the backend
-  const bookAppointmentAfterPayment = async (transactionRef: string) => {
-    try {
-      // Get pending appointment data from localStorage
-      const pendingData = localStorage.getItem("pendingAppointment");
-      if (!pendingData) {
-        throw new Error("No pending appointment found");
-      }
+  // Note: Appointment creation is now handled by the backend
 
-      const appointment = JSON.parse(pendingData);
-
-      // Verify transactionRef matches
-      if (appointment.paymentInfo?.transactionRef !== transactionRef) {
-        throw new Error("Transaction reference mismatch");
-      }
-
-      // Book the appointment
-      const appointmentData = {
-        ...appointment,
-        paymentInfo: {
-          method: "vnpay",
-          transactionRef: transactionRef,
-          amount: appointment.amount,
-          paymentDate: new Date(),
-          status: "paid",
-        },
-      };
-
-      // Import and call appointments API
-      const { appointmentsAPI } = await import("../services/api");
-      const createdAppointment = await appointmentsAPI.create(appointmentData);
-
-      // Clear pending appointment
-      localStorage.removeItem("pendingAppointment");
-
-      return createdAppointment;
-    } catch (error) {
-      console.error("Error booking appointment after payment:", error);
-      throw error;
-    }
-  };
-
-  const verifyPaymentAndBookAppointment = async (transactionRef: string) => {
-    try {
-      // Verify the payment
-      const verifyResponse = await vnpayAPI.verifyAppointmentPayment({
-        transactionRef,
-      });
-
-      if (verifyResponse.data?.success) {
-        // Try to book the appointment (fallback if backend creation failed)
-        const appointment = await bookAppointmentAfterPayment(transactionRef);
-
-        setStatus("success");
-        setPaymentInfo({
-          success: true,
-          transactionRef,
-          amount: verifyResponse.data.paymentInfo.amount,
-          paymentDate: verifyResponse.data.paymentInfo.paymentDate,
-          appointmentId: appointment._id,
-          autoCreated: false, // Frontend fallback creation
-        });
-
-        // Show success message
-        toast.success("Payment successful! Your appointment has been booked.");
-
-        // Redirect to appointments page after 3 seconds
-        setTimeout(() => {
-          navigate("/appointments");
-        }, 3000);
-      } else {
-        setStatus("error");
-        setPaymentInfo({
-          success: false,
-          error: verifyResponse.data?.message || "Payment verification failed",
-        });
-      }
-    } catch (error) {
-      console.error("Payment verification or booking error:", error);
-      setStatus("error");
-      setPaymentInfo({
-        success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to verify payment or book appointment",
-      });
-    }
-  };
+  // Note: Payment verification is now handled by the backend
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -289,12 +246,10 @@ const PaymentResult: React.FC = () => {
               </h2>
               <p className="text-gray-600 mb-4">
                 Your payment has been processed successfully.
-                {paymentInfo?.autoCreated && (
-                  <span className="text-green-600 font-medium">
-                    {" "}
-                    Please complete your appointment booking.
-                  </span>
-                )}
+                <span className="text-green-600 font-medium">
+                  {" "}
+                  Please complete your appointment booking.
+                </span>
               </p>
               {paymentInfo && (
                 <div className="bg-gray-50 rounded-lg p-4 mb-4">
@@ -302,7 +257,9 @@ const PaymentResult: React.FC = () => {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Amount:</span>
                       <span className="font-medium">
-                        {formatCurrency(parseFloat(paymentInfo.amount))}
+                        {paymentInfo.amount
+                          ? formatCurrency(parseFloat(paymentInfo.amount))
+                          : "N/A"}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -335,28 +292,6 @@ const PaymentResult: React.FC = () => {
                         </div>
                       </>
                     )}
-                    {paymentInfo.appointmentId && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Appointment ID:</span>
-                        <span className="font-medium text-sm text-green-600">
-                          {paymentInfo.appointmentId}
-                        </span>
-                      </div>
-                    )}
-                    {paymentInfo.autoCreated && (
-                      <div className="flex items-center justify-center mt-2 pt-2 border-t border-gray-200">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          <svg
-                            className="mr-1.5 h-2 w-2 text-green-400"
-                            fill="currentColor"
-                            viewBox="0 0 8 8"
-                          >
-                            <circle cx="4" cy="4" r="3" />
-                          </svg>
-                          Auto-booked
-                        </span>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
@@ -365,10 +300,9 @@ const PaymentResult: React.FC = () => {
                 few seconds...
               </p>
               <button
-                onClick={() => navigate("/appointments")}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
               >
-                View Appointments
+                You will be redirected shortly
               </button>
             </>
           ) : (

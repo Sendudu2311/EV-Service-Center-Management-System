@@ -299,7 +299,6 @@ describe('Enhanced Scheduling System', () => {
     it('should create appointment successfully with all parameters', async () => {
       const appointmentData = {
         vehicleId: 'vehicle-123',
-        serviceCenterId: 'service-center-1',
         services: [{ serviceId: 'service1', quantity: 1 }],
         scheduledDate: '2024-01-15',
         scheduledTime: '08:30',
@@ -328,7 +327,6 @@ describe('Enhanced Scheduling System', () => {
     it('should handle appointment creation with auto-assignment', async () => {
       const appointmentDataWithoutTech = {
         vehicleId: 'vehicle-123',
-        serviceCenterId: 'service-center-1',
         services: [{ serviceId: 'service2', quantity: 1 }], // Battery service
         scheduledDate: '2024-01-15',
         scheduledTime: '08:30',
@@ -355,7 +353,6 @@ describe('Enhanced Scheduling System', () => {
 
       // Simulate auto-assignment logic
       const availableTechnicians = await appointmentsAPI.getAvailableTechnicians(
-        appointmentDataWithoutTech.serviceCenterId,
         appointmentDataWithoutTech.scheduledDate,
         appointmentDataWithoutTech.scheduledTime,
         60,
@@ -588,7 +585,6 @@ describe('Enhanced Scheduling System', () => {
 
       const appointmentData = {
         vehicleId: 'vehicle-123',
-        serviceCenterId: 'service-center-1',
         services: [{ serviceId: 'service1', quantity: 1 }],
         scheduledDate: '2024-01-15',
         scheduledTime: '08:30',

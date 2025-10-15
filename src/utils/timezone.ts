@@ -41,14 +41,18 @@ export const utcToVietnameseDateTime = (utcDate: Date) => {
  * @returns UTC Date object
  */
 export const vietnameseDateTimeToUTC = (dateStr: string, timeStr: string): Date => {
-  // Create a date string in Vietnam timezone
-  const vietnameseDateTime = new Date(`${dateStr}T${timeStr}:00`);
-
-  // Convert to UTC by calculating timezone offset
-  const vietnameseOffset = vietnameseDateTime.getTimezoneOffset();
-  const utcTime = vietnameseDateTime.getTime() - (vietnameseOffset * 60000);
-
-  return new Date(utcTime);
+  // Vietnam is UTC+7, so we need to subtract 7 hours to get UTC
+  // Create date string in ISO format and parse it as if it were UTC
+  const isoString = `${dateStr}T${timeStr}:00.000Z`;
+  const utcDate = new Date(isoString);
+  
+  // Subtract 7 hours (Vietnam offset) to get actual UTC time
+  // When it's 08:00 in Vietnam, it's 01:00 UTC
+  utcDate.setHours(utcDate.getHours() - 7);
+  
+  console.log(`Converting Vietnam time ${dateStr} ${timeStr} to UTC:`, utcDate.toISOString());
+  
+  return utcDate;
 };
 
 /**

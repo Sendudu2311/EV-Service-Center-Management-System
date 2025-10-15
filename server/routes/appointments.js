@@ -1,4 +1,4 @@
-import express from 'express';
+import express from "express";
 import {
   getAppointments,
   getAppointment,
@@ -8,7 +8,11 @@ import {
   checkAvailability,
   preValidateAvailability,
   getAvailableTechnicians,
+  getAvailableTechniciansOptimized,
+  getAvailableTechniciansForSlot,
   checkTechnicianAvailability,
+  debugSlots,
+  initializeSlotTechnicians,
   assignTechnician,
   getWorkQueue,
   bulkUpdateAppointments,
@@ -27,9 +31,13 @@ import {
   completeAppointment,
   handlePartsDecision,
   // Customer Actions API
-  getCustomerActions
-} from '../controllers/appointmentController.js';
-import { protect } from '../middleware/auth.js';
+  getCustomerActions,
+  // New Cancel Request APIs
+  requestCancellation,
+  approveCancellation,
+  processRefund,
+} from "../controllers/appointmentController.js";
+import { protect } from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -37,41 +45,53 @@ const router = express.Router();
 router.use(protect);
 
 // Public appointment routes (all authenticated users) - specific routes first
-router.get('/availability', checkAvailability);
-router.get('/pre-validate', preValidateAvailability);
-router.get('/available-technicians', getAvailableTechnicians);
-router.get('/technician-availability', checkTechnicianAvailability);
-router.get('/work-queue', getWorkQueue);
-router.put('/bulk-update', bulkUpdateAppointments);
-router.get('/', getAppointments);
+router.get("/availability", checkAvailability);
+router.get("/pre-validate", preValidateAvailability);
+router.get("/available-technicians", getAvailableTechnicians);
+router.get(
+  "/available-technicians-optimized",
+  getAvailableTechniciansOptimized
+);
+router.get("/available-technicians-for-slot", getAvailableTechniciansForSlot);
+router.get("/technician-availability", checkTechnicianAvailability);
+router.get("/debug-slots", debugSlots);
+router.post("/init-slot-technicians", initializeSlotTechnicians);
+router.get("/work-queue", getWorkQueue);
+router.put("/bulk-update", bulkUpdateAppointments);
+router.get("/", getAppointments);
 
 // Appointment creation (all authenticated users)
-router.post('/', createAppointment);
+router.post("/", createAppointment);
 
 // Staff confirmation workflow routes (all authenticated users)
-router.get('/pending-staff-confirmation', getPendingStaffConfirmation);
-router.put('/:id/staff-confirm', staffConfirmAppointment);
-router.put('/:id/staff-reject', staffRejectAppointment);
-router.put('/:id/customer-arrived', handleCustomerArrival);
-router.put('/:id/reschedule', rescheduleAppointment);
+router.get("/pending-staff-confirmation", getPendingStaffConfirmation);
+router.put("/:id/staff-confirm", staffConfirmAppointment);
+router.put("/:id/staff-reject", staffRejectAppointment);
+router.put("/:id/customer-arrived", handleCustomerArrival);
+router.put("/:id/reschedule", rescheduleAppointment);
 
 // Service Reception workflow routes (all authenticated users)
-router.get('/receptions/pending-approval', getPendingReceptionApprovals);
-router.put('/:id/submit-reception', submitServiceReception);
-router.put('/:id/review-reception', reviewServiceReception);
+router.get("/receptions/pending-approval", getPendingReceptionApprovals);
+router.put("/:id/submit-reception", submitServiceReception);
+router.put("/:id/review-reception", reviewServiceReception);
 
 // Workflow management routes (all authenticated users)
-router.put('/:id/start-work', startAppointmentWork);
-router.put('/:id/complete', completeAppointment);
-router.put('/:id/parts-decision', handlePartsDecision);
+router.put("/:id/start-work", startAppointmentWork);
+router.put("/:id/complete", completeAppointment);
+router.put("/:id/parts-decision", handlePartsDecision);
 
 // Customer actions route (all authenticated users)
-router.get('/:id/customer-actions', getCustomerActions);
+router.get("/:id/customer-actions", getCustomerActions);
+
+// Cancel request routes (all authenticated users)
+router.post("/:id/request-cancel", requestCancellation);
+router.post("/:id/approve-cancel", approveCancellation);
+router.post("/:id/process-refund", processRefund);
 
 // Parameterized routes - must come after specific routes
-router.get('/:id', getAppointment);
-router.put('/:id', updateAppointment);
-router.delete('/:id', cancelAppointment);
-router.put('/:id/assign', assignTechnician);
+router.get("/:id", getAppointment);
+router.put("/:id", updateAppointment);
+router.delete("/:id", cancelAppointment);
+router.put("/:id/assign", assignTechnician);
 
 export default router;

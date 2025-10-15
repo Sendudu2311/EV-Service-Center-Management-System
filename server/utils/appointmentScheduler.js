@@ -70,7 +70,7 @@ export const checkNoShowAppointments = async () => {
             appointmentNumber: appointment.appointmentNumber,
             customerId: appointment.customerId._id,
             customerName: `${appointment.customerId.firstName} ${appointment.customerId.lastName}`,
-            serviceCenterName: appointment.serviceCenterId.name,
+            serviceCenterName: "EV Service Center", // Single center architecture
             scheduledDate: appointment.scheduledDate,
             scheduledTime: appointment.scheduledTime,
             newStatus: "no_show",

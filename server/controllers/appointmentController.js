@@ -4,11 +4,14 @@ import Vehicle from "../models/Vehicle.js";
 import Service from "../models/Service.js";
 import User from "../models/User.js";
 import TechnicianProfile from "../models/TechnicianProfile.js";
+import Slot from "../models/Slot.js";
 import {
   vietnamDateTimeToUTC,
   utcToVietnamDateTime,
   roundToSlotBoundary,
 } from "../utils/timezone.js";
+import { sendEmail } from "../utils/email.js";
+import { generateRefundNotificationTemplate } from "../utils/emailTemplates.js";
 
 // @desc    Get appointments for current user (role-based)
 // @route   GET /api/appointments
@@ -31,10 +34,8 @@ export const getAppointments = async (req, res) => {
         filter.customerId = req.user._id;
       } else if (req.user.role === "technician") {
         filter.assignedTechnician = req.user._id;
-      } else if (req.user.role === "staff") {
-        filter.serviceCenterId = req.user.serviceCenterId;
       }
-      // Admin can see all appointments (no additional filter)
+      // Staff and admin can see all appointments (no additional filter)
     }
 
     // Add status filter if provided
@@ -62,7 +63,6 @@ export const getAppointments = async (req, res) => {
     appointments = await Appointment.find(filter)
       .populate("customerId", "firstName lastName email phone")
       .populate("vehicleId", "make model year vin")
-      // serviceCenterId populate removed - single center architecture
       .populate(
         "services.serviceId",
         "name category basePrice estimatedDuration"
@@ -114,7 +114,6 @@ export const getAppointment = async (req, res) => {
         "vehicleId",
         "make model year vin color batteryType batteryCapacity"
       )
-      // serviceCenterId populate removed - single center architecture
       .populate(
         "services.serviceId",
         "name category description basePrice estimatedDuration"
@@ -155,16 +154,7 @@ export const getAppointment = async (req, res) => {
       });
     }
 
-    if (
-      req.user.role === "staff" &&
-      appointment.serviceCenterId._id.toString() !==
-        req.user.serviceCenterId.toString()
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to view this appointment",
-      });
-    }
+    // Staff and admin can view all appointments (no center restriction)
 
     res.status(200).json({
       success: true,
@@ -184,16 +174,16 @@ export const getAppointment = async (req, res) => {
 // @access  Private (Customer)
 export const createAppointment = async (req, res) => {
   try {
+    debugger;
     const {
       vehicleId,
-      serviceCenterId,
       services, // array of { serviceId, quantity }
       scheduledDate,
       scheduledTime,
       customerNotes,
       priority = "normal",
       technicianId, // optional technician selection by customer
-      paymentInfo, // payment information for paid appointments
+      slotId, // optional slot reservation id
     } = req.body;
 
     // Validate vehicle belongs to customer
@@ -209,8 +199,6 @@ export const createAppointment = async (req, res) => {
         message: "Vehicle not found",
       });
     }
-
-    // Single center architecture - no service center validation needed
 
     // Validate services exist
     const serviceIds = services.map((s) => s.serviceId);
@@ -232,14 +220,13 @@ export const createAppointment = async (req, res) => {
       const technician = await User.findOne({
         _id: technicianId,
         role: "technician",
-        serviceCenterId: serviceCenterId,
         isActive: true,
       });
 
       if (!technician) {
         return res.status(400).json({
           success: false,
-          message: "Selected technician not available at this service center",
+          message: "Selected technician not available",
         });
       }
 
@@ -255,35 +242,78 @@ export const createAppointment = async (req, res) => {
         appointmentDateTime.getTime() + totalDuration * 60000
       );
 
-      // Check for time slot conflicts
+      // Check for time slot conflicts - proper time overlap check
+      console.log("🔍 [createAppointment] Checking technician availability:");
+      console.log("- Technician ID:", technicianId);
+      console.log("- Appointment time:", appointmentDateTime);
+      console.log("- Estimated completion:", estimatedCompletion);
+
       const conflictingAppointments = await Appointment.find({
         assignedTechnician: technicianId,
-        $or: [
-          {
-            scheduledDate: {
-              $gte: appointmentDateTime,
-              $lt: estimatedCompletion,
-            },
-          },
-          {
-            estimatedCompletion: {
-              $gt: appointmentDateTime,
-              $lte: estimatedCompletion,
-            },
-          },
-          {
-            scheduledDate: { $lte: appointmentDateTime },
-            estimatedCompletion: { $gte: estimatedCompletion },
-          },
-        ],
+        scheduledDate: {
+          $gte: new Date(appointmentDateTime.toDateString()),
+          $lt: new Date(appointmentDateTime.getTime() + 24 * 60 * 60 * 1000), // Next day
+        },
         status: { $in: ["confirmed", "in_progress"] },
       });
 
-      if (conflictingAppointments.length > 0) {
+      console.log(
+        "🔍 [createAppointment] Found appointments for technician on this date:",
+        conflictingAppointments.length
+      );
+      conflictingAppointments.forEach((appointment, index) => {
+        console.log(
+          `  ${index + 1}. ${appointment.scheduledDate} ${
+            appointment.scheduledTime
+          } (${appointment.status})`
+        );
+      });
+
+      // Filter for actual time conflicts
+      const actualConflicts = conflictingAppointments.filter((existing) => {
+        const existingStart = new Date(
+          `${existing.scheduledDate}T${existing.scheduledTime}`
+        );
+        const existingEnd = existing.estimatedCompletion
+          ? new Date(existing.estimatedCompletion)
+          : new Date(existingStart.getTime() + 60 * 60 * 1000); // Default 1 hour if no estimatedCompletion
+
+        console.log("🔍 [createAppointment] Checking time overlap:");
+        console.log(`  Existing: ${existingStart} to ${existingEnd}`);
+        console.log(
+          `  Requested: ${appointmentDateTime} to ${estimatedCompletion}`
+        );
+
+        // Check for time overlap
+        const hasOverlap =
+          appointmentDateTime < existingEnd &&
+          estimatedCompletion > existingStart;
+
+        console.log(`  Has overlap: ${hasOverlap}`);
+        return hasOverlap;
+      });
+
+      if (actualConflicts.length > 0) {
+        console.log("🔍 [createAppointment] Time conflict detected:");
+        console.log(
+          "- Requested time:",
+          appointmentDateTime,
+          "to",
+          estimatedCompletion
+        );
+        console.log("- Conflicting appointments:", actualConflicts.length);
+        actualConflicts.forEach((conflict, index) => {
+          console.log(
+            `  ${index + 1}. ${conflict.scheduledDate} ${
+              conflict.scheduledTime
+            } (${conflict.status})`
+          );
+        });
+
         return res.status(400).json({
           success: false,
           message: "Selected technician is not available during this time slot",
-          conflictingAppointments: conflictingAppointments.length,
+          conflictingAppointments: actualConflicts.length,
         });
       }
 
@@ -349,11 +379,10 @@ export const createAppointment = async (req, res) => {
     const appointmentNumber = `APT${dateStr}${randomNum}`;
 
     // Create appointment
-    const appointment = await Appointment.create({
+    const appointmentPayload = {
       appointmentNumber,
       customerId: req.user._id,
       vehicleId,
-      serviceCenterId,
       services: appointmentServices,
       scheduledDate: appointmentDateTime,
       scheduledTime,
@@ -361,10 +390,103 @@ export const createAppointment = async (req, res) => {
       priority,
       estimatedCompletion,
       assignedTechnician: assignedTechnician,
-      status: "pending", // Always pending, requires staff confirmation
-      paymentInfo: paymentInfo, // Include payment information if provided
-      paymentStatus: paymentInfo ? "paid" : "pending", // Set payment status
-    });
+      status: req.body.paymentInfo ? "confirmed" : "pending", // Auto-confirm if payment completed
+      coreStatus: req.body.paymentInfo ? "Scheduled" : "Scheduled", // Both are Scheduled but status differs
+      totalAmount: 0, // Will be calculated below
+      paymentStatus: req.body.paymentInfo ? "paid" : "pending",
+      remindersSent: 0,
+      reschedulingInfo: {
+        customerAgreed: false,
+      },
+      staffConfirmation: {
+        modificationsRequired: [],
+      },
+      customerArrival: {
+        customerItems: [],
+      },
+      serviceNotes: [],
+      checklistItems: [],
+      partsUsed: [],
+      images: [],
+      workflowHistory: [],
+    };
+
+    // If slotId provided, attempt to reserve it and attach
+    // NOTE: frontend may reserve the slot first (to hold it during payment). In that case
+    // it should send skipSlotReservation=true to avoid double-incrementing bookedCount.
+    if (slotId) {
+      console.log("🔍 [createAppointment] Processing slot:", slotId);
+      console.log(
+        "🔍 [createAppointment] skipSlotReservation:",
+        req.body.skipSlotReservation
+      );
+      console.log("🔍 [createAppointment] slotId:", slotId);
+
+      const slot = await Slot.findById(slotId);
+      if (!slot) {
+        console.log("❌ [createAppointment] Slot not found:", slotId);
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid slotId" });
+      }
+      console.log(
+        "🔍 [createAppointment] Found slot:",
+        slot._id,
+        "status:",
+        slot.status,
+        "bookedCount:",
+        slot.bookedCount,
+        "capacity:",
+        slot.capacity
+      );
+
+      // If caller didn't pre-reserve, perform reservation here
+      if (!req.body.skipSlotReservation) {
+        console.log(
+          "🔍 [createAppointment] No skipSlotReservation, checking availability..."
+        );
+        if (!slot.canBook()) {
+          return res.status(400).json({
+            success: false,
+            message: "Selected slot is not available",
+          });
+        }
+        // Reserve slot (increment bookedCount)
+        slot.bookedCount += 1;
+        if (slot.bookedCount >= slot.capacity) slot.status = "full";
+        else slot.status = "partially_booked";
+        await slot.save();
+      } else {
+        console.log(
+          "🔍 [createAppointment] skipSlotReservation=true, validating slot..."
+        );
+        // If skipSlotReservation is true, still verify availability at time of create
+        if (!slot.canBook() && slot.status !== "partially_booked") {
+          console.log(
+            "❌ [createAppointment] Slot not available for pre-reserved slot"
+          );
+          // allow partially_booked because frontend might have decreased availability
+          return res.status(400).json({
+            success: false,
+            message: "Selected slot is not available",
+          });
+        }
+        console.log("✅ [createAppointment] Pre-reserved slot is valid");
+      }
+
+      appointmentPayload.slotId = slot._id;
+      // If slot has technicianIds, set assignedTechnician if not already set
+      if (
+        !appointmentPayload.assignedTechnician &&
+        slot.technicianIds &&
+        slot.technicianIds.length > 0
+      ) {
+        // Use the first available technician from the slot
+        appointmentPayload.assignedTechnician = slot.technicianIds[0];
+      }
+    }
+
+    const appointment = await Appointment.create(appointmentPayload);
 
     // Calculate total
     appointment.calculateTotal();
@@ -385,16 +507,74 @@ export const createAppointment = async (req, res) => {
       }
     }
 
+    // Send appointment confirmation email if appointment is confirmed (payment completed)
+    if (appointment.status === "confirmed" && req.body.paymentInfo) {
+      try {
+        console.log(
+          "📧 [createAppointment] Sending appointment confirmation email..."
+        );
+
+        // Get user data for email
+        const user = await User.findById(req.user._id);
+        if (user && user.email) {
+          // Get service details for email
+          const serviceDetails = await Service.find({
+            _id: { $in: serviceIds },
+          });
+
+          // Prepare appointment data for email
+          const appointmentData = {
+            appointmentNumber: appointment.appointmentNumber,
+            scheduledDate: appointment.scheduledDate,
+            scheduledTime: appointment.scheduledTime,
+            services: serviceDetails.map((service) => ({
+              serviceName: service.name,
+              estimatedDuration: service.estimatedDuration,
+              basePrice: service.basePrice,
+            })),
+            serviceCenter: {
+              name: "EV Service Center",
+              address: "123 Main Street, Ho Chi Minh City",
+              phone: "+84 28 1234 5678",
+            },
+          };
+
+          const userData = {
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+          };
+
+          // Import email functions
+          const { sendAppointmentConfirmation } = await import(
+            "../utils/paymentNotifications.js"
+          );
+
+          await sendAppointmentConfirmation(appointmentData, userData);
+          console.log(
+            "✅ [createAppointment] Appointment confirmation email sent"
+          );
+        }
+      } catch (emailError) {
+        console.error(
+          "❌ [createAppointment] Failed to send appointment confirmation email:",
+          emailError
+        );
+        // Don't fail the appointment creation if email fails
+      }
+    }
+
     // Populate for response
     const populatedAppointment = await Appointment.findById(appointment._id)
       .populate("vehicleId", "make model year")
-      // serviceCenterId populate removed - single center architecture
       .populate("services.serviceId", "name category")
       .populate("assignedTechnician", "firstName lastName specializations");
 
     res.status(201).json({
       success: true,
-      message: "Appointment booked successfully",
+      message: req.body.paymentInfo
+        ? "Appointment booked and confirmed successfully"
+        : "Appointment booked successfully, awaiting confirmation",
       data: populatedAppointment,
     });
   } catch (error) {
@@ -600,98 +780,29 @@ export const cancelAppointment = async (req, res) => {
     appointment.cancelledBy = req.user._id;
     appointment.cancellationReason = req.body.reason || "No reason provided";
 
-    // Handle refund for customer cancellations with payment
-    let refundInfo = null;
-    if (req.user.role === "customer" && appointment.paymentInfo) {
+    await appointment.save();
+
+    // Release slot if appointment has one
+    if (appointment.slotId) {
       try {
-        // Import VNPAYTransaction here to avoid circular dependency
-        const { default: VNPAYTransaction } = await import(
-          "../models/VNPAYTransaction.js"
-        );
+        const Slot = (await import("../models/Slot.js")).default;
+        const slot = await Slot.findById(appointment.slotId);
 
-        // Find the transaction associated with this appointment
-        const transaction = await VNPAYTransaction.findOne({
-          transactionRef: appointment.paymentInfo.transactionRef,
-          userId: req.user._id,
-        });
-
-        if (transaction && transaction.status === "completed") {
-          // Create a new refund transaction record
-          const refundTransactionRef = `REFUND_${
-            transaction.transactionRef
-          }_${Date.now()}`;
-
-          const refundTransaction = new VNPAYTransaction({
-            transactionRef: refundTransactionRef,
-            paymentType: "refund",
-            orderInfo: `Refund for appointment ${appointment.appointmentNumber} - Customer cancellation`,
-            orderType: "refund",
-            userId: req.user._id,
-            appointmentId: appointment._id,
-            amount: transaction.paidAmount,
-            paidAmount: transaction.paidAmount,
-            currency: "VND",
-            status: "completed", // Refund is immediately processed
-            responseCode: "00", // Success code for refund
-            vnpayData: {
-              bankCode: transaction.vnpayData?.bankCode,
-              cardType: transaction.vnpayData?.cardType,
-              paymentDate: new Date(),
-            },
-            settlementInfo: {
-              settled: true,
-              settlementDate: new Date(),
-              settlementAmount: transaction.paidAmount,
-              settlementReference: `REFUND${Date.now()}`,
-            },
-            metadata: {
-              originalTransactionId: transaction._id,
-              originalTransactionRef: transaction.transactionRef,
-              refundReason: "Customer requested cancellation",
-              refundedBy: req.user._id,
-              refundDate: new Date(),
-              refundType: "customer_cancellation",
-              appointmentNumber: appointment.appointmentNumber,
-            },
-          });
-
-          await refundTransaction.save();
-
-          // Update original transaction status to refunded
-          await transaction.updateStatus("refunded", {
-            metadata: {
-              ...transaction.metadata,
-              refundTransactionId: refundTransaction._id,
-              refundTransactionRef: refundTransactionRef,
-              refundReason: "Customer requested cancellation",
-              refundedBy: req.user._id,
-              refundDate: new Date(),
-              refundType: "customer_cancellation",
-            },
-          });
-
-          refundInfo = {
-            refundAmount: transaction.paidAmount,
-            refundReference: refundTransactionRef,
-            refundDate: new Date(),
-            status: "refunded",
-            refundTransactionId: refundTransaction._id,
-          };
-
+        if (slot) {
           console.log(
-            `[Appointment Cancellation] Refund transaction created for appointment ${appointment._id}: ${refundInfo.refundAmount} VND (Refund ID: ${refundTransaction._id})`
+            `🔓 [cancelAppointment] Releasing slot ${appointment.slotId} for appointment ${appointment.appointmentNumber}`
           );
+          await slot.release();
+          console.log(`✅ [cancelAppointment] Slot released successfully`);
         }
-      } catch (refundError) {
+      } catch (slotError) {
         console.error(
-          "Error processing refund for appointment cancellation:",
-          refundError
+          "Error releasing slot during appointment cancellation:",
+          slotError
         );
-        // Don't fail the cancellation if refund fails
+        // Don't fail the cancellation process if slot release fails
       }
     }
-
-    await appointment.save();
 
     res.status(200).json({
       success: true,
@@ -703,7 +814,6 @@ export const cancelAppointment = async (req, res) => {
         cancelledAt: appointment.cancelledAt,
         cancelledBy: req.user.role,
         reason: appointment.cancellationReason,
-        refundInfo: refundInfo,
       },
     });
   } catch (error) {
@@ -715,96 +825,765 @@ export const cancelAppointment = async (req, res) => {
   }
 };
 
-// @desc    Get available technicians for specific time slot and services
-// @route   GET /api/appointments/available-technicians
-// @access  Private
-export const getAvailableTechnicians = async (req, res) => {
+// @desc    Request appointment cancellation
+// @route   POST /api/appointments/:id/request-cancel
+// @access  Private (Customer for own appointments)
+export const requestCancellation = async (req, res) => {
   try {
-    // Log: Incoming request details
-    console.log(
-      "🔍 [getAvailableTechnicians] Called with query params:",
-      req.query
-    );
-    console.log("👤 [getAvailableTechnicians] User role:", req.user?.role);
-    console.log("👤 [getAvailableTechnicians] User ID:", req.user?._id);
+    const appointment = await Appointment.findById(req.params.id);
 
-    const { date, time, duration = 60, serviceCategories } = req.query;
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
+    }
 
-    // Log: Parameter validation
-    console.log("📅 [getAvailableTechnicians] Date:", date);
-    console.log("⏰ [getAvailableTechnicians] Time:", time);
-    console.log("⏱️ [getAvailableTechnicians] Duration:", duration);
-    console.log(
-      "🔧 [getAvailableTechnicians] Service Categories:",
-      serviceCategories
+    // Only customers can request cancellation
+    if (req.user.role !== "customer") {
+      return res.status(403).json({
+        success: false,
+        message: "Only customers can request cancellation",
+      });
+    }
+
+    // Check if it's the right customer
+    if (appointment.customerId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Not your appointment",
+      });
+    }
+
+    const canCancelCheck = appointment.canBeCancelledByCustomer(req.user._id);
+
+    if (!canCancelCheck.canCancel) {
+      return res.status(400).json({
+        success: false,
+        message: canCancelCheck.reason,
+        details: {
+          hoursLeft: canCancelCheck.hoursLeft,
+          status: appointment.status,
+          scheduledDate: appointment.scheduledDate,
+        },
+      });
+    }
+
+    const { reason } = req.body;
+
+    if (!reason || reason.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Cancellation reason is required",
+      });
+    }
+
+    // Request cancellation
+    await appointment.requestCancellation(reason, req.user._id);
+
+    res.status(200).json({
+      success: true,
+      message: "Cancel request submitted successfully",
+      data: {
+        appointmentId: appointment._id,
+        appointmentNumber: appointment.appointmentNumber,
+        status: appointment.status,
+        refundPercentage: appointment.cancelRequest.refundPercentage,
+        refundMessage: canCancelCheck.refundMessage,
+        requestedAt: appointment.cancelRequest.requestedAt,
+      },
+    });
+  } catch (error) {
+    console.error("Error requesting cancellation:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error requesting cancellation",
+    });
+  }
+};
+
+// @desc    Approve appointment cancellation
+// @route   POST /api/appointments/:id/approve-cancel
+// @access  Private (Staff/Admin)
+export const approveCancellation = async (req, res) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id);
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
+    }
+
+    // Only staff/admin can approve cancellation
+    if (req.user.role !== "staff" && req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to approve cancellation",
+      });
+    }
+
+    if (appointment.status !== "cancel_requested") {
+      return res.status(400).json({
+        success: false,
+        message: "Appointment is not in cancel_requested status",
+      });
+    }
+
+    const { notes } = req.body;
+
+    // Approve cancellation
+    await appointment.approveCancellation(req.user._id, notes || "");
+
+    // Release slot if appointment has one
+    if (appointment.slotId) {
+      try {
+        const Slot = (await import("../models/Slot.js")).default;
+        const slot = await Slot.findById(appointment.slotId);
+
+        if (slot) {
+          console.log(
+            `🔓 [approveCancellation] Releasing slot ${appointment.slotId} for appointment ${appointment.appointmentNumber}`
+          );
+          await slot.release();
+          console.log(`✅ [approveCancellation] Slot released successfully`);
+        }
+      } catch (slotError) {
+        console.error(
+          "Error releasing slot during cancellation approval:",
+          slotError
+        );
+        // Don't fail the cancellation process if slot release fails
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Cancel request approved successfully",
+      data: {
+        appointmentId: appointment._id,
+        appointmentNumber: appointment.appointmentNumber,
+        status: appointment.status,
+        approvedAt: appointment.cancelRequest.approvedAt,
+        approvedBy: req.user.role,
+        refundPercentage: appointment.cancelRequest.refundPercentage,
+      },
+    });
+  } catch (error) {
+    console.error("Error approving cancellation:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error approving cancellation",
+    });
+  }
+};
+
+// @desc    Process refund for cancelled appointment
+// @route   POST /api/appointments/:id/process-refund
+// @access  Private (Staff/Admin)
+export const processRefund = async (req, res) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id);
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
+    }
+
+    // Only staff/admin can process refund
+    if (req.user.role !== "staff" && req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to process refund",
+      });
+    }
+
+    if (appointment.status !== "cancel_approved") {
+      return res.status(400).json({
+        success: false,
+        message: "Appointment is not in cancel_approved status",
+      });
+    }
+
+    // Calculate refund amount
+    const refundPercentage = appointment.cancelRequest.refundPercentage;
+    const refundAmount = Math.round(
+      (appointment.totalAmount * refundPercentage) / 100
     );
+
+    // Create refund transaction
+    const VNPAYTransaction = (await import("../models/VNPAYTransaction.js"))
+      .default;
+
+    const refundTransactionRef = `REFUND_${
+      appointment.appointmentNumber
+    }_${Date.now()}`;
+
+    const refundTransaction = new VNPAYTransaction({
+      transactionRef: refundTransactionRef,
+      paymentType: "refund",
+      orderInfo: `Refund for appointment ${appointment.appointmentNumber} - ${appointment.cancelRequest.reason}`,
+      orderType: "refund",
+      userId: appointment.customerId,
+      appointmentId: appointment._id,
+      amount: refundAmount,
+      paidAmount: refundAmount,
+      currency: "VND",
+      status: "completed",
+      responseCode: "00",
+      vnpayData: {
+        paymentDate: new Date(),
+      },
+      settlementInfo: {
+        settled: true,
+        settlementDate: new Date(),
+        settlementAmount: refundAmount,
+        settlementReference: `REFUND${Date.now()}`,
+      },
+      metadata: {
+        refundReason: appointment.cancelRequest.reason,
+        refundedBy: req.user._id,
+        refundDate: new Date(),
+        refundType: "appointment_cancellation",
+        refundPercentage,
+      },
+    });
+
+    await refundTransaction.save();
+
+    // Get notes from request body
+    const { notes } = req.body;
+
+    // Process refund in appointment
+    await appointment.processRefund(req.user._id, refundTransaction._id, notes);
+
+    // Release slot if appointment has one (in case it wasn't released during approval)
+    if (appointment.slotId) {
+      try {
+        const Slot = (await import("../models/Slot.js")).default;
+        const slot = await Slot.findById(appointment.slotId);
+
+        if (slot) {
+          console.log(
+            `🔓 [processRefund] Releasing slot ${appointment.slotId} for appointment ${appointment.appointmentNumber}`
+          );
+          await slot.release();
+          console.log(`✅ [processRefund] Slot released successfully`);
+        }
+      } catch (slotError) {
+        console.error(
+          "Error releasing slot during refund processing:",
+          slotError
+        );
+        // Don't fail the refund process if slot release fails
+      }
+    }
+
+    // Send refund notification email to customer
+    try {
+      // Get customer information
+      const customer = await User.findById(appointment.customerId);
+
+      if (customer && customer.email) {
+        const refundData = {
+          refundAmount,
+          refundPercentage,
+          refundTransactionRef,
+          refundDate: new Date(),
+          refundReason: appointment.cancelRequest.reason,
+        };
+
+        const userData = {
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+        };
+
+        const appointmentData = {
+          appointmentNumber: appointment.appointmentNumber,
+          scheduledDate: appointment.scheduledDate,
+          scheduledTime: appointment.scheduledTime,
+        };
+
+        const emailContent = generateRefundNotificationTemplate(
+          refundData,
+          userData,
+          appointmentData
+        );
+
+        await sendEmail({
+          to: customer.email,
+          subject: `Refund Processed - Appointment ${appointment.appointmentNumber}`,
+          html: emailContent,
+        });
+      }
+    } catch (emailError) {
+      console.error("Error sending refund notification email:", emailError);
+      // Don't fail the refund process if email fails
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Refund processed successfully",
+      data: {
+        appointmentId: appointment._id,
+        appointmentNumber: appointment.appointmentNumber,
+        status: appointment.status,
+        refundAmount,
+        refundPercentage,
+        refundTransactionId: refundTransaction._id,
+        refundTransactionRef: refundTransactionRef,
+        processedAt: appointment.cancelRequest.refundProcessedAt,
+      },
+    });
+  } catch (error) {
+    console.error("Error processing refund:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error processing refund",
+    });
+  }
+};
+
+// @desc    Get available technicians for specific time slot and services (NEW IMPROVED VERSION)
+// @route   GET /api/appointments/available-technicians-optimized
+// @access  Private
+// Get available technicians for a specific slot
+export const getAvailableTechniciansForSlot = async (req, res) => {
+  try {
+    const { slotId, duration = 60, serviceCategories } = req.query;
+
+    if (!slotId) {
+      return res.status(400).json({
+        success: false,
+        message: "Slot ID is required",
+      });
+    }
+
+    console.log(
+      `🔍 [getAvailableTechniciansForSlot] Searching for slot ${slotId}`
+    );
+
+    // Find the specific slot
+    const slot = await Slot.findById(slotId);
+    if (!slot) {
+      return res.status(404).json({
+        success: false,
+        message: "Slot not found",
+      });
+    }
+
+    // Check if slot has enough duration
+    const slotStart = new Date(`${slot.date}T${slot.startTime}:00`);
+    const slotEnd = new Date(`${slot.date}T${slot.endTime}:00`);
+    const slotDurationMinutes = (slotEnd - slotStart) / (1000 * 60);
+
+    console.log(
+      `🔍 Slot ${slot._id}: duration ${slotDurationMinutes} minutes, required ${duration} minutes`
+    );
+
+    if (slotDurationMinutes < parseInt(duration)) {
+      return res.status(400).json({
+        success: false,
+        message: `Slot duration (${slotDurationMinutes} minutes) is less than required duration (${duration} minutes)`,
+      });
+    }
+
+    // Get available technicians for this specific slot
+    const availableTechnicians = await slot.getAvailableTechniciansOptimized();
+
+    console.log(
+      `✅ Found ${availableTechnicians.length} available technicians for slot ${slotId}`
+    );
+
+    // Format response
+    const formattedTechnicians = availableTechnicians.map((technician) => ({
+      id: technician._id.toString(),
+      name: `${technician.firstName} ${technician.lastName}`,
+      specializations: technician.specializations || [],
+      availability: {
+        status: "available",
+        workloadPercentage: 0,
+      },
+      performance: {
+        customerRating: 4.5,
+        completedJobs: 0,
+        efficiency: 85,
+      },
+      skills:
+        technician.specializations?.map((spec) => ({
+          category: spec,
+          level: 3,
+          certified: true,
+        })) || [],
+      isRecommended: true,
+      yearsExperience: 2,
+      isAssignedToSlot: true,
+      isPreferredSlotTechnician: true,
+      slotStatus: {
+        slotId: slot._id.toString(),
+        slotTime: `${slot.startTime}-${slot.endTime}`,
+        currentWorkload: 0,
+        maxCapacity: 1,
+        slotCapacity: slot.capacity,
+        technicianSlotCapacity: 1,
+        availabilityPercentage: 100,
+        isPreferred: true,
+        appointments: [],
+      },
+    }));
+
+    res.json({
+      success: true,
+      data: formattedTechnicians,
+      availableCount: formattedTechnicians.length,
+      totalTechnicians: slot.technicianIds.length,
+      slot: {
+        id: slot._id.toString(),
+        date: slot.date,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        capacity: slot.capacity,
+        bookedCount: slot.bookedCount,
+        status: slot.status,
+      },
+      method: "slot-specific",
+    });
+  } catch (error) {
+    console.error("Error in getAvailableTechniciansForSlot:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+export const getAvailableTechniciansOptimized = async (req, res) => {
+  try {
+    const {
+      date,
+      time,
+      duration = 60,
+      serviceCategories,
+      preferredSlotId,
+    } = req.query;
 
     if (!date || !time) {
-      console.error(
-        "❌ [getAvailableTechnicians] Missing required parameters - date or time"
-      );
       return res.status(400).json({
         success: false,
         message: "Date and time are required",
       });
     }
 
+    console.log(
+      `🔍 [getAvailableTechniciansOptimized] Searching for ${date} ${time}`
+    );
+
     // Create appointment datetime
-    const appointmentDateTime = new Date(`${date}T${time}`);
+    let appointmentDateTime;
+    try {
+      if (time.includes(":")) {
+        appointmentDateTime = new Date(`${date}T${time}:00`);
+      } else {
+        appointmentDateTime = new Date(`${date}T${time}`);
+      }
+
+      if (isNaN(appointmentDateTime.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid date or time format: ${date} ${time}`,
+        });
+      }
+    } catch (error) {
+      console.error("Error parsing date/time:", error);
+      return res.status(400).json({
+        success: false,
+        message: `Error parsing date/time: ${date} ${time}`,
+      });
+    }
+
     const estimatedCompletion = new Date(
       appointmentDateTime.getTime() + parseInt(duration) * 60000
     );
 
+    // Find available slots using optimized method
+    const availableSlots = await Slot.find({
+      date: date,
+      startTime: { $lte: time },
+      endTime: { $gt: time },
+      status: { $in: ["available", "partially_booked"] },
+    }).populate("technicianIds", "firstName lastName specializations");
+
+    console.log(`Found ${availableSlots.length} available slots`);
+
+    // Filter slots that have enough duration
+    const slotsWithEnoughDuration = availableSlots.filter((slot) => {
+      const slotStart = new Date(`${slot.date}T${slot.startTime}:00`);
+      const slotEnd = new Date(`${slot.date}T${slot.endTime}:00`);
+      const slotDurationMinutes = (slotEnd - slotStart) / (1000 * 60);
+
+      console.log(
+        `🔍 Slot ${slot._id}: duration ${slotDurationMinutes} minutes, required ${duration} minutes`
+      );
+
+      return slotDurationMinutes >= parseInt(duration);
+    });
+
     console.log(
-      "📅 [getAvailableTechnicians] Appointment DateTime:",
-      appointmentDateTime
-    );
-    console.log(
-      "📅 [getAvailableTechnicians] Estimated Completion:",
-      estimatedCompletion
+      `Found ${slotsWithEnoughDuration.length} slots with enough duration`
     );
 
-    // Single center architecture - get all active technicians
-    const technicians = await User.find({
+    // Get available technicians using optimized method
+    const availableTechnicians = [];
+
+    for (const slot of slotsWithEnoughDuration) {
+      console.log(`🔍 Checking slot ${slot._id} for available technicians...`);
+
+      // Use optimized method to get available technicians
+      const slotAvailableTechnicians =
+        await slot.getAvailableTechniciansOptimized();
+
+      for (const technicianId of slotAvailableTechnicians) {
+        // Get technician profile
+        const technicianProfile = await TechnicianProfile.findOne({
+          technicianId: technicianId,
+        }).populate("technicianId", "firstName lastName specializations");
+
+        if (technicianProfile) {
+          const technician = technicianProfile.technicianId;
+
+          // Calculate skill match if service categories provided
+          let skillMatchScore = 0;
+          if (serviceCategories && serviceCategories.length > 0) {
+            skillMatchScore = calculateSkillMatch(
+              technicianProfile.skillMatrix,
+              serviceCategories
+            );
+          }
+
+          // Check if this is the preferred slot
+          const isPreferredSlot =
+            preferredSlotId && slot._id.toString() === preferredSlotId;
+
+          // Get detailed workload info for this slot
+          const workloadInfo = await slot.getTechnicianWorkloadInSlot(
+            technicianId
+          );
+
+          availableTechnicians.push({
+            // Frontend-compatible format
+            id: technician._id,
+            name: `${technician.firstName} ${technician.lastName}`,
+            specializations: technician.specializations,
+            availability: {
+              status: technicianProfile.availability.status,
+              workloadPercentage: technicianProfile.workloadPercentage,
+            },
+            performance: {
+              customerRating: technicianProfile.performance.customerRating,
+              completedJobs: technicianProfile.performance.completedJobs,
+              efficiency: technicianProfile.performance.efficiency,
+            },
+            skills: (technicianProfile.skillMatrix || []).map((skill) => ({
+              category: skill.serviceCategory,
+              level: skill.proficiencyLevel,
+              certified: skill.certificationRequired,
+            })),
+            isRecommended: skillMatchScore > 0.7,
+            yearsExperience: technicianProfile.yearsExperience ?? 0,
+            isAssignedToSlot: true,
+            isPreferredSlotTechnician: isPreferredSlot,
+            // New: Detailed slot status information
+            slotStatus: {
+              slotId: slot._id,
+              slotTime: `${slot.startTime}-${slot.endTime}`,
+              currentWorkload: workloadInfo.currentWorkload,
+              maxCapacity: workloadInfo.maxCapacity, // Use calculated capacity from slot
+              slotCapacity: workloadInfo.slotCapacity,
+              technicianSlotCapacity: workloadInfo.technicianSlotCapacity,
+              availabilityPercentage: Math.round(
+                (1 - workloadInfo.currentWorkload / workloadInfo.maxCapacity) *
+                  100
+              ),
+              isPreferred: isPreferredSlot,
+              appointments: workloadInfo.appointments,
+            },
+            // Additional backend data
+            _id: technician._id,
+            firstName: technician.firstName,
+            lastName: technician.lastName,
+            skillMatchScore,
+            currentWorkload: technicianProfile.workload.current,
+            maxCapacity: technicianProfile.workload.capacity,
+          });
+        }
+      }
+    }
+
+    // Remove duplicates based on technician ID
+    const uniqueTechnicians = availableTechnicians.reduce((acc, tech) => {
+      if (!acc.find((t) => t._id.toString() === tech._id.toString())) {
+        acc.push(tech);
+      }
+      return acc;
+    }, []);
+
+    // Sort by preferred slot first, then by skill match, then by performance
+    uniqueTechnicians.sort((a, b) => {
+      if (a.isPreferredSlotTechnician && !b.isPreferredSlotTechnician)
+        return -1;
+      if (!a.isPreferredSlotTechnician && b.isPreferredSlotTechnician) return 1;
+
+      if (a.skillMatchScore > b.skillMatchScore) return -1;
+      if (a.skillMatchScore < b.skillMatchScore) return 1;
+
+      return b.performance.customerRating - a.performance.customerRating;
+    });
+
+    console.log(
+      `✅ Found ${uniqueTechnicians.length} available technicians using optimized method`
+    );
+
+    // Get total technicians count for comparison
+    const totalTechnicians = await User.countDocuments({
+      role: "technician",
+      isActive: true,
+    });
+
+    res.status(200).json({
+      success: true,
+      data: uniqueTechnicians,
+      availableCount: uniqueTechnicians.length,
+      totalTechnicians,
+      timeSlot: {
+        date,
+        time,
+        duration: parseInt(duration),
+      },
+      method: "optimized",
+    });
+  } catch (error) {
+    console.error("Error fetching available technicians (optimized):", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching available technicians",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};
+
+// @route   GET /api/appointments/available-technicians
+// @access  Private
+export const getAvailableTechnicians = async (req, res) => {
+  // Use the optimized version by default
+  return getAvailableTechniciansOptimized(req, res);
+};
+
+// Legacy method - kept for backward compatibility
+export const getAvailableTechniciansLegacy = async (req, res) => {
+  try {
+    const {
+      date,
+      time,
+      duration = 60,
+      serviceCategories,
+      preferredSlotId,
+    } = req.query;
+
+    if (!date || !time) {
+      return res.status(400).json({
+        success: false,
+        message: "Date and time are required",
+      });
+    }
+
+    // Create appointment datetime - ensure proper format
+    let appointmentDateTime;
+    try {
+      // Try different date formats
+      if (time.includes(":")) {
+        appointmentDateTime = new Date(`${date}T${time}:00`);
+      } else {
+        appointmentDateTime = new Date(`${date}T${time}`);
+      }
+
+      console.log(`Creating appointment datetime from: ${date}T${time}`);
+      console.log(`Parsed datetime:`, appointmentDateTime);
+      console.log(`Timestamp:`, appointmentDateTime.getTime());
+      console.log(`Is valid date:`, !isNaN(appointmentDateTime.getTime()));
+
+      if (isNaN(appointmentDateTime.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid date or time format: ${date} ${time}`,
+        });
+      }
+    } catch (error) {
+      console.error("Error parsing date/time:", error);
+      return res.status(400).json({
+        success: false,
+        message: `Error parsing date/time: ${date} ${time}`,
+      });
+    }
+
+    const estimatedCompletion = new Date(
+      appointmentDateTime.getTime() + parseInt(duration) * 60000
+    );
+    console.log(`Estimated completion:`, estimatedCompletion);
+
+    // First, find available slots for this date and time
+    // Look for slots that contain the requested time
+    const availableSlots = await Slot.find({
+      date: date,
+      startTime: { $lte: time }, // Slot starts at or before requested time
+      endTime: { $gt: time }, // Slot ends after requested time
+      status: { $in: ["available", "partially_booked"] },
+    }).populate("technicianIds", "firstName lastName specializations");
+
+    console.log(
+      `Found ${availableSlots.length} available slots for ${date} ${time}`
+    );
+
+    // Get technicians assigned to available slots
+    const slotTechnicians = new Map();
+    availableSlots.forEach((slot) => {
+      if (slot.technicianIds && slot.technicianIds.length > 0) {
+        slot.technicianIds.forEach((tech) => {
+          if (!slotTechnicians.has(tech._id.toString())) {
+            slotTechnicians.set(tech._id.toString(), {
+              technician: tech,
+              slots: [],
+            });
+          }
+          slotTechnicians.get(tech._id.toString()).slots.push(slot);
+        });
+      }
+    });
+
+    console.log(`Found ${slotTechnicians.size} technicians assigned to slots`);
+
+    // Get all technicians (fallback for technicians not assigned to slots)
+    const allTechnicians = await User.find({
       role: "technician",
       isActive: true,
     }).select("_id firstName lastName specializations");
 
-    console.log(
-      "👨‍🔧 [getAvailableTechnicians] Found technicians:",
-      technicians.length
-    );
+    const allTechnicianIds = allTechnicians.map((t) => t._id);
 
-    if (technicians.length === 0) {
-      console.warn("⚠️ [getAvailableTechnicians] No technicians found");
-      return res.status(200).json({
-        success: true,
-        data: [],
-        message: "No technicians found",
-      });
-    }
-
-    const technicianIds = technicians.map((t) => t._id);
-    console.log("🆔 [getAvailableTechnicians] Technician IDs:", technicianIds);
-
-    // Get technician profiles
+    // Get technician profiles for all technicians
     const profiles = await TechnicianProfile.find({
-      technicianId: { $in: technicianIds },
-      isActive: true,
+      technicianId: { $in: allTechnicianIds },
     }).populate("technicianId", "firstName lastName specializations");
-
-    console.log(
-      "📋 [getAvailableTechnicians] Found profiles:",
-      profiles.length
-    );
 
     // Check availability for each technician
     const availableTechnicians = [];
 
     for (const profile of profiles) {
-      console.log(
-        `🔍 [getAvailableTechnicians] Checking technician: ${profile.technicianId?.firstName} ${profile.technicianId?.lastName}`
-      );
+      const technicianId = profile.technicianId._id.toString();
+      const isAssignedToSlot = slotTechnicians.has(technicianId);
 
       // Check basic availability
       const isBasicallyAvailable = profile.isAvailableForAppointment(
@@ -812,124 +1591,129 @@ export const getAvailableTechnicians = async (req, res) => {
         parseInt(duration)
       );
 
-      console.log(
-        `📊 [getAvailableTechnicians] Basic availability: ${isBasicallyAvailable}`
-      );
-
       if (!isBasicallyAvailable) {
-        console.log(
-          `❌ [getAvailableTechnicians] Technician ${profile.technicianId?.firstName} not basically available`
-        );
         continue;
       }
 
-      // Check for conflicting appointments
+      // Check if technician is assigned to any slot for this time
+      const availableSlots = await Slot.find({
+        date: date,
+        startTime: { $lte: time }, // Slot starts at or before requested time
+        endTime: { $gt: time }, // Slot ends after requested time
+        technicianIds: profile.technicianId._id,
+        status: { $in: ["available", "partially_booked"] },
+      });
+
+      if (availableSlots.length === 0) {
+        continue;
+      }
+
+      // Check for conflicting appointments - proper time overlap check
       const conflictingAppointments = await Appointment.find({
         assignedTechnician: profile.technicianId._id,
-        $or: [
-          {
-            scheduledDate: {
-              $gte: appointmentDateTime,
-              $lt: estimatedCompletion,
-            },
-          },
-          {
-            estimatedCompletion: {
-              $gt: appointmentDateTime,
-              $lte: estimatedCompletion,
-            },
-          },
-          {
-            scheduledDate: { $lte: appointmentDateTime },
-            estimatedCompletion: { $gte: estimatedCompletion },
-          },
-        ],
+        scheduledDate: {
+          $gte: new Date(appointmentDateTime.toDateString()),
+          $lt: new Date(appointmentDateTime.getTime() + 24 * 60 * 60 * 1000), // Next day
+        },
         status: { $in: ["confirmed", "in_progress"] },
       });
 
-      if (conflictingAppointments.length === 0) {
-        console.log(
-          `✅ [getAvailableTechnicians] Technician ${profile.technicianId?.firstName} is available`
+      // Filter for actual time conflicts
+      const actualConflicts = conflictingAppointments.filter((existing) => {
+        const existingStart = new Date(
+          `${existing.scheduledDate}T${existing.scheduledTime}`
         );
+        const existingEnd = existing.estimatedCompletion
+          ? new Date(existing.estimatedCompletion)
+          : new Date(existingStart.getTime() + 60 * 60 * 1000); // Default 1 hour if no estimatedCompletion
 
-        // Calculate skill matching score if service categories provided
-        let skillMatchScore = 0;
-        if (serviceCategories) {
-          const categories = Array.isArray(serviceCategories)
-            ? serviceCategories
-            : [serviceCategories];
-          skillMatchScore = calculateSkillMatch(
-            profile.skillMatrix,
-            categories
-          );
-          console.log(
-            `🎯 [getAvailableTechnicians] Skill match score: ${skillMatchScore}`
-          );
-        }
+        // Check for time overlap
+        return (
+          appointmentDateTime < existingEnd &&
+          estimatedCompletion > existingStart
+        );
+      });
 
-        availableTechnicians.push({
-          id: profile.technicianId._id,
-          name: `${profile.technicianId.firstName} ${profile.technicianId.lastName}`,
-          specializations: profile.technicianId.specializations,
-          availability: {
-            status: profile.availability.status,
-            workloadPercentage: profile.workloadPercentage,
-          },
-          performance: {
-            customerRating: profile.performance.customerRating,
-            completedJobs: profile.performance.completedJobs,
-            efficiency: profile.performance.efficiency,
-          },
-          skills: (profile.skillMatrix || []).map((skill) => ({
-            category: skill.serviceCategory,
-            level: skill.proficiencyLevel,
-            certified: skill.certificationRequired,
-          })),
-          isRecommended: skillMatchScore > 70, // High skill match
-          yearsExperience: profile.yearsExperience ?? 0,
-        });
+      if (actualConflicts.length > 0) {
+        continue;
       }
+
+      // Calculate skill matching score if service categories provided
+      let skillMatchScore = 0;
+      if (serviceCategories) {
+        const categories = Array.isArray(serviceCategories)
+          ? serviceCategories
+          : [serviceCategories];
+        skillMatchScore = calculateSkillMatch(profile.skillMatrix, categories);
+      }
+
+      availableTechnicians.push({
+        id: profile.technicianId._id,
+        name: `${profile.technicianId.firstName} ${profile.technicianId.lastName}`,
+        specializations: profile.technicianId.specializations,
+        availability: {
+          status: profile.availability.status,
+          workloadPercentage: profile.workloadPercentage,
+        },
+        performance: {
+          customerRating: profile.performance.customerRating,
+          completedJobs: profile.performance.completedJobs,
+          efficiency: profile.performance.efficiency,
+        },
+        skills: (profile.skillMatrix || []).map((skill) => ({
+          category: skill.serviceCategory,
+          level: skill.proficiencyLevel,
+          certified: skill.certificationRequired,
+        })),
+        isRecommended: skillMatchScore > 70 || isAssignedToSlot, // Prioritize slot-assigned technicians
+        yearsExperience: profile.yearsExperience ?? 0,
+        isAssignedToSlot: isAssignedToSlot,
+        availableSlots: isAssignedToSlot
+          ? slotTechnicians.get(technicianId).slots.length
+          : 0,
+        isPreferredSlotTechnician:
+          preferredSlotId && isAssignedToSlot
+            ? slotTechnicians
+                .get(technicianId)
+                .slots.some((slot) => slot._id.toString() === preferredSlotId)
+            : false,
+      });
     }
 
-    console.log(
-      `📊 [getAvailableTechnicians] Available technicians: ${availableTechnicians.length}`
-    );
-
-    // Sort by recommendation, then by performance
+    // Sort by preferred slot assignment first, then general slot assignment, then by recommendation, then by performance
     availableTechnicians.sort((a, b) => {
+      // Prioritize technicians assigned to the preferred slot
+      if (a.isPreferredSlotTechnician && !b.isPreferredSlotTechnician)
+        return -1;
+      if (!a.isPreferredSlotTechnician && b.isPreferredSlotTechnician) return 1;
+
+      // Then prioritize technicians assigned to any slots
+      if (a.isAssignedToSlot && !b.isAssignedToSlot) return -1;
+      if (!a.isAssignedToSlot && b.isAssignedToSlot) return 1;
+
+      // Then by recommendation
       if (a.isRecommended && !b.isRecommended) return -1;
       if (!a.isRecommended && b.isRecommended) return 1;
+
+      // Finally by performance rating
       return b.performance.customerRating - a.performance.customerRating;
     });
-
-    console.log(
-      "✅ [getAvailableTechnicians] Returning available technicians:",
-      availableTechnicians.length
-    );
 
     res.status(200).json({
       success: true,
       data: availableTechnicians,
       availableCount: availableTechnicians.length,
-      totalTechnicians: technicians.length,
+      totalTechnicians: allTechnicians.length,
       timeSlot: {
         date,
         time,
         duration: parseInt(duration),
       },
+      method: "legacy",
     });
   } catch (error) {
-    console.error(
-      "❌ [getAvailableTechnicians] Error fetching available technicians:",
-      error
-    );
-    console.error("📊 [getAvailableTechnicians] Stack trace:", error.stack);
-    console.error("📊 [getAvailableTechnicians] Error details:", {
-      message: error.message,
-      name: error.name,
-      code: error.code,
-    });
-
+    console.error("Error fetching available technicians:", error);
+    console.error("Stack trace:", error.stack);
     res.status(500).json({
       success: false,
       message: "Error fetching available technicians",
@@ -966,6 +1750,127 @@ const calculateSkillMatch = (skillMatrix, serviceCategories) => {
   return (totalScore / maxPossibleScore) * 100;
 };
 
+// @desc    Debug slot technician appointments
+// @route   GET /api/appointments/debug-slots
+// @access  Private
+export const debugSlots = async (req, res) => {
+  try {
+    const { date, time } = req.query;
+
+    if (!date || !time) {
+      return res.status(400).json({
+        success: false,
+        message: "Date and time are required",
+      });
+    }
+
+    // Find slots for this date and time
+    const slots = await Slot.find({
+      date: date,
+      startTime: { $lte: time },
+      endTime: { $gt: time },
+    });
+
+    const debugInfo = slots.map((slot) => ({
+      slotId: slot._id,
+      date: slot.date,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      status: slot.status,
+      technicianIds: slot.technicianIds,
+      technicianAppointments: slot.technicianAppointments,
+      capacity: slot.capacity,
+      bookedCount: slot.bookedCount,
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: {
+        date,
+        time,
+        totalSlots: slots.length,
+        slots: debugInfo,
+      },
+    });
+  } catch (error) {
+    console.error("Error debugging slots:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error debugging slots",
+    });
+  }
+};
+
+// @desc    Initialize technician appointments for all slots
+// @route   POST /api/appointments/init-slot-technicians
+// @access  Private
+export const initializeSlotTechnicians = async (req, res) => {
+  try {
+    console.log("🔄 Starting slot technicianAppointments initialization...");
+
+    // Get all slots
+    const slots = await Slot.find({});
+    console.log(`Found ${slots.length} slots to initialize`);
+
+    let initializedCount = 0;
+
+    for (const slot of slots) {
+      console.log(`\n📋 Processing slot ${slot._id}:`);
+      console.log(
+        `- Date: ${slot.date}, Time: ${slot.startTime}-${slot.endTime}`
+      );
+      console.log(`- TechnicianIds: ${slot.technicianIds.length}`);
+      console.log(
+        `- Current technicianAppointments: ${
+          slot.technicianAppointments?.length || 0
+        }`
+      );
+
+      // Initialize technicianAppointments if not exists
+      if (
+        !slot.technicianAppointments ||
+        slot.technicianAppointments.length === 0
+      ) {
+        console.log("  - Initializing technicianAppointments...");
+
+        slot.technicianAppointments = slot.technicianIds.map(
+          (technicianId) => ({
+            technicianId: technicianId,
+            appointmentIds: [],
+            currentWorkload: 0,
+            maxCapacity: 1, // Default capacity
+          })
+        );
+
+        await slot.save();
+        initializedCount++;
+        console.log("  ✅ Slot initialized successfully");
+      } else {
+        console.log("  ⏭️  Slot already has technicianAppointments, skipping");
+      }
+    }
+
+    console.log(
+      `\n🎉 Initialization completed! Initialized ${initializedCount} slots`
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalSlots: slots.length,
+        initializedSlots: initializedCount,
+        message: `Initialized ${initializedCount} out of ${slots.length} slots`,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Initialization error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error initializing slot technicians",
+    });
+  }
+};
+
 // @desc    Check technician availability for specific time slot
 // @route   GET /api/appointments/technician-availability
 // @access  Private
@@ -980,7 +1885,27 @@ export const checkTechnicianAvailability = async (req, res) => {
       });
     }
 
-    // Get technician profile
+    // Create appointment datetime
+    const appointmentDateTime = new Date(`${date}T${time}`);
+    const estimatedCompletion = new Date(
+      appointmentDateTime.getTime() + duration * 60000
+    );
+
+    // Step 1: Check if technician exists and is active
+    const technician = await User.findOne({
+      _id: technicianId,
+      role: "technician",
+      isActive: true,
+    });
+
+    if (!technician) {
+      return res.status(404).json({
+        success: false,
+        message: "Technician not found or inactive",
+      });
+    }
+
+    // Step 2: Check technician profile and basic availability
     const technicianProfile = await TechnicianProfile.findOne({
       technicianId,
     }).populate("technicianId", "firstName lastName specializations");
@@ -992,13 +1917,7 @@ export const checkTechnicianAvailability = async (req, res) => {
       });
     }
 
-    // Create appointment datetime
-    const appointmentDateTime = new Date(`${date}T${time}`);
-    const estimatedCompletion = new Date(
-      appointmentDateTime.getTime() + duration * 60000
-    );
-
-    // Check basic availability
+    // Check basic availability (working hours, workload, status)
     const isBasicallyAvailable = technicianProfile.isAvailableForAppointment(
       appointmentDateTime,
       duration
@@ -1010,38 +1929,129 @@ export const checkTechnicianAvailability = async (req, res) => {
         data: {
           available: false,
           reason: "Technician is not available during this time",
-          technicianStatus: technicianProfile.availability.status,
-          workloadPercentage: technicianProfile.workloadPercentage,
+          details: {
+            status: technicianProfile.availability.status,
+            workloadPercentage: technicianProfile.workloadPercentage,
+            currentWorkload: technicianProfile.workload.current,
+            capacity: technicianProfile.workload.capacity,
+          },
         },
       });
     }
 
-    // Check for conflicting appointments with improved overlap detection
+    // Step 3: Check if technician is assigned to any slot for this time
+    const availableSlots = await Slot.find({
+      date: date,
+      startTime: { $lte: time }, // Slot starts at or before requested time
+      endTime: { $gt: time }, // Slot ends after requested time
+      technicianIds: technicianId,
+      status: { $in: ["available", "partially_booked"] },
+    });
+
+    if (availableSlots.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          available: false,
+          reason:
+            "Technician is not assigned to any available slot for this time",
+          details: {
+            status: technicianProfile.availability.status,
+            workloadPercentage: technicianProfile.workloadPercentage,
+          },
+        },
+      });
+    }
+
+    // Step 4: Check technician availability in each slot using new method
+    console.log("🔍 [checkTechnicianAvailability] Debug info:");
+    console.log("- Available slots found:", availableSlots.length);
+    console.log("- Technician ID:", technicianId);
+
+    // Debug each slot
+    for (let i = 0; i < availableSlots.length; i++) {
+      const slot = availableSlots[i];
+      const isAvailable = await slot.isTechnicianAvailable(technicianId);
+      console.log(`- Slot ${i + 1}:`, {
+        slotId: slot._id,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        status: slot.status,
+        technicianIds: slot.technicianIds,
+        technicianAppointments: slot.technicianAppointments,
+        isTechnicianAvailable: isAvailable,
+      });
+    }
+
+    const availableSlotsWithTechnician = [];
+    for (const slot of availableSlots) {
+      const isAvailable = await slot.isTechnicianAvailable(technicianId);
+      if (isAvailable) {
+        availableSlotsWithTechnician.push(slot);
+      }
+    }
+
+    console.log(
+      "- Available slots with technician:",
+      availableSlotsWithTechnician.length
+    );
+
+    if (availableSlotsWithTechnician.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          available: false,
+          reason:
+            "Technician is at full capacity in all available slots for this time",
+          details: {
+            status: technicianProfile.availability.status,
+            workloadPercentage: technicianProfile.workloadPercentage,
+            totalSlots: availableSlots.length,
+            availableSlots: 0,
+            debugInfo: {
+              slots: availableSlots.map((slot) => ({
+                slotId: slot._id,
+                startTime: slot.startTime,
+                endTime: slot.endTime,
+                status: slot.status,
+                technicianIds: slot.technicianIds,
+                technicianAppointments: slot.technicianAppointments,
+                isTechnicianAvailable: slot.isTechnicianAvailable(technicianId),
+              })),
+            },
+          },
+        },
+      });
+    }
+
+    // Step 4: Check for conflicting appointments with proper time overlap
     const conflictingAppointments = await Appointment.find({
       assignedTechnician: technicianId,
-      $or: [
-        {
-          scheduledDate: {
-            $gte: appointmentDateTime,
-            $lt: estimatedCompletion,
-          },
-        },
-        {
-          estimatedCompletion: {
-            $gt: appointmentDateTime,
-            $lte: estimatedCompletion,
-          },
-        },
-        {
-          scheduledDate: { $lte: appointmentDateTime },
-          estimatedCompletion: { $gte: estimatedCompletion },
-        },
-      ],
+      scheduledDate: {
+        $gte: new Date(appointmentDateTime.toDateString()),
+        $lt: new Date(appointmentDateTime.getTime() + 24 * 60 * 60 * 1000), // Next day
+      },
       status: { $in: ["confirmed", "in_progress"] },
     });
 
-    const hasConflicts = conflictingAppointments.length > 0;
+    // Filter for actual time conflicts
+    const actualConflicts = conflictingAppointments.filter((existing) => {
+      const existingStart = new Date(
+        `${existing.scheduledDate}T${existing.scheduledTime}`
+      );
+      const existingEnd = existing.estimatedCompletion
+        ? new Date(existing.estimatedCompletion)
+        : new Date(existingStart.getTime() + 60 * 60 * 1000); // Default 1 hour if no estimatedCompletion
 
+      // Check for time overlap
+      return (
+        appointmentDateTime < existingEnd && estimatedCompletion > existingStart
+      );
+    });
+
+    const hasConflicts = actualConflicts.length > 0;
+
+    // Step 5: Return final result
     res.status(200).json({
       success: true,
       data: {
@@ -1057,9 +2067,38 @@ export const checkTechnicianAvailability = async (req, res) => {
           currentAppointments: technicianProfile.workload.current,
           capacity: technicianProfile.workload.capacity,
         },
-        conflictingAppointments: hasConflicts
-          ? conflictingAppointments.length
-          : 0,
+        slotInfo: {
+          totalSlots: availableSlots.length,
+          availableSlots: availableSlotsWithTechnician.length,
+          slotDetails: availableSlotsWithTechnician.map((slot) => ({
+            slotId: slot._id,
+            startTime: slot.startTime,
+            endTime: slot.endTime,
+            status: slot.status,
+            capacity: slot.capacity,
+            bookedCount: slot.bookedCount,
+            technicianCapacity:
+              slot.technicianAppointments.find(
+                (ta) => ta.technicianId.toString() === technicianId.toString()
+              )?.maxCapacity || 1,
+            technicianCurrentWorkload:
+              slot.technicianAppointments.find(
+                (ta) => ta.technicianId.toString() === technicianId.toString()
+              )?.currentWorkload || 0,
+          })),
+        },
+        conflictInfo: {
+          hasConflicts,
+          conflictingAppointments: hasConflicts ? actualConflicts.length : 0,
+          conflictDetails: hasConflicts
+            ? actualConflicts.map((conflict) => ({
+                appointmentNumber: conflict.appointmentNumber,
+                scheduledTime: conflict.scheduledTime,
+                estimatedCompletion: conflict.estimatedCompletion,
+                status: conflict.status,
+              }))
+            : [],
+        },
       },
     });
   } catch (error) {
@@ -1085,25 +2124,11 @@ const enhancedAvailabilityCheck = async (
   );
 
   const conflictQuery = {
-    serviceCenterId,
-    $or: [
-      {
-        scheduledDate: {
-          $gte: appointmentDateTime,
-          $lt: estimatedCompletion,
-        },
-      },
-      {
-        estimatedCompletion: {
-          $gt: appointmentDateTime,
-          $lte: estimatedCompletion,
-        },
-      },
-      {
-        scheduledDate: { $lte: appointmentDateTime },
-        estimatedCompletion: { $gte: estimatedCompletion },
-      },
-    ],
+    // serviceCenterId removed - single center architecture
+    scheduledDate: {
+      $gte: new Date(appointmentDateTime.toDateString()),
+      $lt: new Date(appointmentDateTime.getTime() + 24 * 60 * 60 * 1000), // Next day
+    },
     status: { $in: ["pending", "confirmed", "in_progress"] },
   };
 
@@ -1121,24 +2146,18 @@ const enhancedAvailabilityCheck = async (
 // Pre-validation endpoint for booking conflicts
 export const preValidateAvailability = async (req, res) => {
   try {
-    const {
-      serviceCenterId,
-      date,
-      time,
-      duration = 60,
-      technicianId,
-    } = req.query;
+    const { date, time, duration = 60, technicianId } = req.query;
 
-    if (!serviceCenterId || !date || !time) {
+    if (!date || !time) {
       return res.status(400).json({
         success: false,
-        message: "Service center ID, date, and time are required",
+        message: "Date and time are required",
       });
     }
 
-    // Check service center availability
+    // Check availability (single center - no service center filtering needed)
     const centerConflicts = await enhancedAvailabilityCheck(
-      serviceCenterId,
+      null,
       date,
       time,
       duration
@@ -1162,22 +2181,37 @@ export const preValidateAvailability = async (req, res) => {
 
     // Check technician availability if specified
     if (technicianId) {
+      const appointmentDateTime = new Date(`${date}T${time}`);
+      const estimatedCompletion = new Date(
+        appointmentDateTime.getTime() + duration * 60000
+      );
+
       const techConflicts = await Appointment.find({
         assignedTechnician: technicianId,
-        $or: [
-          {
-            scheduledDate: {
-              $gte: new Date(`${date}T${time}`),
-              $lt: new Date(
-                new Date(`${date}T${time}`).getTime() + duration * 60000
-              ),
-            },
-          },
-        ],
+        scheduledDate: {
+          $gte: new Date(appointmentDateTime.toDateString()),
+          $lt: new Date(appointmentDateTime.getTime() + 24 * 60 * 60 * 1000), // Next day
+        },
         status: { $in: ["pending", "confirmed", "in_progress"] },
       });
 
-      if (techConflicts.length > 0) {
+      // Filter for actual time conflicts
+      const actualConflicts = techConflicts.filter((existing) => {
+        const existingStart = new Date(
+          `${existing.scheduledDate}T${existing.scheduledTime}`
+        );
+        const existingEnd = existing.estimatedCompletion
+          ? new Date(existing.estimatedCompletion)
+          : new Date(existingStart.getTime() + 60 * 60 * 1000); // Default 1 hour if no estimatedCompletion
+
+        // Check for time overlap
+        return (
+          appointmentDateTime < existingEnd &&
+          estimatedCompletion > existingStart
+        );
+      });
+
+      if (actualConflicts.length > 0) {
         return res.status(409).json({
           success: false,
           message: "Technician is not available during this time slot",
@@ -1208,40 +2242,33 @@ export const preValidateAvailability = async (req, res) => {
 // @access  Private
 export const checkAvailability = async (req, res) => {
   try {
-    const { serviceCenterId, date, duration = 60 } = req.query;
+    const { date, duration = 60 } = req.query;
 
-    if (!serviceCenterId || !date) {
+    if (!date) {
       return res.status(400).json({
         success: false,
-        message: "Service center ID and date are required",
+        message: "Date is required",
       });
     }
 
-    // Single center architecture - use default service center data
-    const serviceCenter = {
-      name: "EV Service Center",
-      capacity: {
-        totalBays: 10,
-        availableBays: 8,
-        maxDailyAppointments: 50,
-      },
-      workingHours: {
-        monday: { open: "08:00", close: "18:00", isOpen: true },
-        tuesday: { open: "08:00", close: "18:00", isOpen: true },
-        wednesday: { open: "08:00", close: "18:00", isOpen: true },
-        thursday: { open: "08:00", close: "18:00", isOpen: true },
-        friday: { open: "08:00", close: "18:00", isOpen: true },
-        saturday: { open: "08:00", close: "16:00", isOpen: true },
-        sunday: { open: "09:00", close: "15:00", isOpen: false },
-      },
-    };
-
-    // Get working hours for the requested day
+    // Single center - use default working hours (assuming 8:00-17:00, Monday-Friday)
     const requestedDate = new Date(date);
     const dayOfWeek = requestedDate.toLocaleDateString("en-US", {
       weekday: "lowercase",
     });
-    const workingHours = serviceCenter.workingHours[dayOfWeek];
+
+    // Default working hours for single center
+    const defaultWorkingHours = {
+      monday: { isOpen: true, open: "08:00", close: "17:00" },
+      tuesday: { isOpen: true, open: "08:00", close: "17:00" },
+      wednesday: { isOpen: true, open: "08:00", close: "17:00" },
+      thursday: { isOpen: true, open: "08:00", close: "17:00" },
+      friday: { isOpen: true, open: "08:00", close: "17:00" },
+      saturday: { isOpen: false, open: "08:00", close: "17:00" },
+      sunday: { isOpen: false, open: "08:00", close: "17:00" },
+    };
+
+    const workingHours = defaultWorkingHours[dayOfWeek];
 
     if (!workingHours || !workingHours.isOpen) {
       return res.status(200).json({
@@ -1254,14 +2281,13 @@ export const checkAvailability = async (req, res) => {
       });
     }
 
-    // Get existing appointments for the date
+    // Get existing appointments for the date (single center - no serviceCenterId filter)
     const startOfDay = new Date(date);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
     const existingAppointments = await Appointment.find({
-      serviceCenterId,
       scheduledDate: {
         $gte: startOfDay,
         $lte: endOfDay,
@@ -1269,13 +2295,13 @@ export const checkAvailability = async (req, res) => {
       status: { $in: ["pending", "confirmed", "in_progress"] },
     }).select("scheduledTime estimatedCompletion");
 
-    // Generate available time slots
+    // Generate available time slots (assume default capacity of 4 bays)
     const availableSlots = generateTimeSlots(
       workingHours.open,
       workingHours.close,
       duration,
       existingAppointments,
-      serviceCenter.capacity.totalBays
+      4 // Default capacity for single center
     );
 
     res.status(200).json({
@@ -1328,10 +2354,9 @@ export const assignTechnician = async (req, res) => {
         0
       );
 
-      // Get technicians from the appointment's service center
+      // Get all technicians (single center - no service center filtering)
       const technicians = await User.find({
         role: "technician",
-        serviceCenterId: appointment.serviceCenterId,
         isActive: true,
       }).select("_id");
 
@@ -1406,12 +2431,14 @@ export const assignTechnician = async (req, res) => {
       });
     }
 
-    // Additional availability check
+    // Additional availability check - simplified to same date check
     const conflictingAppointments = await Appointment.find({
       assignedTechnician: selectedTechnicianId,
       scheduledDate: {
-        $gte: appointment.scheduledDate,
-        $lte: appointment.estimatedCompletion || appointment.scheduledDate,
+        $gte: new Date(appointment.scheduledDate.toDateString()),
+        $lt: new Date(
+          appointment.scheduledDate.getTime() + 24 * 60 * 60 * 1000
+        ), // Next day
       },
       status: { $in: ["confirmed", "in_progress"] },
       _id: { $ne: appointment._id },
@@ -1494,7 +2521,6 @@ export const getWorkQueue = async (req, res) => {
     const {
       status = "pending,confirmed",
       priority,
-      serviceCenterId,
       technicianId, // Add technician filter support
       dateRange = "today",
       page = 1,
@@ -1574,12 +2600,8 @@ export const getWorkQueue = async (req, res) => {
       filter.assignedTechnician = req.user._id;
     }
 
-    // Service center filter
-    if (serviceCenterId) {
-      filter.serviceCenterId = serviceCenterId;
-    } else if (req.user.role === "staff" && req.user.serviceCenterId) {
-      filter.serviceCenterId = req.user.serviceCenterId;
-    }
+    // Service center filter removed - single center architecture
+    // All staff can see all appointments
 
     // Build sort criteria
     let sortCriteria = {};
@@ -1618,7 +2640,6 @@ export const getWorkQueue = async (req, res) => {
         "vehicleId",
         "make model year vin color batteryType licensePlate"
       )
-      // serviceCenterId populate removed - single center architecture
       .populate(
         "services.serviceId",
         "name category basePrice estimatedDuration"
@@ -1660,14 +2681,8 @@ export const getWorkQueue = async (req, res) => {
             0
           );
 
-          // Filter technicians by service center
-          const centerTechnicians = availableTechnicians.filter(
-            (profile) =>
-              profile.technicianId.serviceCenterId &&
-              profile.technicianId.serviceCenterId.equals(
-                appointment.serviceCenterId._id
-              )
-          );
+          // All technicians available in single center architecture
+          const centerTechnicians = availableTechnicians;
 
           // Score and recommend technicians
           const recommendations = centerTechnicians
@@ -1924,15 +2939,11 @@ export const getPendingStaffConfirmation = async (req, res) => {
 
     let filter = { status: "pending" };
 
-    // Staff can only see appointments for their service center
-    if (req.user.role === "staff") {
-      filter.serviceCenterId = req.user.serviceCenterId;
-    }
+    // Staff can see all pending appointments in single center architecture
 
     const appointments = await Appointment.find(filter)
       .populate("customerId", "firstName lastName email phone")
       .populate("vehicleId", "make model year vin licensePlate")
-      // serviceCenterId populate removed - single center architecture
       .populate(
         "services.serviceId",
         "name category basePrice estimatedDuration"
@@ -2385,10 +3396,7 @@ export const getPendingReceptionApprovals = async (req, res) => {
       "submissionStatus.staffReviewStatus": "pending",
     };
 
-    // Filter by service center for staff
-    if (req.user.role === "staff") {
-      filter.serviceCenterId = req.user.serviceCenterId;
-    }
+    // Single center architecture - no service center filtering needed
 
     const pendingReceptions = await ServiceReception.find(filter)
       .populate(
@@ -2397,7 +3405,6 @@ export const getPendingReceptionApprovals = async (req, res) => {
       )
       .populate("customerId", "firstName lastName email phone")
       .populate("vehicleId", "make model year vin licensePlate")
-      // serviceCenterId populate removed - single center architecture
       .populate("submissionStatus.submittedBy", "firstName lastName")
       .populate("bookedServices.serviceId", "name category basePrice")
       .populate(

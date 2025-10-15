@@ -1,5 +1,6 @@
 import React from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import CancelRequestManagement from "./CancelRequestManagement";
 
 interface AppointmentDetailsProps {
   appointment: any;
@@ -23,6 +24,9 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
       completed: "bg-green-100 text-green-800",
       invoiced: "bg-gray-100 text-gray-800",
       cancelled: "bg-red-100 text-red-800",
+      cancel_requested: "bg-orange-100 text-orange-800",
+      cancel_approved: "bg-yellow-100 text-yellow-800",
+      cancel_refunded: "bg-green-100 text-green-800",
     };
     return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800";
   };
@@ -83,9 +87,26 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                 {appointment.status === "in_progress" && "Đang thực hiện"}
                 {appointment.status === "completed" && "Hoàn thành"}
                 {appointment.status === "invoiced" && "Đã xuất hóa đơn"}
-                {appointment.status === "cancelled" && "Đã hủy"}
+                {appointment.status === "cancelled" &&
+                  (appointment.cancelRequest?.refundProcessedAt
+                    ? "Đã hủy và hoàn tiền"
+                    : "Đã hủy")}
+                {appointment.status === "cancel_requested" && "Yêu cầu hủy"}
+                {appointment.status === "cancel_approved" && "Đã duyệt hủy"}
+                {appointment.status === "cancel_refunded" && "Đã hoàn tiền"}
               </span>
             </div>
+
+            {/* Cancel Request Management */}
+            {(appointment.status === "cancel_requested" ||
+              appointment.status === "cancel_approved" ||
+              (appointment.status === "cancelled" &&
+                appointment.cancelRequest)) && (
+              <CancelRequestManagement
+                appointment={appointment}
+                onUpdate={_onUpdate}
+              />
+            )}
 
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

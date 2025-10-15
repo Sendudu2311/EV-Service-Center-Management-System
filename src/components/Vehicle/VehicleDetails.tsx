@@ -393,22 +393,6 @@ const VehicleDetails: React.FC<VehicleDetailsProps> = ({
                       </div>
                     )}
                   </div>
-
-                  {/* Quick Actions */}
-                  <div className="bg-white rounded-lg border p-4">
-                    <h4 className="text-sm font-medium text-gray-900 mb-3">Quick Actions</h4>
-                    <div className="space-y-2">
-                      <button className="w-full bg-blue-600 text-white px-3 py-2 rounded-md text-sm hover:bg-blue-500">
-                        Book Maintenance
-                      </button>
-                      <button className="w-full bg-gray-100 text-gray-700 px-3 py-2 rounded-md text-sm hover:bg-gray-200">
-                        View Full History
-                      </button>
-                      <button className="w-full bg-gray-100 text-gray-700 px-3 py-2 rounded-md text-sm hover:bg-gray-200">
-                        Download Reports
-                      </button>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>

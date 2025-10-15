@@ -1,4 +1,3 @@
-import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -28,6 +27,8 @@ import InvoicesPage from "./pages/InvoicesPage";
 import PaymentResult from "./pages/PaymentResult";
 import CustomerTransactionsPage from "./pages/CustomerTransactionsPage";
 import StaffTransactionsPage from "./pages/StaffTransactionsPage";
+import SlotManagerPage from "./pages/SlotManagerPage";
+import TechnicianSlotsPage from "./pages/TechnicianSlotsPage";
 
 function App() {
   return (
@@ -97,6 +98,15 @@ function App() {
                   }
                 />
 
+                <Route
+                  path="/slots"
+                  element={
+                    <ProtectedRoute roles={["staff", "admin"]}>
+                      <SlotManagerPage />
+                    </ProtectedRoute>
+                  }
+                />
+
                 {/* Staff/Admin vehicle management */}
                 <Route
                   path="/manage-vehicles"
@@ -113,6 +123,15 @@ function App() {
                   element={
                     <ProtectedRoute roles={["technician"]}>
                       <WorkQueuePage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                <Route
+                  path="/my-slots"
+                  element={
+                    <ProtectedRoute roles={["technician"]}>
+                      <TechnicianSlotsPage />
                     </ProtectedRoute>
                   }
                 />
@@ -224,10 +243,7 @@ function App() {
                 />
 
                 {/* Payment Result */}
-                <Route
-                  path="/payment/result"
-                  element={<PaymentResult />}
-                />
+                <Route path="/payment/result" element={<PaymentResult />} />
 
                 {/* VNPay Return URL */}
                 <Route

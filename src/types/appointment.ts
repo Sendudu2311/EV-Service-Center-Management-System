@@ -14,6 +14,9 @@ export type DetailedAppointmentStatus =
   | "completed"
   | "invoiced"
   | "cancelled"
+  | "cancel_requested"
+  | "cancel_approved"
+  | "cancel_refunded"
   | "no_show";
 
 export type CoreAppointmentStatus =
@@ -122,6 +125,19 @@ export interface AppointmentService {
   notes?: string;
 }
 
+export interface CancelRequest {
+  requestedAt: string;
+  requestedBy: string;
+  reason: string;
+  refundPercentage: number;
+  approvedAt?: string;
+  approvedBy?: string;
+  approvedNotes?: string;
+  refundProcessedAt?: string;
+  refundProcessedBy?: string;
+  refundTransactionId?: string;
+}
+
 export interface Appointment {
   _id: string;
   appointmentNumber: string;
@@ -189,6 +205,9 @@ export interface Appointment {
   isUrgent: boolean;
   requiresApproval: boolean;
   isApproved: boolean;
+
+  // Cancel Request
+  cancelRequest?: CancelRequest;
 
   // Timestamps
   createdAt: string;
@@ -261,13 +280,13 @@ export const statusTransitions: StatusTransition[] = [
   {
     from: "confirmed",
     to: "cancelled",
-    allowedRoles: ["customer", "staff", "admin"],
+    allowedRoles: ["staff", "admin"], // Only staff/admin can directly cancel
   },
   { from: "confirmed", to: "no_show", allowedRoles: ["staff", "admin"] },
   {
     from: "confirmed",
     to: "rescheduled",
-    allowedRoles: ["customer", "staff", "admin"],
+    allowedRoles: ["staff", "admin"], // Only staff/admin can directly reschedule
   },
   {
     from: "customer_arrived",
@@ -336,6 +355,9 @@ export const getCorStatus = (
     completed: "ReadyForPickup",
     invoiced: "ReadyForPickup",
     cancelled: "Closed",
+    cancel_requested: "Closed",
+    cancel_approved: "Closed",
+    cancel_refunded: "Closed",
     no_show: "Closed",
   };
 
@@ -384,6 +406,9 @@ export const appointmentStatusTranslations: Record<
   completed: "Hoàn thành",
   invoiced: "Đã xuất hóa đơn",
   cancelled: "Đã hủy",
+  cancel_requested: "Yêu cầu hủy",
+  cancel_approved: "Đã duyệt hủy",
+  cancel_refunded: "Đã hoàn tiền",
   no_show: "Khách không đến",
 };
 
