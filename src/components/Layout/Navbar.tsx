@@ -46,6 +46,8 @@ const Navbar: React.FC = () => {
           ...baseLinks,
           { name: "My Vehicles", href: "/vehicles" },
           { name: "Appointments", href: "/appointments" },
+          { name: "Services", href: "/customer-services" },
+          { name: "Parts", href: "/customer-parts" },
           { name: "Transactions", href: "/transactions" },
           { name: "Service History", href: "/service-history" },
         ];
@@ -58,6 +60,7 @@ const Navbar: React.FC = () => {
           { name: "Parts", href: "/parts" },
           { name: "Vehicles", href: "/manage-vehicles" },
           { name: "Appointments", href: "/appointments" },
+          { name: "Contacts", href: "/manage-contacts" },
           { name: "Transactions", href: "/manage-transactions" },
         ];
       case "technician":
@@ -75,6 +78,7 @@ const Navbar: React.FC = () => {
           { name: "Users", href: "/users" },
           { name: "Vehicles", href: "/manage-vehicles" },
           { name: "Service Centers", href: "/service-centers" },
+          { name: "Contacts", href: "/manage-contacts" },
           { name: "Transactions", href: "/manage-transactions" },
           { name: "Reports", href: "/admin/reports" },
         ];
