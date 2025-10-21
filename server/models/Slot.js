@@ -218,15 +218,13 @@ slotSchema.methods.isTechnicianAvailableOptimized = async function (
     const technicianIndex = this.technicianIds.findIndex(
       (id) => id.toString() === technicianId.toString()
     );
-    // Fix: If remainingCapacity >= totalTechnicians, all technicians are available
-    // If remainingCapacity < totalTechnicians, only first N technicians are available
-    // But in practice, if there's any remaining capacity, at least one technician should be available
-    if (remainingCapacity >= totalTechnicians) {
-      maxCapacity = 1; // All technicians can take 1 slot
+
+    // Only allow technicians with index < remainingCapacity to be available
+    // This ensures only the first N technicians are available for remaining slots
+    if (technicianIndex < remainingCapacity) {
+      maxCapacity = 1; // This technician can take 1 remaining slot
     } else {
-      // For remaining slots, give priority to technicians with lower index
-      // But if there's any remaining capacity, make sure at least one technician is available
-      maxCapacity = 1; // Allow all technicians to compete for remaining slots
+      maxCapacity = 0; // This technician is not available for remaining slots
     }
   }
 
@@ -341,8 +339,13 @@ slotSchema.methods.getTechnicianWorkloadInSlot = async function (technicianId) {
     const technicianIndex = this.technicianIds.findIndex(
       (id) => id.toString() === technicianId.toString()
     );
+
+    // Only allow technicians with index < remainingCapacity to be available
+    // This ensures only the first N technicians are available for remaining slots
     if (technicianIndex < remainingCapacity) {
       maxCapacity = 1; // This technician can take 1 remaining slot
+    } else {
+      maxCapacity = 0; // This technician is not available for remaining slots
     }
   }
 

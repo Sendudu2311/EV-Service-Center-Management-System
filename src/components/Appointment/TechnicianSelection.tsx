@@ -1,10 +1,7 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
-import {
-  MagnifyingGlassIcon,
-  AdjustmentsHorizontalIcon,
-} from "@heroicons/react/24/outline";
+// Removed filter icons - simplified interface
 import TechnicianCard from "./TechnicianCard";
 
 interface Technician {
@@ -66,56 +63,41 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
   selectedSlotId,
   estimatedDuration = 60,
 }) => {
+  // Debug: Log when component re-renders
+  console.log("🔄 [TechnicianSelection] Component re-rendered with props:", {
+    selectedTechnicianId,
+    appointmentDate,
+    appointmentTime,
+    selectedSlotId,
+    disabled,
+  });
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [loading, setLoading] = useState(false);
   const [technicianAvailability, setTechnicianAvailability] = useState<
     Record<string, boolean>
   >({});
-  const [filter, setFilter] = useState({
-    availability: "",
-    specialization: "",
-    search: "",
-  });
-  const [showFilters, setShowFilters] = useState(false);
+  // Removed filter state - simplified interface
 
   // Extract service categories for filtering (memoized to prevent unnecessary re-renders)
   const serviceCategories = useMemo(() => {
-    return selectedServices
+    const categories = selectedServices
       .map((service) => service.category)
       .filter(
         (category): category is string =>
           category !== undefined && category !== null && category !== ""
       )
       .filter((category, index, array) => array.indexOf(category) === index);
+
+    console.log(
+      "🔧 [TechnicianSelection] serviceCategories memoized:",
+      categories
+    );
+    return categories;
   }, [selectedServices]);
 
-  // Individual technician availability check (for real-time validation during selection)
-  const checkTechnicianAvailability = async (technicianId: string) => {
-    if (!appointmentDate || !appointmentTime) {
-      return true; // If no date/time selected, assume available
-    }
+  // Removed individual technician availability check - not needed since technicians are pre-filtered by API
 
-    try {
-      const response = await api.get(
-        "/api/appointments/technician-availability",
-        {
-          params: {
-            technicianId,
-            date: appointmentDate,
-            time: appointmentTime,
-            duration: estimatedDuration,
-          },
-        }
-      );
-
-      return response.data.success && response.data.data.available;
-    } catch (error) {
-      console.error("Error checking technician availability:", error);
-      return false;
-    }
-  };
-
-  const fetchTechnicians = async () => {
+  const fetchTechnicians = useCallback(async () => {
     // Log: Check if required parameters are present
     console.log("🔍 [TechnicianSelection] fetchTechnicians called");
     console.log("📅 [TechnicianSelection] appointmentDate:", appointmentDate);
@@ -128,7 +110,12 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
       "⏱️ [TechnicianSelection] estimatedDuration:",
       estimatedDuration
     );
-    console.log("🔍 [TechnicianSelection] filter:", filter);
+    console.log("🎯 [TechnicianSelection] selectedSlotId:", selectedSlotId);
+    console.log(
+      "👤 [TechnicianSelection] selectedTechnicianId:",
+      selectedTechnicianId
+    );
+    // Removed filter logging - simplified interface
 
     if (!appointmentDate || !appointmentTime) {
       console.warn(
@@ -229,7 +216,7 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
         );
 
         if (response.data.success) {
-          techniciansData = response.data.data;
+          techniciansData = response.data;
           console.log(
             "✅ [TechnicianSelection] Successfully fetched technicians:",
             response.data.data.length
@@ -288,63 +275,35 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
     } finally {
       setLoading(false);
     }
-  };
-
-  // Memoize service categories string to prevent unnecessary API calls
-  const serviceCategoriesString = useMemo(() => {
-    return serviceCategories.sort().join(",");
-  }, [serviceCategories]);
-
-  useEffect(() => {
-    fetchTechnicians();
   }, [
     appointmentDate,
     appointmentTime,
     estimatedDuration,
-    filter.availability,
-    filter.specialization,
-    serviceCategoriesString,
+    serviceCategories,
+    selectedSlotId,
+    // Note: selectedTechnicianId is intentionally not included as it shouldn't trigger refetch
   ]);
 
-  const filteredTechnicians = useMemo(() => {
-    if (!technicians || technicians.length === 0) {
-      return [];
-    }
+  // Removed serviceCategoriesString - no longer needed without filters
 
-    return technicians.filter((technician) => {
-      // Search filter
-      if (filter.search) {
-        const searchLower = filter.search.toLowerCase();
-        if (
-          !technician.name?.toLowerCase().includes(searchLower) &&
-          !technician.specializations?.some((spec) =>
-            spec?.toLowerCase().includes(searchLower)
-          )
-        ) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }, [technicians, filter.search]);
+  useEffect(() => {
+    console.log(
+      "🔄 [TechnicianSelection] useEffect triggered - calling fetchTechnicians"
+    );
+    fetchTechnicians();
+  }, [fetchTechnicians]);
 
-  const handleTechnicianSelect = async (technicianId: string) => {
+  // Removed filtering - show all available technicians
+  const filteredTechnicians = technicians;
+
+  const handleTechnicianSelect = (technicianId: string) => {
     if (disabled) return;
 
     if (selectedTechnicianId === technicianId) {
       // Deselect if clicking the same technician
       onTechnicianSelect(null);
     } else {
-      // Check availability before selecting
-      if (appointmentDate && appointmentTime) {
-        const isAvailable = await checkTechnicianAvailability(technicianId);
-        if (!isAvailable) {
-          toast.error(
-            "This technician is not available at the selected time. Please choose a different time or technician."
-          );
-          return;
-        }
-      }
+      // Directly select technician - no need for additional API call since technicians are pre-filtered
       onTechnicianSelect(technicianId);
     }
   };
@@ -400,90 +359,7 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
         )}
       </div>
 
-      {/* Search and Filters */}
-      <div className="space-y-3">
-        <div className="flex items-center space-x-3">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search technicians..."
-              value={filter.search}
-              onChange={(e) =>
-                setFilter((prev) => ({ ...prev, search: e.target.value }))
-              }
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          {/* Filter Toggle */}
-          <button
-            type="button"
-            onClick={() => setShowFilters(!showFilters)}
-            className={`p-2 rounded-lg border ${
-              showFilters
-                ? "border-blue-500 bg-blue-50 text-blue-600"
-                : "border-gray-300 text-gray-600 hover:bg-gray-50"
-            }`}
-          >
-            <AdjustmentsHorizontalIcon className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Filter Panel */}
-        {showFilters && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Availability
-              </label>
-              <select
-                value={filter.availability}
-                onChange={(e) =>
-                  setFilter((prev) => ({
-                    ...prev,
-                    availability: e.target.value,
-                  }))
-                }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All</option>
-                <option value="available">Available</option>
-                <option value="busy">Busy</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Specialization
-              </label>
-              <select
-                value={filter.specialization}
-                onChange={(e) =>
-                  setFilter((prev) => ({
-                    ...prev,
-                    specialization: e.target.value,
-                  }))
-                }
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All</option>
-                {serviceCategories.map((category) => (
-                  <option key={category} value={category}>
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
-                  </option>
-                ))}
-                <option value="battery">Battery</option>
-                <option value="motor">Motor</option>
-                <option value="charging">Charging</option>
-                <option value="electronics">Electronics</option>
-                <option value="general">General</option>
-              </select>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Removed search and filters - simplified interface */}
 
       {/* Technicians Grid */}
       {loading ? (
@@ -544,14 +420,11 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
             </svg>
           </div>
           <p className="text-lg font-medium text-gray-900 mb-2">
-            {filter.search || filter.availability || filter.specialization
-              ? "No technicians match your search criteria."
-              : "No technicians available for this time slot."}
+            No technicians available for this time slot.
           </p>
           <p className="text-sm">
-            {!filter.search && !filter.availability && !filter.specialization
-              ? "Please try selecting a different date or time, or let us automatically assign the best available technician."
-              : "Try adjusting your search filters or selecting a different time slot."}
+            Please try selecting a different date or time, or let us
+            automatically assign the best available technician.
           </p>
         </div>
       )}

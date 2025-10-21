@@ -1347,7 +1347,10 @@ export const getAvailableTechniciansOptimized = async (req, res) => {
       const slotAvailableTechnicians =
         await slot.getAvailableTechniciansOptimized();
 
-      for (const technicianId of slotAvailableTechnicians) {
+      for (const technicianData of slotAvailableTechnicians) {
+        // Extract technicianId from the returned object
+        const technicianId = technicianData._id || technicianData;
+
         // Get technician profile
         const technicianProfile = await TechnicianProfile.findOne({
           technicianId: technicianId,

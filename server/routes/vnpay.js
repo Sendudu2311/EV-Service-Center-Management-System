@@ -152,4 +152,15 @@ router.post(
  */
 router.get("/transactions/all", protect, vnpayController.getAllTransactions);
 
+/**
+ * @route   PUT /api/vnpay/update-transaction-appointment
+ * @desc    Update transaction with appointment ID after appointment creation
+ * @access  Private
+ */
+router.put(
+  "/update-transaction-appointment",
+  protect,
+  vnpayController.updateTransactionAppointmentId
+);
+
 export default router;

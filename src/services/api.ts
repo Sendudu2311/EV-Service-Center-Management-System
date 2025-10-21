@@ -842,6 +842,16 @@ export const vnpayAPI = {
 
   cleanupExpiredTransactions: () =>
     api.post<ApiResponse<any>>("/api/vnpay/transactions/cleanup-expired"),
+
+  // Update transaction with appointment ID after appointment creation
+  updateTransactionAppointmentId: (data: {
+    transactionRef: string;
+    appointmentId: string;
+  }) =>
+    api.put<ApiResponse<any>>(
+      "/api/vnpay/update-transaction-appointment",
+      data
+    ),
 };
 
 // Chatbot API

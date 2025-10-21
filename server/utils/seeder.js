@@ -368,6 +368,49 @@ const createServices = async () => {
         tags: ["maintenance", "basic", "routine", "inspection", "vietnamese"],
       },
       {
+        name: "Đặt lịch kiểm tra",
+        code: "BOOK001",
+        description:
+          "Dịch vụ đặt lịch kiểm tra tổng quát xe điện - kiểm tra sơ bộ và tư vấn",
+        category: "general",
+        subcategory: "inspection",
+        basePrice: 200000,
+        estimatedDuration: 60,
+        skillLevel: "basic",
+        requiredCertifications: ["General EV Maintenance"],
+        checklist: [
+          {
+            step: "Kiểm tra tổng quát xe",
+            category: "preparation",
+            isRequired: true,
+            estimatedTime: 15,
+          },
+          {
+            step: "Kiểm tra hệ thống pin",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 20,
+          },
+          {
+            step: "Kiểm tra hệ thống sạc",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 15,
+          },
+          {
+            step: "Kiểm tra hệ thống phanh",
+            category: "safety",
+            isRequired: true,
+            estimatedTime: 10,
+          },
+        ],
+        warranty: {
+          duration: 30,
+          description: "30 ngày bảo hành cho dịch vụ kiểm tra",
+        },
+        tags: ["booking", "inspection", "consultation", "vietnamese"],
+      },
+      {
         name: "Annual Maintenance",
         code: "GEN001",
         description: "Comprehensive annual maintenance service",

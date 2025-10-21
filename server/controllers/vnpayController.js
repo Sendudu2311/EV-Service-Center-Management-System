@@ -85,7 +85,7 @@ export const createPayment = async (req, res, next) => {
       orderInfo: paymentParams.vnp_OrderInfo,
       orderType: paymentParams.vnp_OrderType,
       userId: user._id,
-      appointmentId: appointmentData?.appointmentId || null,
+      appointmentId: appointmentData?.appointmentId || null, // Will be updated after appointment creation
       amount: amount,
       currency: paymentParams.vnp_CurrCode,
       status: "pending",
@@ -804,6 +804,64 @@ export const verifyAppointmentPayment = async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+};
+
+/**
+ * Update transaction with appointment ID after appointment creation
+ */
+export const updateTransactionAppointmentId = async (req, res) => {
+  try {
+    const { transactionRef, appointmentId } = req.body;
+
+    if (!transactionRef || !appointmentId) {
+      return res.status(400).json({
+        success: false,
+        message: "Transaction reference and appointment ID are required",
+      });
+    }
+
+    // Update the VNPay transaction record
+    const transaction = await VNPAYTransaction.findOneAndUpdate(
+      { transactionRef },
+      {
+        appointmentId: appointmentId,
+        updatedAt: new Date(),
+      },
+      { new: true }
+    );
+
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        message: "Transaction not found",
+      });
+    }
+
+    // Also update the global pending payment if it exists
+    if (global.pendingPayments && global.pendingPayments[transactionRef]) {
+      global.pendingPayments[transactionRef].appointmentId = appointmentId;
+    }
+
+    console.log(
+      `✅ [VNPay] Updated transaction ${transactionRef} with appointment ID ${appointmentId}`
+    );
+
+    res.json({
+      success: true,
+      message: "Transaction updated successfully",
+      data: {
+        transactionRef,
+        appointmentId,
+        updatedAt: transaction.updatedAt,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating transaction appointment ID:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error updating transaction",
+    });
   }
 };
 
