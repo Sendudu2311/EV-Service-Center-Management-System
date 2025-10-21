@@ -62,7 +62,7 @@ const createServices = async () => {
         category: "battery",
         subcategory: "diagnostic",
         basePrice: 200000,
-        estimatedDuration: 60,
+        estimatedDuration: 15,
         skillLevel: "intermediate",
         requiredCertifications: ["EV Battery Certification"],
         checklist: [
@@ -98,7 +98,7 @@ const createServices = async () => {
         category: "battery",
         subcategory: "replacement",
         basePrice: 15000000,
-        estimatedDuration: 240,
+        estimatedDuration: 30,
         skillLevel: "expert",
         requiredCertifications: [
           "EV Battery Certification",
@@ -145,7 +145,7 @@ const createServices = async () => {
         category: "motor",
         subcategory: "diagnostic",
         basePrice: 300000,
-        estimatedDuration: 90,
+        estimatedDuration: 15,
         skillLevel: "intermediate",
         requiredCertifications: ["EV Motor Systems"],
         checklist: [
@@ -181,7 +181,7 @@ const createServices = async () => {
         category: "motor",
         subcategory: "repair",
         basePrice: 2500000,
-        estimatedDuration: 300,
+        estimatedDuration: 30,
         skillLevel: "expert",
         requiredCertifications: ["EV Motor Systems", "Advanced Electrical"],
         checklist: [
@@ -219,7 +219,7 @@ const createServices = async () => {
         category: "charging",
         subcategory: "diagnostic",
         basePrice: 250000,
-        estimatedDuration: 75,
+        estimatedDuration: 15,
         skillLevel: "intermediate",
         requiredCertifications: ["EV Charging Systems"],
         checklist: [
@@ -255,7 +255,7 @@ const createServices = async () => {
         category: "charging",
         subcategory: "repair",
         basePrice: 800000,
-        estimatedDuration: 120,
+        estimatedDuration: 30,
         skillLevel: "intermediate",
         requiredCertifications: ["EV Charging Systems"],
         checklist: [
@@ -293,7 +293,7 @@ const createServices = async () => {
         category: "electronics",
         subcategory: "diagnostic",
         basePrice: 350000,
-        estimatedDuration: 90,
+        estimatedDuration: 15,
         skillLevel: "advanced",
         requiredCertifications: ["EV Electronics", "Automotive Diagnostics"],
         checklist: [
@@ -331,7 +331,7 @@ const createServices = async () => {
         category: "general",
         subcategory: "maintenance",
         basePrice: 800000,
-        estimatedDuration: 180,
+        estimatedDuration: 30,
         skillLevel: "intermediate",
         requiredCertifications: ["General EV Maintenance"],
         checklist: [
@@ -373,7 +373,7 @@ const createServices = async () => {
         category: "general",
         subcategory: "inspection",
         basePrice: 500000,
-        estimatedDuration: 120,
+        estimatedDuration: 15,
         skillLevel: "advanced",
         requiredCertifications: ["EV Inspector Certification"],
         checklist: [
@@ -411,7 +411,7 @@ const createServices = async () => {
         category: "electronics",
         subcategory: "update",
         basePrice: 150000,
-        estimatedDuration: 45,
+        estimatedDuration: 30,
         skillLevel: "basic",
         requiredCertifications: ["EV Software Systems"],
         checklist: [
@@ -447,7 +447,7 @@ const createServices = async () => {
         category: "battery",
         subcategory: "diagnostic",
         basePrice: 180000,
-        estimatedDuration: 60,
+        estimatedDuration: 15,
         skillLevel: "intermediate",
         requiredCertifications: ["EV Cooling Systems"],
         checklist: [
@@ -483,7 +483,7 @@ const createServices = async () => {
         category: "diagnostic",
         subcategory: "inspection",
         basePrice: 220000,
-        estimatedDuration: 90,
+        estimatedDuration: 15,
         skillLevel: "expert",
         requiredCertifications: ["High Voltage Safety", "EV Safety Inspector"],
         checklist: [
@@ -520,7 +520,7 @@ const createServices = async () => {
         category: "electronics",
         subcategory: "calibration",
         basePrice: 280000,
-        estimatedDuration: 75,
+        estimatedDuration: 30,
         skillLevel: "advanced",
         requiredCertifications: ["EV Braking Systems", "Advanced Diagnostics"],
         checklist: [
@@ -556,7 +556,7 @@ const createServices = async () => {
         category: "charging",
         subcategory: "maintenance",
         basePrice: 320000,
-        estimatedDuration: 100,
+        estimatedDuration: 30,
         skillLevel: "advanced",
         requiredCertifications: ["DC Charging Systems", "High Current Safety"],
         checklist: [
@@ -593,7 +593,7 @@ const createServices = async () => {
         category: "charging",
         subcategory: "installation",
         basePrice: 850000,
-        estimatedDuration: 180,
+        estimatedDuration: 30,
         skillLevel: "expert",
         requiredCertifications: [
           "V2G Systems",
@@ -633,7 +633,7 @@ const createServices = async () => {
         category: "general",
         subcategory: "consultation",
         basePrice: 400000,
-        estimatedDuration: 120,
+        estimatedDuration: 30,
         skillLevel: "expert",
         requiredCertifications: [
           "EV Conversion Specialist",
@@ -672,7 +672,7 @@ const createServices = async () => {
         category: "charging",
         subcategory: "installation",
         basePrice: 1200000,
-        estimatedDuration: 240,
+        estimatedDuration: 30,
         skillLevel: "expert",
         requiredCertifications: [
           "Wireless Charging Systems",
@@ -3365,12 +3365,12 @@ const createAppointments = async (
   }
 };
 
-// Create sample slots for testing
+// Create sample slots for testing - generates slots for next 7 days
 const createSlots = async (users) => {
   try {
     const technicians = users.filter((u) => u.role === "technician");
 
-    // Create slots for the next 7 days, 4 slots per day
+    // Create slots for the next 7 days (starting tomorrow), 4 slots per day
     const slots = [];
     const now = new Date();
 
