@@ -233,15 +233,88 @@ const getTechName = (slot: any) => {
     }
   };
 
+  const handleAutoAssignAll = async () => {
+    try {
+      // Get all available technician IDs
+      const allTechnicianIds = technicians.map(t => t.technicianId?._id || t._id);
+      
+      if (allTechnicianIds.length === 0) {
+        return toast.error('No technicians available');
+      }
+
+      const capacity = allTechnicianIds.length;
+      const days = getWeekDates();
+      let successCount = 0;
+      let errorCount = 0;
+
+      toast.loading('Assigning technicians to all slots...');
+
+      // Assign to all day/time combinations
+      for (const date of days) {
+        for (const [start] of slotRanges) {
+          try {
+            await handleAssign(date, start, allTechnicianIds, capacity);
+            successCount++;
+          } catch (err) {
+            console.error(`Failed to assign ${date} ${start}:`, err);
+            errorCount++;
+          }
+        }
+      }
+
+      toast.dismiss();
+      
+      if (errorCount === 0) {
+        toast.success(`Successfully assigned all technicians to ${successCount} slots!`);
+      } else {
+        toast.success(`Assigned to ${successCount} slots. ${errorCount} failed.`);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.dismiss();
+      toast.error('Auto assign all failed');
+    }
+  };
+
   const days = getWeekDates();
 
   return (
     <div className="p-4">
       <h3 className="text-lg font-semibold mb-4">Slot Manager — Weekly Timetable</h3>
 
-      <div className="flex items-center gap-4 mb-4">
-        <label className="text-sm text-gray-600">Week start (Mon)</label>
-        <input type="date" value={weekStart} onChange={(e)=>setWeekStart(e.target.value)} className="rounded-md border-gray-300" />
+      <div className="flex items-center gap-4 mb-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Week start (Mon)</label>
+          <input 
+            type="date" 
+            value={weekStart} 
+            onChange={(e) => {
+              const selectedDate = new Date(e.target.value);
+              const day = selectedDate.getDay();
+              
+              // Only allow Monday selection (day === 1)
+              if (day === 1) {
+                setWeekStart(e.target.value);
+              } else {
+                // Find the nearest Monday
+                const diff = day === 0 ? -6 : 1 - day; // If Sunday (0), go back 6 days; otherwise go to previous/next Monday
+                const monday = new Date(selectedDate);
+                monday.setDate(selectedDate.getDate() + diff);
+                setWeekStart(monday.toISOString().slice(0, 10));
+                toast.info('Only Monday can be selected. Adjusted to nearest Monday.');
+              }
+            }}
+            className="rounded-md border-gray-300" 
+          />
+        </div>
+        
+        <button
+          onClick={handleAutoAssignAll}
+          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium text-sm flex items-center gap-2"
+        >
+          
+          Auto Assign For Entire Week
+        </button>
       </div>
 
       <div className="overflow-auto border rounded-md bg-white">

@@ -23,12 +23,23 @@ import UsersPage from "./pages/UsersPage";
 import ServiceReceptionPage from "./pages/ServiceReceptionPage";
 import PartsPage from "./pages/PartsPage";
 import ServicesPage from "./pages/ServicesPage";
+import CustomerServicesPage from "./pages/CustomerServicesPage";
+import CustomerPartsPage from "./pages/CustomerPartsPage";
+import ServiceHistoryPage from "./pages/ServiceHistoryPage";
 import InvoicesPage from "./pages/InvoicesPage";
 import PaymentResult from "./pages/PaymentResult";
 import CustomerTransactionsPage from "./pages/CustomerTransactionsPage";
 import StaffTransactionsPage from "./pages/StaffTransactionsPage";
 import SlotManagerPage from "./pages/SlotManagerPage";
 import TechnicianSlotsPage from "./pages/TechnicianSlotsPage";
+import AboutPage from "./pages/AboutPage";
+import ContactPage from "./pages/ContactPage";
+import HelpPage from "./pages/HelpPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsOfServicePage from "./pages/TermsOfServicePage";
+import SecurityPage from "./pages/SecurityPage";
+import CareersPage from "./pages/CareersPage";
+import ContactManagementPage from "./pages/ContactManagementPage";
 
 function App() {
   return (
@@ -47,6 +58,15 @@ function App() {
                   path="/reset-password/:resetToken"
                   element={<ResetPassword />}
                 />
+
+                {/* Static pages */}
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/contact" element={<ContactPage />} />
+                <Route path="/help" element={<HelpPage />} />
+                <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                <Route path="/terms" element={<TermsOfServicePage />} />
+                <Route path="/security" element={<SecurityPage />} />
+                <Route path="/careers" element={<CareersPage />} />
 
                 {/* Protected routes */}
                 <Route
@@ -74,6 +94,36 @@ function App() {
                   element={
                     <ProtectedRoute roles={["customer"]}>
                       <CustomerTransactionsPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Customer Services Catalog */}
+                <Route
+                  path="/customer-services"
+                  element={
+                    <ProtectedRoute roles={["customer"]}>
+                      <CustomerServicesPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Customer Parts Catalog */}
+                <Route
+                  path="/customer-parts"
+                  element={
+                    <ProtectedRoute roles={["customer"]}>
+                      <CustomerPartsPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Service History */}
+                <Route
+                  path="/service-history"
+                  element={
+                    <ProtectedRoute roles={["customer"]}>
+                      <ServiceHistoryPage />
                     </ProtectedRoute>
                   }
                 />
@@ -182,6 +232,16 @@ function App() {
                   element={
                     <ProtectedRoute roles={["staff", "admin"]}>
                       <StaffTransactionsPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Contact Management */}
+                <Route
+                  path="/manage-contacts"
+                  element={
+                    <ProtectedRoute roles={["staff", "admin"]}>
+                      <ContactManagementPage />
                     </ProtectedRoute>
                   }
                 />

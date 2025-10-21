@@ -23,6 +23,7 @@ import serviceReceptionRoutes from "./routes/serviceReception.js";
 import vnpayRoutes from "./routes/vnpay.js";
 import slotRoutes from "./routes/slots.js";
 import chatbotRoutes from "./routes/chatbot.js";
+import contactRoutes from "./routes/contacts.js";
 
 // Import error handler
 import { globalErrorHandler } from "./utils/response.js";
@@ -105,6 +106,7 @@ app.use("/api/service-receptions", serviceReceptionRoutes);
 app.use("/api/vnpay", vnpayRoutes);
 app.use("/api/slots", slotRoutes);
 app.use("/api/chatbot", chatbotRoutes);
+app.use("/api/contacts", contactRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

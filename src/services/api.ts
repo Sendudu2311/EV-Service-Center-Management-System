@@ -880,4 +880,50 @@ export const chatbotAPI = {
     >("/api/chatbot/clear"),
 };
 
+// Contacts API
+export const contactsAPI = {
+  // Public endpoint for creating contact messages (no auth required)
+  create: (contactData: {
+    name: string;
+    email: string;
+    subject: "service" | "appointment" | "parts" | "warranty" | "feedback" | "other";
+    message: string;
+  }) =>
+    api.post<ApiResponse<any>>("/api/contacts", contactData, {
+      headers: {
+        "Content-Type": "application/json",
+        // Explicitly remove Authorization header for public endpoint
+        Authorization: undefined,
+      },
+    }).catch(handleApiError),
+
+  // Staff/Admin endpoints
+  getAll: (params?: {
+    status?: "all" | "open" | "in-progress" | "closed";
+    assignedTo?: string;
+    subject?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+  }) =>
+    api.get<ApiResponse<any>>("/api/contacts", { params }).catch(handleApiError),
+
+  getById: (id: string) =>
+    api.get<ApiResponse<any>>(`/api/contacts/${id}`).catch(handleApiError),
+
+  updateStatus: (id: string, statusData: {
+    status?: "open" | "in-progress" | "closed";
+    assignedTo?: string | null;
+  }) =>
+    api.put<ApiResponse<any>>(`/api/contacts/${id}/status`, statusData).catch(handleApiError),
+
+  addNote: (id: string, noteData: { content: string }) =>
+    api.post<ApiResponse<any>>(`/api/contacts/${id}/notes`, noteData).catch(handleApiError),
+
+  getStats: () =>
+    api.get<ApiResponse<any>>("/api/contacts/stats").catch(handleApiError),
+};
+
 export default api;
