@@ -200,10 +200,10 @@ export const createAppointment = async (req, res) => {
       });
     }
 
-    // Validate services exist
+    // Validate services exist - support both _id and code
     const serviceIds = services.map((s) => s.serviceId);
     const validServices = await Service.find({
-      _id: { $in: serviceIds },
+      $or: [{ _id: { $in: serviceIds } }, { code: { $in: serviceIds } }],
       isActive: true,
     });
 
@@ -352,10 +352,11 @@ export const createAppointment = async (req, res) => {
     // Build services array with pricing
     const appointmentServices = services.map((service) => {
       const serviceData = validServices.find(
-        (s) => s._id.toString() === service.serviceId
+        (s) =>
+          s._id.toString() === service.serviceId || s.code === service.serviceId
       );
       return {
-        serviceId: service.serviceId,
+        serviceId: serviceData._id, // Use actual _id for storage
         quantity: service.quantity || 1,
         price: serviceData.basePrice,
         estimatedDuration: serviceData.estimatedDuration,

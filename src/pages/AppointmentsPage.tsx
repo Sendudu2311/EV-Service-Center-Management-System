@@ -13,7 +13,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useSocket, useCustomEvent } from "../contexts/SocketContext";
 import { appointmentsAPI, vehiclesAPI, slotsAPI } from "../services/api";
 import toast from "react-hot-toast";
-import AppointmentFormClean from "../components/Appointment/AppointmentFormClean";
+import AppointmentFormClean from "../components/Appointment/AppointmentForm";
 import PaymentRestorationHandler from "../components/Appointment/PaymentRestorationHandler";
 import AppointmentDetails from "../components/Appointment/AppointmentDetails";
 import {
@@ -996,7 +996,7 @@ const AppointmentsPage: React.FC = () => {
               </div>
             )}
           </div>
-          <div className="mt-4 flex md:ml-4 md:mt-0">
+          <div className="mt-4 flex md:ml-4 md:mt-0 h-[40px] ">
             <button
               type="button"
               onClick={() => setShowFilters(!showFilters)}
@@ -1018,7 +1018,7 @@ const AppointmentsPage: React.FC = () => {
               </div>
             ) : (
               user?.role !== "technician" && (
-                <div className="mt-6">
+                <div className="mt-1">
                   {user?.role === "customer" && !hasVehicles ? (
                     <div></div>
                   ) : (

@@ -325,6 +325,49 @@ const createServices = async () => {
 
       // General Services
       {
+        name: "Basic Maintenance Service",
+        code: "MAINT001",
+        description:
+          "Dịch vụ bảo dưỡng cơ bản cho xe điện - kiểm tra tổng quát và bảo dưỡng định kỳ",
+        category: "general",
+        subcategory: "maintenance",
+        basePrice: 200000,
+        estimatedDuration: 60,
+        skillLevel: "basic",
+        requiredCertifications: ["General EV Maintenance"],
+        checklist: [
+          {
+            step: "Kiểm tra tổng quát xe",
+            category: "preparation",
+            isRequired: true,
+            estimatedTime: 15,
+          },
+          {
+            step: "Kiểm tra hệ thống pin",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 20,
+          },
+          {
+            step: "Kiểm tra hệ thống sạc",
+            category: "execution",
+            isRequired: true,
+            estimatedTime: 15,
+          },
+          {
+            step: "Kiểm tra hệ thống phanh",
+            category: "safety",
+            isRequired: true,
+            estimatedTime: 10,
+          },
+        ],
+        warranty: {
+          duration: 30,
+          description: "30 ngày bảo hành cho dịch vụ bảo dưỡng",
+        },
+        tags: ["maintenance", "basic", "routine", "inspection", "vietnamese"],
+      },
+      {
         name: "Annual Maintenance",
         code: "GEN001",
         description: "Comprehensive annual maintenance service",
