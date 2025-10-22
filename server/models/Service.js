@@ -64,6 +64,10 @@ const serviceSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Part'
     },
+    partName: {
+      type: String,
+      description: 'Denormalized part name for quick access'
+    },
     quantity: {
       type: Number,
       default: 1

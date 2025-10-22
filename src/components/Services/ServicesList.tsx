@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, CheckCircleIcon, ClockIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
+import ServiceDetailsModal from './ServiceDetailsModal';
 
 interface Service {
   _id: string;
@@ -59,6 +60,8 @@ const ServicesList: React.FC<ServicesListProps> = ({ onEditService }) => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [filters, setFilters] = useState({
     category: '',
     isActive: 'true'
@@ -284,9 +287,6 @@ const ServicesList: React.FC<ServicesListProps> = ({ onEditService }) => {
                   >
                     Edit
                   </button>
-                  <button className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-200 transition-colors">
-                    View Details
-                  </button>
                 </div>
               </div>
             </div>
@@ -381,6 +381,16 @@ const ServicesList: React.FC<ServicesListProps> = ({ onEditService }) => {
           <p className="text-gray-400 mt-2">Try adjusting your search or filters</p>
         </div>
       )}
+
+      {/* Service Details Modal */}
+      <ServiceDetailsModal
+        service={selectedService}
+        isOpen={isDetailsModalOpen}
+        onClose={() => {
+          setIsDetailsModalOpen(false);
+          setSelectedService(null);
+        }}
+      />
     </div>
   );
 };

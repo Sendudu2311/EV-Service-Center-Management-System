@@ -77,7 +77,6 @@ const Navbar: React.FC = () => {
           { name: "Slots", href: "/slots" },
           { name: "Users", href: "/users" },
           { name: "Vehicles", href: "/manage-vehicles" },
-          { name: "Service Centers", href: "/service-centers" },
           { name: "Contacts", href: "/manage-contacts" },
           { name: "Transactions", href: "/manage-transactions" },
           { name: "Reports", href: "/admin/reports" },

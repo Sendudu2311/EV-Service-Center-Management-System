@@ -958,4 +958,23 @@ export const contactsAPI = {
     api.get<ApiResponse<any>>("/api/contacts/stats").catch(handleApiError),
 };
 
+// Reports API
+export const reportsAPI = {
+  getAnalytics: (params?: {
+    period?: "1month" | "3months" | "6months" | "1year";
+    serviceId?: string;
+    technicianId?: string;
+  }) =>
+    api.get<ApiResponse<any>>("/api/reports/analytics", { params }).catch(handleApiError),
+
+  getDetailedReport: (params?: {
+    period?: "1month" | "3months" | "6months" | "1year";
+    format?: "json" | "csv";
+  }) =>
+    api.get<ApiResponse<any>>("/api/reports/detailed", { params }).catch(handleApiError),
+
+  getKPI: () =>
+    api.get<ApiResponse<any>>("/api/reports/kpi").catch(handleApiError),
+};
+
 export default api;
