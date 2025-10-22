@@ -50,9 +50,56 @@ const clearData = async () => {
   }
 };
 
+// Helper: Map service to relevant parts
+const getRelevantParts = (serviceCode, serviceCategory, parts) => {
+  const partMap = {
+    // Battery Services
+    'BAT002': ['Tesla Model 3 Battery Pack', 'Lithium Battery Cell 18650'],
+    'BAT001': ['Tesla Model 3 Battery Pack', 'Lithium Battery Cell 18650'],
+    
+    // Motor Services
+    'MOT002': ['Tesla Model 3 Rear Motor', 'Inverter Control Module'],
+    'MOT001': ['Tesla Model 3 Rear Motor'],
+    
+    // Charging Services
+    'CHG001': ['Type 2 Charging Port', 'Type 2 Charging Cable 32A'],
+    'CHG002': ['Type 2 Charging Port', 'Type 2 Charging Cable 32A'],
+    'CHG003': ['22kW Onboard Charger', 'Type 2 Charging Cable 32A'],
+    'CHG004': [],
+    'CHG005': ['DC-DC Converter 12V'],
+    'V2G001': ['Type 2 Charging Port'],
+    
+    // Electronics Services
+    'ELC001': [],
+    'ELC002': ['Tesla MCU (Media Control Unit)', 'Inverter Control Module'],
+    
+    // Body & Interior
+    'BDY001': [],
+    'INT001': ['HEPA Cabin Air Filter'],
+    
+    // General/Maintenance
+    'GEN001': ['EV Brake Fluid DOT 4', 'EV Coolant Concentrate'],
+    'GEN002': [],
+    'BOOK001': []
+  };
+  
+  // Get part names for this service
+  const relevantPartNames = partMap[serviceCode] || [];
+  
+  // Find actual part objects by name
+  const relevantParts = relevantPartNames
+    .map(name => parts.find(p => p.name === name))
+    .filter(p => p !== undefined);
+  
+  return relevantParts;
+};
+
 // Create comprehensive services
 const createServices = async () => {
   try {
+    // First, get or create all parts
+    const parts = await Part.find({});
+    
     const services = [
       // Battery Services
       {
@@ -796,6 +843,19 @@ const createServices = async () => {
     for (const service of services) {
       const exists = await Service.findOne({ code: service.code });
       if (!exists) {
+        // Add relevant common parts based on service type
+        const relevantParts = getRelevantParts(service.code, service.category, parts);
+        
+        if (relevantParts.length > 0) {
+          const selectedParts = relevantParts.map(part => ({
+            partId: part._id,
+            partName: part.name,
+            quantity: service.code === 'BAT002' ? 1 : Math.floor(Math.random() * 2) + 1, // Battery replacement needs exactly 1 battery
+            isOptional: Math.random() > 0.8,
+          }));
+          service.commonParts = selectedParts;
+        }
+        
         const newService = await Service.create(service);
         createdServices.push(newService);
       } else {
@@ -2963,7 +3023,117 @@ const createAppointments = async (
     const customers = users.filter((u) => u.role === "customer");
     const technicians = users.filter((u) => u.role === "technician");
 
+    // Helper function to create completed appointments spread across 6 months
+    const createCompletedAppointments = () => {
+      const completed = [];
+      const monthsBack = 6;
+      const appointmentsPerMonth = 4;
+      let appointmentCounter = 100;
+
+      for (let month = 0; month < monthsBack; month++) {
+        for (let i = 0; i < appointmentsPerMonth; i++) {
+          const dayOffset = month * 30 + i * 7;
+          const scheduledDate = new Date(Date.now() - dayOffset * 24 * 60 * 60 * 1000);
+          const serviceIdx = (appointmentCounter + i + month) % services.length;
+          const customerIdx = appointmentCounter % customers.length;
+          const technicianIdx = appointmentCounter % technicians.length;
+          const vehicleIdx = appointmentCounter % vehicles.length;
+          const totalAmount = services[serviceIdx].basePrice;
+
+          completed.push({
+            appointmentNumber: `APT25${String(appointmentCounter).padStart(4, "0")}`,
+            customerId: customers[customerIdx]._id,
+            vehicleId: vehicles[vehicleIdx]._id,
+            services: [
+              {
+                serviceId: services[serviceIdx]._id,
+                quantity: 1,
+                price: services[serviceIdx].basePrice,
+                estimatedDuration: services[serviceIdx].estimatedDuration,
+              },
+            ],
+            totalAmount: totalAmount,
+            paymentStatus: Math.random() > 0.15 ? "paid" : "pending",
+            scheduledDate: scheduledDate,
+            scheduledTime: "09:00",
+            status: "completed",
+            priority: ["low", "normal", "high"][Math.floor(Math.random() * 3)],
+            customerNotes: `Service appointment for ${services[serviceIdx].name}`,
+            assignedTechnician: technicians[technicianIdx]._id,
+            actualCompletion: new Date(
+              scheduledDate.getTime() + services[serviceIdx].estimatedDuration * 60 * 1000
+            ),
+            workflowHistory: [
+              {
+                status: "pending",
+                changedBy: customers[customerIdx]._id,
+                changedAt: new Date(scheduledDate.getTime() - 48 * 60 * 60 * 1000),
+                reason: "appointment_created",
+                notes: "Appointment booked",
+              },
+              {
+                status: "confirmed",
+                changedBy: users.find((u) => u.role === "staff")._id,
+                changedAt: new Date(scheduledDate.getTime() - 24 * 60 * 60 * 1000),
+                reason: "staff_confirmation",
+                notes: "Confirmed and technician assigned",
+              },
+              {
+                status: "customer_arrived",
+                changedBy: users.find((u) => u.role === "staff")._id,
+                changedAt: scheduledDate,
+                reason: "customer_arrival",
+                notes: "Customer checked in",
+              },
+              {
+                status: "in_progress",
+                changedBy: technicians[technicianIdx]._id,
+                changedAt: new Date(scheduledDate.getTime() + 15 * 60 * 1000),
+                reason: "service_started",
+                notes: "Service work started",
+              },
+              {
+                status: "completed",
+                changedBy: technicians[technicianIdx]._id,
+                changedAt: new Date(
+                  scheduledDate.getTime() + services[serviceIdx].estimatedDuration * 60 * 1000
+                ),
+                reason: "service_completed",
+                notes: "Service completed successfully",
+              },
+            ],
+            customerArrival: {
+              expectedAt: scheduledDate,
+              arrivedAt: scheduledDate,
+            },
+            serviceNotes: [
+              {
+                note: `${services[serviceIdx].name} completed successfully`,
+                addedBy: technicians[technicianIdx]._id,
+                addedAt: new Date(
+                  scheduledDate.getTime() + services[serviceIdx].estimatedDuration * 30 * 1000
+                ),
+              },
+            ],
+            feedback: {
+              rating: Math.floor(Math.random() * 2) + 4, // 4 or 5 stars
+              comment: "Satisfied with service quality",
+              submittedAt: new Date(
+                scheduledDate.getTime() + services[serviceIdx].estimatedDuration * 60 * 1000 + 24 * 60 * 60 * 1000
+              ),
+            },
+          });
+
+          appointmentCounter++;
+        }
+      }
+      return completed;
+    };
+
+    // Create base appointments
     const appointments = [
+      ...createCompletedAppointments(),
+
       // Confirmed appointment with full workflow tracking
       {
         appointmentNumber: "APT251201001",
@@ -3768,7 +3938,10 @@ const seedData = async () => {
     // Optional: Clear existing data (uncomment if needed)
     await clearData();
 
-    console.log("📝 Creating services...");
+    console.log("� Creating parts...");
+    const parts = await createParts();
+
+    console.log("�📝 Creating services...");
     const services = await createServices();
 
     console.log("🏢 Creating service centers...");
@@ -3783,9 +3956,6 @@ const seedData = async () => {
 
     console.log("�🚗 Creating vehicles...");
     const vehicles = await createVehicles(users);
-
-    console.log("🔧 Creating parts...");
-    const parts = await createParts();
 
     console.log("📅 Creating appointments...");
     const appointments = await createAppointments(
