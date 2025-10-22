@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
-import { slotsAPI } from "../services/api";
+import { slotsAPI, appointmentsAPI, vnpayAPI } from "../services/api";
 // import { useSocket } from "../contexts/SocketContext"; // Not used
 
 const PaymentResult: React.FC = () => {
@@ -25,6 +25,17 @@ const PaymentResult: React.FC = () => {
       payDate?: string;
     };
   } | null>(null);
+  const [appointmentCreated, setAppointmentCreated] = useState(false);
+  const [appointmentData, setAppointmentData] = useState<{
+    appointmentId: string;
+    appointmentNumber: string;
+    scheduledDate: string;
+    scheduledTime: string;
+    [key: string]: unknown;
+  } | null>(null);
+  const [isCreatingAppointment, setIsCreatingAppointment] = useState(false);
+  const [appointmentCreationAttempts, setAppointmentCreationAttempts] =
+    useState(0);
 
   // Function to release slot when payment fails
   const releaseSlotOnPaymentFailure = async () => {
@@ -33,12 +44,7 @@ const PaymentResult: React.FC = () => {
       if (pendingAppointmentStr) {
         const pendingAppointment = JSON.parse(pendingAppointmentStr);
         if (pendingAppointment.selectedSlotId) {
-          console.log(
-            "🔍 [PaymentResult] Releasing slot due to payment failure:",
-            pendingAppointment.selectedSlotId
-          );
           await slotsAPI.release(pendingAppointment.selectedSlotId);
-          console.log("✅ [PaymentResult] Slot released successfully");
           toast.success("Previous slot reservation has been released.");
         }
       }
@@ -47,6 +53,207 @@ const PaymentResult: React.FC = () => {
       toast.error("Failed to release previous slot. Please contact support.");
     }
   };
+
+  // Function to create appointment after successful payment
+  const createAppointmentAfterPayment = useCallback(
+    async (
+      paymentData: {
+        transactionRef: string;
+        amount: string;
+        paymentDate: Date;
+        vnpayTransaction?: {
+          transactionNo?: string;
+          responseCode?: string;
+          bankCode?: string;
+          cardType?: string;
+          payDate?: string;
+        };
+      },
+      appointmentData: {
+        vehicleId: string;
+        scheduledDate: string;
+        scheduledTime: string;
+        selectedSlotId?: string;
+        technicianId?: string;
+        customerNotes?: string;
+        priority?: string;
+        [key: string]: unknown;
+      }
+    ) => {
+      // Check localStorage for existing appointment creation
+      const appointmentCreationKey = `appointment_creation_${paymentData.transactionRef}`;
+      const existingCreation = localStorage.getItem(appointmentCreationKey);
+
+      if (existingCreation) {
+        return;
+      }
+
+      // Prevent duplicate appointment creation
+      if (isCreatingAppointment || appointmentCreated) {
+        return;
+      }
+
+      // Prevent too many attempts
+      if (appointmentCreationAttempts >= 2) {
+        return;
+      }
+
+      // Mark appointment creation as started
+      localStorage.setItem(
+        appointmentCreationKey,
+        JSON.stringify({
+          started: true,
+          timestamp: new Date().toISOString(),
+          transactionRef: paymentData.transactionRef,
+        })
+      );
+
+      setIsCreatingAppointment(true);
+      setAppointmentCreationAttempts((prev) => prev + 1);
+
+      try {
+        // Check if appointment already exists for this transaction
+        try {
+          const existingAppointments = await appointmentsAPI.getAll();
+          console.log("🔍 [PaymentResult] API Response:", existingAppointments);
+
+          // Handle different response formats
+          const appointments =
+            existingAppointments.data?.data || existingAppointments.data || [];
+          const existingAppointment = Array.isArray(appointments)
+            ? appointments.find(
+                (apt: { paymentInfo?: { transactionRef?: string } }) =>
+                  apt.paymentInfo?.transactionRef === paymentData.transactionRef
+              )
+            : null;
+
+          if (existingAppointment) {
+            console.log(
+              "⚠️ [PaymentResult] Appointment already exists for transaction:",
+              paymentData.transactionRef,
+              existingAppointment
+            );
+            setAppointmentCreated(true);
+            setAppointmentData({
+              appointmentId: existingAppointment._id,
+              appointmentNumber: existingAppointment.appointmentNumber,
+              scheduledDate: existingAppointment.scheduledDate,
+              scheduledTime: existingAppointment.scheduledTime,
+            });
+            return;
+          }
+        } catch (checkError) {
+          console.error(
+            "❌ [PaymentResult] Failed to check existing appointments:",
+            checkError
+          );
+          // Continue with creation if check fails
+        }
+
+        // Use service code directly instead of fetching from API
+        // This avoids issues with service filtering and pagination
+        const appointmentPayload = {
+          ...appointmentData,
+          services: [
+            {
+              serviceId: "BOOK001", // Use code directly - backend supports both _id and code
+              quantity: 1,
+              price: 200000, // Fixed price for booking service
+              basePrice: 200000, // Also include basePrice for email templates
+              estimatedDuration: 60, // Fixed duration for booking service
+            },
+          ],
+          paymentInfo: {
+            transactionRef: paymentData.transactionRef,
+            paymentMethod: "vnpay",
+            paidAmount: parseFloat(paymentData.amount),
+            paymentDate: new Date(),
+          },
+          ...(appointmentData.selectedSlotId && {
+            slotId: appointmentData.selectedSlotId,
+            skipSlotReservation: true, // Slot already reserved
+          }),
+        };
+
+        const response = await appointmentsAPI.create(appointmentPayload);
+        const appointmentId = response.data?.data?._id;
+        const appointmentNumber = response.data?.data?.appointmentNumber;
+
+        // Update VNPay transaction with appointment ID
+        if (paymentData.transactionRef) {
+          try {
+            await vnpayAPI.updateTransactionAppointmentId({
+              transactionRef: paymentData.transactionRef,
+              appointmentId: appointmentId,
+            });
+          } catch (updateErr) {
+            console.error(
+              "Failed to update VNPay transaction with appointment ID:",
+              updateErr
+            );
+          }
+        }
+
+        // Verify payment and trigger notifications
+        try {
+          await vnpayAPI.verifyAppointmentPayment({
+            transactionRef: paymentData.transactionRef,
+          });
+        } catch (verifyError) {
+          console.error("Failed to send notifications:", verifyError);
+        }
+
+        setAppointmentCreated(true);
+        setAppointmentData({
+          appointmentId,
+          appointmentNumber,
+          ...appointmentPayload,
+        });
+
+        // Clean up localStorage
+        localStorage.removeItem("pendingAppointment");
+        localStorage.removeItem("paymentVerified");
+        localStorage.removeItem(appointmentCreationKey);
+
+        toast.success("Appointment booked successfully!");
+
+        // Redirect to appointments page after successful creation
+        setTimeout(() => {
+          navigate("/appointments");
+        }, 2000);
+      } catch (error: unknown) {
+        console.error(
+          "❌ [PaymentResult] Failed to create appointment:",
+          error
+        );
+        const errorMessage =
+          error instanceof Error && "response" in error
+            ? (error as { response?: { data?: { message?: string } } }).response
+                ?.data?.message
+            : "Failed to create appointment";
+        toast.error(errorMessage || "Failed to create appointment");
+
+        // Release slot if appointment creation fails
+        if (appointmentData.selectedSlotId) {
+          try {
+            await slotsAPI.release(appointmentData.selectedSlotId);
+          } catch (releaseErr) {
+            console.error("Failed to release slot:", releaseErr);
+          }
+        }
+      } finally {
+        setIsCreatingAppointment(false);
+        // Clean up localStorage on error too
+        localStorage.removeItem(appointmentCreationKey);
+      }
+    },
+    [
+      isCreatingAppointment,
+      appointmentCreated,
+      appointmentCreationAttempts,
+      navigate,
+    ]
+  );
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
@@ -93,23 +300,6 @@ const PaymentResult: React.FC = () => {
           }
         );
 
-        // Store payment verification and redirect to appointments page with pre-filled data
-        localStorage.setItem(
-          "paymentVerified",
-          JSON.stringify({
-            transactionRef: vnp_TxnRef,
-            amount: amountInVND,
-            paymentDate: new Date(),
-            vnpayTransaction: {
-              transactionNo: vnp_TransactionNo,
-              responseCode: vnp_ResponseCode,
-              bankCode: queryParams.get("vnp_BankCode") || "",
-              cardType: queryParams.get("vnp_CardType") || "",
-              payDate: queryParams.get("vnp_PayDate") || "",
-            },
-          })
-        );
-
         // Store payment success in localStorage for analytics
         localStorage.setItem(
           "lastPaymentSuccess",
@@ -132,10 +322,35 @@ const PaymentResult: React.FC = () => {
           });
         }
 
-        // Redirect to appointments page to show appointment form with pre-filled data
-        setTimeout(() => {
-          navigate("/appointments?payment=success&showForm=true");
-        }, 2000);
+        // Get pending appointment data and create appointment
+        const pendingAppointmentStr =
+          localStorage.getItem("pendingAppointment");
+        if (pendingAppointmentStr) {
+          // Check if appointment creation is already in progress or completed
+          const appointmentCreationKey = `appointment_creation_${vnp_TxnRef}`;
+          const existingCreation = localStorage.getItem(appointmentCreationKey);
+
+          if (existingCreation) {
+            return;
+          }
+
+          const pendingAppointment = JSON.parse(pendingAppointmentStr);
+          const paymentData = {
+            transactionRef: vnp_TxnRef,
+            amount: amountInVND.toString(),
+            paymentDate: new Date(),
+            vnpayTransaction: {
+              transactionNo: vnp_TransactionNo || undefined,
+              responseCode: vnp_ResponseCode || undefined,
+              bankCode: queryParams.get("vnp_BankCode") || undefined,
+              cardType: queryParams.get("vnp_CardType") || undefined,
+              payDate: queryParams.get("vnp_PayDate") || undefined,
+            },
+          };
+
+          // Create appointment automatically
+          createAppointmentAfterPayment(paymentData, pendingAppointment);
+        }
       } else {
         setStatus("error");
         setPaymentInfo({
@@ -157,28 +372,32 @@ const PaymentResult: React.FC = () => {
         amount: amount,
       });
 
-      toast.success(
-        "Payment successful! Please complete your appointment booking.",
-        {
-          duration: 6000,
-          icon: "✅",
+      toast.success("Payment successful! Creating your appointment...", {
+        duration: 6000,
+        icon: "✅",
+      });
+
+      // Get pending appointment data and create appointment
+      const pendingAppointmentStr = localStorage.getItem("pendingAppointment");
+      if (pendingAppointmentStr) {
+        // Check if appointment creation is already in progress or completed
+        const appointmentCreationKey = `appointment_creation_${transactionRef}`;
+        const existingCreation = localStorage.getItem(appointmentCreationKey);
+
+        if (existingCreation) {
+          return;
         }
-      );
 
-      // Store payment verification data for AppointmentForm
-      localStorage.setItem(
-        "paymentVerified",
-        JSON.stringify({
+        const pendingAppointment = JSON.parse(pendingAppointmentStr);
+        const paymentData = {
           transactionRef: transactionRef,
-          amount: parseInt(amount),
+          amount: amount,
           paymentDate: new Date(),
-        })
-      );
+        };
 
-      // Redirect to appointments page to show appointment form
-      setTimeout(() => {
-        navigate("/appointments?payment=success&showForm=true");
-      }, 2000);
+        // Create appointment automatically
+        createAppointmentAfterPayment(paymentData, pendingAppointment);
+      }
     } else {
       setStatus("error");
       setPaymentInfo({
@@ -190,7 +409,14 @@ const PaymentResult: React.FC = () => {
       // Release slot when payment fails
       releaseSlotOnPaymentFailure();
     }
-  }, [location, navigate]);
+  }, [
+    location,
+    navigate,
+    createAppointmentAfterPayment,
+    appointmentCreated,
+    appointmentCreationAttempts,
+    isCreatingAppointment,
+  ]);
 
   // Note: This function is now a fallback since appointment creation is handled by the backend
   // Note: Appointment creation is now handled by the backend
@@ -245,11 +471,9 @@ const PaymentResult: React.FC = () => {
                 Payment Successful!
               </h2>
               <p className="text-gray-600 mb-4">
-                Your payment has been processed successfully.
-                <span className="text-green-600 font-medium">
-                  {" "}
-                  Please complete your appointment booking.
-                </span>
+                {appointmentCreated
+                  ? "Your appointment has been created successfully!"
+                  : "Your payment has been processed successfully. Creating your appointment..."}
               </p>
               {paymentInfo && (
                 <div className="bg-gray-50 rounded-lg p-4 mb-4">
@@ -295,15 +519,47 @@ const PaymentResult: React.FC = () => {
                   </div>
                 </div>
               )}
-              <p className="text-sm text-gray-500 mb-4">
-                You will be redirected to complete your appointment booking in a
-                few seconds...
-              </p>
-              <button
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
-              >
-                You will be redirected shortly
-              </button>
+              {appointmentCreated && appointmentData && (
+                <div className="bg-green-50 rounded-lg p-4 mb-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Appointment Number:</span>
+                      <span className="font-medium text-sm">
+                        {appointmentData.appointmentNumber}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Scheduled Date:</span>
+                      <span className="font-medium text-sm">
+                        {new Date(
+                          appointmentData.scheduledDate
+                        ).toLocaleDateString("vi-VN")}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Scheduled Time:</span>
+                      <span className="font-medium text-sm">
+                        {appointmentData.scheduledTime}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <button
+                  onClick={() => navigate("/appointments")}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+                >
+                  View My Appointments
+                </button>
+                <button
+                  onClick={() => navigate("/")}
+                  className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+                >
+                  Back to Home
+                </button>
+              </div>
             </>
           ) : (
             <>

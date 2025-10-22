@@ -711,6 +711,27 @@ export const verifyAppointmentPayment = async (req, res, next) => {
       });
     }
 
+    // Check if already processed to prevent duplicate calls
+    if (pendingPayment.verificationProcessed) {
+      console.log(
+        `[VNPay] Payment ${transactionRef} already processed, skipping`
+      );
+      return res.json({
+        success: true,
+        message: "Payment already verified",
+        paymentInfo: {
+          transactionRef,
+          amount: pendingPayment.amount,
+          method: "vnpay",
+          paymentDate: pendingPayment.completedAt,
+          vnpayTransaction: pendingPayment.vnpayTransaction,
+        },
+      });
+    }
+
+    // Mark as being processed
+    pendingPayment.verificationProcessed = true;
+
     if (pendingPayment.status !== "completed") {
       console.error(
         `[VNPay] Payment not completed. Status: ${pendingPayment.status}`
@@ -738,24 +759,54 @@ export const verifyAppointmentPayment = async (req, res, next) => {
         throw new Error("User not found");
       }
 
-      // Fetch service details from database
+      // Fetch service details from database - handle both ObjectId and code
       const serviceIds =
         pendingPayment.appointmentData?.services?.map((s) => s.serviceId) || [];
 
-      const services = await Service.find({ _id: { $in: serviceIds } });
+      const objectIdServiceIds = serviceIds.filter(
+        (id) => typeof id === "string" && id.match(/^[0-9a-fA-F]{24}$/)
+      );
+      const codeServiceIds = serviceIds.filter(
+        (id) => typeof id === "string" && !id.match(/^[0-9a-fA-F]{24}$/)
+      );
+
+      let services = [];
+      if (objectIdServiceIds.length > 0) {
+        const servicesById = await Service.find({
+          _id: { $in: objectIdServiceIds },
+        });
+        services = [...services, ...servicesById];
+      }
+      if (codeServiceIds.length > 0) {
+        const servicesByCode = await Service.find({
+          code: { $in: codeServiceIds },
+        });
+        services = [...services, ...servicesByCode];
+      }
 
       // Map services with their details
       const servicesWithDetails =
         pendingPayment.appointmentData?.services?.map((appointmentService) => {
+          // Find service by either _id or code
           const serviceDetails = services.find(
-            (s) => s._id.toString() === appointmentService.serviceId.toString()
+            (s) =>
+              s._id.toString() === appointmentService.serviceId.toString() ||
+              s.code === appointmentService.serviceId
           );
+
           return {
-            serviceId: appointmentService.serviceId,
+            serviceId: serviceDetails?._id || appointmentService.serviceId, // Use ObjectId if available, fallback to original
             quantity: appointmentService.quantity,
             serviceName: serviceDetails?.name || "Unknown Service",
-            basePrice: serviceDetails?.basePrice || 0,
-            estimatedDuration: serviceDetails?.estimatedDuration || 30,
+            basePrice:
+              serviceDetails?.basePrice ||
+              appointmentService.price ||
+              appointmentService.basePrice ||
+              0,
+            estimatedDuration:
+              serviceDetails?.estimatedDuration ||
+              appointmentService.estimatedDuration ||
+              30,
           };
         }) || [];
 
@@ -766,6 +817,7 @@ export const verifyAppointmentPayment = async (req, res, next) => {
         paymentDate: pendingPayment.completedAt || new Date(),
         vnpayTransaction: pendingPayment.vnpayTransaction,
         services: servicesWithDetails,
+        paymentType: "appointment", // Mark as appointment payment to skip receipt
       };
 
       // Prepare appointment data for notifications
@@ -774,12 +826,17 @@ export const verifyAppointmentPayment = async (req, res, next) => {
         scheduledDate: pendingPayment.appointmentData?.scheduledDate,
         scheduledTime: pendingPayment.appointmentData?.scheduledTime,
         services: servicesWithDetails,
-        // serviceCenterId removed - single center architecture
         customerName: `${user.firstName} ${user.lastName}`,
       };
 
       // Execute payment success workflow (send emails, socket notifications)
+      console.log(
+        `[VNPay] Executing payment success workflow for ${transactionRef}`
+      );
       await executePaymentSuccessWorkflow(paymentData, appointmentData, user);
+      console.log(
+        `[VNPay] Payment success workflow completed for ${transactionRef}`
+      );
     } catch (notificationError) {
       console.error(
         "[VNPay] Failed to send post-payment notifications:",
@@ -1012,7 +1069,7 @@ export const getTransactionById = async (req, res, next) => {
       .populate("userId", "firstName lastName email phone")
       .populate("appointmentId", "appointmentNumber scheduledDate status")
       .populate("invoiceId", "invoiceNumber status totals");
-    // serviceCenterId populate removed - single center architecture
+    // Single center architecture - no service center filtering needed
 
     if (!transaction) {
       return res.status(404).json({

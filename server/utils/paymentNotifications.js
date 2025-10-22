@@ -161,6 +161,8 @@ export const sendAppointmentConfirmation = async (
 
 /**
  * Send payment receipt to customer
+ * Note: This is used for invoice payments, not booking appointments
+ * Booking appointments only send confirmation emails
  */
 export const sendPaymentReceipt = async (paymentData, userData) => {
   try {
@@ -182,10 +184,7 @@ export const sendPaymentReceipt = async (paymentData, userData) => {
 /**
  * Send notification to service center staff about new paid appointment
  */
-export const notifyServiceCenterStaff = async (
-  appointmentData,
-  serviceCenterId
-) => {
+export const notifyServiceCenterStaff = async (appointmentData) => {
   try {
     // Single center architecture - use default service center data
     const serviceCenter = {
@@ -216,10 +215,7 @@ export const notifyServiceCenterStaff = async (
     };
 
     await sendEmail(emailOptions);
-    console.log(
-      "✅ Staff notification sent to admin for service center:",
-      serviceCenterId
-    );
+    console.log("✅ Staff notification sent to admin");
     return { success: true, message: "Staff notification sent" };
   } catch (error) {
     console.error("❌ Failed to send staff notification:", error);
@@ -325,22 +321,17 @@ export const sendPaymentSuccessSocketNotification = async (
       timestamp: new Date(),
     });
 
-    // Notify service center staff about new paid appointment
-    if (appointmentData.serviceCenterId) {
-      io.to(`service_center_${appointmentData.serviceCenterId}`).emit(
-        "new_paid_appointment",
-        {
-          type: "new_paid_appointment",
-          appointmentNumber: appointmentData.appointmentNumber,
-          customerName: appointmentData.customerName,
-          amount: paymentData.amount,
-          scheduledDate: appointmentData.scheduledDate,
-          scheduledTime: appointmentData.scheduledTime,
-          message: `New paid appointment from ${appointmentData.customerName}`,
-          timestamp: new Date(),
-        }
-      );
-    }
+    // Notify service center staff about new paid appointment (single center)
+    io.to("service_center_staff").emit("new_paid_appointment", {
+      type: "new_paid_appointment",
+      appointmentNumber: appointmentData.appointmentNumber,
+      customerName: appointmentData.customerName,
+      amount: paymentData.amount,
+      scheduledDate: appointmentData.scheduledDate,
+      scheduledTime: appointmentData.scheduledTime,
+      message: `New paid appointment from ${appointmentData.customerName}`,
+      timestamp: new Date(),
+    });
 
     // Log socket notification sent in audit trail
     await logNotificationSent({
@@ -439,16 +430,21 @@ export const executePaymentSuccessWorkflow = async (
       userData
     );
 
-    // 3. Send payment receipt
-    results.paymentReceipt = await sendPaymentReceipt(paymentData, userData);
-
-    // 4. Notify service center staff
-    if (appointmentData.serviceCenterId) {
-      results.staffNotification = await notifyServiceCenterStaff(
-        appointmentData,
-        appointmentData.serviceCenterId
+    // 3. Send payment receipt (skip for booking appointments, keep for invoice payments)
+    if (paymentData.paymentType !== "appointment") {
+      results.paymentReceipt = await sendPaymentReceipt(paymentData, userData);
+    } else {
+      console.log(
+        "📧 [Payment] Skipping receipt email for booking appointment"
       );
+      results.paymentReceipt = {
+        success: true,
+        message: "Receipt skipped for booking",
+      };
     }
+
+    // 4. Notify service center staff (single center architecture)
+    results.staffNotification = await notifyServiceCenterStaff(appointmentData);
 
     // 5. Send real-time socket notifications
     results.socketNotification = await sendPaymentSuccessSocketNotification(

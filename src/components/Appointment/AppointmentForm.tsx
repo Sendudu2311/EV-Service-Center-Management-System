@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { XMarkIcon, CheckIcon } from "@heroicons/react/24/outline";
 import {
-  appointmentsAPI,
   vehiclesAPI,
   techniciansAPI,
   vnpayAPI,
   slotsAPI,
+  appointmentsAPI,
 } from "../../services/api";
 import toast from "react-hot-toast";
 import TechnicianSelection from "./TechnicianSelection";
@@ -19,29 +19,59 @@ interface Vehicle {
   vin: string;
 }
 
+interface Slot {
+  _id: string;
+  start: string;
+  status: string;
+  capacity: number;
+  bookedCount?: number;
+}
+
+interface Technician {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  specialization: string[];
+}
+
+interface PendingAppointment {
+  vehicleId?: string;
+  services?: unknown[];
+  scheduledDate?: string;
+  scheduledTime?: string;
+  customerNotes?: string;
+  priority?: string;
+  technicianId?: string | null;
+  selectedSlotId?: string;
+  paymentInfo?: {
+    transactionRef: string;
+  };
+  [key: string]: unknown;
+}
+
 interface AppointmentFormProps {
-  onSuccess: () => void;
   onCancel: () => void;
 }
 
 // Constant for selected services to prevent re-creation on every render
 const SELECTED_SERVICES = [{ serviceId: "BOOK001", category: "general" }];
 
-const AppointmentForm: React.FC<AppointmentFormProps> = ({
-  onSuccess,
-  onCancel,
-}) => {
+const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
   const [loading, setLoading] = useState(false);
+  const [checkingVehicle, setCheckingVehicle] = useState(false);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [slots, setSlots] = useState<any[]>([]);
+  const [slots, setSlots] = useState<Slot[]>([]);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
   const [reservedSlotId, setReservedSlotId] = useState<string | null>(null);
-  const [technicians, setTechnicians] = useState<any[]>([]);
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
+  const [selectedTechnicianData, setSelectedTechnicianData] =
+    useState<Technician | null>(null);
   const [currentStep, setCurrentStep] = useState<"input" | "confirmation">(
     "input"
   );
   const [paymentVerified, setPaymentVerified] = useState(false);
-  const [pendingAppointment, setPendingAppointment] = useState<any>(null);
+  const [pendingAppointment, setPendingAppointment] =
+    useState<PendingAppointment | null>(null);
 
   const [formData, setFormData] = useState({
     vehicleId: "",
@@ -57,6 +87,22 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
     fetchVehicles();
     fetchTechnicians();
   }, []);
+
+  // Handle technician data restoration when technicians array is loaded
+  useEffect(() => {
+    if (
+      formData.technicianId &&
+      technicians.length > 0 &&
+      !selectedTechnicianData
+    ) {
+      const foundTechnician = technicians.find(
+        (t) => t._id === formData.technicianId
+      );
+      if (foundTechnician) {
+        setSelectedTechnicianData(foundTechnician);
+      }
+    }
+  }, [technicians, formData.technicianId, selectedTechnicianData]);
 
   useEffect(() => {
     if (!formData.scheduledDate) {
@@ -88,7 +134,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
           slotData = responseData;
         }
 
-        setSlots(slotData as any[]);
+        setSlots(slotData as Slot[]);
       } catch (err) {
         console.error("Error fetching slots:", err);
         setSlots([]);
@@ -104,12 +150,14 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 
     if (paymentVerifiedStr && pendingDataStr) {
       const paymentData = JSON.parse(paymentVerifiedStr);
-      const appointment = JSON.parse(pendingDataStr);
+      const appointment = JSON.parse(pendingDataStr) as PendingAppointment;
 
       setFormData({
         vehicleId: appointment.vehicleId || "",
-        services: appointment.services?.map((s: any) =>
-          typeof s === "string" ? s : s.serviceId
+        services: appointment.services?.map((s: unknown) =>
+          typeof s === "string"
+            ? s
+            : ((s as Record<string, unknown>).serviceId as string)
         ) || ["BOOK001"],
         scheduledDate: appointment.scheduledDate || "",
         scheduledTime: appointment.scheduledTime || "",
@@ -117,6 +165,23 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
         priority: appointment.priority || "normal",
         technicianId: appointment.technicianId || null,
       });
+
+      // Restore technician data if available
+      if (appointment.technicianId && technicians.length > 0) {
+        const foundTechnician = technicians.find(
+          (t) => t._id === appointment.technicianId
+        );
+        if (foundTechnician) {
+          setSelectedTechnicianData(foundTechnician);
+        } else {
+          setSelectedTechnicianData({
+            _id: appointment.technicianId,
+            firstName: "Selected",
+            lastName: "Technician",
+            specialization: [],
+          });
+        }
+      }
 
       if (appointment.selectedSlotId) {
         setSelectedSlotId(appointment.selectedSlotId);
@@ -137,7 +202,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
         "Payment verified! Please complete your appointment booking."
       );
     }
-  }, []);
+  }, [technicians]);
 
   const fetchVehicles = async () => {
     try {
@@ -160,12 +225,15 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
         ? response.data
         : [];
 
-      const mappedTechnicians = techniciansData.map((tech: any) => {
+      const mappedTechnicians = techniciansData.map((tech: unknown) => {
+        const techObj = tech as Record<string, unknown>;
         return {
-          _id: tech._id,
-          firstName: tech.firstName,
-          lastName: tech.lastName,
-          specialization: tech.specializations || tech.specialization || [],
+          _id: techObj._id as string,
+          firstName: techObj.firstName as string,
+          lastName: techObj.lastName as string,
+          specialization: (techObj.specializations ||
+            techObj.specialization ||
+            []) as string[],
         };
       });
 
@@ -204,10 +272,55 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
       [name]: value,
       ...(name === "scheduledDate" && { technicianId: null }),
     }));
+
+    // Reset technician data when date changes
+    if (name === "scheduledDate") {
+      setSelectedTechnicianData(null);
+    }
   };
 
-  const handleTechnicianSelect = (technicianId: string | null) => {
+  const handleTechnicianSelect = (
+    technicianId: string | null,
+    technicianData?: unknown
+  ) => {
     setFormData((prev) => ({ ...prev, technicianId }));
+
+    // Store selected technician data for display
+    if (technicianId) {
+      if (technicianData) {
+        // Use technician data from TechnicianSelection
+        // Convert TechnicianSelection format to AppointmentForm format
+        const techData = technicianData as Record<string, unknown>;
+        const convertedTechnician: Technician = {
+          _id: techData.id as string,
+          firstName: (techData.name as string)?.split(" ")[0] || "Selected",
+          lastName:
+            (techData.name as string)?.split(" ").slice(1).join(" ") ||
+            "Technician",
+          specialization: (techData.specializations as string[]) || [],
+        };
+
+        setSelectedTechnicianData(convertedTechnician);
+      } else {
+        // Try to find in technicians array first
+        const foundTechnician = technicians.find((t) => t._id === technicianId);
+
+        if (foundTechnician) {
+          setSelectedTechnicianData(foundTechnician);
+        } else {
+          // Create a basic technician object for display
+          const basicTechnician = {
+            _id: technicianId,
+            firstName: "Selected",
+            lastName: "Technician",
+            specialization: [],
+          };
+          setSelectedTechnicianData(basicTechnician);
+        }
+      }
+    } else {
+      setSelectedTechnicianData(null);
+    }
   };
 
   const calculateTotalAmount = () => {
@@ -240,8 +353,11 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
         try {
           const r = await slotsAPI.reserve(selectedSlotId);
           setReservedSlotId(r.data?.data?._id || selectedSlotId);
-        } catch (reserveErr: any) {
-          toast.error(reserveErr.response?.data?.message || "Slot unavailable");
+        } catch (reserveErr: unknown) {
+          const error = reserveErr as {
+            response?: { data?: { message?: string } };
+          };
+          toast.error(error.response?.data?.message || "Slot unavailable");
           setLoading(false);
           return;
         }
@@ -249,14 +365,16 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 
       const response = await vnpayAPI.createPayment(paymentData);
 
-      if ((response.data as any)?.paymentUrl) {
+      if ((response.data as unknown as Record<string, unknown>)?.paymentUrl) {
         const dataToStore = {
           ...formData,
           selectedSlotId,
           services: [{ serviceId: "BOOK001", quantity: 1 }],
           ...(formData.technicianId && { technicianId: formData.technicianId }),
           paymentInfo: {
-            transactionRef: (response.data as any).transactionRef || "",
+            transactionRef:
+              ((response.data as unknown as Record<string, unknown>)
+                .transactionRef as string) || "",
             amount: totalAmount,
             method: "vnpay",
           },
@@ -265,15 +383,58 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
         };
 
         localStorage.setItem("pendingAppointment", JSON.stringify(dataToStore));
-        window.location.href = (response.data as any).paymentUrl;
+        window.location.href = (
+          response.data as unknown as Record<string, unknown>
+        ).paymentUrl as string;
       } else {
         throw new Error("Failed to create payment URL");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error creating payment:", error);
-      toast.error(error.response?.data?.message || "Failed to create payment");
+      const errorObj = error as { response?: { data?: { message?: string } } };
+      toast.error(
+        errorObj.response?.data?.message || "Failed to create payment"
+      );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkVehicleBookingStatus = async (vehicleId: string) => {
+    setCheckingVehicle(true);
+    try {
+      const response = await appointmentsAPI.checkVehicleBookingStatus(
+        vehicleId
+      );
+      const data = response.data?.data;
+
+      if (data?.hasPendingAppointments) {
+        const pendingAppointments = data.pendingAppointments;
+        const appointmentList = pendingAppointments
+          .map(
+            (apt: {
+              appointmentNumber: string;
+              scheduledDate: string;
+              scheduledTime: string;
+            }) =>
+              `- ${apt.appointmentNumber} (${apt.scheduledDate} ${apt.scheduledTime})`
+          )
+          .join("\n");
+
+        toast.error(
+          `Xe ${data.vehicleInfo.make} ${data.vehicleInfo.model} đã có lịch hẹn đang chờ xử lý:\n${appointmentList}\n\nVui lòng hoàn thành hoặc hủy lịch hẹn hiện tại trước khi đặt lịch mới.`,
+          { duration: 8000 }
+        );
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error checking vehicle booking status:", error);
+      toast.error("Không thể kiểm tra trạng thái xe. Vui lòng thử lại.");
+      return false;
+    } finally {
+      setCheckingVehicle(false);
     }
   };
 
@@ -282,6 +443,14 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 
     if (!formData.vehicleId || !formData.scheduledDate || !selectedSlotId) {
       toast.error("Vui lòng điền đầy đủ thông tin");
+      return;
+    }
+
+    // Check vehicle booking status before proceeding
+    const isVehicleAvailable = await checkVehicleBookingStatus(
+      formData.vehicleId
+    );
+    if (!isVehicleAvailable) {
       return;
     }
 
@@ -298,118 +467,29 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   };
 
   const handleDirectBooking = async () => {
-    if (!formData.scheduledTime) {
-      toast.error("Please select a time slot before booking.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      if (selectedSlotId && !reservedSlotId) {
-        try {
-          const r = await slotsAPI.reserve(selectedSlotId);
-          setReservedSlotId(r.data?.data?._id || selectedSlotId);
-        } catch (reserveErr: any) {
-          toast.error(reserveErr.response?.data?.message || "Slot unavailable");
-          setLoading(false);
-          return;
-        }
-      }
-
-      const appointmentData = {
-        ...formData,
-        services: [{ serviceId: "BOOK001", quantity: 1 }],
-        ...(formData.technicianId && { technicianId: formData.technicianId }),
-        ...(paymentVerified &&
-          pendingAppointment?.paymentInfo && {
-            paymentInfo: pendingAppointment.paymentInfo,
-          }),
-        ...(selectedSlotId && {
-          slotId: selectedSlotId,
-          skipSlotReservation: !!reservedSlotId,
-        }),
-      };
-
-      const response = await appointmentsAPI.create(appointmentData);
-      setReservedSlotId(null);
-
-      // Log appointment ID for debugging
-      const appointmentId = response.data?.data?._id;
-      const appointmentNumber = response.data?.data?.appointmentNumber;
-
-      console.log("✅ [AppointmentForm] Appointment created successfully:", {
-        appointmentId,
-        appointmentNumber,
-        response: response.data,
-      });
-
-      // Update pending appointment with actual appointment ID
-      if (paymentVerified && pendingAppointment) {
-        const updatedPendingAppointment = {
-          ...pendingAppointment,
-          appointmentId: appointmentId,
-          appointmentNumber: appointmentNumber,
-        };
-        setPendingAppointment(updatedPendingAppointment);
-        localStorage.setItem(
-          "pendingAppointment",
-          JSON.stringify(updatedPendingAppointment)
-        );
-
-        // Also update the VNPay transaction record with appointment ID
-        if (pendingAppointment.paymentInfo?.transactionRef) {
-          try {
-            await vnpayAPI.updateTransactionAppointmentId({
-              transactionRef: pendingAppointment.paymentInfo.transactionRef,
-              appointmentId: appointmentId,
-            });
-          } catch (updateErr) {
-            console.error(
-              "Failed to update VNPay transaction with appointment ID:",
-              updateErr
-            );
-          }
-        }
-      }
-
-      if (paymentVerified && pendingAppointment?.paymentInfo) {
-        try {
-          await vnpayAPI.verifyAppointmentPayment({
-            transactionRef: pendingAppointment.paymentInfo.transactionRef,
-          });
-        } catch (verifyError) {
-          console.error("Failed to send notifications:", verifyError);
-        }
-      }
-
-      toast.success("Appointment booked successfully!");
-      localStorage.removeItem("pendingAppointment");
-      localStorage.removeItem("paymentVerified");
-      onSuccess();
-    } catch (error: any) {
-      console.error("Error creating appointment:", error);
-      toast.error(
-        error.response?.data?.message || "Failed to book appointment"
-      );
-
-      if (reservedSlotId) {
-        try {
-          await slotsAPI.release(reservedSlotId);
-        } catch (releaseErr) {
-          console.error("Failed to release slot:", releaseErr);
-        }
-        setReservedSlotId(null);
-      }
-    } finally {
-      setLoading(false);
-    }
+    // Direct booking is disabled - appointment is created in PaymentResult.tsx
+    toast("Appointment is being processed. Please wait...", {
+      icon: "⏳",
+      duration: 3000,
+    });
+    return;
   };
 
   const selectedVehicle = vehicles.find((v) => v._id === formData.vehicleId);
   const selectedSlot = slots.find((s) => s._id === selectedSlotId);
-  const selectedTechnician = technicians.find(
-    (t) => t._id === formData.technicianId
-  );
+
+  // Use selectedTechnicianData if available, otherwise fallback to technicians array
+  const selectedTechnician =
+    selectedTechnicianData ||
+    technicians.find((t) => t._id === formData.technicianId) ||
+    (formData.technicianId
+      ? {
+          _id: formData.technicianId,
+          firstName: "Selected",
+          lastName: "Technician",
+          specialization: [],
+        }
+      : null);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -538,7 +618,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                       onChange={handleChange}
                       required
                       disabled={paymentVerified}
-                      className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed py-2.5 px-4"
+                      className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed py-2.5 px-4"
                     >
                       <option value="">Chọn xe của bạn</option>
                       {vehicles.map((vehicle) => (
@@ -561,7 +641,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                       min={new Date().toISOString().split("T")[0]}
                       required
                       disabled={paymentVerified}
-                      className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed py-2.5 px-4"
+                      className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed py-2.5 px-4"
                     />
                   </div>
                 </div>
@@ -751,7 +831,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 
               {/* Customer Notes */}
               <div className="bg-gray-50 rounded-xl p-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center">
                   <svg
                     className="w-5 h-5 mr-2 text-blue-600"
                     fill="none"
@@ -794,11 +874,12 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                     !formData.vehicleId ||
                     !formData.scheduledDate ||
                     !selectedSlotId ||
-                    loading
+                    loading ||
+                    checkingVehicle
                   }
                   className="px-8 py-3 border-2 border-transparent rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
                 >
-                  {loading ? (
+                  {loading || checkingVehicle ? (
                     <span className="flex items-center">
                       <svg
                         className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
@@ -819,7 +900,9 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                         ></path>
                       </svg>
-                      Đang xử lý...
+                      {checkingVehicle
+                        ? "Đang kiểm tra xe..."
+                        : "Đang xử lý..."}
                     </span>
                   ) : (
                     "Tiếp tục →"
@@ -974,7 +1057,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 
                 {selectedTechnician && (
                   <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-                    <div className="flex items-center mb-2">
+                    <div className="flex items-center mb-3">
                       <svg
                         className="w-5 h-5 text-gray-400 mr-2"
                         fill="none"
@@ -992,10 +1075,99 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                         Kỹ thuật viên
                       </h5>
                     </div>
-                    <p className="text-lg font-semibold text-gray-900">
-                      {selectedTechnician.firstName}{" "}
-                      {selectedTechnician.lastName}
-                    </p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+                        <svg
+                          className="w-6 h-6 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-lg font-semibold text-gray-900">
+                          {selectedTechnician.firstName}{" "}
+                          {selectedTechnician.lastName}
+                        </p>
+                        {selectedTechnician.specialization &&
+                          selectedTechnician.specialization.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {selectedTechnician.specialization
+                                .slice(0, 2)
+                                .map((spec: string) => (
+                                  <span
+                                    key={spec}
+                                    className="inline-flex items-center px-2 py-1 rounded text-xs bg-blue-100 text-blue-700"
+                                  >
+                                    {spec}
+                                  </span>
+                                ))}
+                              {selectedTechnician.specialization.length > 2 && (
+                                <span className="text-xs text-gray-500">
+                                  +
+                                  {selectedTechnician.specialization.length - 2}{" "}
+                                  more
+                                </span>
+                              )}
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {!selectedTechnician && formData.technicianId && (
+                  <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                    <div className="flex items-center mb-3">
+                      <svg
+                        className="w-5 h-5 text-gray-400 mr-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                      <h5 className="text-sm font-medium text-gray-500">
+                        Kỹ thuật viên
+                      </h5>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                        <svg
+                          className="w-6 h-6 text-gray-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-lg font-semibold text-gray-900">
+                          Kỹ thuật viên đã chọn
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Thông tin chi tiết sẽ được hiển thị sau khi xác nhận
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -1056,23 +1228,36 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 
               {/* Payment Status */}
               {paymentVerified && pendingAppointment?.paymentInfo && (
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-5 shadow-sm">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-5 shadow-sm">
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
-                      <CheckIcon className="h-7 w-7 text-white" />
+                    <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+                      <svg
+                        className="h-7 w-7 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
                     </div>
                     <div className="flex-1">
-                      <p className="text-base font-bold text-green-800">
-                        Thanh toán thành công!
+                      <p className="text-base font-bold text-blue-800">
+                        Đang xử lý đặt lịch...
                       </p>
-                      <p className="text-sm text-green-700 mt-1">
+                      <p className="text-sm text-blue-700 mt-1">
                         Mã giao dịch:{" "}
                         <span className="font-mono font-semibold">
                           {pendingAppointment.paymentInfo.transactionRef}
                         </span>
                       </p>
-                      <p className="text-xs text-green-600 mt-1">
-                        Vui lòng nhấn "Hoàn tất đặt lịch" để xác nhận cuộc hẹn
+                      <p className="text-xs text-blue-600 mt-1">
+                        Hệ thống đang tự động tạo lịch hẹn cho bạn. Vui lòng
+                        chờ...
                       </p>
                     </div>
                   </div>
@@ -1093,39 +1278,31 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                   {paymentVerified ? (
                     <button
                       type="button"
-                      onClick={handleDirectBooking}
-                      disabled={loading}
-                      className="px-8 py-3 border-2 border-transparent rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                      disabled={true}
+                      className="px-8 py-3 border-2 border-transparent rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-gray-400 to-gray-500 cursor-not-allowed shadow-lg"
                     >
-                      {loading ? (
-                        <span className="flex items-center">
-                          <svg
-                            className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            ></circle>
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                          </svg>
-                          Đang xử lý...
-                        </span>
-                      ) : (
-                        <span className="flex items-center">
-                          <CheckIcon className="w-5 h-5 mr-2" />
-                          Hoàn tất đặt lịch
-                        </span>
-                      )}
+                      <span className="flex items-center">
+                        <svg
+                          className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Đang xử lý...
+                      </span>
                     </button>
                   ) : (
                     <button

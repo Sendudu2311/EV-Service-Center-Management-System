@@ -13,6 +13,93 @@ import {
 import { sendEmail } from "../utils/email.js";
 import { generateRefundNotificationTemplate } from "../utils/emailTemplates.js";
 
+// @desc    Check if vehicle has pending appointments
+// @route   GET /api/appointments/vehicle-status/:vehicleId
+// @access  Private
+export const checkVehicleBookingStatus = async (req, res) => {
+  try {
+    const { vehicleId } = req.params;
+    const userId = req.user?._id;
+
+    if (!vehicleId) {
+      return res.status(400).json({
+        success: false,
+        message: "Vehicle ID is required",
+      });
+    }
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated",
+      });
+    }
+
+    // Check if vehicle belongs to user
+    const vehicle = await Vehicle.findOne({
+      _id: vehicleId,
+      customerId: userId,
+    });
+
+    if (!vehicle) {
+      return res.status(404).json({
+        success: false,
+        message: "Vehicle not found or not owned by user",
+      });
+    }
+
+    // Pending statuses - appointment is still active
+    const pendingStatuses = [
+      "pending",
+      "confirmed",
+      "customer_arrived",
+      "reception_created",
+      "reception_approved",
+      "parts_insufficient",
+      "waiting_for_parts",
+      "in_progress",
+      "parts_requested",
+      "cancel_requested",
+      "cancel_approved",
+    ];
+
+    // Check for pending appointments
+    const pendingAppointments = await Appointment.find({
+      vehicleId: vehicleId,
+      status: { $in: pendingStatuses },
+    }).select(
+      "appointmentNumber scheduledDate scheduledTime status coreStatus"
+    );
+
+    const hasPendingAppointments = pendingAppointments.length > 0;
+
+    res.json({
+      success: true,
+      data: {
+        vehicleId,
+        vehicleInfo: {
+          make: vehicle.make,
+          model: vehicle.model,
+          year: vehicle.year,
+          vin: vehicle.vin,
+        },
+        hasPendingAppointments,
+        pendingAppointments: hasPendingAppointments ? pendingAppointments : [],
+        message: hasPendingAppointments
+          ? "Vehicle has pending appointments"
+          : "Vehicle is available for booking",
+      },
+    });
+  } catch (error) {
+    console.error("❌ [checkVehicleBookingStatus] Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to check vehicle booking status",
+      error: error.message,
+    });
+  }
+};
+
 // @desc    Get appointments for current user (role-based)
 // @route   GET /api/appointments
 // @access  Private
@@ -200,12 +287,37 @@ export const createAppointment = async (req, res) => {
       });
     }
 
-    // Validate services exist - support both _id and code
+    // Validate services exist - convert codes to ObjectIds first
     const serviceIds = services.map((s) => s.serviceId);
-    const validServices = await Service.find({
-      $or: [{ _id: { $in: serviceIds } }, { code: { $in: serviceIds } }],
-      isActive: true,
-    });
+
+    // Separate ObjectId and code serviceIds
+    const objectIdServiceIds = serviceIds.filter(
+      (id) => typeof id === "string" && id.match(/^[0-9a-fA-F]{24}$/)
+    );
+    const codeServiceIds = serviceIds.filter(
+      (id) => typeof id === "string" && !id.match(/^[0-9a-fA-F]{24}$/)
+    );
+
+    // First, find services by code to get their ObjectIds
+    let servicesByCode = [];
+    if (codeServiceIds.length > 0) {
+      servicesByCode = await Service.find({
+        code: { $in: codeServiceIds },
+        isActive: true,
+      });
+    }
+
+    // Then find services by ObjectId
+    let servicesById = [];
+    if (objectIdServiceIds.length > 0) {
+      servicesById = await Service.find({
+        _id: { $in: objectIdServiceIds },
+        isActive: true,
+      });
+    }
+
+    // Combine all valid services
+    const validServices = [...servicesByCode, ...servicesById];
 
     if (validServices.length !== serviceIds.length) {
       return res.status(400).json({
@@ -236,14 +348,15 @@ export const createAppointment = async (req, res) => {
         const serviceData = validServices.find(
           (s) => s._id.toString() === service.serviceId
         );
-        return total + serviceData.estimatedDuration * (service.quantity || 1);
+        // Add safety check for serviceData and estimatedDuration
+        const estimatedDuration = serviceData?.estimatedDuration || 60; // Default to 60 minutes
+        return total + estimatedDuration * (service.quantity || 1);
       }, 0);
       const estimatedCompletion = new Date(
         appointmentDateTime.getTime() + totalDuration * 60000
       );
 
       // Check for time slot conflicts - proper time overlap check
-      console.log("🔍 [createAppointment] Checking technician availability:");
       console.log("- Technician ID:", technicianId);
       console.log("- Appointment time:", appointmentDateTime);
       console.log("- Estimated completion:", estimatedCompletion);
@@ -278,7 +391,6 @@ export const createAppointment = async (req, res) => {
           ? new Date(existing.estimatedCompletion)
           : new Date(existingStart.getTime() + 60 * 60 * 1000); // Default 1 hour if no estimatedCompletion
 
-        console.log("🔍 [createAppointment] Checking time overlap:");
         console.log(`  Existing: ${existingStart} to ${existingEnd}`);
         console.log(
           `  Requested: ${appointmentDateTime} to ${estimatedCompletion}`
@@ -294,7 +406,6 @@ export const createAppointment = async (req, res) => {
       });
 
       if (actualConflicts.length > 0) {
-        console.log("🔍 [createAppointment] Time conflict detected:");
         console.log(
           "- Requested time:",
           appointmentDateTime,
@@ -355,11 +466,16 @@ export const createAppointment = async (req, res) => {
         (s) =>
           s._id.toString() === service.serviceId || s.code === service.serviceId
       );
+
+      if (!serviceData) {
+        throw new Error(`Service not found: ${service.serviceId}`);
+      }
+
       return {
         serviceId: serviceData._id, // Use actual _id for storage
         quantity: service.quantity || 1,
-        price: serviceData.basePrice,
-        estimatedDuration: serviceData.estimatedDuration,
+        price: serviceData.basePrice || 0,
+        estimatedDuration: serviceData.estimatedDuration || 60,
       };
     });
 
@@ -416,36 +532,15 @@ export const createAppointment = async (req, res) => {
     // NOTE: frontend may reserve the slot first (to hold it during payment). In that case
     // it should send skipSlotReservation=true to avoid double-incrementing bookedCount.
     if (slotId) {
-      console.log("🔍 [createAppointment] Processing slot:", slotId);
-      console.log(
-        "🔍 [createAppointment] skipSlotReservation:",
-        req.body.skipSlotReservation
-      );
-      console.log("🔍 [createAppointment] slotId:", slotId);
-
       const slot = await Slot.findById(slotId);
       if (!slot) {
-        console.log("❌ [createAppointment] Slot not found:", slotId);
         return res
           .status(400)
           .json({ success: false, message: "Invalid slotId" });
       }
-      console.log(
-        "🔍 [createAppointment] Found slot:",
-        slot._id,
-        "status:",
-        slot.status,
-        "bookedCount:",
-        slot.bookedCount,
-        "capacity:",
-        slot.capacity
-      );
 
       // If caller didn't pre-reserve, perform reservation here
       if (!req.body.skipSlotReservation) {
-        console.log(
-          "🔍 [createAppointment] No skipSlotReservation, checking availability..."
-        );
         if (!slot.canBook()) {
           return res.status(400).json({
             success: false,
@@ -458,21 +553,15 @@ export const createAppointment = async (req, res) => {
         else slot.status = "partially_booked";
         await slot.save();
       } else {
-        console.log(
-          "🔍 [createAppointment] skipSlotReservation=true, validating slot..."
-        );
-        // If skipSlotReservation is true, still verify availability at time of create
-        if (!slot.canBook() && slot.status !== "partially_booked") {
-          console.log(
-            "❌ [createAppointment] Slot not available for pre-reserved slot"
-          );
-          // allow partially_booked because frontend might have decreased availability
+        // If skipSlotReservation is true, validate that slot is still valid
+        // Allow both "partially_booked" and "full" if skipSlotReservation is true
+        // because the slot was already reserved during payment process
+        if (slot.status === "booked" && slot.bookedCount >= slot.capacity) {
           return res.status(400).json({
             success: false,
-            message: "Selected slot is not available",
+            message: "Slot is no longer available",
           });
         }
-        console.log("✅ [createAppointment] Pre-reserved slot is valid");
       }
 
       appointmentPayload.slotId = slot._id;
@@ -518,10 +607,27 @@ export const createAppointment = async (req, res) => {
         // Get user data for email
         const user = await User.findById(req.user._id);
         if (user && user.email) {
-          // Get service details for email
-          const serviceDetails = await Service.find({
-            _id: { $in: serviceIds },
-          });
+          // Get service details for email - handle both ObjectId and code
+          const objectIdServiceIds = serviceIds.filter(
+            (id) => typeof id === "string" && id.match(/^[0-9a-fA-F]{24}$/)
+          );
+          const codeServiceIds = serviceIds.filter(
+            (id) => typeof id === "string" && !id.match(/^[0-9a-fA-F]{24}$/)
+          );
+
+          let serviceDetails = [];
+          if (objectIdServiceIds.length > 0) {
+            const servicesById = await Service.find({
+              _id: { $in: objectIdServiceIds },
+            });
+            serviceDetails = [...serviceDetails, ...servicesById];
+          }
+          if (codeServiceIds.length > 0) {
+            const servicesByCode = await Service.find({
+              code: { $in: codeServiceIds },
+            });
+            serviceDetails = [...serviceDetails, ...servicesByCode];
+          }
 
           // Prepare appointment data for email
           const appointmentData = {
@@ -1199,42 +1305,91 @@ export const getAvailableTechniciansForSlot = async (req, res) => {
       `✅ Found ${availableTechnicians.length} available technicians for slot ${slotId}`
     );
 
-    // Format response
-    const formattedTechnicians = availableTechnicians.map((technician) => ({
-      id: technician._id.toString(),
-      name: `${technician.firstName} ${technician.lastName}`,
-      specializations: technician.specializations || [],
-      availability: {
-        status: "available",
-        workloadPercentage: 0,
-      },
-      performance: {
-        customerRating: 4.5,
-        completedJobs: 0,
-        efficiency: 85,
-      },
-      skills:
-        technician.specializations?.map((spec) => ({
-          category: spec,
-          level: 3,
-          certified: true,
-        })) || [],
-      isRecommended: true,
-      yearsExperience: 2,
-      isAssignedToSlot: true,
-      isPreferredSlotTechnician: true,
-      slotStatus: {
-        slotId: slot._id.toString(),
-        slotTime: `${slot.startTime}-${slot.endTime}`,
-        currentWorkload: 0,
-        maxCapacity: 1,
-        slotCapacity: slot.capacity,
-        technicianSlotCapacity: 1,
-        availabilityPercentage: 100,
-        isPreferred: true,
-        appointments: [],
-      },
-    }));
+    console.log(
+      `🔍 [getAvailableTechniciansForSlot] Processing technicians with real data from TechnicianProfile`
+    );
+
+    // Format response with real data from TechnicianProfile
+    const formattedTechnicians = await Promise.all(
+      availableTechnicians.map(async (technician) => {
+        // Get technician profile for real performance data
+        const technicianProfile = await TechnicianProfile.findOne({
+          technicianId: technician._id,
+        }).populate("technicianId", "firstName lastName specializations");
+
+        console.log(
+          `🔍 [getAvailableTechniciansForSlot] Technician ${technician._id} profile:`,
+          {
+            hasProfile: !!technicianProfile,
+            performance: technicianProfile?.performance,
+            yearsExperience: technicianProfile?.yearsExperience,
+            workload: technicianProfile?.workload,
+          }
+        );
+
+        // Get workload info for this technician in this slot
+        const workloadInfo = await slot.getTechnicianWorkloadInSlot(
+          technician._id
+        );
+
+        // Calculate skill match score if service categories provided
+        let skillMatchScore = 0;
+        if (serviceCategories && serviceCategories.length > 0) {
+          const categories = Array.isArray(serviceCategories)
+            ? serviceCategories
+            : [serviceCategories];
+          skillMatchScore = calculateSkillMatch(
+            technicianProfile?.skillMatrix || [],
+            categories
+          );
+        }
+
+        return {
+          id: technician._id.toString(),
+          name: `${technician.firstName} ${technician.lastName}`,
+          specializations: technician.specializations || [],
+          availability: {
+            status: technicianProfile?.availability?.status || "available",
+            workloadPercentage: technicianProfile?.workloadPercentage || 0,
+          },
+          performance: {
+            customerRating: technicianProfile?.performance?.customerRating || 0,
+            completedJobs: technicianProfile?.performance?.completedJobs || 0,
+            efficiency: technicianProfile?.performance?.efficiency || 0,
+          },
+          skills: (technicianProfile?.skillMatrix || []).map((skill) => ({
+            category: skill.serviceCategory,
+            level: skill.proficiencyLevel,
+            certified: skill.certificationRequired,
+          })),
+          isRecommended: skillMatchScore > 0.7,
+          yearsExperience: technicianProfile?.yearsExperience || 0,
+          isAssignedToSlot: true,
+          isPreferredSlotTechnician: true,
+          slotStatus: {
+            slotId: slot._id.toString(),
+            slotTime: `${slot.startTime}-${slot.endTime}`,
+            currentWorkload: workloadInfo.currentWorkload,
+            maxCapacity: workloadInfo.maxCapacity,
+            slotCapacity: workloadInfo.slotCapacity,
+            technicianSlotCapacity: workloadInfo.technicianSlotCapacity,
+            availabilityPercentage: Math.round(
+              (1 - workloadInfo.currentWorkload / workloadInfo.maxCapacity) *
+                100
+            ),
+            isPreferred: true,
+            appointments: workloadInfo.appointments,
+          },
+          // Additional backend data
+          _id: technician._id,
+          firstName: technician.firstName,
+          lastName: technician.lastName,
+          skillMatchScore,
+          currentWorkload: technicianProfile?.workload?.current || 0,
+          maxCapacity: technicianProfile?.workload?.capacity || 1,
+        };
+      })
+    );
 
     res.json({
       success: true,
@@ -2116,7 +2271,6 @@ export const checkTechnicianAvailability = async (req, res) => {
 
 // Enhanced availability checking with 409 conflict responses
 const enhancedAvailabilityCheck = async (
-  serviceCenterId,
   date,
   time,
   duration,
@@ -2128,7 +2282,6 @@ const enhancedAvailabilityCheck = async (
   );
 
   const conflictQuery = {
-    // serviceCenterId removed - single center architecture
     scheduledDate: {
       $gte: new Date(appointmentDateTime.toDateString()),
       $lt: new Date(appointmentDateTime.getTime() + 24 * 60 * 60 * 1000), // Next day
@@ -2161,7 +2314,6 @@ export const preValidateAvailability = async (req, res) => {
 
     // Check availability (single center - no service center filtering needed)
     const centerConflicts = await enhancedAvailabilityCheck(
-      null,
       date,
       time,
       duration
@@ -2314,7 +2466,7 @@ export const checkAvailability = async (req, res) => {
         isOpen: true,
         workingHours,
         availableSlots,
-        totalBays: serviceCenter.capacity.totalBays,
+        totalBays: 4, // Default capacity for single center
         currentBookings: existingAppointments.length,
       },
     });

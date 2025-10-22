@@ -76,7 +76,10 @@ const paymentAuditSchema = new mongoose.Schema(
       serviceCenterId: mongoose.Schema.Types.ObjectId,
       services: [
         {
-          serviceId: mongoose.Schema.Types.ObjectId,
+          serviceId: {
+            type: mongoose.Schema.Types.Mixed, // Support both ObjectId and string code
+            required: true,
+          },
           serviceName: String,
           quantity: Number,
           price: Number,

@@ -45,7 +45,10 @@ interface Technician {
 interface TechnicianSelectionProps {
   selectedServices: Array<{ serviceId: string; category?: string }>;
   selectedTechnicianId: string | null;
-  onTechnicianSelect: (technicianId: string | null) => void;
+  onTechnicianSelect: (
+    technicianId: string | null,
+    technicianData?: Technician
+  ) => void;
   disabled?: boolean;
   appointmentDate?: string;
   appointmentTime?: string;
@@ -63,14 +66,6 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
   selectedSlotId,
   estimatedDuration = 60,
 }) => {
-  // Debug: Log when component re-renders
-  console.log("🔄 [TechnicianSelection] Component re-rendered with props:", {
-    selectedTechnicianId,
-    appointmentDate,
-    appointmentTime,
-    selectedSlotId,
-    disabled,
-  });
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [loading, setLoading] = useState(false);
   const [technicianAvailability, setTechnicianAvailability] = useState<
@@ -88,39 +83,13 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
       )
       .filter((category, index, array) => array.indexOf(category) === index);
 
-    console.log(
-      "🔧 [TechnicianSelection] serviceCategories memoized:",
-      categories
-    );
     return categories;
   }, [selectedServices]);
 
   // Removed individual technician availability check - not needed since technicians are pre-filtered by API
 
   const fetchTechnicians = useCallback(async () => {
-    // Log: Check if required parameters are present
-    console.log("🔍 [TechnicianSelection] fetchTechnicians called");
-    console.log("📅 [TechnicianSelection] appointmentDate:", appointmentDate);
-    console.log("⏰ [TechnicianSelection] appointmentTime:", appointmentTime);
-    console.log(
-      "🔧 [TechnicianSelection] serviceCategories:",
-      serviceCategories
-    );
-    console.log(
-      "⏱️ [TechnicianSelection] estimatedDuration:",
-      estimatedDuration
-    );
-    console.log("🎯 [TechnicianSelection] selectedSlotId:", selectedSlotId);
-    console.log(
-      "👤 [TechnicianSelection] selectedTechnicianId:",
-      selectedTechnicianId
-    );
-    // Removed filter logging - simplified interface
-
     if (!appointmentDate || !appointmentTime) {
-      console.warn(
-        "⚠️ [TechnicianSelection] Skipping technician fetch - missing required parameters"
-      );
       return;
     }
 
@@ -130,11 +99,6 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
 
       // Use slot-specific API if selectedSlotId is provided, otherwise use time-based API
       if (selectedSlotId) {
-        console.log(
-          "🔍 [TechnicianSelection] Using slot-specific API for slot:",
-          selectedSlotId
-        );
-
         // Build parameters for the slot-specific API
         const params = new URLSearchParams();
         params.append("slotId", selectedSlotId);
@@ -147,42 +111,14 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
           });
         }
 
-        // Log: Parameters being sent to the API
-        console.log(
-          "📤 [TechnicianSelection] Requesting technicians for slot with params:",
-          params.toString()
-        );
-        console.log(
-          "🌐 [TechnicianSelection] Full URL:",
-          `/api/appointments/available-technicians-for-slot?${params.toString()}`
-        );
-
         const response = await api.get(
           `/api/appointments/available-technicians-for-slot?${params.toString()}`
         );
 
-        console.log(
-          "📥 [TechnicianSelection] Slot-specific response received:",
-          response.data
-        );
-
         if (response.data.success) {
           techniciansData = response.data.data;
-          console.log(
-            "✅ [TechnicianSelection] Successfully fetched technicians for slot:",
-            response.data.data.length
-          );
-        } else {
-          console.error(
-            "❌ [TechnicianSelection] Slot-specific API returned success: false",
-            response.data
-          );
         }
       } else {
-        console.log(
-          "🔍 [TechnicianSelection] Using time-based available-technicians API"
-        );
-
         // Build parameters for the time-based API
         const params = new URLSearchParams();
         params.append("date", appointmentDate);
@@ -196,36 +132,12 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
           });
         }
 
-        // Log: Parameters being sent to the API
-        console.log(
-          "📤 [TechnicianSelection] Requesting technicians with params:",
-          params.toString()
-        );
-        console.log(
-          "🌐 [TechnicianSelection] Full URL:",
-          `/api/appointments/available-technicians?${params.toString()}`
-        );
-
         const response = await api.get(
           `/api/appointments/available-technicians?${params.toString()}`
         );
 
-        console.log(
-          "📥 [TechnicianSelection] Time-based response received:",
-          response.data
-        );
-
         if (response.data.success) {
-          techniciansData = response.data;
-          console.log(
-            "✅ [TechnicianSelection] Successfully fetched technicians:",
-            response.data.data.length
-          );
-        } else {
-          console.error(
-            "❌ [TechnicianSelection] Time-based API returned success: false",
-            response.data
-          );
+          techniciansData = response.data.data;
         }
       }
 
@@ -240,35 +152,7 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
       );
       setTechnicianAvailability(availabilityMap);
     } catch (error: any) {
-      console.error(
-        "❌ [TechnicianSelection] Error fetching available technicians:",
-        error
-      );
-
-      // Log: Detailed error response from Axios
-      if (error.response) {
-        console.error(
-          "📊 [TechnicianSelection] Error Response Data:",
-          error.response.data
-        );
-        console.error(
-          "📊 [TechnicianSelection] Error Response Status:",
-          error.response.status
-        );
-        console.error(
-          "📊 [TechnicianSelection] Error Response Headers:",
-          error.response.headers
-        );
-        console.error(
-          "📊 [TechnicianSelection] Error Response Config:",
-          error.response.config
-        );
-      } else if (error.request) {
-        console.error("📊 [TechnicianSelection] Error Request:", error.request);
-      } else {
-        console.error("📊 [TechnicianSelection] Error Message:", error.message);
-      }
-
+      console.error("Error fetching available technicians:", error);
       toast.error("Failed to load available technicians");
       setTechnicians([]);
       setTechnicianAvailability({});
@@ -287,9 +171,6 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
   // Removed serviceCategoriesString - no longer needed without filters
 
   useEffect(() => {
-    console.log(
-      "🔄 [TechnicianSelection] useEffect triggered - calling fetchTechnicians"
-    );
     fetchTechnicians();
   }, [fetchTechnicians]);
 
@@ -303,8 +184,11 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
       // Deselect if clicking the same technician
       onTechnicianSelect(null);
     } else {
-      // Directly select technician - no need for additional API call since technicians are pre-filtered
-      onTechnicianSelect(technicianId);
+      // Find the technician data and pass it along
+      const technicianData = technicians.find((t) => t.id === technicianId);
+
+      // Pass both technicianId and technicianData to parent
+      onTechnicianSelect(technicianId, technicianData);
     }
   };
 

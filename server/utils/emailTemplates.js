@@ -151,11 +151,27 @@ export const generateAppointmentConfirmationTemplate = (
 
 /**
  * Generate payment receipt email template
+ * Note: This template is used for invoice payments, not booking appointments
+ * Booking appointments only send confirmation emails, not receipts
  */
 export const generatePaymentReceiptTemplate = (paymentData, userData) => {
   const { amount, transactionRef, paymentDate, vnpayTransaction, services } =
     paymentData;
   const { firstName, lastName } = userData;
+
+  // DEBUG: Log the data being processed
+  console.log("📧 [Receipt Template] Payment data:", {
+    amount,
+    transactionRef,
+    paymentDate,
+    servicesCount: services?.length,
+    services: services?.map((s) => ({
+      serviceName: s.serviceName,
+      quantity: s.quantity,
+      basePrice: s.basePrice,
+      serviceId: s.serviceId,
+    })),
+  });
 
   // Handle service data with proper details
   const servicesList = services
@@ -176,10 +192,9 @@ export const generatePaymentReceiptTemplate = (paymentData, userData) => {
 
   // Calculate total amount safely
   const totalAmount = services.reduce((sum, service) => {
-    if (service.basePrice) {
-      return sum + service.basePrice;
-    }
-    return sum;
+    const quantity = service.quantity || 1;
+    const basePrice = service.basePrice || 0;
+    return sum + basePrice * quantity;
   }, 0);
 
   return `

@@ -16,6 +16,7 @@ import {
   assignTechnician,
   getWorkQueue,
   bulkUpdateAppointments,
+  checkVehicleBookingStatus,
   // New Staff Confirmation APIs
   getPendingStaffConfirmation,
   staffConfirmAppointment,
@@ -58,6 +59,7 @@ router.get("/debug-slots", debugSlots);
 router.post("/init-slot-technicians", initializeSlotTechnicians);
 router.get("/work-queue", getWorkQueue);
 router.put("/bulk-update", bulkUpdateAppointments);
+router.get("/vehicle-status/:vehicleId", checkVehicleBookingStatus);
 router.get("/", getAppointments);
 
 // Appointment creation (all authenticated users)

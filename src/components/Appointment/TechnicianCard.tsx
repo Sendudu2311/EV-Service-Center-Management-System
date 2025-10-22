@@ -44,20 +44,20 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
   const getAvailabilityColor = (status: string) => {
     switch (status) {
       case "available":
-        return "text-green-600 bg-green-100";
+        return "text-emerald-700 bg-emerald-50 border-emerald-200";
       case "busy":
-        return "text-yellow-600 bg-yellow-100";
+        return "text-amber-700 bg-amber-50 border-amber-200";
       case "offline":
-        return "text-gray-600 bg-gray-100";
+        return "text-gray-700 bg-gray-50 border-gray-200";
       default:
-        return "text-gray-600 bg-gray-100";
+        return "text-gray-700 bg-gray-50 border-gray-200";
     }
   };
 
   const getAvailabilityText = (status: string) => {
     switch (status) {
       case "available":
-        return "Available";
+        return "Available Now";
       case "busy":
         return "Busy";
       case "offline":
@@ -84,103 +84,130 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
 
   return (
     <div
-      className={`relative p-4 rounded-lg border-2 transition-all duration-200 ${
+      className={`relative p-5 rounded-xl transition-all duration-300 ${
         disabled
-          ? "cursor-not-allowed opacity-60 bg-gray-50 border-gray-200"
+          ? "cursor-not-allowed opacity-50 bg-gray-50"
           : isSelected
-          ? "border-blue-500 bg-blue-50 shadow-md cursor-pointer"
-          : "border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm cursor-pointer"
-      }`}
+          ? "shadow-lg ring-2 ring-blue-500 ring-offset-2 cursor-pointer scale-[1.02]"
+          : "shadow-sm hover:shadow-md cursor-pointer hover:scale-[1.01] bg-white"
+      } ${isSelected ? "bg-gradient-to-br from-blue-50 to-white" : ""}`}
       onClick={disabled ? undefined : () => onSelect(technician.id)}
     >
       {/* Recommended Badge */}
       {technician.isRecommended && (
-        <div className="absolute top-2 right-2">
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gold-100 text-gold-800">
-            <CheckBadgeIcon className="w-3 h-3 mr-1" />
+        <div className="absolute -top-2 -right-2 z-10">
+          <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-md">
+            <CheckBadgeIcon className="w-4 h-4 mr-1" />
             Recommended
           </span>
         </div>
       )}
 
       {/* Header */}
-      <div
-        className={`flex items-start justify-between mb-3 ${
-          technician.isRecommended ? "mt-8" : ""
-        }`}
-      >
-        <div className="flex items-center">
-          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-            <UserIcon className="w-6 h-6 text-gray-600" />
+      <div className="flex items-start gap-4 mb-4">
+        <div className="relative flex-shrink-0">
+          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
+            <UserIcon className="w-8 h-8 text-white" />
           </div>
-          <div>
-            <h3 className="font-semibold text-gray-900">{technician.name}</h3>
-            <div className="flex items-center text-sm text-gray-600">
-              <ClockIcon className="w-4 h-4 mr-1" />
-              {technician.yearsExperience} years experience
+          {isSelected && (
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center shadow-sm">
+              <CheckBadgeIcon className="w-4 h-4 text-white" />
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-bold text-lg text-gray-900 mb-1 truncate">
+            {technician.name}
+          </h3>
+          <div className="flex items-center gap-3 text-sm text-gray-600">
+            <div className="flex items-center gap-1">
+              <ClockIcon className="w-4 h-4" />
+              <span>{technician.yearsExperience} years</span>
+            </div>
+            <span className="text-gray-400">•</span>
+            <div className="flex items-center gap-1">
+              <StarIcon className="w-4 h-4 text-amber-500" />
+              <span className="font-semibold text-gray-900">
+                {(technician.performance.customerRating || 0).toFixed(1)}
+              </span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Availability Status */}
-      <div className="space-y-2 mb-3">
-        <div className="flex items-center justify-between">
+      <div className="mb-4">
+        <div className="flex items-center justify-between gap-2">
           <span
-            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getAvailabilityColor(
+            className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold border ${getAvailabilityColor(
               technician.availability.status
             )}`}
           >
+            <span
+              className={`w-2 h-2 rounded-full mr-2 ${
+                technician.availability.status === "available"
+                  ? "bg-emerald-500 animate-pulse"
+                  : technician.availability.status === "busy"
+                  ? "bg-amber-500"
+                  : "bg-gray-400"
+              }`}
+            />
             {getAvailabilityText(technician.availability.status)}
           </span>
-          <span className="text-sm text-gray-600">
+          <span className="text-xs font-medium text-gray-600 bg-gray-100 px-3 py-1.5 rounded-lg">
             {Math.round(technician.availability.workloadPercentage)}% workload
           </span>
         </div>
         {!isAvailableForSlot && (
-          <div className="flex items-center text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
-            <ClockIcon className="w-3 h-3 mr-1" />
+          <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-red-700 bg-red-50 px-3 py-2 rounded-lg border border-red-200">
+            <ClockIcon className="w-4 h-4 flex-shrink-0" />
             Not available for selected time slot
           </div>
         )}
       </div>
 
       {/* Performance Metrics */}
-      <div className="grid grid-cols-3 gap-2 mb-3 text-center">
-        <div className="bg-gray-50 rounded p-2">
-          <div className="flex items-center justify-center mb-1">
-            <StarIcon className="w-4 h-4 text-yellow-500" />
-            <span className="ml-1 font-semibold text-sm">
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-2.5 text-center border border-gray-200 min-h-[60px] flex flex-col justify-center">
+          <div className="flex items-center justify-center gap-1 mb-1">
+            <StarIcon className="w-4 h-4 text-amber-500 flex-shrink-0" />
+            <span className="font-bold text-sm text-gray-900 truncate">
               {(technician.performance.customerRating || 0).toFixed(1)}
             </span>
           </div>
-          <div className="text-xs text-gray-600">Rating</div>
+          <div className="text-xs font-medium text-gray-600 leading-tight">
+            Rating
+          </div>
         </div>
-        <div className="bg-gray-50 rounded p-2">
-          <div className="font-semibold text-sm mb-1">
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-2.5 text-center border border-gray-200 min-h-[60px] flex flex-col justify-center">
+          <div className="font-bold text-sm text-gray-900 mb-1 truncate">
             {technician.performance.completedJobs}
           </div>
-          <div className="text-xs text-gray-600">Jobs</div>
+          <div className="text-xs font-medium text-gray-600 leading-tight">
+            Jobs Done
+          </div>
         </div>
-        <div className="bg-gray-50 rounded p-2">
-          <div className="font-semibold text-sm mb-1">
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-2.5 text-center border border-gray-200 min-h-[60px] flex flex-col justify-center">
+          <div className="font-bold text-sm text-gray-900 mb-1 truncate">
             {Math.round(technician.performance.efficiency)}%
           </div>
-          <div className="text-xs text-gray-600">Efficiency</div>
+          <div className="text-xs font-medium text-gray-600 leading-tight">
+            Efficiency
+          </div>
         </div>
       </div>
 
       {/* Specializations */}
       {technician.specializations.length > 0 && (
-        <div className="mb-3">
-          <div className="text-sm font-medium text-gray-700 mb-1">
-            Specializations:
+        <div className="mb-4">
+          <div className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+            Specializations
           </div>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {technician.specializations.map((spec) => (
               <span
                 key={spec}
-                className="inline-flex items-center px-2 py-1 rounded text-xs bg-blue-100 text-blue-800"
+                className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200"
               >
                 {spec}
               </span>
@@ -191,42 +218,35 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
 
       {/* Relevant Skills for Selected Services */}
       {hasRelevantSkills && (
-        <div className="mb-3">
-          <div className="text-sm font-medium text-gray-700 mb-1">
-            Skills for your services:
+        <div className="border-t border-gray-200 pt-4">
+          <div className="text-xs font-semibold text-gray-700 mb-2.5 uppercase tracking-wide">
+            Skills Match
           </div>
-          <div className="space-y-1">
+          <div className="space-y-2">
             {relevantSkills.slice(0, 3).map((skill) => (
               <div
                 key={skill.category}
-                className="flex items-center justify-between text-xs"
+                className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 border border-gray-200"
               >
-                <div className="flex items-center">
-                  <CpuChipIcon className="w-3 h-3 mr-1 text-gray-500" />
-                  <span className="capitalize">{skill.category}</span>
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <CpuChipIcon className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                  <span className="capitalize text-sm font-medium text-gray-900 truncate">
+                    {skill.category}
+                  </span>
                   {skill.certified && (
-                    <CheckBadgeIcon className="w-3 h-3 ml-1 text-green-500" />
+                    <CheckBadgeIcon className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                   )}
                 </div>
-                <span className="font-medium text-gray-600">
+                <span className="text-xs font-semibold text-gray-700 bg-white px-2 py-1 rounded border border-gray-300 ml-2 flex-shrink-0">
                   {getSkillLevel(skill.level)}
                 </span>
               </div>
             ))}
             {relevantSkills.length > 3 && (
-              <div className="text-xs text-gray-500">
+              <div className="text-xs font-medium text-gray-500 text-center pt-1">
                 +{relevantSkills.length - 3} more skills
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* Selection Indicator */}
-      {isSelected && (
-        <div className="absolute inset-0 rounded-lg border-2 border-blue-500 bg-blue-50 bg-opacity-20 pointer-events-none">
-          <div className="absolute top-3 right-3">
-            <CheckBadgeIcon className="w-6 h-6 text-blue-500" />
           </div>
         </div>
       )}
