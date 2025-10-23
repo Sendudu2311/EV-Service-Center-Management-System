@@ -10,6 +10,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { invoicesAPI } from '../services/api';
+import { useCustomEvent } from '../contexts/SocketContext';
 
 interface Invoice {
   _id: string;
@@ -42,6 +43,23 @@ const InvoicesScreen: React.FC = () => {
   useEffect(() => {
     fetchInvoices();
   }, []);
+
+  // Listen to real-time invoice updates
+  useCustomEvent('invoiceGenerated', (data) => {
+    console.log('📡 New invoice generated:', data);
+    fetchInvoices();
+  });
+
+  // Listen to payment updates
+  useCustomEvent('paymentReceived', (data) => {
+    console.log('📡 Payment received:', data);
+    fetchInvoices();
+  });
+
+  useCustomEvent('paymentSuccess', (data) => {
+    console.log('📡 Payment success:', data);
+    fetchInvoices();
+  });
 
   const fetchInvoices = async () => {
     try {

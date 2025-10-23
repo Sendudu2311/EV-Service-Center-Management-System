@@ -91,67 +91,18 @@ const StaffDashboard: React.FC = () => {
   const fetchPendingReceptions = async () => {
     try {
       setReceptionLoading(true);
-      const response = await appointmentsAPI.getAll({ status: 'reception_created' });
+      // Call the correct backend endpoint to get pending service receptions
+      const response = await fetch('/api/appointments/receptions/pending-approval', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
 
-      if (response.data.success) {
-        const receptions = (response.data.data || []).map((appointment: any) => ({
-          _id: `reception_${appointment._id}`,
-          appointmentId: {
-            _id: appointment._id,
-            appointmentNumber: appointment.appointmentNumber
-          },
-          customerId: {
-            firstName: appointment.customerId.firstName || 'Unknown',
-            lastName: appointment.customerId.lastName || 'Customer',
-            phone: appointment.customerId.phone || 'N/A'
-          },
-          vehicleId: {
-            make: appointment.vehicleId?.make || 'Unknown',
-            model: appointment.vehicleId?.model || 'Vehicle',
-            year: appointment.vehicleId?.year || 2020,
-            licensePlate: appointment.vehicleId?.licensePlate || 'N/A',
-            vin: appointment.vehicleId?.vin || 'N/A'
-          },
-          bookedServices: appointment.services || [],
-          priorityLevel: appointment.priority || 'normal',
-          estimatedServiceTime: appointment.estimatedDuration || 120,
-          status: 'received',
-          receivedBy: {
-            firstName: 'System',
-            lastName: 'Auto'
-          },
-          receivedAt: appointment.updatedAt || new Date().toISOString(),
-          vehicleCondition: {
-            exterior: {
-              condition: 'good',
-              damages: [],
-              notes: 'Pending detailed inspection'
-            },
-            interior: {
-              condition: 'good',
-              cleanliness: 'clean',
-              damages: [],
-              notes: ''
-            },
-            battery: {
-              level: 80,
-              health: 'good',
-              chargingStatus: 'not_charging',
-              notes: 'Battery level checked during arrival'
-            },
-            mileage: {
-              current: 25000
-            }
-          },
-          customerItems: [],
-          specialInstructions: {
-            fromCustomer: appointment.customerNotes || '',
-            safetyPrecautions: [],
-            warningNotes: []
-          }
-        }));
-
-        setPendingReceptions(receptions);
+      if (response.ok) {
+        const data = await response.json();
+        setPendingReceptions(data.data || []);
+      } else {
+        toast.error('Không thể tải danh sách phiếu tiếp nhận');
       }
     } catch (error) {
       console.error('Error fetching pending receptions:', error);
@@ -163,17 +114,24 @@ const StaffDashboard: React.FC = () => {
 
   const handleReceptionReview = async (receptionId: string, decision: 'approve' | 'reject', notes: string) => {
     try {
-      const appointmentId = receptionId.replace('reception_', '');
-
-      const response = await serviceReceptionAPI.review(appointmentId, {
-        decision: decision === 'approve' ? 'approved' : 'rejected',
-        reviewNotes: notes,
-        staffReviewStatus: decision === 'approve' ? 'approved' : 'rejected'
+      // receptionId is now the actual ServiceReception _id, not appointment ID
+      const response = await fetch(`/api/service-receptions/${receptionId}/approve`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          decision: decision === 'approve' ? 'approved' : 'rejected',
+          reviewNotes: notes
+        })
       });
 
-      if (response.data.success) {
+      if (response.ok) {
         fetchPendingReceptions();
         immediateFetchDashboard();
+      } else {
+        throw new Error('Failed to review reception');
       }
     } catch (error: any) {
       console.error('Error reviewing reception:', error);
@@ -515,7 +473,6 @@ const StaffDashboard: React.FC = () => {
             receptions={pendingReceptions}
             loading={receptionLoading}
             onReview={handleReceptionReview}
-            onRefresh={fetchPendingReceptions}
           />
         )}
       </div>

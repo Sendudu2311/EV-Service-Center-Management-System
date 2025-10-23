@@ -12,18 +12,14 @@ export const createServiceReception = async (req, res) => {
   try {
     const { appointmentId } = req.params;
     const {
-      notes,
-      estimatedCompletionTime,
-      checklist,
-      services: requestedServices,
-      parts: requestedParts,
       vehicleCondition,
       customerItems,
       specialInstructions,
       estimatedServiceTime,
-      priorityLevel,
-      additionalServices,
-      requestedParts: frontendRequestedParts,
+      recommendedServices,
+      requestedParts,
+      preServicePhotos,
+      diagnosticCodes,
     } = req.body;
 
     // Check if service reception already exists for this appointment
@@ -38,13 +34,11 @@ export const createServiceReception = async (req, res) => {
       );
     }
 
-    // Get appointment data using direct mongoose query to avoid import issues
+    // Get appointment data
     const Appointment = mongoose.model("Appointment");
     const appointment = await Appointment.findById(appointmentId)
       .populate("customerId")
-      .populate("vehicleId")
-      // serviceCenterId populate removed - single center architecture
-      .populate("services");
+      .populate("vehicleId");
 
     if (!appointment) {
       return sendError(
@@ -81,22 +75,22 @@ export const createServiceReception = async (req, res) => {
       );
     }
 
-    // Validate requested services exist
-    if (requestedServices && requestedServices.length > 0) {
-      const serviceIds = requestedServices.map((s) => s.serviceId);
+    // Validate recommended services exist
+    if (recommendedServices && recommendedServices.length > 0) {
+      const serviceIds = recommendedServices.map((s) => s.serviceId);
       const services = await Service.find({ _id: { $in: serviceIds } });
       if (services.length !== serviceIds.length) {
         return sendError(
           res,
           400,
-          "One or more requested services not found",
+          "One or more recommended services not found",
           null,
           "INVALID_SERVICES"
         );
       }
     }
 
-    // Validate requested parts exist and have sufficient stock
+    // Validate requested parts exist (don't check stock - staff will do that during approval)
     if (requestedParts && requestedParts.length > 0) {
       const partIds = requestedParts.map((p) => p.partId);
       const parts = await Part.find({ _id: { $in: partIds } });
@@ -109,31 +103,12 @@ export const createServiceReception = async (req, res) => {
           "INVALID_PARTS"
         );
       }
-
-      // Check stock availability
-      for (const requestedPart of requestedParts) {
-        const part = parts.find(
-          (p) => p._id.toString() === requestedPart.partId
-        );
-        if (part.stockQuantity < requestedPart.quantity) {
-          return sendError(
-            res,
-            400,
-            `Insufficient stock for part: ${part.name}`,
-            null,
-            "INSUFFICIENT_STOCK"
-          );
-        }
-      }
     }
 
-    // Merge parts data: prioritize frontend requestedParts if available, otherwise use legacy parts field
-    const finalRequestedParts = frontendRequestedParts || requestedParts || [];
-
-    // Calculate estimated completion time based on estimatedServiceTime
+    // Calculate estimated completion time
     const completionTime = estimatedServiceTime
       ? new Date(Date.now() + estimatedServiceTime * 60 * 1000)
-      : estimatedCompletionTime || new Date(Date.now() + 2 * 60 * 60 * 1000);
+      : new Date(Date.now() + 2 * 60 * 60 * 1000);
 
     // Generate reception number (format: REC-YYMMDD-XXX)
     const today = new Date();
@@ -142,7 +117,6 @@ export const createServiceReception = async (req, res) => {
       (today.getMonth() + 1).toString().padStart(2, "0") +
       today.getDate().toString().padStart(2, "0");
 
-    // Get count of receptions today for sequential number
     const todayStart = new Date(
       today.getFullYear(),
       today.getMonth(),
@@ -157,62 +131,41 @@ export const createServiceReception = async (req, res) => {
       .toString()
       .padStart(3, "0")}`;
 
-    // Prepare booked services from appointment services
-    const bookedServices = (appointment.services || []).map(
-      (appointmentService) => ({
-        serviceId:
-          typeof appointmentService.serviceId === "string"
-            ? appointmentService.serviceId
-            : appointmentService.serviceId._id,
-        serviceName:
-          typeof appointmentService.serviceId === "string"
-            ? "Unknown Service"
-            : appointmentService.serviceId.name,
-        category:
-          typeof appointmentService.serviceId === "string"
-            ? "general"
-            : appointmentService.serviceId.category,
-        quantity: appointmentService.quantity,
-        estimatedDuration:
-          typeof appointmentService.serviceId === "string"
-            ? 60
-            : appointmentService.serviceId.estimatedDuration,
-        basePrice:
-          typeof appointmentService.serviceId === "string"
-            ? 0
-            : appointmentService.serviceId.basePrice,
-        customerInstructions: appointmentService.notes || "",
-        isCompleted: false,
-      })
-    );
+    // Process recommended services - add addedBy field
+    const processedRecommendedServices = (recommendedServices || []).map(service => ({
+      ...service,
+      addedBy: req.user._id,
+      addedAt: new Date()
+    }));
 
     // Create service reception
+    // NOTE: Initial booked service is already paid and NOT tracked in reception
+    // Only recommendedServices (discovered during inspection) are tracked
     const serviceReception = new ServiceReception({
       receptionNumber,
       appointmentId,
       customerId: appointment.customerId._id,
       vehicleId: appointment.vehicleId._id,
-      serviceCenterId: appointment.serviceCenterId._id,
       receivedBy: req.user._id,
-      notes: notes || specialInstructions?.fromCustomer || "",
       estimatedCompletionTime: completionTime,
-      checklist: checklist || {},
-      services: requestedServices || [],
-      bookedServices: bookedServices,
-      // Enhanced data from new frontend structure
       vehicleCondition: vehicleCondition || {},
       customerItems: customerItems || [],
       specialInstructions: specialInstructions || {},
       estimatedServiceTime: estimatedServiceTime || 120,
-      priorityLevel: priorityLevel || "normal",
-      additionalServices: additionalServices || [],
-      requestedParts: finalRequestedParts,
+      recommendedServices: processedRecommendedServices,
+      requestedParts: requestedParts || [],
+      preServicePhotos: preServicePhotos || [],
+      diagnosticCodes: diagnosticCodes || [],
       status: "received",
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      // Auto-submit to staff for review
+      submissionStatus: {
+        submittedToStaff: true,
+        submittedBy: req.user._id,
+        submittedAt: new Date(),
+        staffReviewStatus: 'pending'
+      }
     });
 
-    // Save service reception
     await serviceReception.save();
 
     // Update appointment status to reception_created
@@ -232,9 +185,8 @@ export const createServiceReception = async (req, res) => {
     )
       .populate("customerId", "firstName lastName email phone")
       .populate("vehicleId", "make model year licensePlate")
-      // serviceCenterId populate removed - single center architecture
       .populate("receivedBy", "firstName lastName email")
-      .populate("bookedServices.serviceId", "name description basePrice")
+      .populate("recommendedServices.serviceId", "name description basePrice")
       .populate("requestedParts.partId", "name partNumber price");
 
     return sendSuccess(
@@ -253,7 +205,7 @@ export const createServiceReception = async (req, res) => {
       "INTERNAL_SERVER_ERROR"
     );
   }
-};
+};;
 
 export const getServiceReception = async (req, res) => {
   try {
@@ -262,10 +214,10 @@ export const getServiceReception = async (req, res) => {
     const serviceReception = await ServiceReception.findById(id)
       .populate("customerId", "firstName lastName email phone")
       .populate("vehicleId", "make model year licensePlate")
-      // serviceCenterId populate removed - single center architecture
       .populate("receivedBy", "firstName lastName email")
-      .populate("services.serviceId", "name description basePrice")
-      .populate("parts.partId", "name partNumber price");
+      .populate("recommendedServices.serviceId", "name description basePrice category estimatedDuration")
+      .populate("recommendedServices.addedBy", "firstName lastName")
+      .populate("requestedParts.partId", "name partNumber pricing");
 
     if (!serviceReception) {
       return sendError(
@@ -289,6 +241,42 @@ export const getServiceReception = async (req, res) => {
       res,
       500,
       "Error retrieving service reception",
+      null,
+      "INTERNAL_SERVER_ERROR"
+    );
+  }
+};
+
+
+// Get service receptions by technician
+export const getServiceReceptionsByTechnician = async (req, res) => {
+  try {
+    const technicianId = req.user._id;
+
+    const serviceReceptions = await ServiceReception.find({
+      receivedBy: technicianId
+    })
+      .populate("customerId", "firstName lastName email phone")
+      .populate("vehicleId", "make model year licensePlate")
+      .populate("receivedBy", "firstName lastName email")
+      .populate("submissionStatus.reviewedBy", "firstName lastName email")
+      .populate("recommendedServices.serviceId", "name description basePrice category estimatedDuration")
+      .populate("recommendedServices.addedBy", "firstName lastName")
+      .populate("requestedParts.partId", "name partNumber pricing")
+      .sort({ createdAt: -1 });
+
+    return sendSuccess(
+      res,
+      200,
+      "Service receptions retrieved successfully",
+      serviceReceptions
+    );
+  } catch (error) {
+    console.error("Error retrieving service receptions by technician:", error);
+    return sendError(
+      res,
+      500,
+      "Error retrieving service receptions",
       null,
       "INTERNAL_SERVER_ERROR"
     );
@@ -342,8 +330,9 @@ export const updateServiceReception = async (req, res) => {
       .populate("vehicleId", "make model year licensePlate")
       // serviceCenterId populate removed - single center architecture
       .populate("receivedBy", "firstName lastName email")
-      .populate("services.serviceId", "name description basePrice")
-      .populate("parts.partId", "name partNumber price");
+      .populate("recommendedServices.serviceId", "name description basePrice category estimatedDuration")
+      .populate("recommendedServices.addedBy", "firstName lastName")
+      .populate("requestedParts.partId", "name partNumber pricing");
 
     return sendSuccess(
       res,
@@ -363,10 +352,96 @@ export const updateServiceReception = async (req, res) => {
   }
 };
 
+// Re-submit service reception after update (for rejected receptions)
+export const resubmitServiceReception = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const serviceReception = await ServiceReception.findById(id);
+    if (!serviceReception) {
+      return sendError(
+        res,
+        404,
+        "Service reception not found",
+        null,
+        "RECEPTION_NOT_FOUND"
+      );
+    }
+
+    // Verify authorization
+    if (
+      req.user.role !== "admin" &&
+      serviceReception.receivedBy?.toString() !== req.user._id.toString()
+    ) {
+      return sendError(
+        res,
+        403,
+        "Only assigned technician can resubmit service reception",
+        null,
+        "UNAUTHORIZED_TECHNICIAN"
+      );
+    }
+
+    // Only allow resubmit if rejected
+    if (serviceReception.submissionStatus.staffReviewStatus !== "rejected") {
+      return sendError(
+        res,
+        400,
+        "Can only resubmit rejected service receptions",
+        null,
+        "INVALID_STATUS"
+      );
+    }
+
+    // Reset submission status
+    serviceReception.submissionStatus.submittedToStaff = true;
+    serviceReception.submissionStatus.staffReviewStatus = "pending";
+    serviceReception.submissionStatus.submittedBy = req.user._id;
+    serviceReception.submissionStatus.submittedAt = new Date();
+    // Clear previous review
+    serviceReception.submissionStatus.reviewedBy = undefined;
+    serviceReception.submissionStatus.reviewedAt = undefined;
+    serviceReception.submissionStatus.reviewNotes = "";
+
+    serviceReception.updatedAt = new Date();
+    await serviceReception.save();
+
+    const populatedReception = await ServiceReception.findById(
+      serviceReception._id
+    )
+      .populate("customerId", "firstName lastName email phone")
+      .populate("vehicleId", "make model year licensePlate")
+      .populate("receivedBy", "firstName lastName email")
+      .populate("recommendedServices.serviceId", "name description basePrice category estimatedDuration")
+      .populate("recommendedServices.addedBy", "firstName lastName")
+      .populate("requestedParts.partId", "name partNumber pricing");
+
+    return sendSuccess(
+      res,
+      200,
+      "Service reception resubmitted successfully",
+      populatedReception
+    );
+  } catch (error) {
+    console.error("Error resubmitting service reception:", error);
+    return sendError(
+      res,
+      500,
+      "Error resubmitting service reception",
+      null,
+      "INTERNAL_SERVER_ERROR"
+    );
+  }
+};
+
 export const approveServiceReception = async (req, res) => {
   try {
     const { id } = req.params;
-    const { approved, staffNotes } = req.body;
+    const { decision, reviewNotes, approved, staffNotes } = req.body;
+
+    // Support both old format (approved: boolean) and new format (decision: 'approved'/'rejected')
+    const isApproved = decision ? decision === 'approved' : approved;
+    const notes = reviewNotes || staffNotes || '';
 
     const serviceReception = await ServiceReception.findById(id);
     if (!serviceReception) {
@@ -390,14 +465,18 @@ export const approveServiceReception = async (req, res) => {
       );
     }
 
-    // Update status and approval info
-    serviceReception.status = approved ? "approved" : "rejected";
-    serviceReception.submissionStatus.staffReviewStatus = approved
+    // Update approval info
+    // Note: Only update serviceReception.status to 'approved' if approved
+    // If rejected, keep current status (usually 'received')
+    if (isApproved) {
+      serviceReception.status = "approved";
+    }
+    serviceReception.submissionStatus.staffReviewStatus = isApproved
       ? "approved"
       : "rejected";
     serviceReception.submissionStatus.reviewedBy = req.user._id;
     serviceReception.submissionStatus.reviewedAt = new Date();
-    serviceReception.submissionStatus.reviewNotes = staffNotes || "";
+    serviceReception.submissionStatus.reviewNotes = notes;
     serviceReception.updatedAt = new Date();
 
     await serviceReception.save();
@@ -407,17 +486,23 @@ export const approveServiceReception = async (req, res) => {
     const appointment = await Appointment.findById(
       serviceReception.appointmentId
     );
-    if (appointment) {
-      appointment.status = approved
-        ? "reception_approved"
-        : "reception_rejected";
+    if (appointment && isApproved) {
+      // Only update appointment status when approved
+      appointment.status = "reception_approved";
       appointment.workflowHistory.push({
-        status: approved ? "reception_approved" : "reception_rejected",
+        status: "reception_approved",
         changedBy: req.user._id,
         changedAt: new Date(),
-        notes: `Service reception ${
-          approved ? "approved" : "rejected"
-        } by staff`,
+        notes: "Service reception approved by staff",
+      });
+      await appointment.save();
+    } else if (appointment && !isApproved) {
+      // When rejected, just add to history but keep current status
+      appointment.workflowHistory.push({
+        status: appointment.status, // Keep current status
+        changedBy: req.user._id,
+        changedAt: new Date(),
+        notes: `Service reception rejected by staff: ${notes || 'No reason provided'}`,
       });
       await appointment.save();
     }
@@ -427,16 +512,16 @@ export const approveServiceReception = async (req, res) => {
     )
       .populate("customerId", "firstName lastName email phone")
       .populate("vehicleId", "make model year licensePlate")
-      // serviceCenterId populate removed - single center architecture
       .populate("receivedBy", "firstName lastName email")
       .populate("submissionStatus.reviewedBy", "firstName lastName email")
-      .populate("services.serviceId", "name description basePrice")
-      .populate("parts.partId", "name partNumber price");
+      .populate("recommendedServices.serviceId", "name description basePrice category estimatedDuration")
+      .populate("recommendedServices.addedBy", "firstName lastName")
+      .populate("requestedParts.partId", "name partNumber pricing");
 
     return sendSuccess(
       res,
       200,
-      `Service reception ${approved ? "approved" : "rejected"} successfully`,
+      `Service reception ${isApproved ? "approved" : "rejected"} successfully`,
       populatedReception
     );
   } catch (error) {

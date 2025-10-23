@@ -259,11 +259,6 @@ const serviceReceptionSchema = new mongoose.Schema({
     enum: ['received', 'inspected', 'approved', 'in_service', 'completed', 'ready_for_pickup'],
     default: 'received'
   },
-  priorityLevel: {
-    type: String,
-    enum: ['low', 'normal', 'high', 'urgent'],
-    default: 'normal'
-  },
   estimatedServiceTime: {
     type: Number, // in minutes
     required: true
@@ -336,39 +331,12 @@ const serviceReceptionSchema = new mongoose.Schema({
   },
   
   // Services từ appointment và thêm trong reception
-  bookedServices: [{
-    serviceId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Service',
-      required: true
-    },
-    serviceName: String,
-    category: String,
-    quantity: {
-      type: Number,
-      default: 1
-    },
-    estimatedDuration: Number, // minutes
-    basePrice: Number, // service price
-    actualDuration: Number, // minutes
-    isCompleted: {
-      type: Boolean,
-      default: false
-    },
-    completedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    completedAt: Date,
-    technicianNotes: String,
-    customerInstructions: String,
-    qualityCheckPassed: {
-      type: Boolean,
-      default: false
-    }
-  }],
+  // REMOVED: bookedServices - Initial service from appointment is already paid
+  // and not tracked in ServiceReception. Only track additional services discovered during inspection.
   
-  additionalServices: [{
+  // Services recommended by technician after vehicle inspection
+  // (replaces both bookedServices and additionalServices)
+  recommendedServices: [{
     serviceId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Service',
@@ -382,19 +350,11 @@ const serviceReceptionSchema = new mongoose.Schema({
     },
     reason: {
       type: String,
-      required: true
+      default: ''
     },
-    discoveredDuring: String, // Which stage was this discovered
-    customerApproved: {
-      type: Boolean,
-      default: false
-    },
-    approvedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    approvedAt: Date,
+    discoveredDuring: String, // e.g., "initial_inspection", "battery_check", "tire_inspection"
     estimatedCost: Number,
+    estimatedDuration: Number, // minutes
     addedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -404,12 +364,25 @@ const serviceReceptionSchema = new mongoose.Schema({
       type: Date,
       default: Date.now
     },
+    // Completion tracking
     isCompleted: {
       type: Boolean,
       default: false
     },
-    technicianNotes: String
+    completedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    completedAt: Date,
+    actualDuration: Number,
+    technicianNotes: String,
+    qualityCheckPassed: {
+      type: Boolean,
+      default: false
+    }
   }],
+
+  // REMOVED: additionalServices merged into recommendedServices above
   
   // Parts yêu cầu trong reception
   requestedParts: [{
@@ -427,12 +400,7 @@ const serviceReceptionSchema = new mongoose.Schema({
     },
     reason: {
       type: String,
-      required: true
-    },
-    urgency: {
-      type: String,
-      enum: ['low', 'normal', 'high', 'critical'],
-      default: 'normal'
+      default: ''
     },
     isApproved: {
       type: Boolean,
@@ -658,7 +626,7 @@ serviceReceptionSchema.methods.staffReview = function(staffId, decision, notes =
 
 // Add additional service
 serviceReceptionSchema.methods.addAdditionalService = function(serviceData, technicianId) {
-  this.additionalServices.push({
+  this.recommendedServices.push({
     ...serviceData,
     addedBy: technicianId,
     addedAt: new Date()
@@ -666,37 +634,30 @@ serviceReceptionSchema.methods.addAdditionalService = function(serviceData, tech
   
   // Add to workflow history
   this.workflowHistory.push({
-    status: 'additional_service_added',
+    status: 'recommended_service_added',
     changedBy: technicianId,
     changedAt: new Date(),
-    reason: `Additional service added: ${serviceData.serviceName}`,
+    reason: `Recommended service added: ${serviceData.serviceName}`,
     systemGenerated: false
   });
   
   return this.save();
-};
+};;
 
 // Mark service as completed
 serviceReceptionSchema.methods.completeService = function(serviceId, technicianId, notes = '', actualDuration = null) {
-  // Find in booked services
-  const bookedService = this.bookedServices.find(s => s.serviceId.toString() === serviceId);
-  if (bookedService) {
-    bookedService.isCompleted = true;
-    bookedService.completedBy = technicianId;
-    bookedService.completedAt = new Date();
-    bookedService.technicianNotes = notes;
-    if (actualDuration) bookedService.actualDuration = actualDuration;
-  }
-  
-  // Find in additional services
-  const additionalService = this.additionalServices.find(s => s.serviceId.toString() === serviceId);
-  if (additionalService) {
-    additionalService.isCompleted = true;
-    additionalService.technicianNotes = notes;
+  // Find in recommended services
+  const service = this.recommendedServices.find(s => s.serviceId.toString() === serviceId);
+  if (service) {
+    service.isCompleted = true;
+    service.completedBy = technicianId;
+    service.completedAt = new Date();
+    service.technicianNotes = notes;
+    if (actualDuration) service.actualDuration = actualDuration;
   }
   
   return this.save();
-};
+};;
 
 // Update EV checklist progress
 serviceReceptionSchema.methods.updateChecklistProgress = function(completedItems, totalItems, criticalIssues = []) {
@@ -740,25 +701,21 @@ serviceReceptionSchema.methods.getEstimatedCost = function() {
     }
   });
   
-  // Add additional services cost
-  this.additionalServices.forEach(service => {
-    if (service.customerApproved && service.estimatedCost) {
+  // Add recommended services cost
+  this.recommendedServices.forEach(service => {
+    if (service.estimatedCost) {
       totalCost += service.estimatedCost;
     }
   });
   
   return totalCost;
-};
+};;
 
 // Check if all services are completed
 serviceReceptionSchema.methods.areAllServicesCompleted = function() {
-  const allBookedCompleted = this.bookedServices.every(service => service.isCompleted);
-  const allAdditionalCompleted = this.additionalServices.every(service => 
-    !service.customerApproved || service.isCompleted
-  );
-  
-  return allBookedCompleted && allAdditionalCompleted;
-};
+  // All recommended services must be completed
+  return this.recommendedServices.every(service => service.isCompleted);
+};;
 
 // Create additional part request
 serviceReceptionSchema.methods.createAdditionalPartRequest = async function(partRequestData, technicianId) {
@@ -770,7 +727,6 @@ serviceReceptionSchema.methods.createAdditionalPartRequest = async function(part
     serviceReceptionId: this._id,
     requestedBy: technicianId,
     requestedParts: partRequestData.parts,
-    urgency: partRequestData.urgency || 'normal',
     requestNotes: partRequestData.notes
   });
   

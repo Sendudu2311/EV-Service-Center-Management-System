@@ -101,23 +101,14 @@ export interface ServiceReception {
       homeChargingSetup: boolean;
     };
   };
-  // serviceCenterId removed - single center architecture
 
   // Technician Information
-  createdBy: {
+  receivedBy: {
     _id: string;
     firstName: string;
     lastName: string;
     fullName: string;
     employeeId: string;
-  };
-  assignedTechnician?: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-    fullName: string;
-    employeeId: string;
-    specializations: string[];
   };
 
   // Vehicle Condition Assessment
@@ -148,23 +139,12 @@ export interface ServiceReception {
       }[];
       notes?: string;
     };
-    underHood: {
-      condition: "excellent" | "good" | "fair" | "poor";
-      findings: {
-        component: string;
-        condition: "normal" | "needs_attention" | "needs_replacement";
-        notes: string;
-      }[];
-    };
     battery: {
-      currentCharge: number; // percentage
-      voltage: number;
-      temperature: number;
-      chargeCycles: number;
-      healthStatus: "excellent" | "good" | "fair" | "poor";
-      estimatedRange: number;
-      chargingPortCondition: "excellent" | "good" | "fair" | "poor";
-      issues: string[];
+      level: number; // percentage
+      health: "excellent" | "good" | "fair" | "poor" | "replace_soon";
+      temperature?: number;
+      chargingStatus: "not_charging" | "charging" | "fully_charged" | "error";
+      notes?: string;
     };
     tires: {
       frontLeft: { pressure: number; treadDepth: number; condition: string };
@@ -172,198 +152,154 @@ export interface ServiceReception {
       rearLeft: { pressure: number; treadDepth: number; condition: string };
       rearRight: { pressure: number; treadDepth: number; condition: string };
     };
+    mileage: {
+      current: number;
+    };
   };
 
-  // Customer Information
-  customerComplaints: string[];
-  customerRequests: string[];
-  customerNotes?: string;
-
-  // Service Planning
-  plannedServices: {
-    serviceId: string;
-    serviceName: string;
-    description: string;
-    category: string;
-    estimatedDuration: number;
-    estimatedCost: number;
-    priority: "low" | "normal" | "high" | "urgent";
-    requiredParts?: string[];
+  // Customer Items
+  customerItems: {
+    item: string;
+    location: string;
+    value?: number;
     notes?: string;
   }[];
 
-  additionalServicesRecommended: {
-    serviceId: string;
-    serviceName: string;
-    description: string;
-    reason: string;
-    urgency: "immediate" | "next_service" | "future";
-    estimatedCost: number;
-    customerApprovalRequired: boolean;
-    customerApproved?: boolean;
+  // Pre-service Photos
+  preServicePhotos: {
+    url: string;
+    category: string;
+    description?: string;
+    timestamp: string;
   }[];
 
-  // EV-Specific Checklist
-  evChecklist: EVChecklistItem[];
+  // Diagnostic Codes
+  diagnosticCodes: {
+    code: string;
+    description: string;
+    severity: "info" | "warning" | "error" | "critical";
+    system?: string;
+  }[];
 
-  // Parts Assessment
-  partsNeeded: {
+  // NOTE: Initial booked service from appointment is NOT included here
+  // It was already paid and is only for knowing the reason for visit
+  
+  // Services recommended by technician after vehicle inspection
+  recommendedServices: {
+    serviceId: string;
+    serviceName: string;
+    category: string;
+    quantity: number;
+    reason: string;
+    discoveredDuring?: string;
+    estimatedCost: number;
+    estimatedDuration: number;
+    addedBy: string;
+    addedAt: string;
+    isCompleted: boolean;
+    completedBy?: string;
+    completedAt?: string;
+    actualDuration?: number;
+    technicianNotes?: string;
+    qualityCheckPassed?: boolean;
+  }[];
+
+  // Parts requested by technician
+  requestedParts: {
     partId: string;
     partName: string;
     partNumber: string;
     quantity: number;
-    urgency: "immediate" | "normal" | "can_wait";
-    estimatedCost: number;
-    availabilityStatus: "in_stock" | "order_required" | "back_order";
-    estimatedDelivery?: string;
-    alternativeParts?: {
-      partId: string;
-      partName: string;
-      reason: string;
-    }[];
+    reason: string;
+    isApproved: boolean;
+    isAvailable: boolean;
+    availableQuantity?: number;
+    shortfall?: number;
+    alternativePartSuggested?: string;
+    estimatedCost?: number;
+    actualCost?: number;
   }[];
 
-  // Cost Estimation
-  costEstimate: {
-    labor: {
-      standardHours: number;
-      overtimeHours: number;
-      standardRate: number;
-      overtimeRate: number;
-      totalLaborCost: number;
-    };
-    parts: {
-      subtotal: number;
-      discount: number;
-      total: number;
-    };
-    additionalCharges: {
-      description: string;
-      amount: number;
-      type: "fee" | "environmental" | "disposal" | "other";
-    }[];
-    subtotal: number;
-    taxRate: number;
-    taxAmount: number;
-    grandTotal: number;
+  // Special Instructions
+  specialInstructions: {
+    fromCustomer?: string;
+    fromStaff?: string;
+    safetyPrecautions?: string[];
+    warningNotes?: string[];
   };
 
-  // Approval Workflow
+  // Status and Priority
   status:
-    | "draft"
-    | "pending_approval"
+    | "received"
+    | "inspected"
     | "approved"
-    | "rejected"
-    | "in_progress"
-    | "completed";
-  approvalHistory: {
-    status: string;
-    timestamp: string;
-    approvedBy: {
-      _id: string;
-      firstName: string;
-      lastName: string;
-      role: string;
-    };
-    notes?: string;
-    reason?: string;
-  }[];
+    | "in_service"
+    | "completed"
+    | "ready_for_pickup";
 
-  // Customer Communication
-  customerNotifications: {
-    type:
-      | "reception_created"
-      | "estimate_ready"
-      | "approval_required"
-      | "work_started"
-      | "work_completed";
-    sentAt: string;
-    method: "email" | "sms" | "phone" | "in_person";
-    message: string;
-    delivered: boolean;
-    customerResponse?: string;
-    responseAt?: string;
-  }[];
+  // Time Estimates
+  estimatedServiceTime: number; // minutes
+  actualServiceTime?: number;
+  estimatedCompletionTime: string;
 
-  // Quality Control
-  qualityChecks: {
-    category: string;
-    checkpoints: {
-      item: string;
-      status: "pass" | "fail" | "na";
-      notes?: string;
-      inspector: string;
-      timestamp: string;
-    }[];
-  }[];
+  // Submission and Approval Workflow
+  submissionStatus: {
+    submittedToStaff: boolean;
+    submittedAt?: string;
+    submittedBy?: string;
+    staffReviewStatus: "pending" | "approved" | "rejected" | "needs_modification" | "partially_approved";
+    reviewedBy?: string;
+    reviewedAt?: string;
+    reviewNotes?: string;
+  };
 
-  // Documentation
-  photos: {
-    category: "before" | "during" | "after" | "damage" | "repair";
-    url: string;
-    description: string;
-    timestamp: string;
-    uploadedBy: string;
-  }[];
-
-  documents: {
-    type: "warranty" | "manual" | "certificate" | "invoice" | "other";
-    name: string;
-    url: string;
-    uploadedBy: string;
-    uploadedAt: string;
-  }[];
-
-  // Metadata
-  priority: "low" | "normal" | "high" | "urgent";
-  estimatedCompletionDate: string;
-  actualCompletionDate?: string;
-  internalNotes?: string;
+  // EV Checklist Progress
+  evChecklistProgress?: {
+    checklistInstanceId?: string;
+    totalItems: number;
+    completedItems: number;
+    progressPercentage: number;
+    isCompleted: boolean;
+    completedAt?: string;
+  };
 
   // Timestamps
+  receivedAt: string;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface ServiceReceptionFormData {
   appointmentId: string;
-  customerId: string;
-  vehicleId: string;
-  assignedTechnician?: string;
-  customerComplaints: string[];
-  customerRequests: string[];
-  customerNotes?: string;
   vehicleCondition: ServiceReception["vehicleCondition"];
-  plannedServices: ServiceReception["plannedServices"];
-  additionalServicesRecommended: ServiceReception["additionalServicesRecommended"];
-  partsNeeded: ServiceReception["partsNeeded"];
-  priority: "low" | "normal" | "high" | "urgent";
-  estimatedCompletionDate: string;
-  internalNotes?: string;
+  customerItems: ServiceReception["customerItems"];
+  preServicePhotos?: ServiceReception["preServicePhotos"];
+  diagnosticCodes?: ServiceReception["diagnosticCodes"];
+  recommendedServices: ServiceReception["recommendedServices"];
+  requestedParts: ServiceReception["requestedParts"];
+  specialInstructions?: ServiceReception["specialInstructions"];
+  estimatedServiceTime: number;
 }
 
 export interface ServiceReceptionUpdate {
   status?: ServiceReception["status"];
   vehicleCondition?: Partial<ServiceReception["vehicleCondition"]>;
-  plannedServices?: ServiceReception["plannedServices"];
-  additionalServicesRecommended?: ServiceReception["additionalServicesRecommended"];
-  partsNeeded?: ServiceReception["partsNeeded"];
-  costEstimate?: ServiceReception["costEstimate"];
-  evChecklist?: EVChecklistItem[];
-  priority?: ServiceReception["priority"];
-  estimatedCompletionDate?: string;
-  actualCompletionDate?: string;
-  internalNotes?: string;
+  recommendedServices?: ServiceReception["recommendedServices"];
+  requestedParts?: ServiceReception["requestedParts"];
+  evChecklistProgress?: ServiceReception["evChecklistProgress"];
+  estimatedCompletionTime?: string;
+  actualServiceTime?: number;
+  specialInstructions?: ServiceReception["specialInstructions"];
 }
 
 // Vietnamese translations for Service Reception
 export const serviceReceptionStatusTranslations: Record<string, string> = {
-  draft: "Bản nháp",
-  pending_approval: "Chờ phê duyệt",
+  received: "Đã tiếp nhận",
+  inspected: "Đã kiểm tra",
   approved: "Đã phê duyệt",
-  rejected: "Đã từ chối",
-  in_progress: "Đang thực hiện",
+  in_service: "Đang thực hiện",
   completed: "Hoàn thành",
+  ready_for_pickup: "Sẵn sàng giao xe",
 };
 
 export const vehicleConditionTranslations: Record<string, string> = {

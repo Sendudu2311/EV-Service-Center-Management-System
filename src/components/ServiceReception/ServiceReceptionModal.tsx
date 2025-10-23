@@ -59,13 +59,16 @@ interface ServiceReceptionData {
     warningNotes: string[];
   };
   estimatedServiceTime: number;
-  priorityLevel: 'low' | 'normal' | 'high' | 'urgent';
-  additionalServices: Array<{
+  // NOTE: Initial booked service is already paid, not included in reception
+  // Only services discovered during inspection are recommended
+  recommendedServices: Array<{
     serviceId: string;
     serviceName: string;
     quantity: number;
     reason: string;
+    discoveredDuring?: string;
     estimatedCost?: number;
+    estimatedDuration?: number;
   }>;
   requestedParts: Array<{
     partId: string;
@@ -73,7 +76,6 @@ interface ServiceReceptionData {
     partNumber?: string;
     quantity: number;
     reason: string;
-    urgency: 'low' | 'normal' | 'high' | 'critical';
     estimatedCost?: number;
     isAvailable?: boolean;
     availableQuantity?: number;
@@ -151,8 +153,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
       warningNotes: []
     },
     estimatedServiceTime: 120,
-    priorityLevel: 'normal',
-    additionalServices: [],
+    recommendedServices: [],
     requestedParts: []
   });
 
@@ -162,24 +163,18 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
   const [loadingParts, setLoadingParts] = useState(false);
 
   // Calculate totals
+  // NOTE: Initial booked service is NOT included - it's already paid
+  // Only calculate recommended services + parts
   const calculateTotals = () => {
-    // Start with appointment services time and cost
-    let totalTime = appointment.services.reduce((total, service) =>
-      total + (service.serviceId.estimatedDuration * service.quantity), 0
-    );
-    let totalCost = appointment.services.reduce((total, service) => {
-      // Try to get price from serviceId object, fallback to lookup in availableServices
-      const price = service.serviceId.basePrice ||
-        availableServices.find(s => s._id === service.serviceId._id)?.basePrice || 0;
-      return total + (price * service.quantity);
-    }, 0);
+    let totalTime = 0;
+    let totalCost = 0;
 
-    // Add time from additional services
-    formData.additionalServices.forEach(service => {
+    // Add time and cost from recommended services (discovered during inspection)
+    formData.recommendedServices.forEach(service => {
       const serviceData = availableServices.find(s => s._id === service.serviceId);
       if (serviceData) {
-        totalTime += serviceData.estimatedDuration * service.quantity;
-        totalCost += serviceData.basePrice * service.quantity;
+        totalTime += (service.estimatedDuration || serviceData.estimatedDuration) * service.quantity;
+        totalCost += (service.estimatedCost || serviceData.basePrice) * service.quantity;
       }
     });
 
@@ -187,7 +182,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
     formData.requestedParts.forEach(part => {
       const partData = availableParts.find(p => p._id === part.partId);
       if (partData) {
-        totalCost += (partData.pricing?.retail || 0) * part.quantity;
+        totalCost += (part.estimatedCost || partData.pricing?.retail || 0) * part.quantity;
       }
     });
 
@@ -767,7 +762,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
       case 4:
         return (
           <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-900">Dịch vụ bổ sung</h3>
+            <h3 className="text-lg font-medium text-gray-900">Dịch vụ đề xuất sau kiểm tra</h3>
 
             {/* Service Summary */}
             <div className="bg-blue-50 rounded-lg p-4">
@@ -809,11 +804,11 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
             {/* Additional Services */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-md font-medium text-gray-900">Dịch vụ bổ sung cần thiết</h4>
+                <h4 className="text-md font-medium text-gray-900">Dịch vụ đề xuất cần thực hiện</h4>
                 <button
                   onClick={() => setFormData(prev => ({
                     ...prev,
-                    additionalServices: [...prev.additionalServices, {
+                    recommendedServices: [...prev.recommendedServices, {
                       serviceId: '',
                       serviceName: '',
                       quantity: 1,
@@ -828,13 +823,13 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                 </button>
               </div>
 
-              {formData.additionalServices.length === 0 ? (
+              {formData.recommendedServices.length === 0 ? (
                 <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
                   <p className="text-gray-500">Chưa có dịch vụ bổ sung nào</p>
                   <button
                     onClick={() => setFormData(prev => ({
                       ...prev,
-                      additionalServices: [...prev.additionalServices, {
+                      recommendedServices: [...prev.recommendedServices, {
                         serviceId: '',
                         serviceName: '',
                         quantity: 1,
@@ -850,21 +845,21 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {formData.additionalServices.map((service, index) => (
+                  {formData.recommendedServices.map((service, index) => (
                     <div key={index} className="border rounded-lg p-4 bg-gray-50">
                       <div className="grid grid-cols-3 gap-4 mb-3">
                         <select
                           value={service.serviceId}
                           onChange={(e) => {
                             const selectedService = availableServices.find(s => s._id === e.target.value);
-                            const newServices = [...formData.additionalServices];
+                            const newServices = [...formData.recommendedServices];
                             newServices[index] = {
                               ...service,
                               serviceId: e.target.value,
                               serviceName: selectedService?.name || '',
                               estimatedCost: selectedService?.basePrice || 0
                             };
-                            setFormData(prev => ({ ...prev, additionalServices: newServices }));
+                            setFormData(prev => ({ ...prev, recommendedServices: newServices }));
                           }}
                           className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
                           disabled={loadingServices}
@@ -882,16 +877,16 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                           placeholder="Số lượng"
                           value={service.quantity}
                           onChange={(e) => {
-                            const newServices = [...formData.additionalServices];
+                            const newServices = [...formData.recommendedServices];
                             newServices[index] = { ...service, quantity: parseInt(e.target.value) || 1 };
-                            setFormData(prev => ({ ...prev, additionalServices: newServices }));
+                            setFormData(prev => ({ ...prev, recommendedServices: newServices }));
                           }}
                           className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
                         />
                         <button
                           onClick={() => {
-                            const newServices = formData.additionalServices.filter((_, i) => i !== index);
-                            setFormData(prev => ({ ...prev, additionalServices: newServices }));
+                            const newServices = formData.recommendedServices.filter((_, i) => i !== index);
+                            setFormData(prev => ({ ...prev, recommendedServices: newServices }));
                           }}
                           className="text-red-600 hover:text-red-700 text-sm justify-self-end"
                         >
@@ -904,9 +899,9 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                           placeholder="Lý do cần thiết cho dịch vụ này..."
                           value={service.reason}
                           onChange={(e) => {
-                            const newServices = [...formData.additionalServices];
+                            const newServices = [...formData.recommendedServices];
                             newServices[index] = { ...service, reason: e.target.value };
-                            setFormData(prev => ({ ...prev, additionalServices: newServices }));
+                            setFormData(prev => ({ ...prev, recommendedServices: newServices }));
                           }}
                           rows={2}
                           className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
@@ -947,24 +942,6 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                 </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Mức độ ưu tiên
-                </label>
-                <select
-                  value={formData.priorityLevel}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    priorityLevel: e.target.value as any
-                  }))}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option value="low">Thấp</option>
-                  <option value="normal">Bình thường</option>
-                  <option value="high">Cao</option>
-                  <option value="urgent">Khẩn cấp</option>
-                </select>
-              </div>
             </div>
 
             {/* Special Instructions */}
@@ -1007,7 +984,6 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                       partNumber: '',
                       quantity: 1,
                       reason: '',
-                      urgency: 'normal' as const,
                       estimatedCost: 0,
                       isAvailable: undefined,
                       availableQuantity: undefined
@@ -1032,7 +1008,6 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                         partNumber: '',
                         quantity: 1,
                         reason: '',
-                        urgency: 'normal' as const,
                         estimatedCost: 0,
                         isAvailable: undefined,
                         availableQuantity: undefined
@@ -1089,7 +1064,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4 mb-3">
+                      <div className="mb-3">
                         <input
                           type="number"
                           min="1"
@@ -1102,20 +1077,6 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                           }}
                           className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
                         />
-                        <select
-                          value={part.urgency}
-                          onChange={(e) => {
-                            const newParts = [...formData.requestedParts];
-                            newParts[index] = { ...part, urgency: e.target.value as any };
-                            setFormData(prev => ({ ...prev, requestedParts: newParts }));
-                          }}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                        >
-                          <option value="low">Thấp</option>
-                          <option value="normal">Bình thường</option>
-                          <option value="high">Cao</option>
-                          <option value="critical">Khẩn cấp</option>
-                        </select>
                       </div>
 
                       {part.partId && (part.estimatedCost || 0) > 0 && (
@@ -1185,10 +1146,10 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                     }, 0).toLocaleString('vi-VN')} VNĐ)
                   </span>
                 </p>
-                <p>• Dịch vụ bổ sung: {formData.additionalServices.length} dịch vụ
-                  {formData.additionalServices.length > 0 && (
+                <p>• Dịch vụ đề xuất: {formData.recommendedServices.length} dịch vụ
+                  {formData.recommendedServices.length > 0 && (
                     <span className="ml-2 text-blue-600 font-medium">
-                      ({formData.additionalServices.reduce((total, service) =>
+                      ({formData.recommendedServices.reduce((total, service) =>
                         total + ((service.estimatedCost || 0) * service.quantity), 0
                       ).toLocaleString('vi-VN')} VNĐ)
                     </span>
@@ -1204,12 +1165,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                   )}
                 </p>
                 <p>• Tổng thời gian dự kiến: {totalTime} phút</p>
-                <p>• Mức độ ưu tiên: {
-                  formData.priorityLevel === 'low' ? 'Thấp' :
-                  formData.priorityLevel === 'normal' ? 'Bình thường' :
-                  formData.priorityLevel === 'high' ? 'Cao' : 'Khẩn cấp'
-                }</p>
-                {(formData.additionalServices.length > 0 || formData.requestedParts.length > 0) && (
+                {(formData.recommendedServices.length > 0 || formData.requestedParts.length > 0) && (
                   <div className="pt-2 mt-2 border-t border-green-200">
                     <p className="font-semibold text-green-700">
                       • Tổng chi phí ước tính: {totalCost.toLocaleString('vi-VN')} VNĐ (chưa bao gồm VAT)
@@ -1274,7 +1230,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
             <span>Ngoại thất</span>
             <span>Nội thất & Pin</span>
             <span>Đồ đạc</span>
-            <span>Dịch vụ bổ sung</span>
+            <span>Dịch vụ đề xuất</span>
             <span>Yêu cầu phụ tùng</span>
           </div>
         </div>

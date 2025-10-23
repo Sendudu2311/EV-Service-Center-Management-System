@@ -214,26 +214,16 @@ const WorkQueuePage: React.FC = () => {
     try {
       setCreatingReception(true);
 
-      // Map the services from appointment to the expected format
-      const bookedServices = selectedAppointment.services?.map(service => ({
-        serviceId: service.serviceId._id || service.serviceId,
-        serviceName: service.serviceId.name || service.serviceId,
-        category: service.serviceId.category || '',
-        quantity: service.quantity || 1,
-        estimatedDuration: service.serviceId.estimatedDuration || 60,
-        isCompleted: false
-      })) || [];
-
+      // NOTE: Initial booked service is already paid, not included in reception
+      // Only send recommendedServices (discovered during inspection) and requestedParts
       const payload = {
-        bookedServices,
-        additionalServices: [],
-        requestedParts: [],
+        recommendedServices: receptionData.recommendedServices || [],
+        requestedParts: receptionData.requestedParts || [],
         vehicleCondition: receptionData.vehicleCondition,
         customerItems: receptionData.customerItems,
         preServicePhotos: [],
         diagnosticCodes: [],
         specialInstructions: receptionData.specialInstructions,
-        priorityLevel: receptionData.priorityLevel,
         estimatedServiceTime: receptionData.estimatedServiceTime
       };
 

@@ -64,20 +64,40 @@ interface ServiceReception {
     value?: number;
     notes: string;
   }>;
-  bookedServices: Array<{
-    serviceId: string;
+  recommendedServices: Array<{
+    serviceId: {
+      _id: string;
+      name: string;
+      category: string;
+      estimatedDuration: number;
+    } | string;
     serviceName: string;
     category: string;
     quantity: number;
-    estimatedDuration: number;
-    basePrice?: number;
+    reason: string;
+    estimatedDuration?: number;
+    estimatedCost?: number;
+  }>;
+  requestedParts: Array<{
+    partId: {
+      _id: string;
+      name: string;
+      partNumber: string;
+      pricing: {
+        retail: number;
+      };
+    } | string;
+    partName: string;
+    partNumber?: string;
+    quantity: number;
+    reason: string;
+    estimatedCost?: number;
   }>;
   specialInstructions: {
     fromCustomer: string;
     safetyPrecautions: string[];
     warningNotes: string[];
   };
-  priorityLevel: string;
   estimatedServiceTime: number;
   status: string;
   receivedBy: {
@@ -100,7 +120,6 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 }) => {
   const [selectedReception, setSelectedReception] = useState<ServiceReception | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
-  const [estimatedCost, setEstimatedCost] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const conditionLabels = {
@@ -109,13 +128,6 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
     fair: 'Trung bình',
     poor: 'Kém',
     replace_soon: 'Cần thay sớm'
-  };
-
-  const priorityLabels = {
-    low: 'Thấp',
-    normal: 'Bình thường',
-    high: 'Cao',
-    urgent: 'Khẩn cấp'
   };
 
   const chargingStatusLabels = {
@@ -140,7 +152,6 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
       setSelectedReception(null);
       setReviewNotes('');
-      setEstimatedCost(0);
     } catch (error) {
       console.error('Error submitting review:', error);
       toast.error('Không thể submit đánh giá');
@@ -191,23 +202,12 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                     Lịch hẹn #{reception.appointmentId.appointmentNumber}
                   </p>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    reception.priorityLevel === 'urgent'
-                      ? 'bg-red-100 text-red-800'
-                      : reception.priorityLevel === 'high'
-                      ? 'bg-orange-100 text-orange-800'
-                      : 'bg-blue-100 text-blue-800'
-                  }`}>
-                    {priorityLabels[reception.priorityLevel as keyof typeof priorityLabels]}
-                  </span>
-                  <button
-                    onClick={() => setSelectedReception(reception)}
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                  >
-                    Xem chi tiết & duyệt
-                  </button>
-                </div>
+                <button
+                  onClick={() => setSelectedReception(reception)}
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                >
+                  Xem chi tiết & duyệt
+                </button>
               </div>
 
               {/* Basic Info */}
@@ -233,18 +233,37 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
               {/* Services Summary */}
               <div className="mt-4 pt-4 border-t">
-                <h4 className="font-medium text-gray-700 mb-2">Dịch vụ đã đặt</h4>
+                <h4 className="font-medium text-gray-700 mb-2">Dịch vụ đề xuất</h4>
                 <div className="flex flex-wrap gap-2">
-                  {reception.bookedServices.map((service, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800"
-                    >
-                      {service.serviceName}
-                      {service.quantity > 1 && ` (${service.quantity})`}
-                    </span>
-                  ))}
+                  {reception.recommendedServices && reception.recommendedServices.length > 0 ? (
+                    reception.recommendedServices.map((service, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800"
+                      >
+                        {service.serviceName}
+                        {service.quantity > 1 && ` (${service.quantity})`}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-sm text-gray-500">Không có dịch vụ đề xuất</span>
+                  )}
                 </div>
+                {reception.requestedParts && reception.requestedParts.length > 0 && (
+                  <div className="mt-3">
+                    <h4 className="font-medium text-gray-700 mb-2 text-sm">Phụ tùng yêu cầu</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {reception.requestedParts.map((part, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-800"
+                        >
+                          {part.partName} (x{part.quantity})
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <p className="text-sm text-gray-600 mt-2">
                   Thời gian ước tính: {reception.estimatedServiceTime} phút
                 </p>
@@ -256,8 +275,8 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
       {/* Review Modal */}
       {selectedReception && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-4 mx-auto p-5 border w-11/12 max-w-6xl shadow-lg rounded-md bg-white mb-8">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center py-8">
+          <div className="relative mx-auto p-5 border w-11/12 max-w-6xl shadow-lg rounded-md bg-white my-auto max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between mb-6 pb-4 border-b">
               <div>
@@ -390,40 +409,68 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
                   {/* Services */}
                   <div className="bg-blue-50 rounded-lg p-4 mb-6">
-                    <h4 className="font-medium text-gray-800 mb-3">Dịch vụ được đặt</h4>
+                    <h4 className="font-medium text-gray-800 mb-3">Dịch vụ đề xuất sau kiểm tra</h4>
                     <div className="space-y-2">
-                      {selectedReception.bookedServices.map((service, index) => (
-                        <div key={index} className="bg-white rounded p-3 text-sm">
-                          <div className="flex justify-between items-start mb-1">
-                            <span className="font-medium">{service.serviceName}</span>
-                            <div className="text-right">
-                              <div className="text-gray-600">{service.estimatedDuration * service.quantity} phút</div>
-                              {service.basePrice && (
-                                <div className="text-blue-600 font-medium">
-                                  {(service.basePrice * service.quantity).toLocaleString('vi-VN')} VNĐ
-                                </div>
-                              )}
+                      {selectedReception.recommendedServices && selectedReception.recommendedServices.length > 0 ? (
+                        selectedReception.recommendedServices.map((service, index) => (
+                          <div key={index} className="bg-white rounded p-3 text-sm">
+                            <div className="flex justify-between items-start mb-1">
+                              <span className="font-medium">{service.serviceName}</span>
+                              <div className="text-right">
+                                {(() => {
+                                  const duration = typeof service.serviceId === 'object'
+                                    ? service.serviceId.estimatedDuration
+                                    : service.estimatedDuration;
+                                  return duration ? (
+                                    <div className="text-gray-600">{duration * service.quantity} phút</div>
+                                  ) : null;
+                                })()}
+                                {service.estimatedCost && (
+                                  <div className="text-blue-600 font-medium">
+                                    {(service.estimatedCost * service.quantity).toLocaleString('vi-VN')} VNĐ
+                                  </div>
+                                )}
+                              </div>
                             </div>
+                            <div className="text-gray-600">
+                              Danh mục: {service.category} • Số lượng: {service.quantity}
+                            </div>
+                            {service.reason && (
+                              <div className="text-gray-500 text-xs mt-1">
+                                Lý do: {service.reason}
+                              </div>
+                            )}
                           </div>
-                          <div className="text-gray-600">
-                            Danh mục: {service.category} • Số lượng: {service.quantity}
-                          </div>
+                        ))
+                      ) : (
+                        <div className="bg-white rounded p-3 text-sm text-gray-500 text-center">
+                          Không có dịch vụ đề xuất
                         </div>
-                      ))}
+                      )}
                     </div>
-                    <div className="mt-3 pt-3 border-t text-sm">
+                    <div className="mt-3 pt-3 border-t text-sm space-y-1">
                       <div className="flex justify-between">
                         <span className="font-medium">Tổng thời gian ước tính:</span>
                         <span>{selectedReception.estimatedServiceTime} phút</span>
                       </div>
-                      <div className="flex justify-between mt-1">
+                      <div className="flex justify-between">
                         <span className="font-medium">Tổng chi phí dịch vụ:</span>
                         <span className="text-blue-600 font-semibold">
-                          {selectedReception.bookedServices.reduce((total, service) =>
-                            total + ((service.basePrice || 0) * service.quantity), 0
+                          {(selectedReception.recommendedServices || []).reduce((total, service) =>
+                            total + ((service.estimatedCost || 0) * service.quantity), 0
                           ).toLocaleString('vi-VN')} VNĐ
                         </span>
                       </div>
+                      {selectedReception.requestedParts && selectedReception.requestedParts.length > 0 && (
+                        <div className="flex justify-between">
+                          <span className="font-medium">Tổng chi phí phụ tùng:</span>
+                          <span className="text-purple-600 font-semibold">
+                            {selectedReception.requestedParts.reduce((total, part) =>
+                              total + ((part.estimatedCost || 0) * part.quantity), 0
+                            ).toLocaleString('vi-VN')} VNĐ
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -437,61 +484,84 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                     </div>
                   )}
 
+                  {/* Parts Requested */}
+                  {selectedReception.requestedParts && selectedReception.requestedParts.length > 0 && (
+                    <div className="bg-purple-50 rounded-lg p-4 mb-6">
+                      <h4 className="font-medium text-gray-800 mb-3">Phụ tùng yêu cầu</h4>
+                      <div className="space-y-2">
+                        {selectedReception.requestedParts.map((part, index) => (
+                          <div key={index} className="bg-white rounded p-3 text-sm">
+                            <div className="flex justify-between items-start mb-1">
+                              <span className="font-medium">{part.partName}</span>
+                              <div className="text-right">
+                                <div className="text-purple-600 font-medium">
+                                  {((part.estimatedCost || 0) * part.quantity).toLocaleString('vi-VN')} VNĐ
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-gray-600">
+                              Số lượng: {part.quantity}
+                            </div>
+                            <div className="text-gray-500 text-xs mt-1">
+                              Lý do: {part.reason}
+                            </div>
+                            {/* TODO: Add availability check here */}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Review Section */}
                   <div className="bg-gray-50 rounded-lg p-4">
                     <h4 className="font-medium text-gray-800 mb-4">Đánh giá phiếu tiếp nhận</h4>
 
                     <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Chi phí ước tính bổ sung (VND)
-                        </label>
-                        <input
-                          type="number"
-                          value={estimatedCost}
-                          onChange={(e) => setEstimatedCost(parseInt(e.target.value) || 0)}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                          placeholder="Nhập chi phí ước tính cho dịch vụ bổ sung và phụ tùng..."
-                        />
-                        {(() => {
-                          const bookedServicesCost = selectedReception.bookedServices.reduce((total, service) =>
-                            total + ((service.basePrice || 0) * service.quantity), 0
-                          );
-                          const totalEstimatedCost = bookedServicesCost + estimatedCost;
-                          return estimatedCost > 0 || bookedServicesCost > 0 ? (
-                            <div className="text-sm text-gray-600 mt-2 space-y-1">
+                      {/* Total Cost Summary */}
+                      {(() => {
+                        const servicesCost = (selectedReception.recommendedServices || []).reduce((total, service) =>
+                          total + ((service.estimatedCost || 0) * service.quantity), 0
+                        );
+                        const partsCost = (selectedReception.requestedParts || []).reduce((total, part) =>
+                          total + ((part.estimatedCost || 0) * part.quantity), 0
+                        );
+                        const totalCost = servicesCost + partsCost;
+
+                        return totalCost > 0 ? (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                            <h5 className="font-medium text-gray-800 mb-3">Tóm tắt chi phí</h5>
+                            <div className="space-y-2 text-sm">
                               <div className="flex justify-between">
-                                <span>Chi phí dịch vụ đã đặt:</span>
-                                <span>{bookedServicesCost.toLocaleString('vi-VN')} VNĐ</span>
+                                <span>Dịch vụ đề xuất:</span>
+                                <span className="font-medium">{servicesCost.toLocaleString('vi-VN')} VNĐ</span>
                               </div>
-                              {estimatedCost > 0 && (
-                                <div className="flex justify-between">
-                                  <span>Chi phí bổ sung:</span>
-                                  <span>{estimatedCost.toLocaleString('vi-VN')} VNĐ</span>
-                                </div>
-                              )}
-                              <div className="flex justify-between font-medium border-t pt-1">
-                                <span>Tổng chi phí ước tính:</span>
-                                <span className="text-blue-600">{totalEstimatedCost.toLocaleString('vi-VN')} VNĐ</span>
+                              <div className="flex justify-between">
+                                <span>Phụ tùng:</span>
+                                <span className="font-medium">{partsCost.toLocaleString('vi-VN')} VNĐ</span>
                               </div>
-                              <p className="text-xs text-gray-500">
-                                (bao gồm VAT 10%: {(totalEstimatedCost * 1.1).toLocaleString('vi-VN')} VNĐ)
-                              </p>
+                              <div className="flex justify-between font-semibold border-t pt-2">
+                                <span>Tổng cộng:</span>
+                                <span className="text-blue-600">{totalCost.toLocaleString('vi-VN')} VNĐ</span>
+                              </div>
+                              <div className="flex justify-between text-xs text-gray-600">
+                                <span>Bao gồm VAT 10%:</span>
+                                <span className="font-medium">{(totalCost * 1.1).toLocaleString('vi-VN')} VNĐ</span>
+                              </div>
                             </div>
-                          ) : null;
-                        })()}
-                      </div>
+                          </div>
+                        ) : null;
+                      })()}
 
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Ghi chú đánh giá
+                          Ghi chú đánh giá <span className="text-gray-500 font-normal">(không bắt buộc)</span>
                         </label>
                         <textarea
                           value={reviewNotes}
                           onChange={(e) => setReviewNotes(e.target.value)}
                           rows={4}
                           className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                          placeholder="Ghi chú về quyết định duyệt/từ chối..."
+                          placeholder="Nhập ghi chú về quyết định duyệt/từ chối (nếu cần)..."
                         />
                       </div>
                     </div>
@@ -522,7 +592,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
               </button>
               <button
                 onClick={() => handleReviewSubmit('approve')}
-                disabled={isSubmitting || !reviewNotes.trim()}
+                disabled={isSubmitting}
                 className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center"
               >
                 {isSubmitting ? (

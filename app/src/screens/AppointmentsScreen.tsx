@@ -11,6 +11,7 @@ import {
   Modal,
 } from 'react-native';
 import { appointmentsAPI } from '../services/api';
+import { useCustomEvent } from '../contexts/SocketContext';
 import AppointmentBookingScreen from './AppointmentBookingScreen';
 
 interface Appointment {
@@ -42,6 +43,19 @@ const AppointmentsScreen: React.FC = () => {
   useEffect(() => {
     fetchAppointments();
   }, []);
+
+  // Listen to real-time appointment status updates
+  useCustomEvent('appointmentStatusUpdate', (data) => {
+    console.log('📡 Real-time status update:', data);
+    // Refresh appointments list when any appointment status changes
+    fetchAppointments();
+  });
+
+  // Listen to new appointments (for staff, but also refresh customer view)
+  useCustomEvent('newAppointment', (data) => {
+    console.log('📡 New appointment created:', data);
+    fetchAppointments();
+  });
 
   const fetchAppointments = async () => {
     try {

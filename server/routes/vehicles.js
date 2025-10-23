@@ -20,11 +20,11 @@ router.use(protect);
 // Vehicle CRUD routes (all authenticated users)
 router.route('/')
   .get(getVehicles)
-  .post(createVehicle);
+  .post(uploadImage.single('image'), createVehicle); // Add image upload support
 
 router.route('/:id')
   .get(getVehicle)
-  .put(updateVehicle)
+  .put(uploadImage.single('image'), updateVehicle) // Add image upload support
   .delete(deleteVehicle);
 
 // Specific vehicle actions (all authenticated users)

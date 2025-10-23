@@ -54,10 +54,8 @@ export const generateInvoice = async (req, res) => {
 
     // Get service reception for detailed work performed
     const serviceReception = await ServiceReception.findOne({ appointmentId })
-      .populate("bookedServices.serviceId", "name category basePrice")
-      .populate("additionalServices.serviceId", "name category basePrice")
-      .populate("requestedParts.partId", "name partNumber unitPrice")
-      .populate("additionalPartRequests");
+      .populate("recommendedServices.serviceId", "name category basePrice")
+      .populate("requestedParts.partId", "name partNumber pricing");
 
     if (
       !serviceReception ||
@@ -81,57 +79,38 @@ export const generateInvoice = async (req, res) => {
     let subtotalParts = 0;
     let subtotalLabor = 0;
 
-    // Process booked services
-    for (const bookedService of serviceReception.bookedServices) {
-      if (bookedService.isCompleted) {
+    // NOTE: Initial booked service (1 basic service) is already paid, not included in invoice
+    // Process recommended services (discovered during inspection)
+    for (const recommendedService of serviceReception.recommendedServices || []) {
+      if (recommendedService.isCompleted && recommendedService.customerApproved) {
         const serviceTotal =
-          bookedService.serviceId.basePrice * bookedService.quantity;
+          recommendedService.serviceId.basePrice * recommendedService.quantity;
         invoiceItems.services.push({
-          serviceId: bookedService.serviceId._id,
-          serviceName: bookedService.serviceId.name,
-          category: bookedService.serviceId.category,
-          quantity: bookedService.quantity,
-          unitPrice: bookedService.serviceId.basePrice,
+          serviceId: recommendedService.serviceId._id,
+          serviceName: recommendedService.serviceId.name,
+          category: recommendedService.serviceId.category,
+          quantity: recommendedService.quantity,
+          unitPrice: recommendedService.serviceId.basePrice,
           totalPrice: serviceTotal,
-          description: `${bookedService.serviceId.name} - ${bookedService.serviceId.category}`,
-          completedAt: bookedService.completedAt,
-          technicianNotes: bookedService.technicianNotes,
-        });
-        subtotalServices += serviceTotal;
-      }
-    }
-
-    // Process additional services
-    for (const additionalService of serviceReception.additionalServices) {
-      if (additionalService.isCompleted && additionalService.customerApproved) {
-        const serviceTotal =
-          additionalService.serviceId.basePrice * additionalService.quantity;
-        invoiceItems.services.push({
-          serviceId: additionalService.serviceId._id,
-          serviceName: additionalService.serviceId.name,
-          category: additionalService.serviceId.category,
-          quantity: additionalService.quantity,
-          unitPrice: additionalService.serviceId.basePrice,
-          totalPrice: serviceTotal,
-          description: `${additionalService.serviceId.name} - Additional Service`,
-          reason: additionalService.reason,
-          technicianNotes: additionalService.technicianNotes,
+          description: `${recommendedService.serviceId.name} - Recommended Service`,
+          reason: recommendedService.reason,
+          technicianNotes: recommendedService.technicianNotes,
         });
         subtotalServices += serviceTotal;
       }
     }
 
     // Process requested parts
-    for (const requestedPart of serviceReception.requestedParts) {
+    for (const requestedPart of serviceReception.requestedParts || []) {
       if (requestedPart.isApproved && requestedPart.isAvailable) {
-        const partTotal =
-          requestedPart.partId.unitPrice * requestedPart.quantity;
+        const unitPrice = requestedPart.partId.pricing?.retail || 0;
+        const partTotal = unitPrice * requestedPart.quantity;
         invoiceItems.parts.push({
           partId: requestedPart.partId._id,
           partName: requestedPart.partId.name,
           partNumber: requestedPart.partId.partNumber,
           quantity: requestedPart.quantity,
-          unitPrice: requestedPart.partId.unitPrice,
+          unitPrice: unitPrice,
           totalPrice: partTotal,
           description: `${requestedPart.partId.name} (${requestedPart.partId.partNumber})`,
           reason: requestedPart.reason,
@@ -239,9 +218,9 @@ export const generateInvoice = async (req, res) => {
         completedDate: new Date(),
         actualServiceTime: actualServiceTime,
         estimatedServiceTime: serviceReception.estimatedServiceTime,
-        workPerformed: serviceReception.bookedServices.map(
-          (s) => s.serviceId.name
-        ),
+        workPerformed: (serviceReception.recommendedServices || [])
+          .filter(s => s.isCompleted && s.customerApproved)
+          .map((s) => s.serviceId.name),
         evChecklistCompleted: serviceReception.evChecklistProgress.isCompleted,
       },
 

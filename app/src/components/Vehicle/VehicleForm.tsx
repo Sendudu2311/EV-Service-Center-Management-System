@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { vehiclesAPI } from '../../services/api';
+import ImagePickerButton from '../ImagePicker/ImagePickerButton';
 
 interface Vehicle {
   _id?: string;
@@ -29,6 +30,10 @@ interface Vehicle {
   maintenanceInterval: number;
   timeBasedInterval: number;
   warrantyExpiry: string;
+  images?: Array<{
+    url: string;
+    description?: string;
+  }>;
 }
 
 interface VehicleFormProps {
@@ -47,6 +52,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
   onCancel,
 }) => {
   const [loading, setLoading] = useState(false);
+  const [imageUri, setImageUri] = useState<string>('');
   const [formData, setFormData] = useState({
     vin: '',
     make: '',
@@ -82,6 +88,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
         timeBasedInterval: vehicle.timeBasedInterval,
         warrantyExpiry: vehicle.warrantyExpiry ? vehicle.warrantyExpiry.split('T')[0] : '',
       });
+      // Set existing image if available
+      setImageUri(vehicle.images?.[0]?.url || '');
     } else {
       // Reset form for create mode
       setFormData({
@@ -100,6 +108,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
         timeBasedInterval: 12,
         warrantyExpiry: '',
       });
+      setImageUri(''); // Reset image
     }
   }, [vehicle, mode, visible]);
 
@@ -113,10 +122,53 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     setLoading(true);
     try {
       if (mode === 'create') {
-        await vehiclesAPI.create(formData);
+        // Use FormData if image is selected
+        if (imageUri) {
+          const formDataToSend = new FormData();
+
+          // Add all vehicle data
+          Object.keys(formData).forEach(key => {
+            formDataToSend.append(key, formData[key as keyof typeof formData].toString());
+          });
+
+          // Add image file
+          const imageFile = {
+            uri: imageUri,
+            type: 'image/jpeg',
+            name: `vehicle_${Date.now()}.jpg`,
+          };
+          formDataToSend.append('image', imageFile as any);
+
+          await vehiclesAPI.create(formDataToSend);
+        } else {
+          await vehiclesAPI.create(formData);
+        }
         Alert.alert('Thành công', 'Đăng ký xe thành công');
       } else {
-        await vehiclesAPI.update(vehicle!._id!, formData);
+        // Update mode - check if image changed
+        const existingImageUrl = vehicle?.images?.[0]?.url || '';
+        const imageChanged = imageUri && imageUri !== existingImageUrl;
+
+        if (imageChanged) {
+          // Send FormData if image changed
+          const formDataToSend = new FormData();
+
+          Object.keys(formData).forEach(key => {
+            formDataToSend.append(key, formData[key as keyof typeof formData].toString());
+          });
+
+          const imageFile = {
+            uri: imageUri,
+            type: 'image/jpeg',
+            name: `vehicle_${Date.now()}.jpg`,
+          };
+          formDataToSend.append('image', imageFile as any);
+
+          await vehiclesAPI.update(vehicle!._id!, formDataToSend);
+        } else {
+          // No image change, send JSON
+          await vehiclesAPI.update(vehicle!._id!, formData);
+        }
         Alert.alert('Thành công', 'Cập nhật xe thành công');
       }
       onSuccess();
@@ -207,6 +259,16 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                 onChangeText={(text) => setFormData({ ...formData, color: text })}
                 placeholder="Màu sắc"
                 placeholderTextColor="#9ca3af"
+              />
+            </View>
+
+            {/* Vehicle Image Section */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Ảnh xe</Text>
+              <ImagePickerButton
+                onImageSelected={(uri) => setImageUri(uri)}
+                currentImage={imageUri}
+                label="Chụp hoặc chọn ảnh xe"
               />
             </View>
 

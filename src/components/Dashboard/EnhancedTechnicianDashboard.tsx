@@ -68,6 +68,32 @@ interface CurrentTask {
   progress: number;
 }
 
+interface ServiceReceptionItem {
+  _id: string;
+  receptionNumber: string;
+  status: string;
+  createdAt: string;
+  customerId: {
+    firstName: string;
+    lastName: string;
+  };
+  vehicleId: {
+    make: string;
+    model: string;
+    licensePlate: string;
+  };
+  submissionStatus: {
+    staffReviewStatus: string;
+    submittedToStaff: boolean;
+  };
+  recommendedServices: Array<{
+    serviceName: string;
+  }>;
+  requestedParts: Array<{
+    partName: string;
+  }>;
+}
+
 const EnhancedTechnicianDashboard: React.FC = () => {
   const { user } = useAuth();
   const { socket: _socket, isConnected } = useSocket(); // socket reserved for real-time updates
@@ -76,6 +102,8 @@ const EnhancedTechnicianDashboard: React.FC = () => {
   const [stats, setStats] = useState<TechnicianStats | null>(null);
   const [workQueue, setWorkQueue] = useState<WorkQueueItem[]>([]);
   const [currentTask, setCurrentTask] = useState<CurrentTask | null>(null);
+  const [serviceReceptions, setServiceReceptions] = useState<ServiceReceptionItem[]>([]);
+  const [selectedReception, setSelectedReception] = useState<ServiceReceptionItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -142,6 +170,21 @@ const EnhancedTechnicianDashboard: React.FC = () => {
       });
       const workQueueData = queueResponse.data.data?.appointments || queueResponse.data.data || [];
       setWorkQueue(workQueueData);
+
+      // Fetch service receptions created by technician
+      try {
+        const receptionsResponse = await fetch('/api/service-receptions/technician/my-receptions', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        if (receptionsResponse.ok) {
+          const receptionsData = await receptionsResponse.json();
+          setServiceReceptions(receptionsData.data || []);
+        }
+      } catch (error) {
+        console.error('Error fetching service receptions:', error);
+      }
 
       // Check for current active task - ONLY in_progress appointments
       const currentTasks = workQueueData.filter((item: WorkQueueItem) =>
@@ -228,6 +271,30 @@ const EnhancedTechnicianDashboard: React.FC = () => {
     } catch (error: any) {
       console.error('Error completing work:', error);
       toast.error('Không thể hoàn thành công việc');
+    }
+  };
+
+  const handleResubmitReception = async (receptionId: string) => {
+    try {
+      const response = await fetch(`/api/service-receptions/${receptionId}/resubmit`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        toast.success('Đã gửi lại phiếu tiếp nhận để staff duyệt');
+        setSelectedReception(null);
+        debouncedFetchDashboard();
+      } else {
+        const data = await response.json();
+        toast.error(data.message || 'Không thể gửi lại phiếu');
+      }
+    } catch (error) {
+      console.error('Error resubmitting reception:', error);
+      toast.error('Lỗi khi gửi lại phiếu tiếp nhận');
     }
   };
 
@@ -508,6 +575,226 @@ const EnhancedTechnicianDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Service Receptions List */}
+        <div className="mt-8">
+          <div className="bg-white shadow-sm rounded-lg">
+            <div className="px-4 py-5 sm:p-6">
+              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                Phiếu tiếp nhận đã tạo
+              </h3>
+              {serviceReceptions.length === 0 ? (
+                <div className="text-center py-6">
+                  <ClipboardDocumentListIcon className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-semibold text-gray-900">Chưa có phiếu tiếp nhận</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Bạn chưa tạo phiếu tiếp nhận nào.
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Số phiếu
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Khách hàng
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Xe
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Dịch vụ / Phụ tùng
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Trạng thái duyệt
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Ngày tạo
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Thao tác
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {serviceReceptions.map((reception) => (
+                        <tr key={reception._id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {reception.receptionNumber}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {reception.customerId?.firstName} {reception.customerId?.lastName}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {reception.vehicleId?.make} {reception.vehicleId?.model}
+                            <br />
+                            <span className="text-xs text-gray-400">{reception.vehicleId?.licensePlate}</span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500">
+                            <div className="max-w-xs">
+                              <div className="text-blue-600">{reception.recommendedServices?.length || 0} dịch vụ</div>
+                              <div className="text-purple-600">{reception.requestedParts?.length || 0} phụ tùng</div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              reception.submissionStatus?.staffReviewStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                              reception.submissionStatus?.staffReviewStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                              reception.submissionStatus?.submittedToStaff ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {reception.submissionStatus?.staffReviewStatus === 'approved' ? 'Đã duyệt' :
+                               reception.submissionStatus?.staffReviewStatus === 'rejected' ? 'Từ chối' :
+                               reception.submissionStatus?.submittedToStaff ? 'Chờ duyệt' :
+                               'Chưa gửi'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {formatVietnameseDateTime(reception.createdAt)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button
+                              onClick={() => setSelectedReception(reception)}
+                              className="text-blue-600 hover:text-blue-900"
+                            >
+                              Xem chi tiết
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Service Reception Detail Modal */}
+        {selectedReception && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-2xl font-bold text-gray-900">
+                  Chi tiết phiếu tiếp nhận - {selectedReception.receptionNumber}
+                </h3>
+                <button
+                  onClick={() => setSelectedReception(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Customer & Vehicle Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Thông tin khách hàng</h4>
+                    <p className="text-gray-900">
+                      {selectedReception.customerId?.firstName} {selectedReception.customerId?.lastName}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Thông tin xe</h4>
+                    <p className="text-gray-900">
+                      {selectedReception.vehicleId?.make} {selectedReception.vehicleId?.model}
+                    </p>
+                    <p className="text-sm text-gray-500">{selectedReception.vehicleId?.licensePlate}</p>
+                  </div>
+                </div>
+
+                {/* Status */}
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Trạng thái duyệt</h4>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                    selectedReception.submissionStatus?.staffReviewStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                    selectedReception.submissionStatus?.staffReviewStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                    selectedReception.submissionStatus?.submittedToStaff ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {selectedReception.submissionStatus?.staffReviewStatus === 'approved' ? 'Đã duyệt' :
+                     selectedReception.submissionStatus?.staffReviewStatus === 'rejected' ? 'Từ chối' :
+                     selectedReception.submissionStatus?.submittedToStaff ? 'Chờ duyệt' :
+                     'Chưa gửi'}
+                  </span>
+                </div>
+
+                {/* Recommended Services */}
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                    Dịch vụ đề xuất ({selectedReception.recommendedServices?.length || 0})
+                  </h4>
+                  {selectedReception.recommendedServices && selectedReception.recommendedServices.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedReception.recommendedServices.map((service, index) => (
+                        <div key={index} className="bg-blue-50 p-3 rounded">
+                          <p className="font-medium text-gray-900">{service.serviceName}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">Không có dịch vụ đề xuất</p>
+                  )}
+                </div>
+
+                {/* Requested Parts */}
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                    Phụ tùng yêu cầu ({selectedReception.requestedParts?.length || 0})
+                  </h4>
+                  {selectedReception.requestedParts && selectedReception.requestedParts.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedReception.requestedParts.map((part, index) => (
+                        <div key={index} className="bg-purple-50 p-3 rounded">
+                          <p className="font-medium text-gray-900">{part.partName}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">Không có phụ tùng yêu cầu</p>
+                  )}
+                </div>
+
+                {/* Created Date */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Ngày tạo</h4>
+                  <p className="text-gray-900">{formatVietnameseDateTime(selectedReception.createdAt)}</p>
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-between items-center">
+                {selectedReception.submissionStatus?.staffReviewStatus === 'rejected' && (
+                  <div className="text-sm">
+                    <p className="text-red-600 font-medium">Lý do từ chối:</p>
+                    <p className="text-gray-700">{selectedReception.submissionStatus.reviewNotes || 'Không có lý do cụ thể'}</p>
+                  </div>
+                )}
+                <div className="flex space-x-2 ml-auto">
+                  {selectedReception.submissionStatus?.staffReviewStatus === 'rejected' && (
+                    <button
+                      onClick={() => handleResubmitReception(selectedReception._id)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    >
+                      Gửi lại để duyệt
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setSelectedReception(null)}
+                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                  >
+                    Đóng
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

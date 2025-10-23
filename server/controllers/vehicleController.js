@@ -112,6 +112,15 @@ export const createVehicle = async (req, res) => {
       });
     }
 
+    // Prepare images array if file uploaded
+    const vehicleImages = [];
+    if (req.file) {
+      vehicleImages.push({
+        url: req.file.path, // Cloudinary URL
+        description: 'Vehicle photo'
+      });
+    }
+
     // Create vehicle
     const vehicle = await Vehicle.create({
       customerId: req.user._id,
@@ -128,7 +137,8 @@ export const createVehicle = async (req, res) => {
       mileage: mileage || 0,
       maintenanceInterval: maintenanceInterval || 10000,
       timeBasedInterval: timeBasedInterval || 6,
-      warrantyExpiry
+      warrantyExpiry,
+      images: vehicleImages
     });
 
     // Calculate next maintenance date
@@ -191,6 +201,18 @@ export const updateVehicle = async (req, res) => {
       timeBasedInterval,
       warrantyExpiry
     } = req.body;
+
+    // Handle new image if uploaded
+    if (req.file) {
+      // Add new image to the beginning of the array
+      const newImage = {
+        url: req.file.path, // Cloudinary URL
+        description: 'Vehicle photo (updated)'
+      };
+
+      // Keep existing images and add new one at the front
+      vehicle.images = [newImage, ...(vehicle.images || [])];
+    }
 
     // Update fields
     const updatedFields = {

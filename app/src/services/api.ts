@@ -3,12 +3,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
 
 // Replace with your actual API URL
-const API_URL = 'http://localhost:3000'; // Update this for production
+// Use your computer's IP address for mobile testing
+// Get your IP with: ifconfig (Mac/Linux) or ipconfig (Windows)
+const API_URL = 'http://172.20.10.5:3000'; // Update this for production
 
 // Create axios instance
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 10000,
+  timeout: 5000, // Reduced timeout for faster error detection
   headers: {
     'Content-Type': 'application/json',
   },
@@ -206,11 +208,23 @@ export const vehiclesAPI = {
 
   getById: (id: string) => api.get<ApiResponse<any>>(`/api/vehicles/${id}`),
 
-  create: (vehicleData: any) =>
-    api.post<ApiResponse<any>>('/api/vehicles', vehicleData),
+  create: (vehicleData: any) => {
+    // If FormData, set proper headers
+    const headers = vehicleData instanceof FormData
+      ? { 'Content-Type': 'multipart/form-data' }
+      : { 'Content-Type': 'application/json' };
 
-  update: (id: string, updateData: any) =>
-    api.put<ApiResponse<any>>(`/api/vehicles/${id}`, updateData),
+    return api.post<ApiResponse<any>>('/api/vehicles', vehicleData, { headers });
+  },
+
+  update: (id: string, updateData: any) => {
+    // If FormData, set proper headers
+    const headers = updateData instanceof FormData
+      ? { 'Content-Type': 'multipart/form-data' }
+      : { 'Content-Type': 'application/json' };
+
+    return api.put<ApiResponse<any>>(`/api/vehicles/${id}`, updateData, { headers });
+  },
 
   delete: (id: string) => api.delete<ApiResponse>(`/api/vehicles/${id}`),
 

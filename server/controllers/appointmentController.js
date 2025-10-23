@@ -3562,11 +3562,9 @@ export const getPendingReceptionApprovals = async (req, res) => {
       .populate("customerId", "firstName lastName email phone")
       .populate("vehicleId", "make model year vin licensePlate")
       .populate("submissionStatus.submittedBy", "firstName lastName")
-      .populate("bookedServices.serviceId", "name category basePrice")
-      .populate(
-        "requestedParts.partId",
-        "name partNumber currentStock unitPrice"
-      )
+      .populate("recommendedServices.serviceId", "name category basePrice estimatedDuration")
+      .populate("recommendedServices.addedBy", "firstName lastName")
+      .populate("requestedParts.partId", "name partNumber pricing")
       .sort({ "submissionStatus.submittedAt": 1 });
 
     res.status(200).json({
