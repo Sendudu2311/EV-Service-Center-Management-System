@@ -27,6 +27,7 @@ import {
 } from '../types/serviceReception';
 import { Appointment } from '../types/appointment';
 import { formatVietnameseDateTime, formatVND, combineDateTime } from '../utils/vietnamese';
+import EVChecklistTab from '../components/ServiceReception/EVChecklistTab';
 
 // Validation schema
 const serviceReceptionSchema = z.object({
@@ -52,10 +53,11 @@ const ServiceReceptionPage: React.FC = () => {
   const [serviceReception, setServiceReception] = useState<ServiceReception | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'basic' | 'condition' | 'services' | 'checklist' | 'estimate'>('basic');
+  const [activeTab, setActiveTab] = useState<'checklist'>('checklist');
   const [newComplaint, setNewComplaint] = useState('');
   const [newRequest, setNewRequest] = useState('');
   const [services, setServices] = useState<any[]>([]);
+  const [evChecklistItems, setEvChecklistItems] = useState<any[]>([]);
 
   const {
     control,
@@ -163,6 +165,7 @@ const ServiceReceptionPage: React.FC = () => {
         })) || [],
         additionalServicesRecommended: [],
         partsNeeded: [],
+        evChecklistItems: evChecklistItems, // Add EV Checklist data
       };
 
       let response;
@@ -286,11 +289,7 @@ const ServiceReceptionPage: React.FC = () => {
   }
 
   const tabs = [
-    { id: 'basic', name: 'Thông tin cơ bản', icon: ClipboardDocumentListIcon },
-    { id: 'condition', name: 'Tình trạng xe', icon: ExclamationTriangleIcon },
-    { id: 'services', name: 'Dịch vụ', icon: CheckCircleIcon },
     { id: 'checklist', name: 'Checklist EV', icon: CheckCircleIcon },
-    { id: 'estimate', name: 'Báo giá', icon: CheckCircleIcon },
   ];
 
   return (
@@ -393,268 +392,12 @@ const ServiceReceptionPage: React.FC = () => {
           </div>
 
           <div className="px-6 py-6">
-            {/* Basic Information Tab */}
-            {activeTab === 'basic' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Độ ưu tiên *
-                    </label>
-                    <Controller
-                      name="priority"
-                      control={control}
-                      render={({ field }) => (
-                        <select
-                          {...field}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                        >
-                          <option value="low">Thấp</option>
-                          <option value="normal">Bình thường</option>
-                          <option value="high">Cao</option>
-                          <option value="urgent">Khẩn cấp</option>
-                        </select>
-                      )}
-                    />
-                    {errors.priority && (
-                      <p className="mt-1 text-sm text-red-600">{errors.priority.message}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Ngày hoàn thành dự kiến *
-                    </label>
-                    <Controller
-                      name="estimatedCompletionDate"
-                      control={control}
-                      render={({ field }) => (
-                        <input
-                          type="date"
-                          {...field}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                        />
-                      )}
-                    />
-                    {errors.estimatedCompletionDate && (
-                      <p className="mt-1 text-sm text-red-600">{errors.estimatedCompletionDate.message}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Customer Complaints */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Khiếu nại của khách hàng *
-                  </label>
-                  <div className="space-y-2">
-                    {watchedComplaints?.map((complaint, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <div className="flex-1 bg-gray-50 p-2 rounded border">
-                          {complaint}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeComplaint(index)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                    <div className="flex space-x-2">
-                      <input
-                        type="text"
-                        value={newComplaint}
-                        onChange={(e) => setNewComplaint(e.target.value)}
-                        placeholder="Nhập khiếu nại mới..."
-                        className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                        onKeyPress={(e) => e.key === 'Enter' && addComplaint()}
-                      />
-                      <button
-                        type="button"
-                        onClick={addComplaint}
-                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                      >
-                        <PlusIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                  {errors.customerComplaints && (
-                    <p className="mt-1 text-sm text-red-600">{errors.customerComplaints.message}</p>
-                  )}
-                </div>
-
-                {/* Customer Requests */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Yêu cầu của khách hàng
-                  </label>
-                  <div className="space-y-2">
-                    {watchedRequests?.map((request, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <div className="flex-1 bg-gray-50 p-2 rounded border">
-                          {request}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeRequest(index)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
-                      </div>
-                    ))}
-                    <div className="flex space-x-2">
-                      <input
-                        type="text"
-                        value={newRequest}
-                        onChange={(e) => setNewRequest(e.target.value)}
-                        placeholder="Nhập yêu cầu mới..."
-                        className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                        onKeyPress={(e) => e.key === 'Enter' && addRequest()}
-                      />
-                      <button
-                        type="button"
-                        onClick={addRequest}
-                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                      >
-                        <PlusIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Notes */}
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Ghi chú của khách hàng
-                    </label>
-                    <Controller
-                      name="customerNotes"
-                      control={control}
-                      render={({ field }) => (
-                        <textarea
-                          {...field}
-                          rows={4}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                          placeholder="Ghi chú từ khách hàng..."
-                        />
-                      )}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Ghi chú nội bộ
-                    </label>
-                    <Controller
-                      name="internalNotes"
-                      control={control}
-                      render={({ field }) => (
-                        <textarea
-                          {...field}
-                          rows={4}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-                          placeholder="Ghi chú nội bộ..."
-                        />
-                      )}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Other tabs content will be implemented in separate components */}
-            {activeTab === 'condition' && (
-              <div className="text-center py-12">
-                <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-semibold text-gray-900">Đánh giá tình trạng xe</h3>
-                <p className="mt-1 text-sm text-gray-500">Tính năng này sẽ được triển khai trong phiên bản tiếp theo.</p>
-              </div>
-            )}
-
-            {activeTab === 'services' && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Dịch vụ từ lịch hẹn</h3>
-                  <div className="bg-white border border-gray-200 rounded-lg">
-                    <div className="px-4 py-3 border-b border-gray-200">
-                      <h4 className="text-sm font-medium text-gray-900">Dịch vụ đã đặt</h4>
-                    </div>
-                    <div className="divide-y divide-gray-200">
-                      {services.length > 0 ? (
-                        services.map((service, index) => (
-                          <div key={index} className="px-4 py-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between">
-                                  <h5 className="text-sm font-medium text-gray-900">{service.serviceName}</h5>
-                                  <span className="text-sm text-gray-500">{service.estimatedDuration} phút</span>
-                                </div>
-                                <div className="mt-1 text-sm text-gray-600">
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                    {service.category}
-                                  </span>
-                                  <span className="ml-2">Số lượng: {service.quantity}</span>
-                                  {service.estimatedCost && (
-                                    <span className="ml-2">Chi phí: {formatVND(service.estimatedCost)}</span>
-                                  )}
-                                </div>
-                                {service.description && (
-                                  <p className="mt-1 text-sm text-gray-500">{service.description}</p>
-                                )}
-                                {service.notes && (
-                                  <p className="mt-1 text-sm text-gray-500">Ghi chú: {service.notes}</p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="px-4 py-8 text-center text-sm text-gray-500">
-                          Không có dịch vụ nào được đặt trong lịch hẹn này.
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Additional Services Section */}
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Dịch vụ bổ sung (tùy chọn)</h3>
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <p className="text-sm text-gray-600 mb-4">
-                      Kỹ thuật viên có thể thêm các dịch vụ bổ sung ngoài những dịch vụ đã đặt trong lịch hẹn.
-                    </p>
-                    <div className="text-center py-8">
-                      <WrenchScrewdriverIcon className="mx-auto h-12 w-12 text-gray-400" />
-                      <h4 className="mt-2 text-sm font-semibold text-gray-900">Tính năng đang phát triển</h4>
-                      <p className="mt-1 text-sm text-gray-500">
-                        Chức năng thêm dịch vụ bổ sung sẽ được triển khai trong phiên bản tiếp theo.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'checklist' && (
-              <div className="text-center py-12">
-                <CheckCircleIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-semibold text-gray-900">Checklist EV</h3>
-                <p className="mt-1 text-sm text-gray-500">Tính năng này sẽ được triển khai trong phiên bản tiếp theo.</p>
-              </div>
-            )}
-
-            {activeTab === 'estimate' && (
-              <div className="text-center py-12">
-                <CheckCircleIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-semibold text-gray-900">Báo giá chi tiết</h3>
-                <p className="mt-1 text-sm text-gray-500">Tính năng này sẽ được triển khai trong phiên bản tiếp theo.</p>
-              </div>
-            )}
+            {/* EV Checklist Tab - only tab needed */}
+            <EVChecklistTab
+              value={evChecklistItems}
+              onChange={setEvChecklistItems}
+              readOnly={false}
+            />
           </div>
         </div>
       </div>

@@ -85,12 +85,21 @@ interface ServiceReceptionItem {
   submissionStatus: {
     staffReviewStatus: string;
     submittedToStaff: boolean;
+    reviewNotes?: string;
   };
   recommendedServices: Array<{
     serviceName: string;
   }>;
   requestedParts: Array<{
     partName: string;
+  }>;
+  evChecklistItems?: Array<{
+    id: string;
+    label: string;
+    category: 'battery' | 'charging' | 'motor' | 'safety' | 'general';
+    checked: boolean;
+    status?: 'good' | 'warning' | 'critical';
+    notes?: string;
   }>;
 }
 
@@ -106,6 +115,10 @@ const EnhancedTechnicianDashboard: React.FC = () => {
   const [selectedReception, setSelectedReception] = useState<ServiceReceptionItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Pagination for work queue
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   useEffect(() => {
     // Fetch data if user is authenticated as technician (boot logic moved to prevent double boot)
@@ -166,10 +179,35 @@ const EnhancedTechnicianDashboard: React.FC = () => {
       const queueResponse = await appointmentsAPI.getWorkQueue({
         technicianId: user?._id,
         status: 'confirmed,customer_arrived,reception_created,reception_approved,in_progress',
-        limit: 10
+        dateRange: 'all', // Get all appointments, not just today
+        limit: 100 // Increase limit for client-side sorting
       });
       const workQueueData = queueResponse.data.data?.appointments || queueResponse.data.data || [];
-      setWorkQueue(workQueueData);
+
+      // Sort: active status first, then by priority and date
+      const statusPriority: Record<string, number> = {
+        'customer_arrived': 1,
+        'reception_created': 2,
+        'reception_approved': 3,
+        'in_progress': 4,
+        'confirmed': 5,
+        'completed': 10,
+        'invoiced': 11,
+        'closed': 12
+      };
+
+      const sortedQueue = [...workQueueData].sort((a, b) => {
+        // First sort by status priority (lower number = higher priority)
+        const statusDiff = (statusPriority[a.status] || 99) - (statusPriority[b.status] || 99);
+        if (statusDiff !== 0) return statusDiff;
+
+        // Then by scheduled date (earlier first)
+        const dateA = new Date(a.scheduledDate).getTime();
+        const dateB = new Date(b.scheduledDate).getTime();
+        return dateA - dateB;
+      });
+
+      setWorkQueue(sortedQueue);
 
       // Fetch service receptions created by technician
       try {
@@ -503,8 +541,9 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                     </p>
                   </div>
                 ) : (
+                  <>
                   <div className="space-y-4">
-                    {workQueue.slice(0, 6).map((item) => (
+                    {workQueue.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item) => (
                       <div
                         key={item._id}
                         className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
@@ -559,17 +598,76 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                         </div>
                       </div>
                     ))}
-                    {workQueue.length > 6 && (
-                      <div className="text-center pt-4">
-                        <Link
-                          to="/work-queue"
-                          className="text-blue-600 hover:text-blue-500 text-sm font-medium"
-                        >
-                          Xem tất cả ({workQueue.length - 6} việc còn lại) →
-                        </Link>
-                      </div>
-                    )}
                   </div>
+
+                  {/* Pagination */}
+                  {workQueue.length > itemsPerPage && (
+                    <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4">
+                      <div className="flex flex-1 justify-between sm:hidden">
+                        <button
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          disabled={currentPage === 1}
+                          className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Trước
+                        </button>
+                        <button
+                          onClick={() => setCurrentPage(Math.min(Math.ceil(workQueue.length / itemsPerPage), currentPage + 1))}
+                          disabled={currentPage >= Math.ceil(workQueue.length / itemsPerPage)}
+                          className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Sau
+                        </button>
+                      </div>
+                      <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-sm text-gray-700">
+                            Hiển thị <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> đến{' '}
+                            <span className="font-medium">{Math.min(currentPage * itemsPerPage, workQueue.length)}</span> trong{' '}
+                            <span className="font-medium">{workQueue.length}</span> công việc
+                          </p>
+                        </div>
+                        <div>
+                          <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                            <button
+                              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                              disabled={currentPage === 1}
+                              className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <span className="sr-only">Trước</span>
+                              <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                            {Array.from({ length: Math.ceil(workQueue.length / itemsPerPage) }, (_, i) => i + 1).map((page) => (
+                              <button
+                                key={page}
+                                onClick={() => setCurrentPage(page)}
+                                className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                                  currentPage === page
+                                    ? 'z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
+                                    : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            ))}
+                            <button
+                              onClick={() => setCurrentPage(Math.min(Math.ceil(workQueue.length / itemsPerPage), currentPage + 1))}
+                              disabled={currentPage >= Math.ceil(workQueue.length / itemsPerPage)}
+                              className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <span className="sr-only">Sau</span>
+                              <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                          </nav>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  </>
                 )}
               </div>
             </div>
@@ -724,6 +822,86 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                      'Chưa gửi'}
                   </span>
                 </div>
+
+                {/* EV Checklist */}
+                {selectedReception.evChecklistItems && selectedReception.evChecklistItems.length > 0 && (
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3">EV Checklist</h4>
+                    <div className="space-y-3">
+                      {['battery', 'charging', 'motor', 'safety', 'general'].map(category => {
+                        const categoryItems = selectedReception.evChecklistItems?.filter(
+                          item => item.category === category && item.checked
+                        ) || [];
+                        if (categoryItems.length === 0) return null;
+
+                        const categoryLabels: Record<string, string> = {
+                          battery: '🔋 Hệ thống Pin',
+                          charging: '⚡ Hệ thống Sạc',
+                          motor: '🔧 Động cơ',
+                          safety: '🛡️ An toàn Cao thế',
+                          general: '🚗 Kiểm tra Chung'
+                        };
+
+                        return (
+                          <div key={category} className="border-l-4 border-blue-500 pl-3">
+                            <h5 className="font-medium text-sm text-gray-700 mb-2">{categoryLabels[category]}</h5>
+                            <div className="space-y-2">
+                              {categoryItems.map(item => (
+                                <div key={item.id} className="flex items-start space-x-2 text-sm">
+                                  <CheckCircleIcon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${
+                                    item.status === 'critical' ? 'text-red-500' :
+                                    item.status === 'warning' ? 'text-yellow-500' :
+                                    'text-green-500'
+                                  }`} />
+                                  <div className="flex-1">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-gray-900">{item.label}</span>
+                                      {item.status && (
+                                        <span className={`text-xs px-2 py-0.5 rounded ${
+                                          item.status === 'critical' ? 'bg-red-100 text-red-800' :
+                                          item.status === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                                          'bg-green-100 text-green-800'
+                                        }`}>
+                                          {item.status === 'critical' ? 'Nghiêm trọng' :
+                                           item.status === 'warning' ? 'Cảnh báo' : 'Tốt'}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {item.notes && (
+                                      <p className="text-xs text-gray-600 mt-1 italic">{item.notes}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Summary */}
+                    <div className="mt-4 pt-4 border-t grid grid-cols-3 gap-2 text-center">
+                      <div>
+                        <div className="text-lg font-bold text-green-600">
+                          {selectedReception.evChecklistItems?.filter(i => i.status === 'good').length || 0}
+                        </div>
+                        <div className="text-xs text-gray-600">Tốt</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-bold text-yellow-600">
+                          {selectedReception.evChecklistItems?.filter(i => i.status === 'warning').length || 0}
+                        </div>
+                        <div className="text-xs text-gray-600">Cảnh báo</div>
+                      </div>
+                      <div>
+                        <div className="text-lg font-bold text-red-600">
+                          {selectedReception.evChecklistItems?.filter(i => i.status === 'critical').length || 0}
+                        </div>
+                        <div className="text-xs text-gray-600">Nghiêm trọng</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Recommended Services */}
                 <div className="bg-white border border-gray-200 rounded-lg p-4">

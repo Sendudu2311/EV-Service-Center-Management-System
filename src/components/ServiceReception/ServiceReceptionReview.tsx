@@ -105,6 +105,14 @@ interface ServiceReception {
     lastName: string;
   };
   receivedAt: string;
+  evChecklistItems?: Array<{
+    id: string;
+    label: string;
+    category: 'battery' | 'charging' | 'motor' | 'safety' | 'general';
+    checked: boolean;
+    status?: 'good' | 'warning' | 'critical';
+    notes?: string;
+  }>;
 }
 
 interface ServiceReceptionReviewProps {
@@ -121,21 +129,6 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
   const [selectedReception, setSelectedReception] = useState<ServiceReception | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const conditionLabels = {
-    excellent: 'Xuất sắc',
-    good: 'Tốt',
-    fair: 'Trung bình',
-    poor: 'Kém',
-    replace_soon: 'Cần thay sớm'
-  };
-
-  const chargingStatusLabels = {
-    not_charging: 'Không sạc',
-    charging: 'Đang sạc',
-    fully_charged: 'Đã sạc đầy',
-    error: 'Lỗi'
-  };
 
   const handleReviewSubmit = async (decision: 'approve' | 'reject') => {
     if (!selectedReception) return;
@@ -297,7 +290,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Left Column - Vehicle Information */}
+              {/* Left Column - Vehicle Information & EV Checklist */}
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Thông tin xe</h3>
@@ -315,74 +308,91 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                         <span className="font-medium">VIN:</span> {selectedReception.vehicleId.vin}
                       </div>
                       <div>
-                        <span className="font-medium">Số km:</span> {selectedReception.vehicleCondition.mileage.current.toLocaleString()}
+                        <span className="font-medium">Số km:</span> {selectedReception.vehicleCondition?.mileage?.current?.toLocaleString() || 'N/A'}
                       </div>
                     </div>
                   </div>
 
-                  {/* Exterior Condition */}
-                  <div className="mb-4">
-                    <h4 className="font-medium text-gray-800 mb-2">Tình trạng ngoại thất</h4>
-                    <div className="bg-white border rounded-lg p-3">
-                      <p className="text-sm mb-2">
-                        <span className="font-medium">Tình trạng:</span> {conditionLabels[selectedReception.vehicleCondition.exterior.condition as keyof typeof conditionLabels]}
-                      </p>
+                  {/* EV Checklist Section */}
+                  {selectedReception.evChecklistItems && selectedReception.evChecklistItems.length > 0 && (
+                    <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+                      <h4 className="font-medium text-gray-800 mb-3">EV Checklist</h4>
+                      <div className="space-y-3">
+                        {['battery', 'charging', 'motor', 'safety', 'general'].map(category => {
+                          const categoryItems = selectedReception.evChecklistItems?.filter(item => item.category === category && item.checked) || [];
+                          if (categoryItems.length === 0) return null;
 
-                      {selectedReception.vehicleCondition.exterior.damages.length > 0 && (
-                        <div className="mb-2">
-                          <span className="font-medium text-sm">Hỏng hóc:</span>
-                          <div className="mt-1 space-y-1">
-                            {selectedReception.vehicleCondition.exterior.damages.map((damage, index) => (
-                              <div key={index} className="text-xs bg-red-50 p-2 rounded">
-                                <strong>{damage.location}:</strong> {damage.type} ({damage.severity})
-                                {damage.description && <p className="text-gray-600 mt-1">{damage.description}</p>}
+                          const categoryLabels: Record<string, string> = {
+                            battery: '🔋 Hệ thống Pin',
+                            charging: '⚡ Hệ thống Sạc',
+                            motor: '🔧 Động cơ',
+                            safety: '🛡️ An toàn Cao thế',
+                            general: '🚗 Kiểm tra Chung'
+                          };
+
+                          return (
+                            <div key={category} className="border-l-4 border-blue-500 pl-3">
+                              <h5 className="font-medium text-sm text-gray-700 mb-2">{categoryLabels[category]}</h5>
+                              <div className="space-y-2">
+                                {categoryItems.map(item => (
+                                  <div key={item.id} className="flex items-start space-x-2 text-sm">
+                                    <CheckCircleIcon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${
+                                      item.status === 'critical' ? 'text-red-500' :
+                                      item.status === 'warning' ? 'text-yellow-500' :
+                                      'text-green-500'
+                                    }`} />
+                                    <div className="flex-1">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-gray-900">{item.label}</span>
+                                        {item.status && (
+                                          <span className={`text-xs px-2 py-0.5 rounded ${
+                                            item.status === 'critical' ? 'bg-red-100 text-red-800' :
+                                            item.status === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                                            'bg-green-100 text-green-800'
+                                          }`}>
+                                            {item.status === 'critical' ? 'Nghiêm trọng' :
+                                             item.status === 'warning' ? 'Cảnh báo' : 'Tốt'}
+                                          </span>
+                                        )}
+                                      </div>
+                                      {item.notes && (
+                                        <p className="text-xs text-gray-600 mt-1 italic">{item.notes}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Summary */}
+                      <div className="mt-4 pt-4 border-t grid grid-cols-3 gap-2 text-center">
+                        <div>
+                          <div className="text-lg font-bold text-green-600">
+                            {selectedReception.evChecklistItems?.filter(i => i.status === 'good').length || 0}
                           </div>
-                        </div>
-                      )}
-
-                      {selectedReception.vehicleCondition.exterior.notes && (
-                        <p className="text-sm text-gray-600">
-                          <span className="font-medium">Ghi chú:</span> {selectedReception.vehicleCondition.exterior.notes}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Interior & Battery */}
-                  <div className="mb-4">
-                    <h4 className="font-medium text-gray-800 mb-2">Nội thất & Pin</h4>
-                    <div className="bg-white border rounded-lg p-3 space-y-2">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="font-medium">Nội thất:</span> {conditionLabels[selectedReception.vehicleCondition.interior.condition as keyof typeof conditionLabels]}
+                          <div className="text-xs text-gray-600">Tốt</div>
                         </div>
                         <div>
-                          <span className="font-medium">Độ sạch:</span> {selectedReception.vehicleCondition.interior.cleanliness}
+                          <div className="text-lg font-bold text-yellow-600">
+                            {selectedReception.evChecklistItems?.filter(i => i.status === 'warning').length || 0}
+                          </div>
+                          <div className="text-xs text-gray-600">Cảnh báo</div>
                         </div>
                         <div>
-                          <span className="font-medium">Mức pin:</span> {selectedReception.vehicleCondition.battery.level}%
-                        </div>
-                        <div>
-                          <span className="font-medium">Tình trạng pin:</span> {conditionLabels[selectedReception.vehicleCondition.battery.health as keyof typeof conditionLabels]}
+                          <div className="text-lg font-bold text-red-600">
+                            {selectedReception.evChecklistItems?.filter(i => i.status === 'critical').length || 0}
+                          </div>
+                          <div className="text-xs text-gray-600">Nghiêm trọng</div>
                         </div>
                       </div>
-
-                      <div className="text-sm">
-                        <span className="font-medium">Trạng thái sạc:</span> {chargingStatusLabels[selectedReception.vehicleCondition.battery.chargingStatus as keyof typeof chargingStatusLabels]}
-                      </div>
-
-                      {selectedReception.vehicleCondition.battery.notes && (
-                        <p className="text-sm text-gray-600">
-                          <span className="font-medium">Ghi chú pin:</span> {selectedReception.vehicleCondition.battery.notes}
-                        </p>
-                      )}
                     </div>
-                  </div>
+                  )}
 
                   {/* Customer Items */}
-                  {selectedReception.customerItems.length > 0 && (
+                  {selectedReception.customerItems && selectedReception.customerItems.length > 0 && (
                     <div>
                       <h4 className="font-medium text-gray-800 mb-2">Đồ đạc khách hàng</h4>
                       <div className="bg-white border rounded-lg p-3">
@@ -505,7 +515,6 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                             <div className="text-gray-500 text-xs mt-1">
                               Lý do: {part.reason}
                             </div>
-                            {/* TODO: Add availability check here */}
                           </div>
                         ))}
                       </div>

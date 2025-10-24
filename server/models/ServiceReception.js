@@ -26,8 +26,7 @@ const serviceReceptionSchema = new mongoose.Schema({
     exterior: {
       condition: {
         type: String,
-        enum: ['excellent', 'good', 'fair', 'poor'],
-        required: true
+        enum: ['excellent', 'good', 'fair', 'poor']
       },
       damages: [{
         location: String,
@@ -47,8 +46,7 @@ const serviceReceptionSchema = new mongoose.Schema({
     interior: {
       condition: {
         type: String,
-        enum: ['excellent', 'good', 'fair', 'poor'],
-        required: true
+        enum: ['excellent', 'good', 'fair', 'poor']
       },
       cleanliness: {
         type: String,
@@ -69,8 +67,7 @@ const serviceReceptionSchema = new mongoose.Schema({
       level: {
         type: Number,
         min: 0,
-        max: 100,
-        required: true
+        max: 100
       },
       health: {
         type: String,
@@ -88,7 +85,6 @@ const serviceReceptionSchema = new mongoose.Schema({
     mileage: {
       current: {
         type: Number,
-        required: true,
         min: 0
       },
       lastService: Number,
@@ -499,7 +495,26 @@ const serviceReceptionSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'PartRequest'
   }],
-  
+
+  // EV Checklist items
+  evChecklistItems: [{
+    id: String,
+    label: String,
+    category: {
+      type: String,
+      enum: ['battery', 'charging', 'motor', 'safety', 'general']
+    },
+    checked: {
+      type: Boolean,
+      default: false
+    },
+    status: {
+      type: String,
+      enum: ['good', 'warning', 'critical']
+    },
+    notes: String
+  }],
+
   // Workflow history tracking
   workflowHistory: [{
     status: String,

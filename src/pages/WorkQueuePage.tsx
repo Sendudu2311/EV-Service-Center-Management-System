@@ -84,6 +84,8 @@ const WorkQueuePage: React.FC = () => {
   const [newNote, setNewNote] = useState('');
   const [showReceptionModal, setShowReceptionModal] = useState(false);
   const [creatingReception, setCreatingReception] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
 
   useEffect(() => {
     fetchWorkQueueData();
@@ -97,14 +99,22 @@ const WorkQueuePage: React.FC = () => {
       const statsResponse = await api.get('/api/dashboard/technician');
       setStats(statsResponse.data.data);
 
-      // Fetch appointments based on active tab
-      const appointmentsUrl = activeTab === 'assigned' 
-        ? '/api/appointments?assignedTechnician=true' 
-        : '/api/appointments?status=pending';
-      
-      const appointmentsResponse = await api.get(appointmentsUrl);
-      setAppointments(appointmentsResponse.data.data || []);
-    } catch (_error) { // Error handled by toast
+      // Fetch appointments based on active tab - use same approach as Dashboard
+      if (activeTab === 'assigned') {
+        const queueResponse = await api.get('/api/appointments/work-queue', {
+          params: {
+            technicianId: user?._id,
+            status: 'confirmed,customer_arrived,reception_created,reception_approved,in_progress',
+            dateRange: 'all',
+            limit: 100
+          }
+        });
+        setAppointments(queueResponse.data.data?.appointments || queueResponse.data.data || []);
+      } else {
+        const appointmentsResponse = await api.get('/api/appointments?status=pending&dateRange=all');
+        setAppointments(appointmentsResponse.data.data || []);
+      }
+    } catch (error) {
       console.error('Error fetching work queue data:', error);
       toast.error('Failed to load work queue data');
     } finally {
@@ -217,6 +227,7 @@ const WorkQueuePage: React.FC = () => {
       // NOTE: Initial booked service is already paid, not included in reception
       // Only send recommendedServices (discovered during inspection) and requestedParts
       const payload = {
+        evChecklistItems: receptionData.evChecklistItems || [],
         recommendedServices: receptionData.recommendedServices || [],
         requestedParts: receptionData.requestedParts || [],
         vehicleCondition: receptionData.vehicleCondition,
@@ -454,7 +465,39 @@ const WorkQueuePage: React.FC = () => {
                     </p>
                   </div>
                 ) : (
-                  (appointments || []).map((appointment) => (
+                  (() => {
+                    // Status priority sorting
+                    const statusPriority: Record<string, number> = {
+                      'customer_arrived': 1,
+                      'reception_created': 2,
+                      'reception_approved': 3,
+                      'in_progress': 4,
+                      'parts_requested': 5,
+                      'parts_insufficient': 5,
+                      'confirmed': 6,
+                      'pending': 7,
+                      'completed': 10,
+                      'invoiced': 11,
+                      'closed': 12,
+                      'cancelled': 13,
+                      'no_show': 13,
+                      'rescheduled': 8
+                    };
+
+                    const sortedAppointments = [...appointments].sort((a, b) => {
+                      const statusDiff = (statusPriority[a.status] || 99) - (statusPriority[b.status] || 99);
+                      if (statusDiff !== 0) return statusDiff;
+                      const dateA = new Date(a.scheduledDate).getTime();
+                      const dateB = new Date(b.scheduledDate).getTime();
+                      return dateA - dateB;
+                    });
+
+                    const paginatedAppointments = sortedAppointments.slice(
+                      (currentPage - 1) * itemsPerPage,
+                      currentPage * itemsPerPage
+                    );
+
+                    return paginatedAppointments.map((appointment) => (
                     <div
                       key={appointment._id}
                       className={`p-6 hover:bg-gray-50 cursor-pointer ${
@@ -515,9 +558,81 @@ const WorkQueuePage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  ))
+                  ));
+                  })()
                 )}
               </div>
+
+              {/* Pagination */}
+              {appointments.length > itemsPerPage && (
+                <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+                  {/* Mobile pagination */}
+                  <div className="flex flex-1 justify-between sm:hidden">
+                    <button
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                      className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Trước
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(Math.min(Math.ceil(appointments.length / itemsPerPage), currentPage + 1))}
+                      disabled={currentPage === Math.ceil(appointments.length / itemsPerPage)}
+                      className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Sau
+                    </button>
+                  </div>
+
+                  {/* Desktop pagination */}
+                  <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm text-gray-700">
+                        Hiển thị <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> đến{' '}
+                        <span className="font-medium">{Math.min(currentPage * itemsPerPage, appointments.length)}</span> trong{' '}
+                        <span className="font-medium">{appointments.length}</span> công việc
+                      </p>
+                    </div>
+                    <div>
+                      <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                        <button
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          disabled={currentPage === 1}
+                          className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <span className="sr-only">Trước</span>
+                          <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                        {Array.from({ length: Math.ceil(appointments.length / itemsPerPage) }, (_, i) => i + 1).map((page) => (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                              currentPage === page
+                                ? 'z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
+                                : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        ))}
+                        <button
+                          onClick={() => setCurrentPage(Math.min(Math.ceil(appointments.length / itemsPerPage), currentPage + 1))}
+                          disabled={currentPage === Math.ceil(appointments.length / itemsPerPage)}
+                          className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <span className="sr-only">Sau</span>
+                          <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </nav>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

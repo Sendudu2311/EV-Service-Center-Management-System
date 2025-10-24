@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { DetailedAppointmentStatus } from '../../types/appointment';
 import { servicesAPI, partsAPI } from '../../services/api';
+import EVChecklistTab from './EVChecklistTab';
 
 interface VehicleCondition {
   exterior: {
@@ -45,7 +46,17 @@ interface VehicleCondition {
   };
 }
 
+interface ChecklistItem {
+  id: string;
+  label: string;
+  category: 'battery' | 'charging' | 'motor' | 'safety' | 'general';
+  checked: boolean;
+  status?: 'good' | 'warning' | 'critical';
+  notes?: string;
+}
+
 interface ServiceReceptionData {
+  evChecklistItems: ChecklistItem[];
   vehicleCondition: VehicleCondition;
   customerItems: Array<{
     item: string;
@@ -124,6 +135,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<ServiceReceptionData>({
+    evChecklistItems: [],
     vehicleCondition: {
       exterior: {
         condition: 'good',
@@ -229,7 +241,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
     }
   }, [isOpen]);
 
-  const totalSteps = 5;
+  const totalSteps = 4;
 
   if (!isOpen) return null;
 
@@ -303,368 +315,15 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
       case 1:
         return (
           <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-900">Thông tin xe - Ngoại thất</h3>
-
-            {/* Exterior Condition */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tình trạng ngoại thất
-              </label>
-              <select
-                value={formData.vehicleCondition.exterior.condition}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  vehicleCondition: {
-                    ...prev.vehicleCondition,
-                    exterior: {
-                      ...prev.vehicleCondition.exterior,
-                      condition: e.target.value as any
-                    }
-                  }
-                }))}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="excellent">Xuất sắc</option>
-                <option value="good">Tốt</option>
-                <option value="fair">Trung bình</option>
-                <option value="poor">Kém</option>
-              </select>
-            </div>
-
-            {/* Exterior Damages */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Hỏng hóc ngoại thất
-                </label>
-                <button
-                  onClick={() => addDamage('exterior')}
-                  className="text-sm text-blue-600 hover:text-blue-700"
-                >
-                  + Thêm hỏng hóc
-                </button>
-              </div>
-
-              {formData.vehicleCondition.exterior.damages.map((damage, index) => (
-                <div key={index} className="border rounded-lg p-4 mb-3 bg-gray-50">
-                  <div className="grid grid-cols-2 gap-4 mb-2">
-                    <input
-                      type="text"
-                      placeholder="Vị trí (VD: Cửa trước bên trái)"
-                      value={damage.location}
-                      onChange={(e) => {
-                        const newDamages = [...formData.vehicleCondition.exterior.damages];
-                        newDamages[index] = { ...damage, location: e.target.value };
-                        setFormData(prev => ({
-                          ...prev,
-                          vehicleCondition: {
-                            ...prev.vehicleCondition,
-                            exterior: {
-                              ...prev.vehicleCondition.exterior,
-                              damages: newDamages
-                            }
-                          }
-                        }));
-                      }}
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                    />
-                    <select
-                      value={damage.type}
-                      onChange={(e) => {
-                        const newDamages = [...formData.vehicleCondition.exterior.damages];
-                        newDamages[index] = { ...damage, type: e.target.value as any };
-                        setFormData(prev => ({
-                          ...prev,
-                          vehicleCondition: {
-                            ...prev.vehicleCondition,
-                            exterior: {
-                              ...prev.vehicleCondition.exterior,
-                              damages: newDamages
-                            }
-                          }
-                        }));
-                      }}
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                    >
-                      <option value="scratch">Trầy xước</option>
-                      <option value="dent">Móp méo</option>
-                      <option value="crack">Nứt</option>
-                      <option value="rust">Rỉ sét</option>
-                      <option value="paint_damage">Hỏng sơn</option>
-                      <option value="missing_part">Thiếu bộ phận</option>
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 mb-2">
-                    <select
-                      value={damage.severity}
-                      onChange={(e) => {
-                        const newDamages = [...formData.vehicleCondition.exterior.damages];
-                        newDamages[index] = { ...damage, severity: e.target.value as any };
-                        setFormData(prev => ({
-                          ...prev,
-                          vehicleCondition: {
-                            ...prev.vehicleCondition,
-                            exterior: {
-                              ...prev.vehicleCondition.exterior,
-                              damages: newDamages
-                            }
-                          }
-                        }));
-                      }}
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                    >
-                      <option value="minor">Nhỏ</option>
-                      <option value="moderate">Trung bình</option>
-                      <option value="major">Lớn</option>
-                    </select>
-                    <button
-                      onClick={() => removeDamage('exterior', index)}
-                      className="text-red-600 hover:text-red-700 text-sm"
-                    >
-                      Xóa
-                    </button>
-                  </div>
-
-                  <textarea
-                    placeholder="Mô tả chi tiết..."
-                    value={damage.description}
-                    onChange={(e) => {
-                      const newDamages = [...formData.vehicleCondition.exterior.damages];
-                      newDamages[index] = { ...damage, description: e.target.value };
-                      setFormData(prev => ({
-                        ...prev,
-                        vehicleCondition: {
-                          ...prev.vehicleCondition,
-                          exterior: {
-                            ...prev.vehicleCondition.exterior,
-                            damages: newDamages
-                          }
-                        }
-                      }));
-                    }}
-                    rows={2}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Exterior Notes */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Ghi chú ngoại thất
-              </label>
-              <textarea
-                value={formData.vehicleCondition.exterior.notes}
-                onChange={(e) => setFormData(prev => ({
-                  ...prev,
-                  vehicleCondition: {
-                    ...prev.vehicleCondition,
-                    exterior: {
-                      ...prev.vehicleCondition.exterior,
-                      notes: e.target.value
-                    }
-                  }
-                }))}
-                rows={3}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Ghi chú thêm về tình trạng ngoại thất..."
-              />
-            </div>
+            <h3 className="text-lg font-medium text-gray-900">EV Checklist</h3>
+            <EVChecklistTab
+              value={formData.evChecklistItems}
+              onChange={(items) => setFormData(prev => ({ ...prev, evChecklistItems: items }))}
+            />
           </div>
         );
 
       case 2:
-        return (
-          <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-900">Thông tin xe - Nội thất & Pin</h3>
-
-            {/* Interior Condition */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tình trạng nội thất
-                </label>
-                <select
-                  value={formData.vehicleCondition.interior.condition}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    vehicleCondition: {
-                      ...prev.vehicleCondition,
-                      interior: {
-                        ...prev.vehicleCondition.interior,
-                        condition: e.target.value as any
-                      }
-                    }
-                  }))}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option value="excellent">Xuất sắc</option>
-                  <option value="good">Tốt</option>
-                  <option value="fair">Trung bình</option>
-                  <option value="poor">Kém</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Độ sạch sẽ
-                </label>
-                <select
-                  value={formData.vehicleCondition.interior.cleanliness}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    vehicleCondition: {
-                      ...prev.vehicleCondition,
-                      interior: {
-                        ...prev.vehicleCondition.interior,
-                        cleanliness: e.target.value as any
-                      }
-                    }
-                  }))}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                >
-                  <option value="very_clean">Rất sạch</option>
-                  <option value="clean">Sạch</option>
-                  <option value="moderate">Trung bình</option>
-                  <option value="dirty">Bẩn</option>
-                  <option value="very_dirty">Rất bẩn</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Battery Information */}
-            <div className="border-t pt-6">
-              <h4 className="text-md font-medium text-gray-900 mb-4">Thông tin Pin</h4>
-
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Mức pin (%)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={formData.vehicleCondition.battery.level}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      vehicleCondition: {
-                        ...prev.vehicleCondition,
-                        battery: {
-                          ...prev.vehicleCondition.battery,
-                          level: parseInt(e.target.value) || 0
-                        }
-                      }
-                    }))}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tình trạng pin
-                  </label>
-                  <select
-                    value={formData.vehicleCondition.battery.health}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      vehicleCondition: {
-                        ...prev.vehicleCondition,
-                        battery: {
-                          ...prev.vehicleCondition.battery,
-                          health: e.target.value as any
-                        }
-                      }
-                    }))}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  >
-                    <option value="excellent">Xuất sắc</option>
-                    <option value="good">Tốt</option>
-                    <option value="fair">Trung bình</option>
-                    <option value="poor">Kém</option>
-                    <option value="replace_soon">Cần thay sớm</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Trạng thái sạc
-                  </label>
-                  <select
-                    value={formData.vehicleCondition.battery.chargingStatus}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      vehicleCondition: {
-                        ...prev.vehicleCondition,
-                        battery: {
-                          ...prev.vehicleCondition.battery,
-                          chargingStatus: e.target.value as any
-                        }
-                      }
-                    }))}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  >
-                    <option value="not_charging">Không sạc</option>
-                    <option value="charging">Đang sạc</option>
-                    <option value="fully_charged">Đã sạc đầy</option>
-                    <option value="error">Lỗi</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Số km hiện tại
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formData.vehicleCondition.mileage.current}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      vehicleCondition: {
-                        ...prev.vehicleCondition,
-                        mileage: {
-                          ...prev.vehicleCondition.mileage,
-                          current: parseInt(e.target.value) || 0
-                        }
-                      }
-                    }))}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="VD: 25000"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ghi chú về pin
-                </label>
-                <textarea
-                  value={formData.vehicleCondition.battery.notes}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    vehicleCondition: {
-                      ...prev.vehicleCondition,
-                      battery: {
-                        ...prev.vehicleCondition.battery,
-                        notes: e.target.value
-                      }
-                    }
-                  }))}
-                  rows={2}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  placeholder="Ghi chú thêm về tình trạng pin..."
-                />
-              </div>
-            </div>
-          </div>
-        );
-
-      case 3:
         return (
           <div className="space-y-6">
             <h3 className="text-lg font-medium text-gray-900">Đồ đạc khách hàng</h3>
@@ -759,7 +418,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
           </div>
         );
 
-      case 4:
+      case 3:
         return (
           <div className="space-y-6">
             <h3 className="text-lg font-medium text-gray-900">Dịch vụ đề xuất sau kiểm tra</h3>
@@ -966,7 +625,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
           </div>
         );
 
-      case 5:
+      case 4:
         return (
           <div className="space-y-6">
             <h3 className="text-lg font-medium text-gray-900">Yêu cầu phụ tùng</h3>
@@ -1209,7 +868,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
         {/* Progress Steps */}
         <div className="mb-6">
           <div className="flex items-center justify-between">
-            {[1, 2, 3, 4, 5].map((step) => (
+            {[1, 2, 3, 4].map((step) => (
               <div key={step} className="flex items-center">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                   step <= currentStep
@@ -1218,8 +877,8 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                 }`}>
                   {step}
                 </div>
-                {step < 5 && (
-                  <div className={`h-1 w-16 ${
+                {step < 4 && (
+                  <div className={`h-1 w-24 ${
                     step < currentStep ? 'bg-blue-600' : 'bg-gray-200'
                   }`} />
                 )}
@@ -1227,8 +886,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
             ))}
           </div>
           <div className="flex justify-between mt-2 text-xs text-gray-600">
-            <span>Ngoại thất</span>
-            <span>Nội thất & Pin</span>
+            <span>EV Checklist</span>
             <span>Đồ đạc</span>
             <span>Dịch vụ đề xuất</span>
             <span>Yêu cầu phụ tùng</span>

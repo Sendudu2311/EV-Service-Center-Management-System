@@ -106,7 +106,7 @@ export const checkVehicleBookingStatus = async (req, res) => {
 export const getAppointments = async (req, res) => {
   try {
     let appointments;
-    const { status, page = 1, limit = 10, customerId } = req.query;
+    const { status, page = 1, limit = 10, customerId, assignedTechnician, dateRange } = req.query;
     const skip = (page - 1) * limit;
 
     // Build filter based on user role
@@ -115,6 +115,9 @@ export const getAppointments = async (req, res) => {
     // Check for customerId query parameter first (for getting specific customer's appointments)
     if (customerId) {
       filter.customerId = customerId;
+    } else if (assignedTechnician === 'true') {
+      // Explicitly filter by assigned technician
+      filter.assignedTechnician = req.user._id;
     } else {
       // Role-based filtering when no specific customerId is requested
       if (req.user.role === "customer") {
@@ -128,6 +131,39 @@ export const getAppointments = async (req, res) => {
     // Add status filter if provided
     if (status) {
       filter.status = status;
+    }
+
+    // Add date range filter if provided
+    if (dateRange && dateRange !== 'all') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      switch (dateRange) {
+        case 'today':
+          filter.scheduledDate = {
+            $gte: today,
+            $lt: tomorrow
+          };
+          break;
+        case 'week':
+          const weekEnd = new Date(today);
+          weekEnd.setDate(weekEnd.getDate() + 7);
+          filter.scheduledDate = {
+            $gte: today,
+            $lt: weekEnd
+          };
+          break;
+        case 'month':
+          const monthEnd = new Date(today);
+          monthEnd.setMonth(monthEnd.getMonth() + 1);
+          filter.scheduledDate = {
+            $gte: today,
+            $lt: monthEnd
+          };
+          break;
+      }
     }
 
     // Define status priority order for Vietnamese EV workflow
@@ -2689,6 +2725,10 @@ export const getWorkQueue = async (req, res) => {
     const now = new Date();
 
     switch (dateRange) {
+      case "all":
+        // No date filter - get all appointments
+        dateFilter = {};
+        break;
       case "today":
         const startOfDay = new Date(
           now.getFullYear(),

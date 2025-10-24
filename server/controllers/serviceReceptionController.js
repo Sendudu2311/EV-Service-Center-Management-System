@@ -20,6 +20,7 @@ export const createServiceReception = async (req, res) => {
       requestedParts,
       preServicePhotos,
       diagnosticCodes,
+      evChecklistItems,
     } = req.body;
 
     // Check if service reception already exists for this appointment
@@ -156,6 +157,7 @@ export const createServiceReception = async (req, res) => {
       requestedParts: requestedParts || [],
       preServicePhotos: preServicePhotos || [],
       diagnosticCodes: diagnosticCodes || [],
+      evChecklistItems: evChecklistItems || [],
       status: "received",
       // Auto-submit to staff for review
       submissionStatus: {
