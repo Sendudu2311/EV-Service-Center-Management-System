@@ -106,7 +106,14 @@ export const checkVehicleBookingStatus = async (req, res) => {
 export const getAppointments = async (req, res) => {
   try {
     let appointments;
-    const { status, page = 1, limit = 10, customerId, assignedTechnician, dateRange } = req.query;
+    const {
+      status,
+      page = 1,
+      limit = 10,
+      customerId,
+      assignedTechnician,
+      dateRange,
+    } = req.query;
     const skip = (page - 1) * limit;
 
     // Build filter based on user role
@@ -115,7 +122,7 @@ export const getAppointments = async (req, res) => {
     // Check for customerId query parameter first (for getting specific customer's appointments)
     if (customerId) {
       filter.customerId = customerId;
-    } else if (assignedTechnician === 'true') {
+    } else if (assignedTechnician === "true") {
       // Explicitly filter by assigned technician
       filter.assignedTechnician = req.user._id;
     } else {
@@ -134,33 +141,33 @@ export const getAppointments = async (req, res) => {
     }
 
     // Add date range filter if provided
-    if (dateRange && dateRange !== 'all') {
+    if (dateRange && dateRange !== "all") {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
       switch (dateRange) {
-        case 'today':
+        case "today":
           filter.scheduledDate = {
             $gte: today,
-            $lt: tomorrow
+            $lt: tomorrow,
           };
           break;
-        case 'week':
+        case "week":
           const weekEnd = new Date(today);
           weekEnd.setDate(weekEnd.getDate() + 7);
           filter.scheduledDate = {
             $gte: today,
-            $lt: weekEnd
+            $lt: weekEnd,
           };
           break;
-        case 'month':
+        case "month":
           const monthEnd = new Date(today);
           monthEnd.setMonth(monthEnd.getMonth() + 1);
           filter.scheduledDate = {
             $gte: today,
-            $lt: monthEnd
+            $lt: monthEnd,
           };
           break;
       }
@@ -464,34 +471,48 @@ export const createAppointment = async (req, res) => {
         });
       }
 
-      // Check technician workload capacity
-      try {
-        const technicianProfile = await TechnicianProfile.findOne({
-          technicianId,
-        });
+      // ==============================================================================
+      // WORKLOAD CHECK FOR TECHNICIAN ASSIGNMENT - DISABLED
+      // ==============================================================================
+      // This section checks if the selected technician has available capacity
+      // to handle the new appointment based on their current workload
+      // COMMENTED OUT TO DISABLE WORKLOAD CHECKING
 
-        if (technicianProfile) {
-          // Check if technician is available for appointment duration
-          if (
-            !technicianProfile.isAvailableForAppointment(
-              appointmentDateTime,
-              totalDuration
-            )
-          ) {
-            return res.status(400).json({
-              success: false,
-              message:
-                "Selected technician is not available due to workload or schedule constraints",
-              workloadPercentage: technicianProfile.workloadPercentage,
-              currentWorkload: technicianProfile.workload.current,
-              capacity: technicianProfile.workload.capacity,
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Error checking technician availability:", error);
-        // Continue without failing - basic conflict check was already done
-      }
+      // Check technician workload capacity
+      // try {
+      //   // Find the technician's profile to get their current workload status
+      //   const technicianProfile = await TechnicianProfile.findOne({
+      //     technicianId,
+      //   });
+
+      //   if (technicianProfile) {
+      //     // Check if technician is available for appointment duration
+      //     // This method checks:
+      //     // 1. Basic availability status (available/busy)
+      //     // 2. Current workload vs capacity
+      //     // 3. Working hours/days
+      //     if (
+      //       !technicianProfile.isAvailableForAppointment(
+      //         appointmentDateTime,
+      //         totalDuration
+      //       )
+      //     ) {
+      //       // Return error with detailed workload information
+      //       return res.status(400).json({
+      //         success: false,
+      //         message:
+      //           "Selected technician is not available due to workload or schedule constraints",
+      //         workloadPercentage: technicianProfile.workloadPercentage,
+      //         currentWorkload: technicianProfile.workload.current,
+      //         capacity: technicianProfile.workload.capacity,
+      //       });
+      //     }
+      //   }
+      // } catch (error) {
+      //   console.error("Error checking technician availability:", error);
+      //   // Continue without failing - basic conflict check was already done
+      //   // This ensures appointment creation doesn't fail if workload check fails
+      // }
 
       assignedTechnician = technicianId;
     }
@@ -2653,28 +2674,35 @@ export const assignTechnician = async (req, res) => {
 
     await appointment.save();
 
-    // Update technician profiles
+    // ==============================================================================
+    // WORKLOAD MANAGEMENT FOR TECHNICIAN REASSIGNMENT - DISABLED
+    // ==============================================================================
+    // Update technician profiles when reassigning appointments
+    // COMMENTED OUT TO DISABLE WORKLOAD MANAGEMENT
 
     // Remove from previous technician's workload if reassigning
-    if (
-      previousTechnician &&
-      !previousTechnician.equals(selectedTechnicianId)
-    ) {
-      const prevProfile = await TechnicianProfile.findOne({
-        technicianId: previousTechnician,
-      });
-      if (prevProfile) {
-        await prevProfile.completeAppointment(appointment._id);
-      }
-    }
+    // if (
+    //   previousTechnician &&
+    //   !previousTechnician.equals(selectedTechnicianId)
+    // ) {
+    //   // Find previous technician's profile
+    //   const prevProfile = await TechnicianProfile.findOne({
+    //     technicianId: previousTechnician,
+    //   });
+    //   if (prevProfile) {
+    //     // Remove appointment from previous technician's workload
+    //     await prevProfile.completeAppointment(appointment._id);
+    //   }
+    // }
 
     // Add to new technician's workload
-    const newProfile = await TechnicianProfile.findOne({
-      technicianId: selectedTechnicianId,
-    });
-    if (newProfile) {
-      await newProfile.assignAppointment(appointment._id);
-    }
+    // const newProfile = await TechnicianProfile.findOne({
+    //   technicianId: selectedTechnicianId,
+    // });
+    // if (newProfile) {
+    //   // Add appointment to new technician's workload
+    //   await newProfile.assignAppointment(appointment._id);
+    // }
 
     // Populate for response
     const updatedAppointment = await Appointment.findById(appointment._id)
@@ -3602,7 +3630,10 @@ export const getPendingReceptionApprovals = async (req, res) => {
       .populate("customerId", "firstName lastName email phone")
       .populate("vehicleId", "make model year vin licensePlate")
       .populate("submissionStatus.submittedBy", "firstName lastName")
-      .populate("recommendedServices.serviceId", "name category basePrice estimatedDuration")
+      .populate(
+        "recommendedServices.serviceId",
+        "name category basePrice estimatedDuration"
+      )
       .populate("recommendedServices.addedBy", "firstName lastName")
       .populate("requestedParts.partId", "name partNumber pricing")
       .sort({ "submissionStatus.submittedAt": 1 });

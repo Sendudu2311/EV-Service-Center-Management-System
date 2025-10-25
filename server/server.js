@@ -20,6 +20,7 @@ import partRoutes from "./routes/parts.js";
 import partRequestRoutes from "./routes/partRequests.js";
 import invoiceRoutes from "./routes/invoices.js";
 import serviceReceptionRoutes from "./routes/serviceReception.js";
+import checklistRoutes from "./routes/checklist.js";
 import vnpayRoutes from "./routes/vnpay.js";
 import slotRoutes from "./routes/slots.js";
 import chatbotRoutes from "./routes/chatbot.js";
@@ -55,7 +56,11 @@ const server = createServer(app);
 // Enable CORS
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:3000", "http://localhost:8081"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://localhost:8081",
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
@@ -66,7 +71,11 @@ app.use(
 // Socket.IO setup with authentication
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "http://localhost:3000", "http://localhost:8081"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "http://localhost:8081",
+    ],
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -104,6 +113,7 @@ app.use("/api/parts", partRoutes);
 app.use("/api/part-requests", partRequestRoutes);
 app.use("/api/invoices", invoiceRoutes);
 app.use("/api/service-receptions", serviceReceptionRoutes);
+app.use("/api/checklist-instances", checklistRoutes);
 app.use("/api/vnpay", vnpayRoutes);
 app.use("/api/slots", slotRoutes);
 app.use("/api/chatbot", chatbotRoutes);
