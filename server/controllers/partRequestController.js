@@ -150,7 +150,7 @@ export const getPendingPartRequests = async (req, res) => {
     // Filter by service center for staff
     if (req.user.role === "staff") {
       const appointments = await Appointment.find({
-        serviceCenterId: req.user.serviceCenterId,
+        // serviceCenterId removed - single center architecture
       }).select("_id");
       const appointmentIds = appointments.map((apt) => apt._id);
       filter.appointmentId = { $in: appointmentIds };
@@ -171,7 +171,7 @@ export const getPendingPartRequests = async (req, res) => {
         path: "appointmentId",
         populate: [
           { path: "customerId", select: "firstName lastName email phone" },
-          { path: "serviceCenterId", select: "name address" },
+          // serviceCenterId populate removed - single center architecture
         ],
       })
       .sort({ requestedAt: 1 });

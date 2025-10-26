@@ -130,12 +130,22 @@ export interface CancelRequest {
   requestedBy: string;
   reason: string;
   refundPercentage: number;
+  refundAmount?: number;
+  baseAmount?: number;
+  refundMethod?: "cash" | "bank_transfer";
+  customerBankInfo?: {
+    bankName: string;
+    accountNumber: string;
+    accountHolder: string;
+  };
+  customerBankProofImage?: string;
   approvedAt?: string;
   approvedBy?: string;
   approvedNotes?: string;
   refundProcessedAt?: string;
   refundProcessedBy?: string;
   refundTransactionId?: string;
+  refundProofImage?: string;
 }
 
 export interface Appointment {
@@ -145,6 +155,7 @@ export interface Appointment {
   vehicleId: Vehicle;
   // serviceCenterId removed - single center architecture
   services: AppointmentService[];
+  transactions: string[]; // Array of transaction IDs
 
   // Scheduling
   scheduledDate: string;

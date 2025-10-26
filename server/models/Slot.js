@@ -156,137 +156,154 @@ slotSchema.methods.getAvailableTechnicians = function () {
     .map((ta) => ta.technicianId);
 };
 
+// ==============================================================================
+// OPTIMIZED TECHNICIAN AVAILABILITY CHECK FOR SLOT - DISABLED
+// ==============================================================================
+// This method checks if a technician is available in a specific time slot
+// It considers both slot capacity and technician's personal workload capacity
+// COMMENTED OUT TO DISABLE WORKLOAD CHECKING
+
 // OPTIMIZED: Method to check technician availability without technicianAppointments
-slotSchema.methods.isTechnicianAvailableOptimized = async function (
-  technicianId
-) {
-  // Check if technician is in technicianIds array
-  const isInTechnicianIds = this.technicianIds.some(
-    (id) => id.toString() === technicianId.toString()
-  );
+// slotSchema.methods.isTechnicianAvailableOptimized = async function (
+//   technicianId
+// ) {
+//   // 1. CHECK IF TECHNICIAN IS ASSIGNED TO THIS SLOT
+//   // Verify technician is in the slot's technicianIds array
+//   const isInTechnicianIds = this.technicianIds.some(
+//     (id) => id.toString() === technicianId.toString()
+//   );
 
-  if (!isInTechnicianIds) {
-    return false;
-  }
+//   if (!isInTechnicianIds) {
+//     return false;
+//   }
 
-  // FIRST: Check if slot has available capacity
-  if (this.bookedCount >= this.capacity) {
-    console.log(
-      `🔍 [isTechnicianAvailableOptimized] Slot ${this._id} is at full capacity (${this.bookedCount}/${this.capacity})`
-    );
-    return false;
-  }
+//   // 2. CHECK SLOT CAPACITY
+//   // First check if the entire slot has available capacity
+//   if (this.bookedCount >= this.capacity) {
+//     console.log(
+//       `🔍 [isTechnicianAvailableOptimized] Slot ${this._id} is at full capacity (${this.bookedCount}/${this.capacity})`
+//     );
+//     return false;
+//   }
 
-  // Count current appointments for this technician in this slot
-  const Appointment = (await import("./Appointment.js")).default;
-  const currentAppointments = await Appointment.countDocuments({
-    slotId: this._id,
-    assignedTechnician: technicianId,
-    status: { $in: ["confirmed", "in_progress"] },
-  });
+//   // 3. COUNT CURRENT APPOINTMENTS FOR THIS TECHNICIAN
+//   // Count how many appointments this technician already has in this slot
+//   const Appointment = (await import("./Appointment.js")).default;
+//   const currentAppointments = await Appointment.countDocuments({
+//     slotId: this._id,
+//     assignedTechnician: technicianId,
+//     status: { $in: ["confirmed", "in_progress"] },
+//   });
 
-  // Get technician profile for capacity check
-  const TechnicianProfile = (await import("./TechnicianProfile.js")).default;
-  const technicianProfile = await TechnicianProfile.findOne({
-    technicianId: technicianId,
-  });
+//   // 4. GET TECHNICIAN PROFILE FOR PERSONAL CAPACITY
+//   // Get technician's personal workload capacity from their profile
+//   const TechnicianProfile = (await import("./TechnicianProfile.js")).default;
+//   const technicianProfile = await TechnicianProfile.findOne({
+//     technicianId: technicianId,
+//   });
 
-  // Calculate technician capacity in this slot
-  // If slot has multiple technicians, distribute REMAINING capacity
-  const totalTechnicians = this.technicianIds.length;
-  const slotCapacity = this.capacity;
-  const remainingCapacity = slotCapacity - this.bookedCount;
+//   // 5. CALCULATE TECHNICIAN CAPACITY IN THIS SLOT
+//   // If slot has multiple technicians, distribute REMAINING capacity equally
+//   const totalTechnicians = this.technicianIds.length;
+//   const slotCapacity = this.capacity;
+//   const remainingCapacity = slotCapacity - this.bookedCount;
 
-  // If no remaining capacity, technician is not available
-  if (remainingCapacity <= 0) {
-    return false;
-  }
+//   // If no remaining capacity, technician is not available
+//   if (remainingCapacity <= 0) {
+//     return false;
+//   }
 
-  // Each technician gets equal share of REMAINING capacity
-  // But if remaining capacity < total technicians, only some technicians are available
-  const technicianSlotCapacity = Math.floor(
-    remainingCapacity / totalTechnicians
-  );
+//   // Each technician gets equal share of REMAINING capacity
+//   // But if remaining capacity < total technicians, only some technicians are available
+//   const technicianSlotCapacity = Math.floor(
+//     remainingCapacity / totalTechnicians
+//   );
 
-  // If technician gets 0 capacity from slot distribution, check if they can take remaining slots
-  let maxCapacity = technicianSlotCapacity;
+//   // 6. HANDLE REMAINING SLOTS DISTRIBUTION
+//   // If technician gets 0 capacity from slot distribution, check if they can take remaining slots
+//   let maxCapacity = technicianSlotCapacity;
 
-  // If this technician gets 0 from distribution but there are remaining slots,
-  // they might still be available (first-come-first-served)
-  if (technicianSlotCapacity === 0 && remainingCapacity > 0) {
-    // Check if this technician is among the first ones who can take remaining slots
-    const technicianIndex = this.technicianIds.findIndex(
-      (id) => id.toString() === technicianId.toString()
-    );
+//   // If this technician gets 0 from distribution but there are remaining slots,
+//   // they might still be available (first-come-first-served)
+//   if (technicianSlotCapacity === 0 && remainingCapacity > 0) {
+//     // Check if this technician is among the first ones who can take remaining slots
+//     const technicianIndex = this.technicianIds.findIndex(
+//       (id) => id.toString() === technicianId.toString()
+//     );
 
-    // Only allow technicians with index < remainingCapacity to be available
-    // This ensures only the first N technicians are available for remaining slots
-    if (technicianIndex < remainingCapacity) {
-      maxCapacity = 1; // This technician can take 1 remaining slot
-    } else {
-      maxCapacity = 0; // This technician is not available for remaining slots
-    }
-  }
+//     // Only allow technicians with index < remainingCapacity to be available
+//     // This ensures only the first N technicians are available for remaining slots
+//     if (technicianIndex < remainingCapacity) {
+//       maxCapacity = 1; // This technician can take 1 remaining slot
+//     } else {
+//       maxCapacity = 0; // This technician is not available for remaining slots
+//     }
+//   }
 
-  // But also respect technician's personal capacity
-  const technicianPersonalCapacity = technicianProfile?.workload?.capacity || 1;
-  maxCapacity = Math.min(maxCapacity, technicianPersonalCapacity);
+//   // 7. RESPECT TECHNICIAN'S PERSONAL CAPACITY
+//   // Also respect technician's personal capacity from their profile
+//   const technicianPersonalCapacity = technicianProfile?.workload?.capacity || 1;
+//   maxCapacity = Math.min(maxCapacity, technicianPersonalCapacity);
 
-  console.log(
-    `🔍 [isTechnicianAvailableOptimized] Technician ${technicianId}:`,
-    {
-      slotBookedCount: this.bookedCount,
-      slotCapacity,
-      remainingCapacity,
-      currentAppointments,
-      totalTechnicians,
-      technicianSlotCapacity,
-      technicianIndex: this.technicianIds.findIndex(
-        (id) => id.toString() === technicianId.toString()
-      ),
-      technicianPersonalCapacity,
-      maxCapacity,
-      isAvailable: currentAppointments < maxCapacity,
-    }
-  );
+//   // 8. LOGGING FOR DEBUGGING
+//   console.log(
+//     `🔍 [isTechnicianAvailableOptimized] Technician ${technicianId}:`,
+//     {
+//       slotBookedCount: this.bookedCount,
+//       slotCapacity,
+//       remainingCapacity,
+//       currentAppointments,
+//       totalTechnicians,
+//       technicianSlotCapacity,
+//       technicianIndex: this.technicianIds.findIndex(
+//         (id) => id.toString() === technicianId.toString()
+//       ),
+//       technicianPersonalCapacity,
+//       maxCapacity,
+//       isAvailable: currentAppointments < maxCapacity,
+//     }
+//   );
 
-  return currentAppointments < maxCapacity;
-};
+//   // 9. FINAL AVAILABILITY CHECK
+//   // Technician is available if their current appointments < max capacity
+//   return currentAppointments < maxCapacity;
+// };
 
-// OPTIMIZED: Method to get available technicians using appointment queries
+// ==============================================================================
+// GET AVAILABLE TECHNICIANS OPTIMIZED - SIMPLIFIED (NO WORKLOAD CHECK)
+// ==============================================================================
+// This method gets available technicians for a slot without workload checking
+// Returns all technicians assigned to the slot
+
 slotSchema.methods.getAvailableTechniciansOptimized = async function () {
   const availableTechnicians = [];
 
   for (const technicianId of this.technicianIds) {
-    const isAvailable = await this.isTechnicianAvailableOptimized(technicianId);
-    if (isAvailable) {
-      // Get technician profile data
-      const TechnicianProfile = (await import("./TechnicianProfile.js"))
-        .default;
-      const technicianProfile = await TechnicianProfile.findOne({
-        technicianId: technicianId,
-      }).populate("technicianId", "firstName lastName email phone");
+    // Get technician profile data without checking workload
+    const TechnicianProfile = (await import("./TechnicianProfile.js")).default;
+    const technicianProfile = await TechnicianProfile.findOne({
+      technicianId: technicianId,
+    }).populate("technicianId", "firstName lastName email phone");
 
-      if (technicianProfile && technicianProfile.technicianId) {
-        availableTechnicians.push({
-          _id: technicianId,
-          firstName: technicianProfile.technicianId.firstName,
-          lastName: technicianProfile.technicianId.lastName,
-          email: technicianProfile.technicianId.email,
-          phone: technicianProfile.technicianId.phone,
-          specializations: technicianProfile.specializations || [],
-        });
-      } else {
-        // Fallback: just add the ID
-        availableTechnicians.push({
-          _id: technicianId,
-          firstName: "Unknown",
-          lastName: "Technician",
-          email: "",
-          phone: "",
-          specializations: [],
-        });
-      }
+    if (technicianProfile && technicianProfile.technicianId) {
+      availableTechnicians.push({
+        _id: technicianId,
+        firstName: technicianProfile.technicianId.firstName,
+        lastName: technicianProfile.technicianId.lastName,
+        email: technicianProfile.technicianId.email,
+        phone: technicianProfile.technicianId.phone,
+        specializations: technicianProfile.specializations || [],
+      });
+    } else {
+      // Fallback: just add the ID
+      availableTechnicians.push({
+        _id: technicianId,
+        firstName: "Unknown",
+        lastName: "Technician",
+        email: "",
+        phone: "",
+        specializations: [],
+      });
     }
   }
 

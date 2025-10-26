@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   ClockIcon,
   WrenchScrewdriverIcon,
@@ -7,15 +7,15 @@ import {
   UserIcon,
   CalendarIcon,
   ClipboardDocumentListIcon,
-  CubeIcon
-} from '@heroicons/react/24/outline';
-import { useAuth } from '../contexts/AuthContext';
-import api from '../services/api';
-import toast from 'react-hot-toast';
-import PartsSelection from '../components/Parts/PartsSelection';
-import StatusActionButton from '../components/Common/StatusActionButton';
-import ServiceReceptionModal from '../components/ServiceReception/ServiceReceptionModal';
-import { DetailedAppointmentStatus } from '../types/appointment';
+  CubeIcon,
+} from "@heroicons/react/24/outline";
+import { useAuth } from "../contexts/AuthContext";
+import api from "../services/api";
+import toast from "react-hot-toast";
+import PartsSelection from "../components/Parts/PartsSelection";
+import StatusActionButton from "../components/Common/StatusActionButton";
+import ServiceReceptionModal from "../components/ServiceReception/ServiceReceptionModal";
+import { DetailedAppointmentStatus } from "../types/appointment";
 
 interface WorkQueueStats {
   pendingAppointments: number;
@@ -78,10 +78,15 @@ const WorkQueuePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState<WorkQueueStats | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [activeTab, setActiveTab] = useState<'assigned' | 'available'>('assigned');
-  const [detailsTab, setDetailsTab] = useState<'overview' | 'checklist' | 'parts'>('overview');
-  const [newNote, setNewNote] = useState('');
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<Appointment | null>(null);
+  const [activeTab, setActiveTab] = useState<"assigned" | "available">(
+    "assigned"
+  );
+  const [detailsTab, setDetailsTab] = useState<
+    "overview" | "checklist" | "parts"
+  >("overview");
+  const [newNote, setNewNote] = useState("");
   const [showReceptionModal, setShowReceptionModal] = useState(false);
   const [creatingReception, setCreatingReception] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -96,115 +101,143 @@ const WorkQueuePage: React.FC = () => {
       setLoading(true);
 
       // Fetch technician dashboard stats
-      const statsResponse = await api.get('/api/dashboard/technician');
+      const statsResponse = await api.get("/api/dashboard/technician");
       setStats(statsResponse.data.data);
 
       // Fetch appointments based on active tab - use same approach as Dashboard
-      if (activeTab === 'assigned') {
-        const queueResponse = await api.get('/api/appointments/work-queue', {
+      if (activeTab === "assigned") {
+        const queueResponse = await api.get("/api/appointments/work-queue", {
           params: {
             technicianId: user?._id,
-            status: 'confirmed,customer_arrived,reception_created,reception_approved,in_progress',
-            dateRange: 'all',
-            limit: 100
-          }
+            status:
+              "confirmed,customer_arrived,reception_created,reception_approved,in_progress",
+            dateRange: "all",
+            limit: 100,
+          },
         });
-        setAppointments(queueResponse.data.data?.appointments || queueResponse.data.data || []);
+        setAppointments(
+          queueResponse.data.data?.appointments || queueResponse.data.data || []
+        );
       } else {
-        const appointmentsResponse = await api.get('/api/appointments?status=pending&dateRange=all');
+        const appointmentsResponse = await api.get(
+          "/api/appointments?status=pending&dateRange=all"
+        );
         setAppointments(appointmentsResponse.data.data || []);
       }
     } catch (error) {
-      console.error('Error fetching work queue data:', error);
-      toast.error('Failed to load work queue data');
+      console.error("Error fetching work queue data:", error);
+      toast.error("Failed to load work queue data");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusUpdate = async (appointmentId: string, newStatus: DetailedAppointmentStatus) => {
+  const handleStatusUpdate = async (
+    appointmentId: string,
+    newStatus: DetailedAppointmentStatus
+  ) => {
     try {
-      await api.put(`/api/appointments/${appointmentId}`, { status: newStatus });
-      toast.success('Status updated successfully');
+      await api.put(`/api/appointments/${appointmentId}`, {
+        status: newStatus,
+      });
+      toast.success("Status updated successfully");
       fetchWorkQueueData();
       if (selectedAppointment && selectedAppointment._id === appointmentId) {
         setSelectedAppointment({ ...selectedAppointment, status: newStatus });
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update status');
+      toast.error(error.response?.data?.message || "Failed to update status");
     }
   };
 
   const handleStatusAction = async (action: string, appointmentId: string) => {
-    const appointment = appointments.find(apt => apt._id === appointmentId) || selectedAppointment;
+    const appointment =
+      appointments.find((apt) => apt._id === appointmentId) ||
+      selectedAppointment;
     if (!appointment) return;
 
     // Map action to status or handle special cases
     let newStatus: DetailedAppointmentStatus | null = null;
 
     switch (action) {
-      case 'confirm':
-      case 'confirm_appointment':
-        newStatus = 'confirmed';
+      case "confirm":
+      case "confirm_appointment":
+        newStatus = "confirmed";
         break;
-      case 'checkIn':
-      case 'mark_customer_arrived':
-        newStatus = 'customer_arrived';
+      case "checkIn":
+      case "mark_customer_arrived":
+        newStatus = "customer_arrived";
         break;
-      case 'createReception':
-      case 'create_reception':
-        if (appointment.status === 'customer_arrived') {
+      case "createReception":
+      case "create_reception":
+        if (appointment.status === "customer_arrived") {
           // Open the service reception modal instead of direct status change
           setSelectedAppointment(appointment);
           setShowReceptionModal(true);
           return;
         }
-        newStatus = 'reception_created';
+        newStatus = "reception_created";
         break;
-      case 'approveReception':
-      case 'approve_reception':
-        newStatus = 'reception_approved';
+      case "approveReception":
+      case "approve_reception":
+        newStatus = "reception_approved";
         break;
-      case 'startWork':
-      case 'start_work':
-        newStatus = 'in_progress';
+      case "startWork":
+      case "start_work":
+        newStatus = "in_progress";
         break;
-      case 'requestParts':
-      case 'request_parts':
-        newStatus = 'parts_requested';
+      case "requestParts":
+      case "request_parts":
+        newStatus = "parts_requested";
         break;
-      case 'complete':
-      case 'complete_work':
-        newStatus = 'completed';
+      case "complete":
+      case "complete_work":
+        newStatus = "completed";
         break;
-      case 'invoice':
-      case 'generate_invoice':
-        newStatus = 'invoiced';
+      case "invoice":
+      case "generate_invoice":
+        newStatus = "invoiced";
         break;
-      case 'cancel':
-      case 'cancel_appointment':
+      case "cancel":
+      case "cancel_appointment":
         // Handle cancellation with confirmation
         const confirmMessage = `Are you sure you want to cancel appointment #${appointment.appointmentNumber}?`;
         if (window.confirm(confirmMessage)) {
-          newStatus = 'cancelled';
+          newStatus = "cancelled";
         } else {
           return;
         }
         break;
-      case 'reschedule':
-      case 'reschedule_appointment':
-        newStatus = 'rescheduled';
+      case "reschedule":
+      case "reschedule_appointment":
+        newStatus = "rescheduled";
         break;
-      case 'view_details':
-      case 'view_reception':
-      case 'send_reminder':
-      case 'contact_customer':
+      case "view_details":
+      case "view_reception":
+      case "send_reminder":
+      case "contact_customer":
         // These are view/notification actions that don't change status
-        console.log(`Handling view/action: ${action} for appointment ${appointmentId}`);
+        console.log(
+          `Handling view/action: ${action} for appointment ${appointmentId}`
+        );
         return;
       default:
         // Only set as status if it's a valid status, otherwise log warning
-        const validStatuses = ['pending', 'confirmed', 'customer_arrived', 'reception_created', 'reception_approved', 'in_progress', 'parts_insufficient', 'parts_requested', 'completed', 'invoiced', 'cancelled', 'no_show', 'rescheduled'];
+        const validStatuses = [
+          "pending",
+          "confirmed",
+          "customer_arrived",
+          "reception_created",
+          "reception_approved",
+          "in_progress",
+          "parts_insufficient",
+          "parts_requested",
+          "completed",
+          "invoiced",
+          "cancelled",
+          "no_show",
+          "rescheduled",
+        ];
         if (validStatuses.includes(action)) {
           newStatus = action as DetailedAppointmentStatus;
         } else {
@@ -235,20 +268,39 @@ const WorkQueuePage: React.FC = () => {
         preServicePhotos: [],
         diagnosticCodes: [],
         specialInstructions: receptionData.specialInstructions,
-        estimatedServiceTime: receptionData.estimatedServiceTime
+        estimatedServiceTime: receptionData.estimatedServiceTime,
       };
 
-      const response = await api.post(`/api/service-receptions/${selectedAppointment._id}/create`, payload);
+      console.log(
+        "🔍 [handleCreateServiceReception] receptionData:",
+        receptionData
+      );
+      console.log(
+        "🔍 [handleCreateServiceReception] recommendedServices:",
+        receptionData.recommendedServices
+      );
+      console.log(
+        "🔍 [handleCreateServiceReception] recommendedServices.length:",
+        receptionData.recommendedServices?.length
+      );
+      console.log("🔍 [handleCreateServiceReception] payload:", payload);
+
+      const response = await api.post(
+        `/api/service-receptions/${selectedAppointment._id}/create`,
+        payload
+      );
 
       if (response.data.success) {
-        toast.success('Tạo phiếu tiếp nhận thành công!');
+        toast.success("Tạo phiếu tiếp nhận thành công!");
         setShowReceptionModal(false);
         setSelectedAppointment(null);
         fetchWorkQueueData();
       }
     } catch (error: any) {
-      console.error('Error creating service reception:', error);
-      toast.error(error.response?.data?.message || 'Không thể tạo phiếu tiếp nhận');
+      console.error("Error creating service reception:", error);
+      toast.error(
+        error.response?.data?.message || "Không thể tạo phiếu tiếp nhận"
+      );
     } finally {
       setCreatingReception(false);
     }
@@ -259,81 +311,90 @@ const WorkQueuePage: React.FC = () => {
 
     try {
       await api.put(`/api/appointments/${appointmentId}`, {
-        addServiceNote: newNote
+        addServiceNote: newNote,
       });
-      setNewNote('');
-      toast.success('Service note added');
+      setNewNote("");
+      toast.success("Service note added");
       fetchWorkQueueData();
-      
+
       // Update selected appointment
       if (selectedAppointment && selectedAppointment._id === appointmentId) {
         const response = await api.get(`/api/appointments/${appointmentId}`);
         setSelectedAppointment(response.data.data);
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to add service note');
+      toast.error(
+        error.response?.data?.message || "Failed to add service note"
+      );
     }
   };
 
-  const handleChecklistItemUpdate = async (appointmentId: string, itemId: string, isCompleted: boolean, notes?: string) => {
+  const handleChecklistItemUpdate = async (
+    appointmentId: string,
+    itemId: string,
+    isCompleted: boolean,
+    notes?: string
+  ) => {
     try {
       await api.put(`/api/appointments/${appointmentId}`, {
         updateChecklistItem: {
           itemId,
           isCompleted,
-          notes
-        }
+          notes,
+        },
       });
-      toast.success('Checklist updated');
-      
+      toast.success("Checklist updated");
+
       // Update selected appointment
       if (selectedAppointment && selectedAppointment._id === appointmentId) {
         const response = await api.get(`/api/appointments/${appointmentId}`);
         setSelectedAppointment(response.data.data);
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update checklist');
+      toast.error(
+        error.response?.data?.message || "Failed to update checklist"
+      );
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'urgent':
-        return 'bg-red-100 text-red-800';
-      case 'high':
-        return 'bg-orange-100 text-orange-800';
-      case 'normal':
-        return 'bg-blue-100 text-blue-800';
-      case 'low':
-        return 'bg-gray-100 text-gray-800';
+      case "urgent":
+        return "bg-red-100 text-red-800";
+      case "high":
+        return "bg-orange-100 text-orange-800";
+      case "normal":
+        return "bg-blue-100 text-blue-800";
+      case "low":
+        return "bg-gray-100 text-gray-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed':
-        return 'bg-blue-100 text-blue-800';
-      case 'in_progress':
-        return 'bg-purple-100 text-purple-800';
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "confirmed":
+        return "bg-blue-100 text-blue-800";
+      case "in_progress":
+        return "bg-purple-100 text-purple-800";
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "cancelled":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -351,7 +412,9 @@ const WorkQueuePage: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Work Queue</h1>
-          <p className="text-gray-600 mt-2">Manage your assigned appointments and work tasks</p>
+          <p className="text-gray-600 mt-2">
+            Manage your assigned appointments and work tasks
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -365,8 +428,12 @@ const WorkQueuePage: React.FC = () => {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Pending</dt>
-                      <dd className="text-lg font-medium text-gray-900">{stats.pendingAppointments}</dd>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        Pending
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.pendingAppointments}
+                      </dd>
                     </dl>
                   </div>
                 </div>
@@ -381,8 +448,12 @@ const WorkQueuePage: React.FC = () => {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">In Progress</dt>
-                      <dd className="text-lg font-medium text-gray-900">{stats.inProgressAppointments}</dd>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        In Progress
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.inProgressAppointments}
+                      </dd>
                     </dl>
                   </div>
                 </div>
@@ -397,8 +468,12 @@ const WorkQueuePage: React.FC = () => {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Completed Today</dt>
-                      <dd className="text-lg font-medium text-gray-900">{stats.completedToday}</dd>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        Completed Today
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.completedToday}
+                      </dd>
                     </dl>
                   </div>
                 </div>
@@ -413,8 +488,12 @@ const WorkQueuePage: React.FC = () => {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Avg. Time (hours)</dt>
-                      <dd className="text-lg font-medium text-gray-900">{stats.averageCompletionTime}</dd>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        Avg. Time (hours)
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats.averageCompletionTime}
+                      </dd>
                     </dl>
                   </div>
                 </div>
@@ -429,24 +508,26 @@ const WorkQueuePage: React.FC = () => {
             <div className="bg-white shadow rounded-lg">
               <div className="px-6 py-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900">Appointments</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Appointments
+                  </h2>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => setActiveTab('assigned')}
+                      onClick={() => setActiveTab("assigned")}
                       className={`px-3 py-1 rounded-md text-sm font-medium ${
-                        activeTab === 'assigned'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'text-gray-500 hover:text-gray-700'
+                        activeTab === "assigned"
+                          ? "bg-blue-100 text-blue-700"
+                          : "text-gray-500 hover:text-gray-700"
                       }`}
                     >
                       My Assignments
                     </button>
                     <button
-                      onClick={() => setActiveTab('available')}
+                      onClick={() => setActiveTab("available")}
                       className={`px-3 py-1 rounded-md text-sm font-medium ${
-                        activeTab === 'available'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'text-gray-500 hover:text-gray-700'
+                        activeTab === "available"
+                          ? "bg-blue-100 text-blue-700"
+                          : "text-gray-500 hover:text-gray-700"
                       }`}
                     >
                       Available
@@ -459,38 +540,46 @@ const WorkQueuePage: React.FC = () => {
                 {appointments.length === 0 ? (
                   <div className="p-6 text-center">
                     <WrenchScrewdriverIcon className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">No appointments</h3>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">
+                      No appointments
+                    </h3>
                     <p className="mt-1 text-sm text-gray-500">
-                      {activeTab === 'assigned' ? 'No appointments assigned to you' : 'No available appointments'}
+                      {activeTab === "assigned"
+                        ? "No appointments assigned to you"
+                        : "No available appointments"}
                     </p>
                   </div>
                 ) : (
                   (() => {
                     // Status priority sorting
                     const statusPriority: Record<string, number> = {
-                      'customer_arrived': 1,
-                      'reception_created': 2,
-                      'reception_approved': 3,
-                      'in_progress': 4,
-                      'parts_requested': 5,
-                      'parts_insufficient': 5,
-                      'confirmed': 6,
-                      'pending': 7,
-                      'completed': 10,
-                      'invoiced': 11,
-                      'closed': 12,
-                      'cancelled': 13,
-                      'no_show': 13,
-                      'rescheduled': 8
+                      customer_arrived: 1,
+                      reception_created: 2,
+                      reception_approved: 3,
+                      in_progress: 4,
+                      parts_requested: 5,
+                      parts_insufficient: 5,
+                      confirmed: 6,
+                      pending: 7,
+                      completed: 10,
+                      invoiced: 11,
+                      closed: 12,
+                      cancelled: 13,
+                      no_show: 13,
+                      rescheduled: 8,
                     };
 
-                    const sortedAppointments = [...appointments].sort((a, b) => {
-                      const statusDiff = (statusPriority[a.status] || 99) - (statusPriority[b.status] || 99);
-                      if (statusDiff !== 0) return statusDiff;
-                      const dateA = new Date(a.scheduledDate).getTime();
-                      const dateB = new Date(b.scheduledDate).getTime();
-                      return dateA - dateB;
-                    });
+                    const sortedAppointments = [...appointments].sort(
+                      (a, b) => {
+                        const statusDiff =
+                          (statusPriority[a.status] || 99) -
+                          (statusPriority[b.status] || 99);
+                        if (statusDiff !== 0) return statusDiff;
+                        const dateA = new Date(a.scheduledDate).getTime();
+                        const dateB = new Date(b.scheduledDate).getTime();
+                        return dateA - dateB;
+                      }
+                    );
 
                     const paginatedAppointments = sortedAppointments.slice(
                       (currentPage - 1) * itemsPerPage,
@@ -498,67 +587,81 @@ const WorkQueuePage: React.FC = () => {
                     );
 
                     return paginatedAppointments.map((appointment) => (
-                    <div
-                      key={appointment._id}
-                      className={`p-6 hover:bg-gray-50 cursor-pointer ${
-                        selectedAppointment?._id === appointment._id ? 'bg-blue-50' : ''
-                      }`}
-                      onClick={() => setSelectedAppointment(appointment)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div>
-                            <div className="flex items-center space-x-2">
-                              <span className="font-semibold text-gray-900">
-                                #{appointment.appointmentNumber}
-                              </span>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(appointment.priority)}`}>
-                                {appointment.priority}
-                              </span>
+                      <div
+                        key={appointment._id}
+                        className={`p-6 hover:bg-gray-50 cursor-pointer ${
+                          selectedAppointment?._id === appointment._id
+                            ? "bg-blue-50"
+                            : ""
+                        }`}
+                        onClick={() => setSelectedAppointment(appointment)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-4">
+                            <div>
+                              <div className="flex items-center space-x-2">
+                                <span className="font-semibold text-gray-900">
+                                  #{appointment.appointmentNumber}
+                                </span>
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(
+                                    appointment.priority
+                                  )}`}
+                                >
+                                  {appointment.priority}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {appointment.customerId.firstName}{" "}
+                                {appointment.customerId.lastName} •{" "}
+                                {appointment.vehicleId.make}{" "}
+                                {appointment.vehicleId.model}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {formatDate(appointment.scheduledDate)}
+                              </p>
                             </div>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {appointment.customerId.firstName} {appointment.customerId.lastName} • {appointment.vehicleId.make} {appointment.vehicleId.model}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {formatDate(appointment.scheduledDate)}
-                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                                appointment.status
+                              )}`}
+                            >
+                              {appointment.status.replace("_", " ")}
+                            </span>
+                            {appointment.priority === "urgent" && (
+                              <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
+                            )}
                           </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(appointment.status)}`}>
-                            {appointment.status.replace('_', ' ')}
-                          </span>
-                          {appointment.priority === 'urgent' && (
-                            <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
-                          )}
+
+                        {/* Status Actions */}
+                        <div className="mt-3">
+                          <StatusActionButton
+                            appointmentId={appointment._id}
+                            currentStatus={appointment.status}
+                            userRole="technician"
+                            onAction={handleStatusAction}
+                          />
+                        </div>
+
+                        <div className="mt-2">
+                          <div className="flex flex-wrap gap-1">
+                            {appointment.services?.map((service, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800"
+                              >
+                                {service?.serviceId?.name || "Unknown Service"}
+                                {(service?.quantity || 0) > 1 &&
+                                  ` (${service.quantity})`}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </div>
-
-                      {/* Status Actions */}
-                      <div className="mt-3">
-                        <StatusActionButton
-                          appointmentId={appointment._id}
-                          currentStatus={appointment.status}
-                          userRole="technician"
-                          onAction={handleStatusAction}
-                        />
-                      </div>
-
-                      <div className="mt-2">
-                        <div className="flex flex-wrap gap-1">
-                          {appointment.services?.map((service, index) => (
-                            <span
-                              key={index}
-                              className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800"
-                            >
-                              {service?.serviceId?.name || 'Unknown Service'}
-                              {(service?.quantity || 0) > 1 && ` (${service.quantity})`}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ));
+                    ));
                   })()
                 )}
               </div>
@@ -569,15 +672,27 @@ const WorkQueuePage: React.FC = () => {
                   {/* Mobile pagination */}
                   <div className="flex flex-1 justify-between sm:hidden">
                     <button
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      onClick={() =>
+                        setCurrentPage(Math.max(1, currentPage - 1))
+                      }
                       disabled={currentPage === 1}
                       className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Trước
                     </button>
                     <button
-                      onClick={() => setCurrentPage(Math.min(Math.ceil(appointments.length / itemsPerPage), currentPage + 1))}
-                      disabled={currentPage === Math.ceil(appointments.length / itemsPerPage)}
+                      onClick={() =>
+                        setCurrentPage(
+                          Math.min(
+                            Math.ceil(appointments.length / itemsPerPage),
+                            currentPage + 1
+                          )
+                        )
+                      }
+                      disabled={
+                        currentPage ===
+                        Math.ceil(appointments.length / itemsPerPage)
+                      }
                       className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Sau
@@ -588,44 +703,97 @@ const WorkQueuePage: React.FC = () => {
                   <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                     <div>
                       <p className="text-sm text-gray-700">
-                        Hiển thị <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> đến{' '}
-                        <span className="font-medium">{Math.min(currentPage * itemsPerPage, appointments.length)}</span> trong{' '}
-                        <span className="font-medium">{appointments.length}</span> công việc
+                        Hiển thị{" "}
+                        <span className="font-medium">
+                          {(currentPage - 1) * itemsPerPage + 1}
+                        </span>{" "}
+                        đến{" "}
+                        <span className="font-medium">
+                          {Math.min(
+                            currentPage * itemsPerPage,
+                            appointments.length
+                          )}
+                        </span>{" "}
+                        trong{" "}
+                        <span className="font-medium">
+                          {appointments.length}
+                        </span>{" "}
+                        công việc
                       </p>
                     </div>
                     <div>
-                      <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                      <nav
+                        className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                        aria-label="Pagination"
+                      >
                         <button
-                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          onClick={() =>
+                            setCurrentPage(Math.max(1, currentPage - 1))
+                          }
                           disabled={currentPage === 1}
                           className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <span className="sr-only">Trước</span>
-                          <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                          <svg
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            aria-hidden="true"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                              clipRule="evenodd"
+                            />
                           </svg>
                         </button>
-                        {Array.from({ length: Math.ceil(appointments.length / itemsPerPage) }, (_, i) => i + 1).map((page) => (
+                        {Array.from(
+                          {
+                            length: Math.ceil(
+                              appointments.length / itemsPerPage
+                            ),
+                          },
+                          (_, i) => i + 1
+                        ).map((page) => (
                           <button
                             key={page}
                             onClick={() => setCurrentPage(page)}
                             className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
                               currentPage === page
-                                ? 'z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
-                                : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                                ? "z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
                             }`}
                           >
                             {page}
                           </button>
                         ))}
                         <button
-                          onClick={() => setCurrentPage(Math.min(Math.ceil(appointments.length / itemsPerPage), currentPage + 1))}
-                          disabled={currentPage === Math.ceil(appointments.length / itemsPerPage)}
+                          onClick={() =>
+                            setCurrentPage(
+                              Math.min(
+                                Math.ceil(appointments.length / itemsPerPage),
+                                currentPage + 1
+                              )
+                            )
+                          }
+                          disabled={
+                            currentPage ===
+                            Math.ceil(appointments.length / itemsPerPage)
+                          }
                           className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <span className="sr-only">Sau</span>
-                          <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                          <svg
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                            aria-hidden="true"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                              clipRule="evenodd"
+                            />
                           </svg>
                         </button>
                       </nav>
@@ -644,35 +812,35 @@ const WorkQueuePage: React.FC = () => {
                   <h3 className="text-lg font-semibold text-gray-900">
                     Appointment #{selectedAppointment.appointmentNumber}
                   </h3>
-                  
+
                   {/* Detail Tabs */}
                   <div className="mt-4 flex space-x-4">
                     <button
-                      onClick={() => setDetailsTab('overview')}
+                      onClick={() => setDetailsTab("overview")}
                       className={`px-3 py-1 rounded-md text-sm font-medium ${
-                        detailsTab === 'overview'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'text-gray-500 hover:text-gray-700'
+                        detailsTab === "overview"
+                          ? "bg-blue-100 text-blue-700"
+                          : "text-gray-500 hover:text-gray-700"
                       }`}
                     >
                       Overview
                     </button>
                     <button
-                      onClick={() => setDetailsTab('checklist')}
+                      onClick={() => setDetailsTab("checklist")}
                       className={`px-3 py-1 rounded-md text-sm font-medium ${
-                        detailsTab === 'checklist'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'text-gray-500 hover:text-gray-700'
+                        detailsTab === "checklist"
+                          ? "bg-blue-100 text-blue-700"
+                          : "text-gray-500 hover:text-gray-700"
                       }`}
                     >
                       Checklist
                     </button>
                     <button
-                      onClick={() => setDetailsTab('parts')}
+                      onClick={() => setDetailsTab("parts")}
                       className={`px-3 py-1 rounded-md text-sm font-medium ${
-                        detailsTab === 'parts'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'text-gray-500 hover:text-gray-700'
+                        detailsTab === "parts"
+                          ? "bg-blue-100 text-blue-700"
+                          : "text-gray-500 hover:text-gray-700"
                       }`}
                     >
                       <CubeIcon className="w-4 h-4 inline mr-1" />
@@ -683,41 +851,78 @@ const WorkQueuePage: React.FC = () => {
 
                 <div className="p-6">
                   {/* Overview Tab */}
-                  {detailsTab === 'overview' && (
+                  {detailsTab === "overview" && (
                     <div className="space-y-6">
                       {/* Customer & Vehicle Info */}
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900 mb-2">Customer & Vehicle</h4>
+                        <h4 className="text-sm font-medium text-gray-900 mb-2">
+                          Customer & Vehicle
+                        </h4>
                         <div className="space-y-1 text-sm text-gray-600">
-                          <p><span className="font-medium">Customer:</span> {selectedAppointment.customerId.firstName} {selectedAppointment.customerId.lastName}</p>
-                          <p><span className="font-medium">Phone:</span> {selectedAppointment.customerId.phone}</p>
-                          <p><span className="font-medium">Vehicle:</span> {selectedAppointment.vehicleId.year} {selectedAppointment.vehicleId.make} {selectedAppointment.vehicleId.model}</p>
-                          <p><span className="font-medium">VIN:</span> {selectedAppointment.vehicleId.vin}</p>
+                          <p>
+                            <span className="font-medium">Customer:</span>{" "}
+                            {selectedAppointment.customerId.firstName}{" "}
+                            {selectedAppointment.customerId.lastName}
+                          </p>
+                          <p>
+                            <span className="font-medium">Phone:</span>{" "}
+                            {selectedAppointment.customerId.phone}
+                          </p>
+                          <p>
+                            <span className="font-medium">Vehicle:</span>{" "}
+                            {selectedAppointment.vehicleId.year}{" "}
+                            {selectedAppointment.vehicleId.make}{" "}
+                            {selectedAppointment.vehicleId.model}
+                          </p>
+                          <p>
+                            <span className="font-medium">VIN:</span>{" "}
+                            {selectedAppointment.vehicleId.vin}
+                          </p>
                         </div>
                       </div>
 
                       {/* Services */}
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900 mb-2">Services</h4>
+                        <h4 className="text-sm font-medium text-gray-900 mb-2">
+                          Services
+                        </h4>
                         <div className="space-y-2">
-                          {(selectedAppointment.services || []).map((service, index) => (
-                            <div key={index} className="bg-gray-50 p-3 rounded-lg">
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium text-gray-900">{service?.serviceId?.name || 'Unknown Service'}</span>
-                                <span className="text-sm text-gray-600">{service?.serviceId?.estimatedDuration || 0} mins</span>
+                          {(selectedAppointment.services || []).map(
+                            (service, index) => (
+                              <div
+                                key={index}
+                                className="bg-gray-50 p-3 rounded-lg"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium text-gray-900">
+                                    {service?.serviceId?.name ||
+                                      "Unknown Service"}
+                                  </span>
+                                  <span className="text-sm text-gray-600">
+                                    {service?.serviceId?.estimatedDuration || 0}{" "}
+                                    mins
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-600 mt-1">
+                                  Category:{" "}
+                                  {service?.serviceId?.category || "Unknown"}
+                                </p>
+                                {service.quantity > 1 && (
+                                  <p className="text-sm text-gray-600">
+                                    Quantity: {service.quantity}
+                                  </p>
+                                )}
                               </div>
-                              <p className="text-sm text-gray-600 mt-1">Category: {service?.serviceId?.category || 'Unknown'}</p>
-                              {service.quantity > 1 && (
-                                <p className="text-sm text-gray-600">Quantity: {service.quantity}</p>
-                              )}
-                            </div>
-                          ))}
+                            )
+                          )}
                         </div>
                       </div>
 
                       {/* Status Actions */}
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900 mb-2">Status Actions</h4>
+                        <h4 className="text-sm font-medium text-gray-900 mb-2">
+                          Status Actions
+                        </h4>
                         <StatusActionButton
                           appointmentId={selectedAppointment._id}
                           currentStatus={selectedAppointment.status}
@@ -728,16 +933,25 @@ const WorkQueuePage: React.FC = () => {
 
                       {/* Service Notes */}
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900 mb-2">Service Notes</h4>
+                        <h4 className="text-sm font-medium text-gray-900 mb-2">
+                          Service Notes
+                        </h4>
                         <div className="space-y-2">
-                          {(selectedAppointment.serviceNotes || []).map((note, index) => (
-                            <div key={index} className="bg-gray-50 p-3 rounded text-sm">
-                              <p className="text-gray-900">{note.note}</p>
-                              <p className="text-gray-500 text-xs mt-1">
-                                By {note.addedBy.firstName} {note.addedBy.lastName} on {formatDate(note.addedAt)}
-                              </p>
-                            </div>
-                          ))}
+                          {(selectedAppointment.serviceNotes || []).map(
+                            (note, index) => (
+                              <div
+                                key={index}
+                                className="bg-gray-50 p-3 rounded text-sm"
+                              >
+                                <p className="text-gray-900">{note.note}</p>
+                                <p className="text-gray-500 text-xs mt-1">
+                                  By {note.addedBy.firstName}{" "}
+                                  {note.addedBy.lastName} on{" "}
+                                  {formatDate(note.addedAt)}
+                                </p>
+                              </div>
+                            )
+                          )}
                           <div className="flex space-x-2">
                             <input
                               type="text"
@@ -747,7 +961,9 @@ const WorkQueuePage: React.FC = () => {
                               className="flex-1 border border-gray-300 rounded-md px-3 py-1 text-sm"
                             />
                             <button
-                              onClick={() => handleAddServiceNote(selectedAppointment._id)}
+                              onClick={() =>
+                                handleAddServiceNote(selectedAppointment._id)
+                              }
                               className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
                             >
                               Add
@@ -759,28 +975,46 @@ const WorkQueuePage: React.FC = () => {
                   )}
 
                   {/* Checklist Tab */}
-                  {detailsTab === 'checklist' && (
+                  {detailsTab === "checklist" && (
                     <div className="space-y-4">
-                      {selectedAppointment.checklistItems && selectedAppointment.checklistItems.length > 0 ? (
+                      {selectedAppointment.checklistItems &&
+                      selectedAppointment.checklistItems.length > 0 ? (
                         <div className="space-y-2">
-                          {(selectedAppointment.checklistItems || []).map((item) => (
-                            <div key={item._id} className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
-                              <input
-                                type="checkbox"
-                                checked={item.isCompleted}
-                                onChange={(e) => handleChecklistItemUpdate(selectedAppointment._id, item._id, e.target.checked)}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                              />
-                              <span className={`text-sm flex-1 ${item.isCompleted ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                                {item.item}
-                              </span>
-                              {item.isCompleted && item.completedBy && (
-                                <span className="text-xs text-gray-500">
-                                  by {item.completedBy.firstName}
+                          {(selectedAppointment.checklistItems || []).map(
+                            (item) => (
+                              <div
+                                key={item._id}
+                                className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={item.isCompleted}
+                                  onChange={(e) =>
+                                    handleChecklistItemUpdate(
+                                      selectedAppointment._id,
+                                      item._id,
+                                      e.target.checked
+                                    )
+                                  }
+                                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                />
+                                <span
+                                  className={`text-sm flex-1 ${
+                                    item.isCompleted
+                                      ? "line-through text-gray-500"
+                                      : "text-gray-900"
+                                  }`}
+                                >
+                                  {item.item}
                                 </span>
-                              )}
-                            </div>
-                          ))}
+                                {item.isCompleted && item.completedBy && (
+                                  <span className="text-xs text-gray-500">
+                                    by {item.completedBy.firstName}
+                                  </span>
+                                )}
+                              </div>
+                            )
+                          )}
                         </div>
                       ) : (
                         <div className="text-center py-8 text-gray-500">
@@ -792,17 +1026,25 @@ const WorkQueuePage: React.FC = () => {
                   )}
 
                   {/* Parts Tab */}
-                  {detailsTab === 'parts' && (
+                  {detailsTab === "parts" && (
                     <PartsSelection
                       appointmentId={selectedAppointment._id}
-                      serviceCategories={selectedAppointment.services?.map(s => s?.serviceId?.category).filter(Boolean) || []}
+                      serviceCategories={
+                        selectedAppointment.services
+                          ?.map((s) => s?.serviceId?.category)
+                          .filter(Boolean) || []
+                      }
                       vehicleInfo={{
                         make: selectedAppointment.vehicleId.make,
                         model: selectedAppointment.vehicleId.model,
-                        year: selectedAppointment.vehicleId.year
+                        year: selectedAppointment.vehicleId.year,
                       }}
-                      mode={selectedAppointment.status === 'in_progress' ? 'use' : 'reserve'}
-                      disabled={selectedAppointment.status === 'completed'}
+                      mode={
+                        selectedAppointment.status === "in_progress"
+                          ? "use"
+                          : "reserve"
+                      }
+                      disabled={selectedAppointment.status === "completed"}
                     />
                   )}
                 </div>
@@ -811,9 +1053,12 @@ const WorkQueuePage: React.FC = () => {
               <div className="bg-white shadow rounded-lg p-6">
                 <div className="text-center">
                   <ClipboardDocumentListIcon className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">Select an appointment</h3>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">
+                    Select an appointment
+                  </h3>
                   <p className="mt-1 text-sm text-gray-500">
-                    Choose an appointment from the list to view details and take actions.
+                    Choose an appointment from the list to view details and take
+                    actions.
                   </p>
                 </div>
               </div>

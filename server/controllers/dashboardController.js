@@ -74,7 +74,7 @@ export const getCustomerDashboard = async (req, res) => {
         .map((s) => s.serviceId?.name)
         .filter(Boolean),
       vehicle: `${appointment.vehicleId?.year} ${appointment.vehicleId?.make} ${appointment.vehicleId?.model}`,
-      serviceCenter: appointment.serviceCenterId?.name,
+      serviceCenter: "EV Service Center", // Single center architecture
       totalPrice: appointment.services.reduce(
         (sum, service) => sum + (service.serviceId?.price || 0),
         0
@@ -107,7 +107,7 @@ export const getStaffDashboard = async (req, res) => {
 
     // Get appointments for staff's service center
     const appointments = await Appointment.find({
-      serviceCenterId: staffUser.serviceCenterId,
+      // serviceCenterId removed - single center architecture
     })
       .populate("customerId", "firstName lastName email phone")
       .populate("vehicleId", "make model year vin")
@@ -328,7 +328,7 @@ export const getAdminDashboard = async (req, res) => {
     // Service center performance
     const serviceCenterPerformance = serviceCenters.map((center) => {
       const centerAppointments = appointments.filter(
-        (a) => a.serviceCenterId?._id.toString() === center._id.toString()
+        (a) => true // Single center architecture - all appointments belong to same center
       );
 
       const centerRevenue = centerAppointments
@@ -471,7 +471,7 @@ export const getTechnicianDashboard = async (req, res) => {
         (total, service) => total + (service.serviceId?.duration || 0),
         0
       ),
-      serviceCenter: appointment.serviceCenterId?.name,
+      serviceCenter: "EV Service Center", // Single center architecture
     }));
 
     res.json({

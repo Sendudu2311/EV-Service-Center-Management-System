@@ -133,6 +133,7 @@ export interface Invoice {
   serviceReceptionId?: string;
   customerId: string;
   vehicleId: string;
+  transactions: string[]; // Array of transaction IDs
   // serviceCenterId removed - single center architecture
 
   // Invoice Items

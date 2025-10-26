@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
-import { slotsAPI, appointmentsAPI, vnpayAPI } from "../services/api";
+import { slotsAPI, appointmentsAPI } from "../services/api";
 // import { useSocket } from "../contexts/SocketContext"; // Not used
 
 const PaymentResult: React.FC = () => {
@@ -77,6 +77,7 @@ const PaymentResult: React.FC = () => {
         technicianId?: string;
         customerNotes?: string;
         priority?: string;
+        services: unknown[];
         [key: string]: unknown;
       }
     ) => {
@@ -150,25 +151,57 @@ const PaymentResult: React.FC = () => {
           // Continue with creation if check fails
         }
 
-        // Use service code directly instead of fetching from API
-        // This avoids issues with service filtering and pagination
+        // Send payment success email first
+        try {
+          console.log("📧 [PaymentResult] Sending payment success email...");
+
+          // Call VNPay verify endpoint to trigger payment success email
+          const emailResponse = await fetch(
+            "/api/vnpay/verify-appointment-payment",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+              body: JSON.stringify({
+                transactionRef: paymentData.transactionRef,
+                paymentType: "deposit",
+              }),
+            }
+          );
+
+          if (emailResponse.ok) {
+            console.log("✅ Payment success email sent");
+          } else {
+            console.warn(
+              "⚠️ Failed to send payment success email, continuing with appointment creation"
+            );
+          }
+        } catch (emailError) {
+          console.error("❌ Error sending payment success email:", emailError);
+          // Don't fail the appointment creation if email fails
+        }
+
+        // Create appointment with payment info
         const appointmentPayload = {
           ...appointmentData,
-          services: [
-            {
-              serviceId: "BOOK001", // Use code directly - backend supports both _id and code
-              quantity: 1,
-              price: 200000, // Fixed price for booking service
-              basePrice: 200000, // Also include basePrice for email templates
-              estimatedDuration: 60, // Fixed duration for booking service
-            },
-          ],
+          services: [], // Empty services for deposit booking
           paymentInfo: {
             transactionRef: paymentData.transactionRef,
             paymentMethod: "vnpay",
+            depositAmount: parseFloat(paymentData.amount),
             paidAmount: parseFloat(paymentData.amount),
-            paymentDate: new Date(),
+            paymentDate: paymentData.paymentDate,
           },
+          depositInfo: {
+            amount: 200000,
+            paid: true,
+            paidAt: paymentData.paymentDate,
+          },
+          bookingType: "deposit_booking",
+          status: "confirmed",
+          paymentStatus: "partial",
           ...(appointmentData.selectedSlotId && {
             slotId: appointmentData.selectedSlotId,
             skipSlotReservation: true, // Slot already reserved
@@ -176,48 +209,24 @@ const PaymentResult: React.FC = () => {
         };
 
         const response = await appointmentsAPI.create(appointmentPayload);
-        const appointmentId = response.data?.data?._id;
-        const appointmentNumber = response.data?.data?.appointmentNumber;
-
-        // Update VNPay transaction with appointment ID
-        if (paymentData.transactionRef) {
-          try {
-            await vnpayAPI.updateTransactionAppointmentId({
-              transactionRef: paymentData.transactionRef,
-              appointmentId: appointmentId,
-            });
-          } catch (updateErr) {
-            console.error(
-              "Failed to update VNPay transaction with appointment ID:",
-              updateErr
-            );
-          }
-        }
-
-        // Verify payment and trigger notifications
-        try {
-          await vnpayAPI.verifyAppointmentPayment({
-            transactionRef: paymentData.transactionRef,
-          });
-        } catch (verifyError) {
-          console.error("Failed to send notifications:", verifyError);
-        }
+        const appointment = response.data?.data;
 
         setAppointmentCreated(true);
         setAppointmentData({
-          appointmentId,
-          appointmentNumber,
-          ...appointmentPayload,
+          appointmentId: appointment._id,
+          appointmentNumber: appointment.appointmentNumber,
+          scheduledDate: appointment.scheduledDate,
+          scheduledTime: appointment.scheduledTime,
         });
+
+        toast.success("Deposit payment successful! Appointment confirmed.");
 
         // Clean up localStorage
         localStorage.removeItem("pendingAppointment");
         localStorage.removeItem("paymentVerified");
         localStorage.removeItem(appointmentCreationKey);
 
-        toast.success("Appointment booked successfully!");
-
-        // Redirect to appointments page after successful creation
+        // Redirect to appointments page after successful verification
         setTimeout(() => {
           navigate("/appointments");
         }, 2000);

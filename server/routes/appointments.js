@@ -37,8 +37,11 @@ import {
   requestCancellation,
   approveCancellation,
   processRefund,
+  // Payment Confirmation API
+  confirmFinalPayment,
 } from "../controllers/appointmentController.js";
 import { protect } from "../middleware/auth.js";
+import { uploadPaymentProof } from "../middleware/upload.js";
 
 const router = express.Router();
 
@@ -89,6 +92,13 @@ router.get("/:id/customer-actions", getCustomerActions);
 router.post("/:id/request-cancel", requestCancellation);
 router.post("/:id/approve-cancel", approveCancellation);
 router.post("/:id/process-refund", processRefund);
+
+// Payment confirmation route (all authenticated users)
+router.post(
+  "/:id/confirm-payment",
+  uploadPaymentProof.single("proofImage"),
+  confirmFinalPayment
+);
 
 // Parameterized routes - must come after specific routes
 router.get("/:id", getAppointment);

@@ -4,6 +4,10 @@ import Appointment from "../models/Appointment.js";
 import User from "../models/User.js";
 import Service from "../models/Service.js";
 import VNPAYTransaction from "../models/VNPAYTransaction.js";
+// Import new Transaction models
+import Transaction from "../models/Transaction.js";
+import VNPAYTransactionNew from "../models/transactions/VNPAYTransaction.js";
+import TransactionService from "../services/transactionService.js";
 import { executePaymentSuccessWorkflow } from "../utils/paymentNotifications.js";
 import { sendEmail } from "../utils/email.js";
 import { generateRefundNotificationTemplate } from "../utils/emailTemplates.js";
@@ -27,6 +31,34 @@ export const createPayment = async (req, res, next) => {
         success: false,
         message: "Valid amount is required",
       });
+    }
+
+    // Validate paymentType - allow default and common values
+    const validPaymentTypes = [
+      "appointment",
+      "invoice",
+      "service",
+      "deposit", // Allow "deposit" for appointment deposits
+      "booking",
+      "payment",
+    ];
+    if (paymentType && !validPaymentTypes.includes(paymentType)) {
+      console.log(
+        "Invalid paymentType received:",
+        paymentType,
+        "Defaulting to 'appointment'"
+      );
+      // Don't return error, just use default
+    }
+
+    // Ensure we have a valid paymentType
+    let finalPaymentType = validPaymentTypes.includes(paymentType)
+      ? paymentType
+      : "appointment";
+
+    // Map "deposit" to "appointment" for payment purpose logic
+    if (finalPaymentType === "deposit") {
+      finalPaymentType = "appointment";
     }
 
     // Generate unique transaction reference
@@ -78,39 +110,76 @@ export const createPayment = async (req, res, next) => {
       throw new Error("Failed to generate payment URL");
     }
 
-    // Create and store transaction record
-    const transaction = new VNPAYTransaction({
-      transactionRef: transactionRef,
-      paymentType: paymentType,
-      orderInfo: paymentParams.vnp_OrderInfo,
-      orderType: paymentParams.vnp_OrderType,
+    // Create and store transaction record using new discriminator
+    console.log("Creating VNPay transaction with data:", {
+      transactionRef: paymentParams.vnp_TxnRef,
       userId: user._id,
-      appointmentId: appointmentData?.appointmentId || null, // Will be updated after appointment creation
+      appointmentId: appointmentData?.appointmentId,
+      paymentPurpose:
+        paymentType === "appointment" ? "deposit_booking" : "other",
       amount: amount,
-      currency: paymentParams.vnp_CurrCode,
-      status: "pending",
-      vnpayData: {
-        bankCode: bankCode || null,
-        ipAddr: paymentParams.vnp_IpAddr,
-        locale: paymentParams.vnp_Locale,
-        version: paymentParams.vnp_Version,
-        command: paymentParams.vnp_Command,
-        payDate: paymentParams.vnp_CreateDate,
-      },
-      billingInfo: {
-        mobile: user.phone || null,
-        email: user.email || null,
-        fullName: `${user.firstName} ${user.lastName}`,
-      },
-      metadata: {
-        appointmentData: appointmentData,
-        returnUrl: paymentParams.vnp_ReturnUrl,
-        userAgent: req.get("User-Agent"),
-        referer: req.get("Referer"),
-      },
     });
 
-    await transaction.save();
+    // Debug paymentType
+    console.log("Payment type received:", paymentType);
+    console.log("Final payment type:", finalPaymentType);
+    console.log(
+      "Payment purpose will be:",
+      finalPaymentType === "appointment" ? "deposit_booking" : "other"
+    );
+
+    let transaction;
+    try {
+      transaction = await TransactionService.createTransaction("vnpay", {
+        transactionRef: paymentParams.vnp_TxnRef, // Use VNPay transaction reference
+        userId: user._id,
+        appointmentId: appointmentData?.appointmentId || null, // Will be updated after appointment creation
+        amount: amount,
+        paymentPurpose:
+          finalPaymentType === "appointment" ? "deposit_booking" : "other",
+        billingInfo: {
+          mobile: user.phone || null,
+          email: user.email || null,
+          fullName: `${user.firstName} ${user.lastName}`,
+        },
+        notes: `VNPay payment for ${finalPaymentType}`,
+        vnpayData: {
+          bankCode: bankCode || null,
+          ipAddr: paymentParams.vnp_IpAddr,
+          locale: paymentParams.vnp_Locale,
+          version: paymentParams.vnp_Version,
+          command: paymentParams.vnp_Command,
+          payDate: paymentParams.vnp_CreateDate,
+        },
+        metadata: {
+          appointmentData: appointmentData,
+          returnUrl: paymentParams.vnp_ReturnUrl,
+          userAgent: req.get("User-Agent"),
+          referer: req.get("Referer"),
+          orderInfo: paymentParams.vnp_OrderInfo,
+          orderType: paymentParams.vnp_OrderType,
+        },
+      });
+
+      if (!transaction) {
+        throw new Error("Failed to create transaction");
+      }
+
+      console.log("Transaction created successfully:", {
+        id: transaction._id,
+        transactionRef: transaction.transactionRef,
+        transactionType: transaction.transactionType,
+        paymentPurpose: transaction.paymentPurpose,
+        status: transaction.status,
+      });
+    } catch (error) {
+      console.error("Error creating transaction:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to create transaction",
+        error: error.message,
+      });
+    }
 
     // Store payment reference in temporary storage (for backward compatibility)
     if (!global.pendingPayments) {
@@ -144,10 +213,16 @@ export const createPayment = async (req, res, next) => {
  */
 export const handleReturn = async (req, res, next) => {
   try {
+    console.log("=== VNPay handleReturn called ===");
+    console.log("Query params:", req.query);
+    console.log("Headers:", req.headers);
+
     const vnp_Params = req.query;
 
     // Verify the return URL
+    console.log("Verifying VNPay return URL...");
     const verify = vnpay.verifyReturnUrl(vnp_Params);
+    console.log("VNPay verification result:", verify);
 
     if (!verify) {
       console.error("[VNPay] Return URL verification failed");
@@ -164,17 +239,31 @@ export const handleReturn = async (req, res, next) => {
           }
         );
       }
-      const redirectUrl = `${process.env.CLIENT_URL}/payment/result?success=false&error=Invalid payment verification`;
+      const redirectUrl = `${
+        process.env.CLIENT_URL || "http://localhost:5173"
+      }/payment/vnpay-return?success=false&error=Invalid payment verification`;
       return res.redirect(redirectUrl);
     }
 
     const { vnp_TxnRef, vnp_ResponseCode, vnp_TransactionNo, vnp_Amount } =
       vnp_Params;
 
-    // Find and update transaction record
-    const transaction = await VNPAYTransaction.findOne({
+    // Find and update transaction record - check both old and new systems
+    console.log("Looking for transaction with ref:", vnp_TxnRef);
+
+    let transaction = await Transaction.findOne({
       transactionRef: vnp_TxnRef,
     });
+
+    console.log("Found in new system:", !!transaction);
+
+    // If not found in new system, check old VNPAYTransaction
+    if (!transaction) {
+      transaction = await VNPAYTransaction.findOne({
+        transactionRef: vnp_TxnRef,
+      });
+      console.log("Found in old system:", !!transaction);
+    }
 
     if (transaction) {
       const success = vnp_ResponseCode === "00";
@@ -215,28 +304,60 @@ export const handleReturn = async (req, res, next) => {
           };
 
           // Update appointment with payment information
-          // Note: This won't be called for new appointments since they're created after payment success
           if (pendingPayment.appointmentData?.appointmentId) {
             try {
               const { default: Appointment } = await import(
                 "../models/Appointment.js"
               );
-              await Appointment.findByIdAndUpdate(
-                pendingPayment.appointmentData.appointmentId,
-                {
-                  paymentInfo: {
-                    transactionRef: vnp_TxnRef,
-                    paymentMethod: "vnpay",
-                    paidAmount: paidAmount,
-                    paymentDate: new Date(),
-                    vnpayTransactionId: transaction._id,
-                  },
-                  paymentStatus: "paid",
-                }
-              );
-              console.log(
-                `✅ Updated appointment ${pendingPayment.appointmentData.appointmentId} with payment info`
-              );
+
+              // Check if this is a deposit payment
+              const isDepositPayment =
+                pendingPayment.appointmentData?.bookingType ===
+                  "deposit_booking" ||
+                transaction.metadata?.paymentType === "deposit";
+
+              if (isDepositPayment) {
+                // Update appointment with deposit payment
+                await Appointment.findByIdAndUpdate(
+                  pendingPayment.appointmentData.appointmentId,
+                  {
+                    "depositInfo.paid": true,
+                    "depositInfo.paidAt": new Date(),
+                    "depositInfo.transactionId": transaction._id,
+                    paymentInfo: {
+                      transactionRef: vnp_TxnRef,
+                      paymentMethod: "vnpay",
+                      depositAmount: paidAmount,
+                      paidAmount: paidAmount,
+                      paymentDate: new Date(),
+                      depositTransactionId: transaction._id,
+                    },
+                    paymentStatus: "partial",
+                    status: "confirmed", // Auto-confirm after deposit payment
+                  }
+                );
+                console.log(
+                  `✅ Updated appointment ${pendingPayment.appointmentData.appointmentId} with deposit payment`
+                );
+              } else {
+                // Update appointment with full payment
+                await Appointment.findByIdAndUpdate(
+                  pendingPayment.appointmentData.appointmentId,
+                  {
+                    paymentInfo: {
+                      transactionRef: vnp_TxnRef,
+                      paymentMethod: "vnpay",
+                      paidAmount: paidAmount,
+                      paymentDate: new Date(),
+                      vnpayTransactionId: transaction._id,
+                    },
+                    paymentStatus: "paid",
+                  }
+                );
+                console.log(
+                  `✅ Updated appointment ${pendingPayment.appointmentData.appointmentId} with full payment`
+                );
+              }
             } catch (error) {
               console.error(
                 "❌ Failed to update appointment with payment info:",
@@ -249,9 +370,15 @@ export const handleReturn = async (req, res, next) => {
 
       // Redirect to frontend
       const displayAmount = parseInt(vnp_Amount) / 100;
-      const redirectUrl = `${process.env.CLIENT_URL}/payment/vnpay-return?success=${success}&transactionRef=${vnp_TxnRef}&amount=${displayAmount}`;
+      const redirectUrl = `${
+        process.env.CLIENT_URL || "http://localhost:5173"
+      }/payment/vnpay-return?success=${success}&transactionRef=${vnp_TxnRef}&amount=${displayAmount}`;
+
+      console.log("Redirecting to frontend:", redirectUrl);
       return res.redirect(redirectUrl);
     } else {
+      console.log("No transaction found for ref:", vnp_TxnRef);
+      console.log("This should not happen - transaction was found earlier");
       // Handle legacy invoice payments (no transaction record)
       const invoice = await Invoice.findOne({
         "paymentInfo.transactionRef": vnp_TxnRef,
@@ -283,7 +410,9 @@ export const handleReturn = async (req, res, next) => {
         });
         await legacyTransaction.save();
 
-        const redirectUrl = `${process.env.CLIENT_URL}/payment/result?success=false&error=Payment record not found`;
+        const redirectUrl = `${
+          process.env.CLIENT_URL || "http://localhost:5173"
+        }/payment/vnpay-return?success=false&error=Payment record not found`;
         return res.redirect(redirectUrl);
       }
 
@@ -336,13 +465,14 @@ export const handleReturn = async (req, res, next) => {
       await invoiceTransaction.save();
 
       const redirectUrl = `${
-        process.env.CLIENT_URL
+        process.env.CLIENT_URL || "http://localhost:5173"
       }/payment/vnpay-return?success=${vnp_ResponseCode === "00"}&invoiceId=${
         invoice._id
       }&transactionRef=${vnp_TxnRef}`;
       return res.redirect(redirectUrl);
     }
   } catch (error) {
+    console.error("Error in handleReturn:", error);
     next(error);
   }
 };
@@ -382,10 +512,22 @@ export const handleIPN = async (req, res, next) => {
     const { vnp_TxnRef, vnp_ResponseCode, vnp_TransactionNo, vnp_Amount } =
       vnp_Params;
 
-    // Find and update transaction record
-    const transaction = await VNPAYTransaction.findOne({
+    // Find and update transaction record - check both old and new systems
+    console.log("Looking for transaction with ref:", vnp_TxnRef);
+
+    let transaction = await Transaction.findOne({
       transactionRef: vnp_TxnRef,
     });
+
+    console.log("Found in new system:", !!transaction);
+
+    // If not found in new system, check old VNPAYTransaction
+    if (!transaction) {
+      transaction = await VNPAYTransaction.findOne({
+        transactionRef: vnp_TxnRef,
+      });
+      console.log("Found in old system:", !!transaction);
+    }
 
     if (transaction) {
       const success = vnp_ResponseCode === "00";
@@ -810,14 +952,19 @@ export const verifyAppointmentPayment = async (req, res, next) => {
           };
         }) || [];
 
+      // Check if this is a deposit payment or full service payment
+      const isDepositPayment =
+        req.body.paymentType === "deposit" ||
+        pendingPayment.appointmentData?.bookingType === "deposit_booking";
+
       // Prepare payment data for notifications
       const paymentData = {
         amount: pendingPayment.paidAmount || pendingPayment.amount,
         transactionRef: transactionRef,
         paymentDate: pendingPayment.completedAt || new Date(),
         vnpayTransaction: pendingPayment.vnpayTransaction,
-        services: servicesWithDetails,
-        paymentType: "appointment", // Mark as appointment payment to skip receipt
+        services: isDepositPayment ? [] : servicesWithDetails, // Empty for deposit
+        paymentType: isDepositPayment ? "deposit" : "appointment",
       };
 
       // Prepare appointment data for notifications
@@ -825,13 +972,22 @@ export const verifyAppointmentPayment = async (req, res, next) => {
         appointmentNumber: `APT${Date.now()}`,
         scheduledDate: pendingPayment.appointmentData?.scheduledDate,
         scheduledTime: pendingPayment.appointmentData?.scheduledTime,
-        services: servicesWithDetails,
+        services: isDepositPayment ? [] : servicesWithDetails, // Empty for deposit
         customerName: `${user.firstName} ${user.lastName}`,
+        bookingType: isDepositPayment ? "deposit_booking" : "full_service",
+        depositInfo: isDepositPayment
+          ? {
+              amount: pendingPayment.paidAmount || pendingPayment.amount,
+              paid: true,
+            }
+          : undefined,
       };
 
       // Execute payment success workflow (send emails, socket notifications)
       console.log(
-        `[VNPay] Executing payment success workflow for ${transactionRef}`
+        `[VNPay] Executing payment success workflow for ${transactionRef} (${
+          isDepositPayment ? "deposit" : "full service"
+        })`
       );
       await executePaymentSuccessWorkflow(paymentData, appointmentData, user);
       console.log(

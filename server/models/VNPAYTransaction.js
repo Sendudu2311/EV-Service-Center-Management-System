@@ -19,7 +19,7 @@ const vnpayTransactionSchema = new mongoose.Schema(
     paymentType: {
       type: String,
       required: true,
-      enum: ["appointment", "invoice", "service", "refund", "other"],
+      enum: ["appointment", "invoice", "service", "refund", "deposit", "other"],
       description: "Type of payment being made",
     },
     orderInfo: {

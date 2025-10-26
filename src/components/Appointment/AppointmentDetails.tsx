@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import CancelRequestManagement from "./CancelRequestManagement";
+import CancelRequestModal from "./CancelRequestModal";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface AppointmentDetailsProps {
   appointment: any;
@@ -13,6 +15,8 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   onClose,
   _onUpdate,
 }) => {
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const { user } = useAuth();
   const getStatusBadge = (status: string) => {
     const colors = {
       pending: "bg-yellow-100 text-yellow-800",
@@ -336,16 +340,42 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
 
           {/* Footer */}
           <div className="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse">
-            <button
-              type="button"
-              onClick={onClose}
-              className="inline-flex w-full justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:ml-3 sm:w-auto"
-            >
-              Đóng
-            </button>
+            <div className="flex space-x-3">
+              {/* Cancel Request Button for Customers */}
+              {user?.role === "customer" &&
+                appointment.customerId === user._id &&
+                ["pending", "confirmed"].includes(appointment.status) && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCancelModal(true)}
+                    className="inline-flex w-full justify-center rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus:outline-none focus:ring-2 focus:ring-red-500 sm:w-auto"
+                  >
+                    Yêu cầu hủy lịch hẹn
+                  </button>
+                )}
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="inline-flex w-full justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:ml-3 sm:w-auto"
+              >
+                Đóng
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Cancel Request Modal */}
+      <CancelRequestModal
+        appointment={appointment}
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onSuccess={() => {
+          _onUpdate();
+          setShowCancelModal(false);
+        }}
+      />
     </div>
   );
 };

@@ -23,7 +23,7 @@ const appointmentSchema = new mongoose.Schema(
         serviceId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Service",
-          required: true,
+          required: false, // Changed from true to false
         },
         quantity: {
           type: Number,
@@ -32,11 +32,31 @@ const appointmentSchema = new mongoose.Schema(
         },
         price: {
           type: Number,
-          required: true,
+          required: false, // Changed from true to false
         },
         estimatedDuration: Number, // minutes
       },
     ],
+    bookingType: {
+      type: String,
+      enum: ["deposit_booking", "full_service"],
+      default: "deposit_booking",
+    },
+    depositInfo: {
+      amount: {
+        type: Number,
+        default: 200000,
+      },
+      paid: {
+        type: Boolean,
+        default: false,
+      },
+      paidAt: Date,
+      transactionId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "VNPAYTransaction",
+      },
+    },
     scheduledDate: {
       type: Date,
       required: true,
@@ -201,6 +221,15 @@ const appointmentSchema = new mongoose.Schema(
         ref: "VNPAYTransaction",
       },
     },
+
+    // Transaction references - NEW
+    transactions: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Transaction",
+        description: "All transactions related to this appointment",
+      },
+    ],
     remindersSent: {
       type: Number,
       default: 0,
@@ -271,12 +300,48 @@ const appointmentSchema = new mongoose.Schema(
         min: 0,
         max: 100,
       },
+      refundAmount: {
+        type: Number,
+        description: "Calculated refund amount in VND",
+      },
+      baseAmount: {
+        type: Number,
+        description: "Base amount used for refund calculation",
+      },
+      // Refund method selection
+      refundMethod: {
+        type: String,
+        enum: ["cash", "bank_transfer"],
+        description: "Customer's preferred refund method",
+      },
+      // Customer bank information (for bank transfer)
+      customerBankInfo: {
+        bankName: {
+          type: String,
+          description: "Customer's bank name",
+        },
+        accountNumber: {
+          type: String,
+          description: "Customer's account number",
+        },
+        accountHolder: {
+          type: String,
+          description: "Account holder name",
+        },
+      },
+      // Customer's bank proof image
+      customerBankProofImage: {
+        type: String,
+        description: "URL to customer's bank account proof image",
+      },
+      // Staff approval fields
       approvedAt: Date,
       approvedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
       approvedNotes: String,
+      // Refund processing fields
       refundProcessedAt: Date,
       refundProcessedBy: {
         type: mongoose.Schema.Types.ObjectId,
@@ -284,7 +349,14 @@ const appointmentSchema = new mongoose.Schema(
       },
       refundTransactionId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "VNPAYTransaction",
+        ref: "Transaction",
+        description:
+          "Reference to refund transaction (updated to use Transaction model)",
+      },
+      // Staff's refund proof image
+      refundProofImage: {
+        type: String,
+        description: "URL to staff's refund proof image",
       },
     },
 
@@ -711,11 +783,25 @@ appointmentSchema.methods.canBeCancelledByCustomer = function (customerId) {
     refundMessage = "80% refund (less than 24 hours)";
   }
 
+  // Calculate base amount for refund calculation
+  let baseAmount;
+  if (this.bookingType === "deposit_booking" && this.depositInfo?.paid) {
+    baseAmount = this.depositInfo.amount;
+  } else {
+    baseAmount = this.totalAmount;
+  }
+
+  const estimatedRefundAmount = Math.round(
+    (baseAmount * refundPercentage) / 100
+  );
+
   return {
     canCancel: true,
     hoursLeft: Math.round(hoursUntilAppointment * 10) / 10,
     refundPercentage,
     refundMessage,
+    baseAmount,
+    estimatedRefundAmount,
   };
 };
 
@@ -817,7 +903,11 @@ appointmentSchema.methods.reschedule = function (
 };
 
 // Request cancellation
-appointmentSchema.methods.requestCancellation = function (reason, userId) {
+appointmentSchema.methods.requestCancellation = function (
+  reason,
+  userId,
+  refundInfo = {}
+) {
   const appointmentDateTime = new Date(this.scheduledDate);
   const now = new Date();
   const timeDifference = appointmentDateTime.getTime() - now.getTime();
@@ -829,11 +919,30 @@ appointmentSchema.methods.requestCancellation = function (reason, userId) {
     refundPercentage = 80;
   }
 
+  // Calculate base amount for refund calculation
+  let baseAmount;
+  if (this.bookingType === "deposit_booking" && this.depositInfo?.paid) {
+    baseAmount = this.depositInfo.amount;
+  } else {
+    baseAmount = this.totalAmount;
+  }
+
+  // Calculate refund amount
+  const estimatedRefundAmount = Math.round(
+    (baseAmount * refundPercentage) / 100
+  );
+
   this.cancelRequest = {
     requestedAt: new Date(),
     requestedBy: userId,
     reason,
     refundPercentage,
+    baseAmount, // Store base amount for refund calculation
+    refundAmount: estimatedRefundAmount, // Store calculated refund amount
+    // Add refund method and bank info
+    refundMethod: refundInfo.refundMethod,
+    customerBankInfo: refundInfo.customerBankInfo,
+    customerBankProofImage: refundInfo.customerBankProofImage,
   };
 
   this.status = "cancel_requested";
@@ -874,11 +983,13 @@ appointmentSchema.methods.approveCancellation = function (userId, notes = "") {
 appointmentSchema.methods.processRefund = function (
   userId,
   refundTransactionId,
-  notes = ""
+  notes = "",
+  refundProofImage = ""
 ) {
   this.cancelRequest.refundProcessedAt = new Date();
   this.cancelRequest.refundProcessedBy = userId;
   this.cancelRequest.refundTransactionId = refundTransactionId;
+  this.cancelRequest.refundProofImage = refundProofImage;
 
   // After successful refund, change status to cancelled
   this.status = "cancelled";

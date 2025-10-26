@@ -328,27 +328,11 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
   };
 
   const handleCreatePayment = async () => {
-    const totalAmount = calculateTotalAmount();
-    if (totalAmount <= 0) {
-      toast.error("Invalid payment amount");
-      return;
-    }
-
+    const depositAmount = 200000; // Fixed deposit amount
     setLoading(true);
+
     try {
-      const appointmentData = {
-        ...formData,
-        services: [{ serviceId: "BOOK001", quantity: 1 }],
-        ...(formData.technicianId && { technicianId: formData.technicianId }),
-      };
-
-      const paymentData = {
-        amount: totalAmount,
-        language: "vn",
-        orderInfo: "Thanh toan dich vu dat lich kiem tra",
-        appointmentData,
-      };
-
+      // Reserve slot first (don't create appointment yet)
       if (selectedSlotId && !reservedSlotId) {
         try {
           const r = await slotsAPI.reserve(selectedSlotId);
@@ -363,26 +347,41 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
         }
       }
 
+      // Prepare appointment data for payment (not create yet)
+      const appointmentData = {
+        vehicleId: formData.vehicleId,
+        scheduledDate: formData.scheduledDate,
+        scheduledTime: formData.scheduledTime,
+        customerNotes: formData.customerNotes,
+        priority: formData.priority,
+        technicianId: formData.technicianId,
+        slotId: selectedSlotId,
+        services: [], // Empty services for deposit booking
+      };
+
+      // Create payment for deposit (appointment will be created after payment success)
+      const paymentData = {
+        amount: depositAmount,
+        language: "vn",
+        orderInfo: `Dat coc 200,000 VND cho lich hen`,
+        appointmentData: appointmentData, // Pass appointment data, not appointment ID
+        paymentType: "appointment", // Changed from "deposit" to "appointment"
+        depositAmount: depositAmount,
+      };
+
       const response = await vnpayAPI.createPayment(paymentData);
 
       if ((response.data as unknown as Record<string, unknown>)?.paymentUrl) {
-        const dataToStore = {
-          ...formData,
-          selectedSlotId,
-          services: [{ serviceId: "BOOK001", quantity: 1 }],
-          ...(formData.technicianId && { technicianId: formData.technicianId }),
-          paymentInfo: {
-            transactionRef:
-              ((response.data as unknown as Record<string, unknown>)
-                .transactionRef as string) || "",
-            amount: totalAmount,
-            method: "vnpay",
-          },
-          // Add appointment ID tracking for payment process
-          appointmentId: null, // Will be set after appointment creation
-        };
+        // Store appointment data for payment result page (not appointment ID)
+        localStorage.setItem(
+          "pendingAppointment",
+          JSON.stringify({
+            ...appointmentData,
+            selectedSlotId: selectedSlotId,
+            reservedSlotId: reservedSlotId,
+          })
+        );
 
-        localStorage.setItem("pendingAppointment", JSON.stringify(dataToStore));
         window.location.href = (
           response.data as unknown as Record<string, unknown>
         ).paymentUrl as string;

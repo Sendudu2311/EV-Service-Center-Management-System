@@ -330,20 +330,48 @@ export const appointmentsAPI = {
     api.get<ApiResponse<any[]>>("/api/appointments/work-queue", { params }),
 
   // Cancel request APIs
-  requestCancellation: (id: string, reason: string) =>
-    api.post<ApiResponse<any>>(`/api/appointments/${id}/request-cancel`, {
-      reason,
-    }),
+  requestCancellation: (
+    id: string,
+    data: {
+      reason: string;
+      refundMethod?: "cash" | "bank_transfer";
+      customerBankInfo?: {
+        bankName: string;
+        accountNumber: string;
+        accountHolder: string;
+      };
+      customerBankProofImage?: string;
+    }
+  ) =>
+    api.post<ApiResponse<any>>(`/api/appointments/${id}/request-cancel`, data),
 
   approveCancellation: (id: string, notes?: string) =>
     api.post<ApiResponse<any>>(`/api/appointments/${id}/approve-cancel`, {
       notes,
     }),
 
-  processRefund: (id: string, notes?: string) =>
-    api.post<ApiResponse<any>>(`/api/appointments/${id}/process-refund`, {
-      notes,
-    }),
+  processRefund: (
+    id: string,
+    data: {
+      notes?: string;
+      refundProofImage?: string;
+    }
+  ) =>
+    api.post<ApiResponse<any>>(`/api/appointments/${id}/process-refund`, data),
+
+  // Payment confirmation
+  confirmFinalPayment: (appointmentId: string, formData: FormData) =>
+    api.post<ApiResponse<any>>(
+      `/api/appointments/${appointmentId}/confirm-payment`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    ),
+
+  // Get invoice by appointment
+  getInvoiceByAppointment: (appointmentId: string) =>
+    api.get<ApiResponse<any>>(`/api/invoices/appointment/${appointmentId}`),
 
   bulkUpdate: (updates: any[]) =>
     api.put<ApiResponse<any>>("/api/appointments/bulk-update", { updates }),
@@ -419,6 +447,26 @@ export const appointmentsAPI = {
       params: { format, ...params },
       responseType: "blob",
     }),
+};
+
+// Upload API
+export const uploadAPI = {
+  uploadImage: (file: File, description?: string) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    if (description) {
+      formData.append("description", description);
+    }
+
+    return api.post<{
+      success: boolean;
+      message: string;
+      imageUrl: string;
+      publicId: string;
+    }>("/api/upload/image", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
 };
 
 // Service Reception API (part of appointments)
@@ -575,6 +623,9 @@ export const invoicesAPI = {
     api.get<ApiResponse<any[]>>("/api/invoices", { params }),
 
   getById: (id: string) => api.get<ApiResponse<any>>(`/api/invoices/${id}`),
+
+  generate: (appointmentId: string, data: any) =>
+    api.post<ApiResponse<any>>(`/api/invoices/generate/${appointmentId}`, data),
 
   // Fixed: Use generate endpoint with appointmentId
   create: (invoiceData: any) =>
@@ -965,16 +1016,181 @@ export const reportsAPI = {
     serviceId?: string;
     technicianId?: string;
   }) =>
-    api.get<ApiResponse<any>>("/api/reports/analytics", { params }).catch(handleApiError),
+    api
+      .get<ApiResponse<any>>("/api/reports/analytics", { params })
+      .catch(handleApiError),
 
   getDetailedReport: (params?: {
     period?: "1month" | "3months" | "6months" | "1year";
     format?: "json" | "csv";
   }) =>
-    api.get<ApiResponse<any>>("/api/reports/detailed", { params }).catch(handleApiError),
+    api
+      .get<ApiResponse<any>>("/api/reports/detailed", { params })
+      .catch(handleApiError),
 
   getKPI: () =>
     api.get<ApiResponse<any>>("/api/reports/kpi").catch(handleApiError),
+};
+
+// Transaction API calls
+export const transactionApi = {
+  // Get all transactions (Admin/Staff only)
+  getTransactions: (filters?: {
+    page?: number;
+    limit?: number;
+    transactionType?: string;
+    status?: string;
+    paymentPurpose?: string;
+    userId?: string;
+    appointmentId?: string;
+    invoiceId?: string;
+    startDate?: string;
+    endDate?: string;
+  }) =>
+    api
+      .get<ApiResponse<any>>("/api/transactions", { params: filters })
+      .catch(handleApiError),
+
+  // Get user's transactions
+  getMyTransactions: (filters?: {
+    transactionType?: string;
+    status?: string;
+    paymentPurpose?: string;
+    limit?: number;
+  }) =>
+    api
+      .get<ApiResponse<any>>("/api/transactions/my", { params: filters })
+      .catch(handleApiError),
+
+  // Get transaction by ID
+  getTransactionById: (id: string) =>
+    api.get<ApiResponse<any>>(`/api/transactions/${id}`).catch(handleApiError),
+
+  // Record cash payment
+  recordCashPayment: (data: {
+    userId: string;
+    appointmentId?: string;
+    invoiceId?: string;
+    amount: number;
+    billingInfo?: {
+      mobile?: string;
+      email?: string;
+      fullName?: string;
+      address?: string;
+    };
+    notes?: string;
+    customerNotes?: string;
+    cashData?: {
+      denomination?: Record<string, number>;
+      changeGiven?: number;
+      notes?: string;
+    };
+  }) =>
+    api
+      .post<ApiResponse<any>>("/api/transactions/cash", data)
+      .catch(handleApiError),
+
+  // Record card payment
+  recordCardPayment: (data: {
+    userId: string;
+    appointmentId?: string;
+    invoiceId?: string;
+    amount: number;
+    billingInfo?: {
+      mobile?: string;
+      email?: string;
+      fullName?: string;
+      address?: string;
+    };
+    notes?: string;
+    customerNotes?: string;
+    cardData: {
+      cardType: string;
+      last4Digits: string;
+      authCode?: string;
+      transactionId?: string;
+      terminalId?: string;
+      merchantId?: string;
+      batchNumber?: string;
+      notes?: string;
+    };
+  }) =>
+    api
+      .post<ApiResponse<any>>("/api/transactions/card", data)
+      .catch(handleApiError),
+
+  // Record bank transfer payment
+  recordBankTransferPayment: (data: {
+    userId: string;
+    appointmentId?: string;
+    invoiceId?: string;
+    amount: number;
+    billingInfo?: {
+      mobile?: string;
+      email?: string;
+      fullName?: string;
+      address?: string;
+    };
+    notes?: string;
+    customerNotes?: string;
+    bankTransferData: {
+      bankName: string;
+      bankCode?: string;
+      transferRef?: string;
+      accountNumber?: string;
+      accountHolder?: string;
+      transferDate?: string;
+      verificationMethod?: string;
+      verificationNotes?: string;
+      receiptImage?: string;
+      notes?: string;
+    };
+  }) =>
+    api
+      .post<ApiResponse<any>>("/api/transactions/bank-transfer", data)
+      .catch(handleApiError),
+
+  // Process refund for a transaction
+  processRefund: (
+    id: string,
+    data: {
+      amount?: number;
+      reason: string;
+      customerNotes?: string;
+    }
+  ) =>
+    api
+      .post<ApiResponse<any>>(`/api/transactions/${id}/refund`, data)
+      .catch(handleApiError),
+
+  // Update transaction status
+  updateTransactionStatus: (
+    id: string,
+    data: {
+      status: string;
+      additionalData?: Record<string, any>;
+    }
+  ) =>
+    api
+      .put<ApiResponse<any>>(`/api/transactions/${id}/status`, data)
+      .catch(handleApiError),
+
+  // Get transaction statistics
+  getTransactionStatistics: (filters?: {
+    startDate?: string;
+    endDate?: string;
+  }) =>
+    api
+      .get<ApiResponse<any>>("/api/transactions/statistics", {
+        params: filters,
+      })
+      .catch(handleApiError),
+
+  // Process expired transactions
+  processExpiredTransactions: () =>
+    api
+      .post<ApiResponse<any>>("/api/transactions/process-expired")
+      .catch(handleApiError),
 };
 
 export default api;

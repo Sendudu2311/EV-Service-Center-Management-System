@@ -5,6 +5,8 @@ import Service from "../models/Service.js";
 import User from "../models/User.js";
 import TechnicianProfile from "../models/TechnicianProfile.js";
 import Slot from "../models/Slot.js";
+import Invoice from "../models/Invoice.js";
+import TransactionService from "../services/transactionService.js";
 import {
   vietnamDateTimeToUTC,
   utcToVietnamDateTime,
@@ -106,7 +108,14 @@ export const checkVehicleBookingStatus = async (req, res) => {
 export const getAppointments = async (req, res) => {
   try {
     let appointments;
-    const { status, page = 1, limit = 10, customerId, assignedTechnician, dateRange } = req.query;
+    const {
+      status,
+      page = 1,
+      limit = 10,
+      customerId,
+      assignedTechnician,
+      dateRange,
+    } = req.query;
     const skip = (page - 1) * limit;
 
     // Build filter based on user role
@@ -115,7 +124,7 @@ export const getAppointments = async (req, res) => {
     // Check for customerId query parameter first (for getting specific customer's appointments)
     if (customerId) {
       filter.customerId = customerId;
-    } else if (assignedTechnician === 'true') {
+    } else if (assignedTechnician === "true") {
       // Explicitly filter by assigned technician
       filter.assignedTechnician = req.user._id;
     } else {
@@ -134,33 +143,33 @@ export const getAppointments = async (req, res) => {
     }
 
     // Add date range filter if provided
-    if (dateRange && dateRange !== 'all') {
+    if (dateRange && dateRange !== "all") {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
       switch (dateRange) {
-        case 'today':
+        case "today":
           filter.scheduledDate = {
             $gte: today,
-            $lt: tomorrow
+            $lt: tomorrow,
           };
           break;
-        case 'week':
+        case "week":
           const weekEnd = new Date(today);
           weekEnd.setDate(weekEnd.getDate() + 7);
           filter.scheduledDate = {
             $gte: today,
-            $lt: weekEnd
+            $lt: weekEnd,
           };
           break;
-        case 'month':
+        case "month":
           const monthEnd = new Date(today);
           monthEnd.setMonth(monthEnd.getMonth() + 1);
           filter.scheduledDate = {
             $gte: today,
-            $lt: monthEnd
+            $lt: monthEnd,
           };
           break;
       }
@@ -300,7 +309,7 @@ export const createAppointment = async (req, res) => {
     debugger;
     const {
       vehicleId,
-      services, // array of { serviceId, quantity }
+      services = [], // array of { serviceId, quantity } - allow empty for deposit booking
       scheduledDate,
       scheduledTime,
       customerNotes,
@@ -323,43 +332,50 @@ export const createAppointment = async (req, res) => {
       });
     }
 
-    // Validate services exist - convert codes to ObjectIds first
-    const serviceIds = services.map((s) => s.serviceId);
+    // Determine booking type based on services
+    const bookingType =
+      services.length === 0 ? "deposit_booking" : "full_service";
 
-    // Separate ObjectId and code serviceIds
-    const objectIdServiceIds = serviceIds.filter(
-      (id) => typeof id === "string" && id.match(/^[0-9a-fA-F]{24}$/)
-    );
-    const codeServiceIds = serviceIds.filter(
-      (id) => typeof id === "string" && !id.match(/^[0-9a-fA-F]{24}$/)
-    );
+    // Validate services exist only if services are provided
+    let validServices = [];
+    if (services.length > 0) {
+      const serviceIds = services.map((s) => s.serviceId);
 
-    // First, find services by code to get their ObjectIds
-    let servicesByCode = [];
-    if (codeServiceIds.length > 0) {
-      servicesByCode = await Service.find({
-        code: { $in: codeServiceIds },
-        isActive: true,
-      });
-    }
+      // Separate ObjectId and code serviceIds
+      const objectIdServiceIds = serviceIds.filter(
+        (id) => typeof id === "string" && id.match(/^[0-9a-fA-F]{24}$/)
+      );
+      const codeServiceIds = serviceIds.filter(
+        (id) => typeof id === "string" && !id.match(/^[0-9a-fA-F]{24}$/)
+      );
 
-    // Then find services by ObjectId
-    let servicesById = [];
-    if (objectIdServiceIds.length > 0) {
-      servicesById = await Service.find({
-        _id: { $in: objectIdServiceIds },
-        isActive: true,
-      });
-    }
+      // First, find services by code to get their ObjectIds
+      let servicesByCode = [];
+      if (codeServiceIds.length > 0) {
+        servicesByCode = await Service.find({
+          code: { $in: codeServiceIds },
+          isActive: true,
+        });
+      }
 
-    // Combine all valid services
-    const validServices = [...servicesByCode, ...servicesById];
+      // Then find services by ObjectId
+      let servicesById = [];
+      if (objectIdServiceIds.length > 0) {
+        servicesById = await Service.find({
+          _id: { $in: objectIdServiceIds },
+          isActive: true,
+        });
+      }
 
-    if (validServices.length !== serviceIds.length) {
-      return res.status(400).json({
-        success: false,
-        message: "One or more services not found",
-      });
+      // Combine all valid services
+      validServices = [...servicesByCode, ...servicesById];
+
+      if (validServices.length !== serviceIds.length) {
+        return res.status(400).json({
+          success: false,
+          message: "One or more services not found",
+        });
+      }
     }
 
     // Validate technician if provided
@@ -380,14 +396,17 @@ export const createAppointment = async (req, res) => {
 
       // Check technician availability for the scheduled time
       const appointmentDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
-      const totalDuration = services.reduce((total, service) => {
-        const serviceData = validServices.find(
-          (s) => s._id.toString() === service.serviceId
-        );
-        // Add safety check for serviceData and estimatedDuration
-        const estimatedDuration = serviceData?.estimatedDuration || 60; // Default to 60 minutes
-        return total + estimatedDuration * (service.quantity || 1);
-      }, 0);
+      const totalDuration =
+        services.length > 0
+          ? services.reduce((total, service) => {
+              const serviceData = validServices.find(
+                (s) => s._id.toString() === service.serviceId
+              );
+              // Add safety check for serviceData and estimatedDuration
+              const estimatedDuration = serviceData?.estimatedDuration || 60; // Default to 60 minutes
+              return total + estimatedDuration * (service.quantity || 1);
+            }, 0)
+          : 60; // Default 60 minutes for deposit booking
       const estimatedCompletion = new Date(
         appointmentDateTime.getTime() + totalDuration * 60000
       );
@@ -406,10 +425,6 @@ export const createAppointment = async (req, res) => {
         status: { $in: ["confirmed", "in_progress"] },
       });
 
-      console.log(
-        "🔍 [createAppointment] Found appointments for technician on this date:",
-        conflictingAppointments.length
-      );
       conflictingAppointments.forEach((appointment, index) => {
         console.log(
           `  ${index + 1}. ${appointment.scheduledDate} ${
@@ -464,61 +479,82 @@ export const createAppointment = async (req, res) => {
         });
       }
 
-      // Check technician workload capacity
-      try {
-        const technicianProfile = await TechnicianProfile.findOne({
-          technicianId,
-        });
+      // ==============================================================================
+      // WORKLOAD CHECK FOR TECHNICIAN ASSIGNMENT - DISABLED
+      // ==============================================================================
+      // This section checks if the selected technician has available capacity
+      // to handle the new appointment based on their current workload
+      // COMMENTED OUT TO DISABLE WORKLOAD CHECKING
 
-        if (technicianProfile) {
-          // Check if technician is available for appointment duration
-          if (
-            !technicianProfile.isAvailableForAppointment(
-              appointmentDateTime,
-              totalDuration
-            )
-          ) {
-            return res.status(400).json({
-              success: false,
-              message:
-                "Selected technician is not available due to workload or schedule constraints",
-              workloadPercentage: technicianProfile.workloadPercentage,
-              currentWorkload: technicianProfile.workload.current,
-              capacity: technicianProfile.workload.capacity,
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Error checking technician availability:", error);
-        // Continue without failing - basic conflict check was already done
-      }
+      // Check technician workload capacity
+      // try {
+      //   // Find the technician's profile to get their current workload status
+      //   const technicianProfile = await TechnicianProfile.findOne({
+      //     technicianId,
+      //   });
+
+      //   if (technicianProfile) {
+      //     // Check if technician is available for appointment duration
+      //     // This method checks:
+      //     // 1. Basic availability status (available/busy)
+      //     // 2. Current workload vs capacity
+      //     // 3. Working hours/days
+      //     if (
+      //       !technicianProfile.isAvailableForAppointment(
+      //         appointmentDateTime,
+      //         totalDuration
+      //       )
+      //     ) {
+      //       // Return error with detailed workload information
+      //       return res.status(400).json({
+      //         success: false,
+      //         message:
+      //           "Selected technician is not available due to workload or schedule constraints",
+      //         workloadPercentage: technicianProfile.workloadPercentage,
+      //         currentWorkload: technicianProfile.workload.current,
+      //         capacity: technicianProfile.workload.capacity,
+      //       });
+      //     }
+      //   }
+      // } catch (error) {
+      //   console.error("Error checking technician availability:", error);
+      //   // Continue without failing - basic conflict check was already done
+      //   // This ensures appointment creation doesn't fail if workload check fails
+      // }
 
       assignedTechnician = technicianId;
     }
 
-    // Build services array with pricing
-    const appointmentServices = services.map((service) => {
-      const serviceData = validServices.find(
-        (s) =>
-          s._id.toString() === service.serviceId || s.code === service.serviceId
-      );
+    // Build services array with pricing (only if services provided)
+    const appointmentServices =
+      services.length > 0
+        ? services.map((service) => {
+            const serviceData = validServices.find(
+              (s) =>
+                s._id.toString() === service.serviceId ||
+                s.code === service.serviceId
+            );
 
-      if (!serviceData) {
-        throw new Error(`Service not found: ${service.serviceId}`);
-      }
+            if (!serviceData) {
+              throw new Error(`Service not found: ${service.serviceId}`);
+            }
 
-      return {
-        serviceId: serviceData._id, // Use actual _id for storage
-        quantity: service.quantity || 1,
-        price: serviceData.basePrice || 0,
-        estimatedDuration: serviceData.estimatedDuration || 60,
-      };
-    });
+            return {
+              serviceId: serviceData._id, // Use actual _id for storage
+              quantity: service.quantity || 1,
+              price: serviceData.basePrice || 0,
+              estimatedDuration: serviceData.estimatedDuration || 60,
+            };
+          })
+        : []; // Empty array for deposit booking
 
     // Calculate estimated completion time
-    const totalDuration = appointmentServices.reduce((total, service) => {
-      return total + service.estimatedDuration * service.quantity;
-    }, 0);
+    const totalDuration =
+      appointmentServices.length > 0
+        ? appointmentServices.reduce((total, service) => {
+            return total + service.estimatedDuration * service.quantity;
+          }, 0)
+        : 60; // Default 60 minutes for deposit booking
 
     const appointmentDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
     const estimatedCompletion = new Date(
@@ -537,6 +573,13 @@ export const createAppointment = async (req, res) => {
       customerId: req.user._id,
       vehicleId,
       services: appointmentServices,
+      bookingType: bookingType,
+      depositInfo: {
+        amount: 200000,
+        paid: req.body.paymentInfo ? true : false,
+        paidAt: req.body.paymentInfo ? new Date() : undefined,
+        transactionId: req.body.paymentInfo?.transactionId,
+      },
       scheduledDate: appointmentDateTime,
       scheduledTime,
       customerNotes,
@@ -546,7 +589,7 @@ export const createAppointment = async (req, res) => {
       status: req.body.paymentInfo ? "confirmed" : "pending", // Auto-confirm if payment completed
       coreStatus: req.body.paymentInfo ? "Scheduled" : "Scheduled", // Both are Scheduled but status differs
       totalAmount: 0, // Will be calculated below
-      paymentStatus: req.body.paymentInfo ? "paid" : "pending",
+      paymentStatus: req.body.paymentInfo ? "partial" : "pending",
       remindersSent: 0,
       reschedulingInfo: {
         customerAgreed: false,
@@ -618,6 +661,69 @@ export const createAppointment = async (req, res) => {
     appointment.calculateTotal();
     await appointment.save();
 
+    // Update transaction with appointment ID if it exists
+    try {
+      const TransactionService = (
+        await import("../services/transactionService.js")
+      ).default;
+      const Transaction = (await import("../models/Transaction.js")).default;
+
+      // Get transactionRef from request body (sent by frontend)
+      const { transactionRef } = req.body;
+      const paymentTransactionRef = req.body.paymentInfo?.transactionRef;
+
+      // Use transactionRef from root level or paymentInfo
+      const finalTransactionRef = transactionRef || paymentTransactionRef;
+
+      if (finalTransactionRef) {
+        // Find specific transaction by transactionRef and verify user ownership
+        const transaction = await Transaction.findOne({
+          transactionRef: finalTransactionRef,
+          userId: req.user._id,
+          status: "completed",
+          transactionType: "vnpay",
+          appointmentId: null,
+        });
+
+        if (transaction) {
+          await TransactionService.updateTransactionAppointmentId(
+            finalTransactionRef,
+            appointment._id
+          );
+          console.log(
+            `Updated transaction ${finalTransactionRef} with appointment ${appointment._id}`
+          );
+        } else {
+          console.log(
+            `Transaction ${finalTransactionRef} not found or already linked`
+          );
+        }
+      } else {
+        // Fallback: Find any completed VNPay transaction for this user (for backward compatibility)
+        const pendingTransaction = await Transaction.findOne({
+          userId: req.user._id,
+          status: "completed",
+          transactionType: "vnpay",
+          appointmentId: null,
+        }).sort({ createdAt: -1 });
+
+        if (pendingTransaction) {
+          await TransactionService.updateTransactionAppointmentId(
+            pendingTransaction.transactionRef,
+            appointment._id
+          );
+          console.log(
+            `Updated transaction ${pendingTransaction.transactionRef} with appointment ${appointment._id}`
+          );
+        } else {
+          console.log("No available transaction found for this user");
+        }
+      }
+    } catch (error) {
+      console.error("Error updating transaction with appointment ID:", error);
+      // Don't fail the appointment creation, just log the error
+    }
+
     // Update technician workload if assigned
     if (assignedTechnician) {
       try {
@@ -634,35 +740,43 @@ export const createAppointment = async (req, res) => {
     }
 
     // Send appointment confirmation email if appointment is confirmed (payment completed)
-    if (appointment.status === "confirmed" && req.body.paymentInfo) {
+    // For deposit booking: send email if deposit is paid
+    // For full service: send email if payment info is provided
+    if (
+      (appointment.status === "confirmed" && req.body.paymentInfo) ||
+      (appointment.bookingType === "deposit_booking" &&
+        appointment.depositInfo?.paid)
+    ) {
       try {
-        console.log(
-          "📧 [createAppointment] Sending appointment confirmation email..."
-        );
-
         // Get user data for email
         const user = await User.findById(req.user._id);
         if (user && user.email) {
-          // Get service details for email - handle both ObjectId and code
-          const objectIdServiceIds = serviceIds.filter(
-            (id) => typeof id === "string" && id.match(/^[0-9a-fA-F]{24}$/)
-          );
-          const codeServiceIds = serviceIds.filter(
-            (id) => typeof id === "string" && !id.match(/^[0-9a-fA-F]{24}$/)
-          );
-
           let serviceDetails = [];
-          if (objectIdServiceIds.length > 0) {
-            const servicesById = await Service.find({
-              _id: { $in: objectIdServiceIds },
-            });
-            serviceDetails = [...serviceDetails, ...servicesById];
-          }
-          if (codeServiceIds.length > 0) {
-            const servicesByCode = await Service.find({
-              code: { $in: codeServiceIds },
-            });
-            serviceDetails = [...serviceDetails, ...servicesByCode];
+
+          // For deposit booking, services are empty - will be determined during inspection
+          if (appointment.bookingType === "deposit_booking") {
+            serviceDetails = []; // No services for deposit booking
+          } else {
+            // For full service booking, get service details
+            const objectIdServiceIds = serviceIds.filter(
+              (id) => typeof id === "string" && id.match(/^[0-9a-fA-F]{24}$/)
+            );
+            const codeServiceIds = serviceIds.filter(
+              (id) => typeof id === "string" && !id.match(/^[0-9a-fA-F]{24}$/)
+            );
+
+            if (objectIdServiceIds.length > 0) {
+              const servicesById = await Service.find({
+                _id: { $in: objectIdServiceIds },
+              });
+              serviceDetails = [...serviceDetails, ...servicesById];
+            }
+            if (codeServiceIds.length > 0) {
+              const servicesByCode = await Service.find({
+                code: { $in: codeServiceIds },
+              });
+              serviceDetails = [...serviceDetails, ...servicesByCode];
+            }
           }
 
           // Prepare appointment data for email
@@ -680,6 +794,14 @@ export const createAppointment = async (req, res) => {
               address: "123 Main Street, Ho Chi Minh City",
               phone: "+84 28 1234 5678",
             },
+            // Add deposit info for deposit booking
+            ...(appointment.bookingType === "deposit_booking" && {
+              depositInfo: {
+                amount: appointment.depositInfo?.amount || 200000,
+                paid: appointment.depositInfo?.paid || false,
+              },
+              bookingType: "deposit_booking",
+            }),
           };
 
           const userData = {
@@ -1012,7 +1134,8 @@ export const requestCancellation = async (req, res) => {
       });
     }
 
-    const { reason } = req.body;
+    const { reason, refundMethod, customerBankInfo, customerBankProofImage } =
+      req.body;
 
     if (!reason || reason.trim().length === 0) {
       return res.status(400).json({
@@ -1021,8 +1144,46 @@ export const requestCancellation = async (req, res) => {
       });
     }
 
+    // Validate refund method if provided
+    if (refundMethod && !["cash", "bank_transfer"].includes(refundMethod)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid refund method. Must be 'cash' or 'bank_transfer'",
+      });
+    }
+
+    // Validate bank transfer info if method is bank_transfer
+    if (refundMethod === "bank_transfer") {
+      if (
+        !customerBankInfo ||
+        !customerBankInfo.bankName ||
+        !customerBankInfo.accountNumber ||
+        !customerBankInfo.accountHolder
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Bank information is required for bank transfer refund method",
+        });
+      }
+      if (!customerBankProofImage) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Bank proof image is required for bank transfer refund method",
+        });
+      }
+    }
+
+    // Prepare refund info
+    const refundInfo = {
+      refundMethod,
+      customerBankInfo,
+      customerBankProofImage,
+    };
+
     // Request cancellation
-    await appointment.requestCancellation(reason, req.user._id);
+    await appointment.requestCancellation(reason, req.user._id, refundInfo);
 
     res.status(200).json({
       success: true,
@@ -1151,79 +1312,133 @@ export const processRefund = async (req, res) => {
       });
     }
 
-    // Calculate refund amount
+    // Calculate refund amount based on booking type
+    let baseAmount;
+    if (
+      appointment.bookingType === "deposit_booking" &&
+      appointment.depositInfo?.paid
+    ) {
+      // For deposit booking, use deposit amount (200k VND)
+      baseAmount = appointment.depositInfo.amount;
+      console.log(
+        `💰 [processRefund] Using deposit amount: ${baseAmount} VND for deposit booking`
+      );
+    } else {
+      // For full service booking, use total amount
+      baseAmount = appointment.totalAmount;
+      console.log(
+        `💰 [processRefund] Using total amount: ${baseAmount} VND for full service booking`
+      );
+    }
+
     const refundPercentage = appointment.cancelRequest.refundPercentage;
-    const refundAmount = Math.round(
-      (appointment.totalAmount * refundPercentage) / 100
+    const refundAmount = Math.round((baseAmount * refundPercentage) / 100);
+
+    console.log(
+      `💰 [processRefund] Refund calculation: ${baseAmount} * ${refundPercentage}% = ${refundAmount} VND`
     );
 
-    // Create refund transaction
-    const VNPAYTransaction = (await import("../models/VNPAYTransaction.js"))
-      .default;
+    // Get refund method and additional data from request body
+    const { notes, refundProofImage } = req.body;
 
-    const refundTransactionRef = `REFUND_${
-      appointment.appointmentNumber
-    }_${Date.now()}`;
+    // Validate refund proof image
+    if (!refundProofImage) {
+      return res.status(400).json({
+        success: false,
+        message: "Refund proof image is required",
+      });
+    }
 
-    const refundTransaction = new VNPAYTransaction({
-      transactionRef: refundTransactionRef,
-      paymentType: "refund",
-      orderInfo: `Refund for appointment ${appointment.appointmentNumber} - ${appointment.cancelRequest.reason}`,
-      orderType: "refund",
+    // Determine refund method from appointment or request body
+    const refundMethod = appointment.cancelRequest.refundMethod || "cash"; // Default to cash for backward compatibility
+
+    console.log(`💰 [processRefund] Using refund method: ${refundMethod}`);
+
+    // Prepare transaction data based on refund method
+    let transactionData = {
       userId: appointment.customerId,
       appointmentId: appointment._id,
       amount: refundAmount,
-      paidAmount: refundAmount,
-      currency: "VND",
-      status: "completed",
-      responseCode: "00",
-      vnpayData: {
-        paymentDate: new Date(),
+      paymentPurpose: "refund",
+      billingInfo: {
+        // Get customer info for billing
+        fullName: appointment.customerInfo
+          ? `${appointment.customerInfo.firstName || ""} ${
+              appointment.customerInfo.lastName || ""
+            }`.trim()
+          : "Unknown Customer",
+        email: appointment.customerInfo?.email || "unknown@example.com",
+        mobile: appointment.customerInfo?.phone || "Unknown",
       },
-      settlementInfo: {
-        settled: true,
-        settlementDate: new Date(),
-        settlementAmount: refundAmount,
-        settlementReference: `REFUND${Date.now()}`,
-      },
+      notes: `Refund for appointment ${appointment.appointmentNumber} - ${appointment.cancelRequest.reason}`,
+      customerNotes: appointment.cancelRequest.reason,
       metadata: {
         refundReason: appointment.cancelRequest.reason,
         refundedBy: req.user._id,
         refundDate: new Date(),
         refundType: "appointment_cancellation",
         refundPercentage,
+        originalAppointmentNumber: appointment.appointmentNumber,
       },
+    };
+
+    // Add method-specific data
+    if (refundMethod === "cash") {
+      transactionData.cashData = {
+        receivedBy: req.user._id,
+        receiptNumber: `REFUND_CASH_${
+          appointment.appointmentNumber
+        }_${Date.now()}`,
+        receivedAt: new Date(),
+        receiptImage: refundProofImage, // Staff's proof image
+        notes: notes || "Cash refund processed",
+      };
+    } else if (refundMethod === "bank_transfer") {
+      const bankInfo = appointment.cancelRequest.customerBankInfo;
+      transactionData.bankTransferData = {
+        bankName: bankInfo?.bankName || "Unknown Bank",
+        transferRef: `REFUND_TRF_${
+          appointment.appointmentNumber
+        }_${Date.now()}`,
+        accountNumber: bankInfo?.accountNumber || "",
+        accountHolder: bankInfo?.accountHolder || "",
+        transferDate: new Date(),
+        verifiedBy: req.user._id,
+        verifiedAt: new Date(),
+        verificationMethod: "other",
+        verificationNotes: "Refund processed by staff",
+        receiptImage: refundProofImage, // Staff's proof image
+        notes: notes || "Bank transfer refund processed",
+      };
+    }
+
+    // Create refund transaction using TransactionService
+    const refundTransaction = await TransactionService.createTransaction(
+      refundMethod,
+      transactionData
+    );
+
+    // Update transaction status to completed
+    await refundTransaction.updateStatus("completed", {
+      processedBy: req.user._id,
+      processedAt: new Date(),
+      paidAmount: refundAmount,
     });
 
-    await refundTransaction.save();
-
-    // Get notes from request body
-    const { notes } = req.body;
+    console.log(
+      `✅ [processRefund] Refund transaction created: ${refundTransaction.transactionRef}`
+    );
 
     // Process refund in appointment
-    await appointment.processRefund(req.user._id, refundTransaction._id, notes);
+    await appointment.processRefund(
+      req.user._id,
+      refundTransaction._id,
+      notes,
+      refundProofImage
+    );
 
-    // Release slot if appointment has one (in case it wasn't released during approval)
-    if (appointment.slotId) {
-      try {
-        const Slot = (await import("../models/Slot.js")).default;
-        const slot = await Slot.findById(appointment.slotId);
-
-        if (slot) {
-          console.log(
-            `🔓 [processRefund] Releasing slot ${appointment.slotId} for appointment ${appointment.appointmentNumber}`
-          );
-          await slot.release();
-          console.log(`✅ [processRefund] Slot released successfully`);
-        }
-      } catch (slotError) {
-        console.error(
-          "Error releasing slot during refund processing:",
-          slotError
-        );
-        // Don't fail the refund process if slot release fails
-      }
-    }
+    // Note: Slot is already released during approveCancellation
+    // No need to release again in processRefund
 
     // Send refund notification email to customer
     try {
@@ -1234,9 +1449,10 @@ export const processRefund = async (req, res) => {
         const refundData = {
           refundAmount,
           refundPercentage,
-          refundTransactionRef,
+          refundTransactionRef: refundTransaction.transactionRef,
           refundDate: new Date(),
           refundReason: appointment.cancelRequest.reason,
+          refundMethod: refundMethod,
         };
 
         const userData = {
@@ -1276,8 +1492,9 @@ export const processRefund = async (req, res) => {
         status: appointment.status,
         refundAmount,
         refundPercentage,
+        refundMethod,
         refundTransactionId: refundTransaction._id,
-        refundTransactionRef: refundTransactionRef,
+        refundTransactionRef: refundTransaction.transactionRef,
         processedAt: appointment.cancelRequest.refundProcessedAt,
       },
     });
@@ -1305,10 +1522,6 @@ export const getAvailableTechniciansForSlot = async (req, res) => {
       });
     }
 
-    console.log(
-      `🔍 [getAvailableTechniciansForSlot] Searching for slot ${slotId}`
-    );
-
     // Find the specific slot
     const slot = await Slot.findById(slotId);
     if (!slot) {
@@ -1322,10 +1535,6 @@ export const getAvailableTechniciansForSlot = async (req, res) => {
     const slotStart = new Date(`${slot.date}T${slot.startTime}:00`);
     const slotEnd = new Date(`${slot.date}T${slot.endTime}:00`);
     const slotDurationMinutes = (slotEnd - slotStart) / (1000 * 60);
-
-    console.log(
-      `🔍 Slot ${slot._id}: duration ${slotDurationMinutes} minutes, required ${duration} minutes`
-    );
 
     if (slotDurationMinutes < parseInt(duration)) {
       return res.status(400).json({
@@ -1341,10 +1550,6 @@ export const getAvailableTechniciansForSlot = async (req, res) => {
       `✅ Found ${availableTechnicians.length} available technicians for slot ${slotId}`
     );
 
-    console.log(
-      `🔍 [getAvailableTechniciansForSlot] Processing technicians with real data from TechnicianProfile`
-    );
-
     // Format response with real data from TechnicianProfile
     const formattedTechnicians = await Promise.all(
       availableTechnicians.map(async (technician) => {
@@ -1352,16 +1557,6 @@ export const getAvailableTechniciansForSlot = async (req, res) => {
         const technicianProfile = await TechnicianProfile.findOne({
           technicianId: technician._id,
         }).populate("technicianId", "firstName lastName specializations");
-
-        console.log(
-          `🔍 [getAvailableTechniciansForSlot] Technician ${technician._id} profile:`,
-          {
-            hasProfile: !!technicianProfile,
-            performance: technicianProfile?.performance,
-            yearsExperience: technicianProfile?.yearsExperience,
-            workload: technicianProfile?.workload,
-          }
-        );
 
         // Get workload info for this technician in this slot
         const workloadInfo = await slot.getTechnicianWorkloadInSlot(
@@ -1516,10 +1711,6 @@ export const getAvailableTechniciansOptimized = async (req, res) => {
       const slotStart = new Date(`${slot.date}T${slot.startTime}:00`);
       const slotEnd = new Date(`${slot.date}T${slot.endTime}:00`);
       const slotDurationMinutes = (slotEnd - slotStart) / (1000 * 60);
-
-      console.log(
-        `🔍 Slot ${slot._id}: duration ${slotDurationMinutes} minutes, required ${duration} minutes`
-      );
 
       return slotDurationMinutes >= parseInt(duration);
     });
@@ -2653,28 +2844,35 @@ export const assignTechnician = async (req, res) => {
 
     await appointment.save();
 
-    // Update technician profiles
+    // ==============================================================================
+    // WORKLOAD MANAGEMENT FOR TECHNICIAN REASSIGNMENT - DISABLED
+    // ==============================================================================
+    // Update technician profiles when reassigning appointments
+    // COMMENTED OUT TO DISABLE WORKLOAD MANAGEMENT
 
     // Remove from previous technician's workload if reassigning
-    if (
-      previousTechnician &&
-      !previousTechnician.equals(selectedTechnicianId)
-    ) {
-      const prevProfile = await TechnicianProfile.findOne({
-        technicianId: previousTechnician,
-      });
-      if (prevProfile) {
-        await prevProfile.completeAppointment(appointment._id);
-      }
-    }
+    // if (
+    //   previousTechnician &&
+    //   !previousTechnician.equals(selectedTechnicianId)
+    // ) {
+    //   // Find previous technician's profile
+    //   const prevProfile = await TechnicianProfile.findOne({
+    //     technicianId: previousTechnician,
+    //   });
+    //   if (prevProfile) {
+    //     // Remove appointment from previous technician's workload
+    //     await prevProfile.completeAppointment(appointment._id);
+    //   }
+    // }
 
     // Add to new technician's workload
-    const newProfile = await TechnicianProfile.findOne({
-      technicianId: selectedTechnicianId,
-    });
-    if (newProfile) {
-      await newProfile.assignAppointment(appointment._id);
-    }
+    // const newProfile = await TechnicianProfile.findOne({
+    //   technicianId: selectedTechnicianId,
+    // });
+    // if (newProfile) {
+    //   // Add appointment to new technician's workload
+    //   await newProfile.assignAppointment(appointment._id);
+    // }
 
     // Populate for response
     const updatedAppointment = await Appointment.findById(appointment._id)
@@ -3602,7 +3800,10 @@ export const getPendingReceptionApprovals = async (req, res) => {
       .populate("customerId", "firstName lastName email phone")
       .populate("vehicleId", "make model year vin licensePlate")
       .populate("submissionStatus.submittedBy", "firstName lastName")
-      .populate("recommendedServices.serviceId", "name category basePrice estimatedDuration")
+      .populate(
+        "recommendedServices.serviceId",
+        "name category basePrice estimatedDuration"
+      )
       .populate("recommendedServices.addedBy", "firstName lastName")
       .populate("requestedParts.partId", "name partNumber pricing")
       .sort({ "submissionStatus.submittedAt": 1 });
@@ -4133,3 +4334,330 @@ async function checkPartsAvailability(serviceReception, appointment, staffId) {
     throw error;
   }
 }
+
+// @desc    Confirm final payment for completed appointment
+// @route   POST /api/appointments/:id/confirm-payment
+// @access  Private (Staff/Admin)
+export const confirmFinalPayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      paymentMethod,
+      amount,
+      paymentDate,
+      // Bank Transfer specific
+      transferRef,
+      bankName,
+      // Cash specific
+      notes,
+    } = req.body;
+
+    // Get uploaded proof image
+    const proofImage = req.file?.path;
+
+    // Validate required fields
+    if (!paymentMethod || !amount || !paymentDate) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment method, amount, and payment date are required",
+      });
+    }
+
+    if (!proofImage) {
+      return res.status(400).json({
+        success: false,
+        message: "Proof image is required",
+      });
+    }
+
+    // Validate payment method specific fields
+    if (paymentMethod === "bank_transfer") {
+      if (!transferRef || !bankName) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Transfer reference and bank name are required for bank transfer",
+        });
+      }
+    }
+
+    // Find appointment
+    const appointment = await Appointment.findById(id)
+      .populate("customerId", "firstName lastName email phone")
+      .populate("vehicleId", "make model year licensePlate vin");
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
+    }
+
+    // Validate appointment status
+    if (appointment.status !== "completed") {
+      return res.status(400).json({
+        success: false,
+        message: "Appointment must be completed to confirm payment",
+      });
+    }
+
+    // Get or create invoice for this appointment
+    let invoice = await Invoice.findOne({ appointmentId: id });
+
+    if (!invoice) {
+      // Create invoice from appointment data
+      const { Service } = await import("../models/index.js");
+
+      // Calculate totals
+      const serviceItems = [];
+      for (const service of appointment.services) {
+        if (service.serviceId) {
+          const serviceDoc = await Service.findById(service.serviceId);
+          if (serviceDoc) {
+            serviceItems.push({
+              serviceId: service.serviceId,
+              serviceName: serviceDoc.name,
+              description: serviceDoc.description,
+              category: serviceDoc.category,
+              quantity: service.quantity || 1,
+              unitPrice: service.price || serviceDoc.price,
+              totalPrice:
+                (service.price || serviceDoc.price) * (service.quantity || 1),
+            });
+          }
+        }
+      }
+
+      const subtotal = serviceItems.reduce(
+        (sum, item) => sum + item.totalPrice,
+        0
+      );
+      const taxAmount = subtotal * 0.1; // 10% VAT
+      const totalAmount = subtotal + taxAmount;
+      const depositAmount = appointment.depositInfo?.paid
+        ? appointment.depositInfo.amount
+        : 0;
+      const remainingAmount = totalAmount - depositAmount;
+
+      // Generate invoice number
+      const now = new Date();
+      const year = now.getFullYear().toString().slice(-2);
+      const month = (now.getMonth() + 1).toString().padStart(2, "0");
+      const day = now.getDate().toString().padStart(2, "0");
+      const timestamp = now.getTime().toString().slice(-6);
+      const invoiceNumber = `INV${year}${month}${day}${timestamp}`;
+
+      invoice = new Invoice({
+        invoiceNumber,
+        appointmentId: id,
+        customerId: appointment.customerId._id,
+        vehicleId: appointment.vehicleId._id,
+        serviceItems,
+        totals: {
+          subtotalServices: subtotal,
+          subtotalParts: 0,
+          subtotalLabor: 0,
+          subtotalAdditional: 0,
+          subtotal,
+          taxRate: 10,
+          taxAmount,
+          discountAmount: 0,
+          depositAmount,
+          remainingAmount,
+          totalAmount,
+        },
+        paymentInfo: {
+          method: paymentMethod,
+          status: depositAmount > 0 ? "partially_paid" : "unpaid",
+          paidAmount: depositAmount,
+          remainingAmount,
+          dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        },
+        customerInfo: {
+          name: `${appointment.customerId.firstName} ${appointment.customerId.lastName}`,
+          email: appointment.customerId.email,
+          phone: appointment.customerId.phone,
+        },
+        vehicleInfo: {
+          make: appointment.vehicleId.make,
+          model: appointment.vehicleId.model,
+          year: appointment.vehicleId.year,
+          licensePlate: appointment.vehicleId.licensePlate,
+          vin: appointment.vehicleId.vin,
+        },
+        generatedBy: req.user._id,
+        status: "draft",
+      });
+
+      await invoice.save();
+    }
+
+    // Validate payment amount matches remaining amount
+    const remainingAmount = invoice.totals.remainingAmount;
+    if (Math.abs(parseFloat(amount) - remainingAmount) > 0.01) {
+      return res.status(400).json({
+        success: false,
+        message: `Payment amount must be ${remainingAmount.toLocaleString(
+          "vi-VN"
+        )} VND`,
+        expectedAmount: remainingAmount,
+      });
+    }
+
+    // Create transaction
+    const TransactionService = (
+      await import("../services/transactionService.js")
+    ).default;
+
+    const transactionData = {
+      userId: appointment.customerId._id,
+      appointmentId: id,
+      invoiceId: invoice._id,
+      amount: parseFloat(amount),
+      paymentPurpose: "appointment_payment",
+      status: "completed", // Set status to completed for staff confirmation
+      processedBy: req.user._id,
+      processedAt: new Date(),
+      billingInfo: {
+        mobile: appointment.customerId.phone,
+        email: appointment.customerId.email,
+        fullName: `${appointment.customerId.firstName} ${appointment.customerId.lastName}`,
+      },
+      notes: `Final payment for appointment ${appointment.appointmentNumber}`,
+    };
+
+    let transaction;
+    if (paymentMethod === "bank_transfer") {
+      transaction = await TransactionService.createTransaction(
+        "bank_transfer",
+        {
+          ...transactionData,
+          bankTransferData: {
+            bankName,
+            transferRef,
+            transferDate: new Date(paymentDate),
+            verifiedBy: req.user._id,
+            verifiedAt: new Date(),
+            verificationMethod: "other",
+            verificationNotes: "Manual verification by staff",
+            receiptImage: proofImage,
+            notes: `Bank transfer verified by staff`,
+          },
+        }
+      );
+    } else if (paymentMethod === "cash") {
+      transaction = await TransactionService.createTransaction("cash", {
+        ...transactionData,
+        cashData: {
+          receivedBy: req.user._id,
+          receivedAt: new Date(paymentDate),
+          notes:
+            notes ||
+            `Cash payment received for appointment ${appointment.appointmentNumber}`,
+          receiptImage: proofImage,
+        },
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment method",
+      });
+    }
+
+    // Update invoice with full payment
+    invoice.paymentInfo.paidAmount = invoice.totals.totalAmount;
+    invoice.paymentInfo.remainingAmount = 0;
+    invoice.paymentInfo.status = "paid";
+    invoice.paymentInfo.paymentDate = new Date(paymentDate);
+    invoice.paymentInfo.method = paymentMethod;
+    invoice.paymentInfo.transactionRef = transaction.transactionRef;
+    invoice.paymentInfo.paymentNotes = `Final payment confirmed via ${paymentMethod}`;
+    invoice.status = "paid";
+    invoice.transactions.push(transaction._id);
+
+    await invoice.save();
+
+    // Update appointment status to invoiced
+    await appointment.updateStatus(
+      "invoiced",
+      req.user._id,
+      "staff",
+      "Final payment confirmed",
+      `Payment of ${amount.toLocaleString("vi-VN")} VND via ${paymentMethod}`
+    );
+
+    // Update appointment payment status
+    appointment.paymentStatus = "paid";
+    appointment.transactions.push(transaction._id);
+    await appointment.save();
+
+    // Send email notification
+    try {
+      const { sendEmail } = await import("../utils/email.js");
+      await sendEmail({
+        to: appointment.customerId.email,
+        subject: `Payment Confirmed - Appointment ${appointment.appointmentNumber}`,
+        template: "payment-confirmed",
+        data: {
+          customerName: `${appointment.customerId.firstName} ${appointment.customerId.lastName}`,
+          appointmentNumber: appointment.appointmentNumber,
+          amount: amount.toLocaleString("vi-VN"),
+          paymentMethod,
+          transactionRef: transaction.transactionRef,
+          invoiceNumber: invoice.invoiceNumber,
+        },
+      });
+    } catch (emailError) {
+      console.error("Failed to send payment confirmation email:", emailError);
+      // Don't fail the request if email fails
+    }
+
+    // Emit socket notification
+    try {
+      const { emitToUser } = await import("../utils/socket.js");
+      emitToUser(appointment.customerId._id, "payment_confirmed", {
+        appointmentId: id,
+        appointmentNumber: appointment.appointmentNumber,
+        amount: parseFloat(amount),
+        paymentMethod,
+        transactionRef: transaction.transactionRef,
+        invoiceNumber: invoice.invoiceNumber,
+      });
+    } catch (socketError) {
+      console.error("Failed to emit socket notification:", socketError);
+      // Don't fail the request if socket fails
+    }
+
+    res.json({
+      success: true,
+      message: "Payment confirmed successfully",
+      data: {
+        appointment: {
+          _id: appointment._id,
+          appointmentNumber: appointment.appointmentNumber,
+          status: appointment.status,
+          paymentStatus: appointment.paymentStatus,
+        },
+        invoice: {
+          _id: invoice._id,
+          invoiceNumber: invoice.invoiceNumber,
+          status: invoice.status,
+          totalAmount: invoice.totals.totalAmount,
+        },
+        transaction: {
+          _id: transaction._id,
+          transactionRef: transaction.transactionRef,
+          transactionType: transaction.transactionType,
+          amount: transaction.amount,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error confirming final payment:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error confirming payment",
+      error: error.message,
+    });
+  }
+};
