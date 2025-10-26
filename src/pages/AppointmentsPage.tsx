@@ -11,11 +11,19 @@ import {
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../contexts/AuthContext";
 import { useSocket, useCustomEvent } from "../contexts/SocketContext";
-import { appointmentsAPI, vehiclesAPI, slotsAPI } from "../services/api";
+import {
+  appointmentsAPI,
+  vehiclesAPI,
+  slotsAPI,
+  invoicesAPI,
+} from "../services/api";
 import toast from "react-hot-toast";
 import AppointmentFormClean from "../components/Appointment/AppointmentForm";
 import PaymentRestorationHandler from "../components/Appointment/PaymentRestorationHandler";
 import AppointmentDetails from "../components/Appointment/AppointmentDetails";
+import InvoiceGenerationModal from "../components/Invoice/InvoiceGenerationModal";
+import PaymentConfirmationModal from "../components/Payment/PaymentConfirmationModal";
+import InvoiceDisplayModal from "../components/Invoice/InvoiceDisplayModal";
 import {
   Appointment,
   DetailedAppointmentStatus,
@@ -90,6 +98,25 @@ const AppointmentsPage: React.FC = () => {
   const [cancelReason, setCancelReason] = useState("");
   const [appointmentToCancel, setAppointmentToCancel] =
     useState<Appointment | null>(null);
+
+  // Payment info display state
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedAppointmentForInvoice, setSelectedAppointmentForInvoice] =
+    useState<Appointment | null>(null);
+  // const [generatingInvoice, setGeneratingInvoice] = useState(false);
+
+  // Payment confirmation modal state
+  const [showPaymentConfirmationModal, setShowPaymentConfirmationModal] =
+    useState(false);
+  const [selectedAppointmentForPayment, setSelectedAppointmentForPayment] =
+    useState<Appointment | null>(null);
+
+  // Invoice display modal state
+  const [showInvoiceDisplayModal, setShowInvoiceDisplayModal] = useState(false);
+  const [
+    selectedAppointmentForInvoiceDisplay,
+    setSelectedAppointmentForInvoiceDisplay,
+  ] = useState<Appointment | null>(null);
 
   // Filters state
   const [filters, setFilters] = useState<FiltersState>({
@@ -475,6 +502,19 @@ const AppointmentsPage: React.FC = () => {
     setCancelReason("");
   }, [appointmentToCancel, cancelReason, handleCancelAppointment]);
 
+  const handleGenerateInvoice = async (appointmentId: string) => {
+    try {
+      await invoicesAPI.generate(appointmentId, {});
+      toast.success("Hóa đơn đã được tạo thành công!");
+      setShowPaymentModal(false);
+      setSelectedAppointmentForInvoice(null);
+      fetchAppointments(); // Refresh list
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || "Không thể tạo hóa đơn");
+    }
+  };
+
   /**
    * Handle cancel dialog close
    */
@@ -483,15 +523,6 @@ const AppointmentsPage: React.FC = () => {
     setAppointmentToCancel(null);
     setCancelReason("");
   }, []);
-
-  /**
-   * Handle form success callback
-   */
-  const handleFormSuccess = useCallback(() => {
-    setShowForm(false);
-    fetchAppointments(false);
-    toast.success("Tạo lịch hẹn thành công!");
-  }, [fetchAppointments]);
 
   /**
    * Handle details modal close
@@ -802,6 +833,76 @@ const AppointmentsPage: React.FC = () => {
               ) : (
                 "Yêu cầu hủy"
               )}
+            </button>
+          </div>
+        );
+      }
+
+      // Add invoice generation button for completed appointments
+      if (
+        appointment.status === "completed" &&
+        (user.role === "staff" || user.role === "admin")
+      ) {
+        console.log(
+          "Showing buttons for completed appointment:",
+          appointment.appointmentNumber,
+          "Status:",
+          appointment.status,
+          "User role:",
+          user.role
+        );
+        return (
+          <div className="flex items-center space-x-2 mt-2">
+            <button
+              onClick={() => {
+                setSelectedAppointmentForInvoiceDisplay(appointment);
+                setShowInvoiceDisplayModal(true);
+              }}
+              disabled={state.updatingStatus === appointment._id}
+              className="inline-flex items-center px-2 py-1 border border-gray-300 text-xs rounded text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            >
+              Xem hóa đơn chi tiết
+            </button>
+            <button
+              onClick={() => {
+                setSelectedAppointmentForPayment(appointment);
+                setShowPaymentConfirmationModal(true);
+              }}
+              disabled={state.updatingStatus === appointment._id}
+              className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+            >
+              Xác nhận thanh toán
+            </button>
+          </div>
+        );
+      }
+
+      // Add invoice display button for invoiced appointments
+      if (
+        appointment.status === "invoiced" &&
+        (user.role === "staff" ||
+          user.role === "admin" ||
+          user.role === "customer")
+      ) {
+        console.log(
+          "Showing invoice button for invoiced appointment:",
+          appointment.appointmentNumber,
+          "Status:",
+          appointment.status,
+          "User role:",
+          user.role
+        );
+        return (
+          <div className="flex items-center space-x-2 mt-2">
+            <button
+              onClick={() => {
+                setSelectedAppointmentForInvoiceDisplay(appointment);
+                setShowInvoiceDisplayModal(true);
+              }}
+              disabled={state.updatingStatus === appointment._id}
+              className="inline-flex items-center px-2 py-1 border border-gray-300 text-xs rounded text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            >
+              Xem hóa đơn chi tiết
             </button>
           </div>
         );
@@ -1308,10 +1409,7 @@ const AppointmentsPage: React.FC = () => {
       {/* Modals */}
       {showForm && (
         <PaymentRestorationHandler>
-          <AppointmentFormClean
-            onCancel={() => setShowForm(false)}
-            onSuccess={handleFormSuccess}
-          />
+          <AppointmentFormClean onCancel={() => setShowForm(false)} />
         </PaymentRestorationHandler>
       )}
 
@@ -1465,6 +1563,49 @@ const AppointmentsPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Payment Info Modal */}
+      {showPaymentModal && selectedAppointmentForInvoice && (
+        <InvoiceGenerationModal
+          appointment={selectedAppointmentForInvoice}
+          isOpen={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setSelectedAppointmentForInvoice(null);
+          }}
+          onConfirm={handleGenerateInvoice}
+        />
+      )}
+
+      {/* Payment Confirmation Modal */}
+      {showPaymentConfirmationModal && selectedAppointmentForPayment && (
+        <PaymentConfirmationModal
+          appointment={selectedAppointmentForPayment}
+          invoice={null} // Not needed anymore, calculation is done in modal
+          isOpen={showPaymentConfirmationModal}
+          onClose={() => {
+            setShowPaymentConfirmationModal(false);
+            setSelectedAppointmentForPayment(null);
+          }}
+          onSuccess={() => {
+            // Refresh appointments list
+            fetchAppointments();
+            toast.success("Thanh toán đã được xác nhận thành công!");
+          }}
+        />
+      )}
+
+      {/* Invoice Display Modal */}
+      {showInvoiceDisplayModal && selectedAppointmentForInvoiceDisplay && (
+        <InvoiceDisplayModal
+          appointmentId={selectedAppointmentForInvoiceDisplay._id}
+          isOpen={showInvoiceDisplayModal}
+          onClose={() => {
+            setShowInvoiceDisplayModal(false);
+            setSelectedAppointmentForInvoiceDisplay(null);
+          }}
+        />
       )}
     </div>
   );

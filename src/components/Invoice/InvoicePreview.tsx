@@ -257,7 +257,9 @@ const InvoicePreview: React.FC<Props> = ({
                 Email: info@evservicecenter.com
               </p>
               <p className="text-sm text-gray-600">
-                MST: {invoice.vietnameseCompliance.vatRegistrationNumber}
+                MST:{" "}
+                {invoice.vietnameseCompliance?.vatRegistrationNumber ||
+                  "0123456789"}
               </p>
             </div>
           </div>
@@ -267,25 +269,27 @@ const InvoicePreview: React.FC<Props> = ({
             <h4 className="text-sm font-semibold text-gray-900 mb-3">Đến:</h4>
             <div className="space-y-1">
               <p className="font-semibold text-gray-900">
-                {invoice.appointmentId.customerId.firstName}{" "}
-                {invoice.appointmentId.customerId.lastName}
+                {invoice.appointmentId?.customerId?.firstName || ""}{" "}
+                {invoice.appointmentId?.customerId?.lastName || ""}
               </p>
               <p className="text-sm text-gray-600">
                 ĐT:{" "}
-                {formatVietnamesePhone(invoice.appointmentId.customerId.phone)}
+                {formatVietnamesePhone(
+                  invoice.appointmentId?.customerId?.phone || ""
+                )}
               </p>
               <p className="text-sm text-gray-600">
-                Email: {invoice.appointmentId.customerId.email}
+                Email: {invoice.appointmentId?.customerId?.email || ""}
               </p>
-              {invoice.appointmentId.customerId.address && (
+              {invoice.appointmentId?.customerId?.address && (
                 <>
                   <p className="text-sm text-gray-600">
-                    {invoice.appointmentId.customerId.address.street},{" "}
-                    {invoice.appointmentId.customerId.address.ward}
+                    {invoice.appointmentId?.customerId?.address?.street || ""},{" "}
+                    {invoice.appointmentId?.customerId?.address?.ward || ""}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {invoice.appointmentId.customerId.address.district},{" "}
-                    {invoice.appointmentId.customerId.address.city}
+                    {invoice.appointmentId?.customerId?.address?.district || ""}
+                    , {invoice.appointmentId?.customerId?.address?.city || ""}
                   </p>
                 </>
               )}
@@ -304,9 +308,9 @@ const InvoicePreview: React.FC<Props> = ({
                 Xe
               </p>
               <p className="text-sm font-medium text-gray-900">
-                {invoice.appointmentId.vehicleId.make}{" "}
-                {invoice.appointmentId.vehicleId.model}{" "}
-                {invoice.appointmentId.vehicleId.year}
+                {invoice.appointmentId?.vehicleId?.make || ""}{" "}
+                {invoice.appointmentId?.vehicleId?.model || ""}{" "}
+                {invoice.appointmentId?.vehicleId?.year || ""}
               </p>
             </div>
             <div>
@@ -314,7 +318,7 @@ const InvoicePreview: React.FC<Props> = ({
                 Biển số
               </p>
               <p className="text-sm font-medium text-gray-900">
-                {invoice.appointmentId.vehicleId.licensePlate}
+                {invoice.appointmentId?.vehicleId?.licensePlate || ""}
               </p>
             </div>
             <div>
@@ -322,7 +326,7 @@ const InvoicePreview: React.FC<Props> = ({
                 Số khung
               </p>
               <p className="text-sm font-medium text-gray-900">
-                {invoice.appointmentId.vehicleId.vin}
+                {invoice.appointmentId?.vehicleId?.vin || ""}
               </p>
             </div>
             <div>
@@ -436,6 +440,12 @@ const InvoicePreview: React.FC<Props> = ({
             {/* Payment Information */}
             {invoice.paymentInfo.paidAmount > 0 && (
               <>
+                {invoice.totals?.depositAmount > 0 && (
+                  <div className="flex justify-between text-sm text-blue-600">
+                    <span>Tiền cọc đã trả:</span>
+                    <span>-{formatVND(invoice.totals.depositAmount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm text-green-600">
                   <span>Đã thanh toán:</span>
                   <span>-{formatVND(invoice.paymentInfo.paidAmount)}</span>
@@ -463,13 +473,13 @@ const InvoicePreview: React.FC<Props> = ({
         </div>
 
         {/* Legal Notes */}
-        {invoice.vietnameseCompliance.legalNotes.length > 0 && (
+        {invoice.vietnameseCompliance?.legalNotes?.length > 0 && (
           <div className="mt-6">
             <h4 className="text-sm font-semibold text-gray-900 mb-2">
               Ghi chú pháp lý:
             </h4>
             <div className="text-xs text-gray-600 space-y-1">
-              {invoice.vietnameseCompliance.legalNotes.map((note, index) => (
+              {invoice.vietnameseCompliance?.legalNotes?.map((note, index) => (
                 <p key={index}>• {note}</p>
               ))}
             </div>
@@ -477,7 +487,7 @@ const InvoicePreview: React.FC<Props> = ({
         )}
 
         {/* Digital Signature */}
-        {invoice.vietnameseCompliance.digitalSignature && (
+        {invoice.vietnameseCompliance?.digitalSignature && (
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
@@ -486,12 +496,12 @@ const InvoicePreview: React.FC<Props> = ({
                 </p>
                 <p className="text-xs text-blue-700">
                   Ký bởi:{" "}
-                  {invoice.vietnameseCompliance.digitalSignature.signedBy}
+                  {invoice.vietnameseCompliance?.digitalSignature?.signedBy}
                 </p>
                 <p className="text-xs text-blue-700">
                   Thời gian:{" "}
                   {formatVietnameseDate(
-                    invoice.vietnameseCompliance.digitalSignature.signedAt
+                    invoice.vietnameseCompliance?.digitalSignature?.signedAt
                   )}
                 </p>
               </div>

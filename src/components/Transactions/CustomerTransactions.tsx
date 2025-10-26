@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { vnpayAPI } from '../../services/api';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect, useCallback } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import { vnpayAPI } from "../../services/api";
+import toast from "react-hot-toast";
 import {
   ArrowPathIcon,
   CreditCardIcon,
@@ -14,44 +14,47 @@ import {
   FunnelIcon,
   CalendarIcon,
   CurrencyDollarIcon,
-  DocumentTextIcon
-} from '@heroicons/react/24/outline';
-import { formatVietnameseDateTime, formatVND } from '../../utils/vietnamese';
-import { Link } from 'react-router-dom';
+  DocumentTextIcon,
+} from "@heroicons/react/24/outline";
+import { formatVietnameseDateTime, formatVND } from "../../utils/vietnamese";
+import { Link } from "react-router-dom";
 
 // Transaction status Vietnamese translations
 const transactionStatusTranslations: Record<string, string> = {
-  pending: 'Đang chờ xử lý',
-  processing: 'Đang xử lý',
-  completed: 'Hoàn thành',
-  failed: 'Thất bại',
-  cancelled: 'Đã hủy',
-  expired: 'Hết hạn',
-  refunded: 'Đã hoàn tiền',
-  disputed: 'Khiếu nại'
+  pending: "Đang chờ xử lý",
+  processing: "Đang xử lý",
+  completed: "Hoàn thành",
+  failed: "Thất bại",
+  cancelled: "Đã hủy",
+  expired: "Hết hạn",
+  refunded: "Đã hoàn tiền",
+  disputed: "Khiếu nại",
 };
 
 // Payment type Vietnamese translations
 const paymentTypeTranslations: Record<string, string> = {
-  appointment: 'Đặt lịch hẹn',
-  invoice: 'Hóa đơn dịch vụ',
-  service: 'Dịch vụ',
-  other: 'Khác'
+  appointment: "Đặt lịch hẹn",
+  invoice: "Hóa đơn dịch vụ",
+  service: "Dịch vụ",
+  other: "Khác",
 };
 
 // Transaction status colors
 const getStatusColor = (status: string) => {
   const colors = {
-    pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    processing: 'bg-blue-100 text-blue-800 border-blue-200',
-    completed: 'bg-green-100 text-green-800 border-green-200',
-    failed: 'bg-red-100 text-red-800 border-red-200',
-    cancelled: 'bg-gray-100 text-gray-800 border-gray-200',
-    expired: 'bg-orange-100 text-orange-800 border-orange-200',
-    refunded: 'bg-purple-100 text-purple-800 border-purple-200',
-    disputed: 'bg-red-100 text-red-800 border-red-200'
+    pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    processing: "bg-blue-100 text-blue-800 border-blue-200",
+    completed: "bg-green-100 text-green-800 border-green-200",
+    failed: "bg-red-100 text-red-800 border-red-200",
+    cancelled: "bg-gray-100 text-gray-800 border-gray-200",
+    expired: "bg-orange-100 text-orange-800 border-orange-200",
+    refunded: "bg-purple-100 text-purple-800 border-purple-200",
+    disputed: "bg-red-100 text-red-800 border-red-200",
   };
-  return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800 border-gray-200';
+  return (
+    colors[status as keyof typeof colors] ||
+    "bg-gray-100 text-gray-800 border-gray-200"
+  );
 };
 
 // Status icon mapping
@@ -64,7 +67,7 @@ const getStatusIcon = (status: string) => {
     cancelled: XCircleIcon,
     expired: ExclamationTriangleIcon,
     refunded: BanknotesIcon,
-    disputed: ExclamationTriangleIcon
+    disputed: ExclamationTriangleIcon,
   };
   return icons[status as keyof typeof icons] || ClockIcon;
 };
@@ -78,42 +81,47 @@ const CustomerTransactions: React.FC = () => {
     page: 1,
     limit: 10,
     total: 0,
-    pages: 0
+    pages: 0,
   });
   const [filters, setFilters] = useState({
-    status: '',
-    paymentType: '',
-    startDate: '',
-    endDate: '',
-    search: ''
+    status: "",
+    paymentType: "",
+    startDate: "",
+    endDate: "",
+    search: "",
   });
 
-  const fetchTransactions = useCallback(async (page = 1, appliedFilters = filters) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const fetchTransactions = useCallback(
+    async (page = 1, appliedFilters = filters) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const params = {
-        page,
-        limit: pagination.limit,
-        ...Object.fromEntries(Object.entries(appliedFilters).filter(([_, value]) => value))
-      };
+        const params = {
+          page,
+          limit: pagination.limit,
+          ...Object.fromEntries(
+            Object.entries(appliedFilters).filter(([_, value]) => value)
+          ),
+        };
 
-      const response = await vnpayAPI.getUserTransactions(params);
+        const response = await vnpayAPI.getUserTransactions(params);
 
-      // Backend returns transactions and pagination directly in response.data
-      const data = response.data;
+        // Backend returns transactions and pagination directly in response.data
+        const data = response.data;
 
-      setTransactions(data.transactions || []);
-      setPagination(data.pagination || pagination);
-    } catch (error: any) {
-      console.error('Error fetching transactions:', error);
-      setError(error.response?.data?.message || 'Không thể tải giao dịch');
-      toast.error('Không thể tải giao dịch');
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, pagination.limit]);
+        setTransactions(data.transactions || []);
+        setPagination(data.pagination || pagination);
+      } catch (error: any) {
+        console.error("Error fetching transactions:", error);
+        setError(error.response?.data?.message || "Không thể tải giao dịch");
+        toast.error("Không thể tải giao dịch");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [filters, pagination.limit]
+  );
 
   useEffect(() => {
     fetchTransactions();
@@ -131,11 +139,11 @@ const CustomerTransactions: React.FC = () => {
 
   const clearFilters = () => {
     const clearedFilters = {
-      status: '',
-      paymentType: '',
-      startDate: '',
-      endDate: '',
-      search: ''
+      status: "",
+      paymentType: "",
+      startDate: "",
+      endDate: "",
+      search: "",
     };
     setFilters(clearedFilters);
     fetchTransactions(1, clearedFilters);
@@ -146,31 +154,31 @@ const CustomerTransactions: React.FC = () => {
 
     if (transaction.appointmentId) {
       details.push({
-        label: 'Lịch hẹn',
+        label: "Lịch hẹn",
         value: `#${transaction.appointmentId.appointmentNumber}`,
-        link: `/appointments/${transaction.appointmentId._id}`
+        link: `/appointments/${transaction.appointmentId._id}`,
       });
     }
 
     if (transaction.invoiceId) {
       details.push({
-        label: 'Hóa đơn',
+        label: "Hóa đơn",
         value: transaction.invoiceId.invoiceNumber,
-        link: `/invoices/${transaction.invoiceId._id}`
+        link: `/invoices/${transaction.invoiceId._id}`,
       });
     }
 
     if (transaction.vnpayData?.bankCode) {
       details.push({
-        label: 'Ngân hàng',
-        value: transaction.vnpayData.bankCode.toUpperCase()
+        label: "Ngân hàng",
+        value: transaction.vnpayData.bankCode.toUpperCase(),
       });
     }
 
     if (transaction.vnpayData?.cardType) {
       details.push({
-        label: 'Loại thẻ',
-        value: transaction.vnpayData.cardType
+        label: "Loại thẻ",
+        value: transaction.vnpayData.cardType,
       });
     }
 
@@ -204,7 +212,9 @@ const CustomerTransactions: React.FC = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Lịch sử giao dịch</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Lịch sử giao dịch
+              </h1>
               <p className="mt-2 text-sm text-gray-600">
                 Xem lịch sử thanh toán và giao dịch của bạn
               </p>
@@ -214,7 +224,9 @@ const CustomerTransactions: React.FC = () => {
               disabled={loading}
               className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
             >
-              <ArrowPathIcon className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              <ArrowPathIcon
+                className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+              />
               Làm mới
             </button>
           </div>
@@ -224,7 +236,7 @@ const CustomerTransactions: React.FC = () => {
         <div className="bg-white rounded-lg shadow-sm border mb-6 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium text-gray-900">Bộ lọc</h3>
-            {(Object.values(filters).some(value => value)) && (
+            {Object.values(filters).some((value) => value) && (
               <button
                 onClick={clearFilters}
                 className="text-sm text-blue-600 hover:text-blue-500"
@@ -246,7 +258,7 @@ const CustomerTransactions: React.FC = () => {
                   placeholder="Mã giao dịch..."
                   className="pl-10 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                   value={filters.search}
-                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  onChange={(e) => handleFilterChange("search", e.target.value)}
                 />
               </div>
             </div>
@@ -258,12 +270,16 @@ const CustomerTransactions: React.FC = () => {
               <select
                 className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 value={filters.status}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
+                onChange={(e) => handleFilterChange("status", e.target.value)}
               >
                 <option value="">Tất cả trạng thái</option>
-                {Object.entries(transactionStatusTranslations).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
-                ))}
+                {Object.entries(transactionStatusTranslations).map(
+                  ([key, label]) => (
+                    <option key={key} value={key}>
+                      {label}
+                    </option>
+                  )
+                )}
               </select>
             </div>
 
@@ -274,11 +290,15 @@ const CustomerTransactions: React.FC = () => {
               <select
                 className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 value={filters.paymentType}
-                onChange={(e) => handleFilterChange('paymentType', e.target.value)}
+                onChange={(e) =>
+                  handleFilterChange("paymentType", e.target.value)
+                }
               >
                 <option value="">Tất cả loại</option>
                 {Object.entries(paymentTypeTranslations).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -291,7 +311,9 @@ const CustomerTransactions: React.FC = () => {
                 type="date"
                 className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 value={filters.startDate}
-                onChange={(e) => handleFilterChange('startDate', e.target.value)}
+                onChange={(e) =>
+                  handleFilterChange("startDate", e.target.value)
+                }
               />
             </div>
 
@@ -303,7 +325,7 @@ const CustomerTransactions: React.FC = () => {
                 type="date"
                 className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 value={filters.endDate}
-                onChange={(e) => handleFilterChange('endDate', e.target.value)}
+                onChange={(e) => handleFilterChange("endDate", e.target.value)}
               />
             </div>
           </div>
@@ -314,13 +336,17 @@ const CustomerTransactions: React.FC = () => {
           {error ? (
             <div className="text-center py-12">
               <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
-              <h3 className="mt-2 text-sm font-semibold text-gray-900">Không thể tải giao dịch</h3>
+              <h3 className="mt-2 text-sm font-semibold text-gray-900">
+                Không thể tải giao dịch
+              </h3>
               <p className="mt-1 text-sm text-gray-500">{error}</p>
             </div>
           ) : transactions.length === 0 ? (
             <div className="text-center py-12">
               <CreditCardIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-semibold text-gray-900">Không có giao dịch</h3>
+              <h3 className="mt-2 text-sm font-semibold text-gray-900">
+                Không có giao dịch
+              </h3>
               <p className="mt-1 text-sm text-gray-500">
                 Bạn chưa có giao dịch nào trong khoảng thời gian này.
               </p>
@@ -332,31 +358,47 @@ const CustomerTransactions: React.FC = () => {
                 const details = getTransactionDetails(transaction);
 
                 return (
-                  <div key={transaction._id} className="p-6 hover:bg-gray-50 transition-colors">
+                  <div
+                    key={transaction._id}
+                    className="p-6 hover:bg-gray-50 transition-colors"
+                  >
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
                         {/* Header */}
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center space-x-3">
-                            <StatusIcon className={`h-5 w-5 ${
-                              transaction.status === 'completed' ? 'text-green-500' :
-                              transaction.status === 'failed' ? 'text-red-500' :
-                              transaction.status === 'pending' ? 'text-yellow-500' :
-                              'text-gray-500'
-                            }`} />
+                            <StatusIcon
+                              className={`h-5 w-5 ${
+                                transaction.status === "completed"
+                                  ? "text-green-500"
+                                  : transaction.status === "failed"
+                                  ? "text-red-500"
+                                  : transaction.status === "pending"
+                                  ? "text-yellow-500"
+                                  : "text-gray-500"
+                              }`}
+                            />
                             <div>
                               <h3 className="text-sm font-semibold text-gray-900">
                                 {transaction.transactionRef}
                               </h3>
                               <p className="text-xs text-gray-500">
-                                {formatVietnameseDateTime(transaction.createdAt)}
+                                {formatVietnameseDateTime(
+                                  transaction.createdAt
+                                )}
                               </p>
                             </div>
                           </div>
 
                           <div className="flex items-center space-x-3">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(transaction.status)}`}>
-                              {transactionStatusTranslations[transaction.status] || transaction.status}
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
+                                transaction.status
+                              )}`}
+                            >
+                              {transactionStatusTranslations[
+                                transaction.status
+                              ] || transaction.status}
                             </span>
                             <span className="text-sm font-medium text-gray-900">
                               {formatVND(transaction.amount)}
@@ -367,7 +409,8 @@ const CustomerTransactions: React.FC = () => {
                         {/* Payment Type and Description */}
                         <div className="mb-3">
                           <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                            {paymentTypeTranslations[transaction.paymentType] || transaction.paymentType}
+                            {paymentTypeTranslations[transaction.paymentType] ||
+                              transaction.paymentType}
                           </span>
                           <p className="mt-1 text-sm text-gray-600">
                             {transaction.orderInfo}
@@ -378,14 +421,24 @@ const CustomerTransactions: React.FC = () => {
                         {details.length > 0 && (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
                             {details.map((detail, index) => (
-                              <div key={index} className="flex items-center justify-between text-sm">
-                                <span className="text-gray-500">{detail.label}:</span>
+                              <div
+                                key={index}
+                                className="flex items-center justify-between text-sm"
+                              >
+                                <span className="text-gray-500">
+                                  {detail.label}:
+                                </span>
                                 {detail.link ? (
-                                  <Link to={detail.link} className="text-blue-600 hover:text-blue-500 font-medium">
+                                  <Link
+                                    to={detail.link}
+                                    className="text-blue-600 hover:text-blue-500 font-medium"
+                                  >
                                     {detail.value}
                                   </Link>
                                 ) : (
-                                  <span className="text-gray-900 font-medium">{detail.value}</span>
+                                  <span className="text-gray-900 font-medium">
+                                    {detail.value}
+                                  </span>
                                 )}
                               </div>
                             ))}
@@ -402,7 +455,8 @@ const CustomerTransactions: React.FC = () => {
                         {/* VNPay Transaction Info */}
                         {transaction.vnpayData?.transactionNo && (
                           <div className="mt-2 text-xs text-gray-500">
-                            Mã giao dịch VNPay: {transaction.vnpayData.transactionNo}
+                            Mã giao dịch VNPay:{" "}
+                            {transaction.vnpayData.transactionNo}
                           </div>
                         )}
                       </div>
@@ -436,11 +490,20 @@ const CustomerTransactions: React.FC = () => {
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm text-gray-700">
-                      Hiển thị <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span> đến{' '}
+                      Hiển thị{" "}
                       <span className="font-medium">
-                        {Math.min(pagination.page * pagination.limit, pagination.total)}
-                      </span>{' '}
-                      trong <span className="font-medium">{pagination.total}</span> kết quả
+                        {(pagination.page - 1) * pagination.limit + 1}
+                      </span>{" "}
+                      đến{" "}
+                      <span className="font-medium">
+                        {Math.min(
+                          pagination.page * pagination.limit,
+                          pagination.total
+                        )}
+                      </span>{" "}
+                      trong{" "}
+                      <span className="font-medium">{pagination.total}</span>{" "}
+                      kết quả
                     </p>
                   </div>
                   <div>
@@ -453,22 +516,25 @@ const CustomerTransactions: React.FC = () => {
                         <span className="sr-only">Trước</span>
                         &larr;
                       </button>
-                      {Array.from({ length: Math.min(pagination.pages, 5) }, (_, i) => {
-                        const page = i + 1;
-                        return (
-                          <button
-                            key={page}
-                            onClick={() => handlePageChange(page)}
-                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                              page === pagination.page
-                                ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                            }`}
-                          >
-                            {page}
-                          </button>
-                        );
-                      })}
+                      {Array.from(
+                        { length: Math.min(pagination.pages, 5) },
+                        (_, i) => {
+                          const page = i + 1;
+                          return (
+                            <button
+                              key={page}
+                              onClick={() => handlePageChange(page)}
+                              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                                page === pagination.page
+                                  ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                                  : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          );
+                        }
+                      )}
                       <button
                         onClick={() => handlePageChange(pagination.page + 1)}
                         disabled={pagination.page === pagination.pages}

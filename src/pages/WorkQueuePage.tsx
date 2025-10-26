@@ -271,6 +271,20 @@ const WorkQueuePage: React.FC = () => {
         estimatedServiceTime: receptionData.estimatedServiceTime,
       };
 
+      console.log(
+        "🔍 [handleCreateServiceReception] receptionData:",
+        receptionData
+      );
+      console.log(
+        "🔍 [handleCreateServiceReception] recommendedServices:",
+        receptionData.recommendedServices
+      );
+      console.log(
+        "🔍 [handleCreateServiceReception] recommendedServices.length:",
+        receptionData.recommendedServices?.length
+      );
+      console.log("🔍 [handleCreateServiceReception] payload:", payload);
+
       const response = await api.post(
         `/api/service-receptions/${selectedAppointment._id}/create`,
         payload

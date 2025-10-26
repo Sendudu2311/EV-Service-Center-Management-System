@@ -145,6 +145,7 @@ export interface Appointment {
   vehicleId: Vehicle;
   // serviceCenterId removed - single center architecture
   services: AppointmentService[];
+  transactions: string[]; // Array of transaction IDs
 
   // Scheduling
   scheduledDate: string;
