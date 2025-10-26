@@ -27,6 +27,7 @@ import chatbotRoutes from "./routes/chatbot.js";
 import contactRoutes from "./routes/contacts.js";
 import reportsRoutes from "./routes/reports.js";
 import transactionRoutes from "./routes/transactions.js";
+import uploadRoutes from "./routes/upload.js";
 
 // Import error handler
 import { globalErrorHandler } from "./utils/response.js";
@@ -121,6 +122,7 @@ app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/contacts", contactRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/transactions", transactionRoutes);
+app.use("/api/upload", uploadRoutes);
 
 // Health check endpoint
 app.get("/api/health", (req, res) => {

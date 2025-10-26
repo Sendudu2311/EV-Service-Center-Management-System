@@ -330,20 +330,34 @@ export const appointmentsAPI = {
     api.get<ApiResponse<any[]>>("/api/appointments/work-queue", { params }),
 
   // Cancel request APIs
-  requestCancellation: (id: string, reason: string) =>
-    api.post<ApiResponse<any>>(`/api/appointments/${id}/request-cancel`, {
-      reason,
-    }),
+  requestCancellation: (
+    id: string,
+    data: {
+      reason: string;
+      refundMethod?: "cash" | "bank_transfer";
+      customerBankInfo?: {
+        bankName: string;
+        accountNumber: string;
+        accountHolder: string;
+      };
+      customerBankProofImage?: string;
+    }
+  ) =>
+    api.post<ApiResponse<any>>(`/api/appointments/${id}/request-cancel`, data),
 
   approveCancellation: (id: string, notes?: string) =>
     api.post<ApiResponse<any>>(`/api/appointments/${id}/approve-cancel`, {
       notes,
     }),
 
-  processRefund: (id: string, notes?: string) =>
-    api.post<ApiResponse<any>>(`/api/appointments/${id}/process-refund`, {
-      notes,
-    }),
+  processRefund: (
+    id: string,
+    data: {
+      notes?: string;
+      refundProofImage?: string;
+    }
+  ) =>
+    api.post<ApiResponse<any>>(`/api/appointments/${id}/process-refund`, data),
 
   // Payment confirmation
   confirmFinalPayment: (appointmentId: string, formData: FormData) =>
@@ -433,6 +447,26 @@ export const appointmentsAPI = {
       params: { format, ...params },
       responseType: "blob",
     }),
+};
+
+// Upload API
+export const uploadAPI = {
+  uploadImage: (file: File, description?: string) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    if (description) {
+      formData.append("description", description);
+    }
+
+    return api.post<{
+      success: boolean;
+      message: string;
+      imageUrl: string;
+      publicId: string;
+    }>("/api/upload/image", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
 };
 
 // Service Reception API (part of appointments)

@@ -6,6 +6,7 @@ import User from "../models/User.js";
 import TechnicianProfile from "../models/TechnicianProfile.js";
 import Slot from "../models/Slot.js";
 import Invoice from "../models/Invoice.js";
+import TransactionService from "../services/transactionService.js";
 import {
   vietnamDateTimeToUTC,
   utcToVietnamDateTime,
@@ -1133,7 +1134,8 @@ export const requestCancellation = async (req, res) => {
       });
     }
 
-    const { reason } = req.body;
+    const { reason, refundMethod, customerBankInfo, customerBankProofImage } =
+      req.body;
 
     if (!reason || reason.trim().length === 0) {
       return res.status(400).json({
@@ -1142,8 +1144,46 @@ export const requestCancellation = async (req, res) => {
       });
     }
 
+    // Validate refund method if provided
+    if (refundMethod && !["cash", "bank_transfer"].includes(refundMethod)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid refund method. Must be 'cash' or 'bank_transfer'",
+      });
+    }
+
+    // Validate bank transfer info if method is bank_transfer
+    if (refundMethod === "bank_transfer") {
+      if (
+        !customerBankInfo ||
+        !customerBankInfo.bankName ||
+        !customerBankInfo.accountNumber ||
+        !customerBankInfo.accountHolder
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Bank information is required for bank transfer refund method",
+        });
+      }
+      if (!customerBankProofImage) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Bank proof image is required for bank transfer refund method",
+        });
+      }
+    }
+
+    // Prepare refund info
+    const refundInfo = {
+      refundMethod,
+      customerBankInfo,
+      customerBankProofImage,
+    };
+
     // Request cancellation
-    await appointment.requestCancellation(reason, req.user._id);
+    await appointment.requestCancellation(reason, req.user._id, refundInfo);
 
     res.status(200).json({
       success: true,
@@ -1298,73 +1338,107 @@ export const processRefund = async (req, res) => {
       `💰 [processRefund] Refund calculation: ${baseAmount} * ${refundPercentage}% = ${refundAmount} VND`
     );
 
-    // Create refund transaction
-    const VNPAYTransaction = (await import("../models/VNPAYTransaction.js"))
-      .default;
+    // Get refund method and additional data from request body
+    const { notes, refundProofImage } = req.body;
 
-    const refundTransactionRef = `REFUND_${
-      appointment.appointmentNumber
-    }_${Date.now()}`;
+    // Validate refund proof image
+    if (!refundProofImage) {
+      return res.status(400).json({
+        success: false,
+        message: "Refund proof image is required",
+      });
+    }
 
-    const refundTransaction = new VNPAYTransaction({
-      transactionRef: refundTransactionRef,
-      paymentType: "refund",
-      orderInfo: `Refund for appointment ${appointment.appointmentNumber} - ${appointment.cancelRequest.reason}`,
-      orderType: "refund",
+    // Determine refund method from appointment or request body
+    const refundMethod = appointment.cancelRequest.refundMethod || "cash"; // Default to cash for backward compatibility
+
+    console.log(`💰 [processRefund] Using refund method: ${refundMethod}`);
+
+    // Prepare transaction data based on refund method
+    let transactionData = {
       userId: appointment.customerId,
       appointmentId: appointment._id,
       amount: refundAmount,
-      paidAmount: refundAmount,
-      currency: "VND",
-      status: "completed",
-      responseCode: "00",
-      vnpayData: {
-        paymentDate: new Date(),
+      paymentPurpose: "refund",
+      billingInfo: {
+        // Get customer info for billing
+        fullName: appointment.customerInfo
+          ? `${appointment.customerInfo.firstName || ""} ${
+              appointment.customerInfo.lastName || ""
+            }`.trim()
+          : "Unknown Customer",
+        email: appointment.customerInfo?.email || "unknown@example.com",
+        mobile: appointment.customerInfo?.phone || "Unknown",
       },
-      settlementInfo: {
-        settled: true,
-        settlementDate: new Date(),
-        settlementAmount: refundAmount,
-        settlementReference: `REFUND${Date.now()}`,
-      },
+      notes: `Refund for appointment ${appointment.appointmentNumber} - ${appointment.cancelRequest.reason}`,
+      customerNotes: appointment.cancelRequest.reason,
       metadata: {
         refundReason: appointment.cancelRequest.reason,
         refundedBy: req.user._id,
         refundDate: new Date(),
         refundType: "appointment_cancellation",
         refundPercentage,
+        originalAppointmentNumber: appointment.appointmentNumber,
       },
+    };
+
+    // Add method-specific data
+    if (refundMethod === "cash") {
+      transactionData.cashData = {
+        receivedBy: req.user._id,
+        receiptNumber: `REFUND_CASH_${
+          appointment.appointmentNumber
+        }_${Date.now()}`,
+        receivedAt: new Date(),
+        receiptImage: refundProofImage, // Staff's proof image
+        notes: notes || "Cash refund processed",
+      };
+    } else if (refundMethod === "bank_transfer") {
+      const bankInfo = appointment.cancelRequest.customerBankInfo;
+      transactionData.bankTransferData = {
+        bankName: bankInfo?.bankName || "Unknown Bank",
+        transferRef: `REFUND_TRF_${
+          appointment.appointmentNumber
+        }_${Date.now()}`,
+        accountNumber: bankInfo?.accountNumber || "",
+        accountHolder: bankInfo?.accountHolder || "",
+        transferDate: new Date(),
+        verifiedBy: req.user._id,
+        verifiedAt: new Date(),
+        verificationMethod: "other",
+        verificationNotes: "Refund processed by staff",
+        receiptImage: refundProofImage, // Staff's proof image
+        notes: notes || "Bank transfer refund processed",
+      };
+    }
+
+    // Create refund transaction using TransactionService
+    const refundTransaction = await TransactionService.createTransaction(
+      refundMethod,
+      transactionData
+    );
+
+    // Update transaction status to completed
+    await refundTransaction.updateStatus("completed", {
+      processedBy: req.user._id,
+      processedAt: new Date(),
+      paidAmount: refundAmount,
     });
 
-    await refundTransaction.save();
-
-    // Get notes from request body
-    const { notes } = req.body;
+    console.log(
+      `✅ [processRefund] Refund transaction created: ${refundTransaction.transactionRef}`
+    );
 
     // Process refund in appointment
-    await appointment.processRefund(req.user._id, refundTransaction._id, notes);
+    await appointment.processRefund(
+      req.user._id,
+      refundTransaction._id,
+      notes,
+      refundProofImage
+    );
 
-    // Release slot if appointment has one (in case it wasn't released during approval)
-    if (appointment.slotId) {
-      try {
-        const Slot = (await import("../models/Slot.js")).default;
-        const slot = await Slot.findById(appointment.slotId);
-
-        if (slot) {
-          console.log(
-            `🔓 [processRefund] Releasing slot ${appointment.slotId} for appointment ${appointment.appointmentNumber}`
-          );
-          await slot.release();
-          console.log(`✅ [processRefund] Slot released successfully`);
-        }
-      } catch (slotError) {
-        console.error(
-          "Error releasing slot during refund processing:",
-          slotError
-        );
-        // Don't fail the refund process if slot release fails
-      }
-    }
+    // Note: Slot is already released during approveCancellation
+    // No need to release again in processRefund
 
     // Send refund notification email to customer
     try {
@@ -1375,9 +1449,10 @@ export const processRefund = async (req, res) => {
         const refundData = {
           refundAmount,
           refundPercentage,
-          refundTransactionRef,
+          refundTransactionRef: refundTransaction.transactionRef,
           refundDate: new Date(),
           refundReason: appointment.cancelRequest.reason,
+          refundMethod: refundMethod,
         };
 
         const userData = {
@@ -1417,8 +1492,9 @@ export const processRefund = async (req, res) => {
         status: appointment.status,
         refundAmount,
         refundPercentage,
+        refundMethod,
         refundTransactionId: refundTransaction._id,
-        refundTransactionRef: refundTransactionRef,
+        refundTransactionRef: refundTransaction.transactionRef,
         processedAt: appointment.cancelRequest.refundProcessedAt,
       },
     });

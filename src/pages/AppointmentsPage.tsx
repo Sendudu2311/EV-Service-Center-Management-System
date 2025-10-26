@@ -21,6 +21,7 @@ import toast from "react-hot-toast";
 import AppointmentFormClean from "../components/Appointment/AppointmentForm";
 import PaymentRestorationHandler from "../components/Appointment/PaymentRestorationHandler";
 import AppointmentDetails from "../components/Appointment/AppointmentDetails";
+import CancelRequestModal from "../components/Appointment/CancelRequestModal";
 import InvoiceGenerationModal from "../components/Invoice/InvoiceGenerationModal";
 import PaymentConfirmationModal from "../components/Payment/PaymentConfirmationModal";
 import InvoiceDisplayModal from "../components/Invoice/InvoiceDisplayModal";
@@ -93,9 +94,8 @@ const AppointmentsPage: React.FC = () => {
   const [retryCount, setRetryCount] = useState(0);
   const [hasVehicles, setHasVehicles] = useState(false);
 
-  // Confirmation dialog state
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [cancelReason, setCancelReason] = useState("");
+  // Cancel request modal state
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [appointmentToCancel, setAppointmentToCancel] =
     useState<Appointment | null>(null);
 
@@ -438,69 +438,21 @@ const AppointmentsPage: React.FC = () => {
   );
 
   /**
-   * Handle appointment cancellation request
-   */
-  const handleCancelAppointment = useCallback(
-    async (appointmentId: string, reason?: string) => {
-      const appointment = state.appointments.find(
-        (apt) => apt._id === appointmentId
-      );
-
-      if (!appointment) {
-        toast.error("Không tìm thấy lịch hẹn");
-        return;
-      }
-
-      try {
-        // Use new cancel request API
-        const response = await appointmentsAPI.requestCancellation(
-          appointmentId,
-          reason || "Khách hàng yêu cầu hủy"
-        );
-
-        // const refundPercentage = response.data.data?.refundPercentage || 100;
-        const refundMessage =
-          response.data.data?.refundMessage || "100% refund";
-
-        toast.success(
-          `Đã gửi yêu cầu hủy thành công! ${refundMessage} sẽ được xử lý sau khi staff duyệt.`,
-          { duration: 6000 }
-        );
-        fetchAppointments(false);
-      } catch (error: unknown) {
-        const err = error as {
-          response?: { data?: { message?: string } };
-          message?: string;
-        };
-        console.error("Error requesting cancellation:", error);
-        const errorMessage =
-          err.response?.data?.message || "Không thể gửi yêu cầu hủy";
-        toast.error(errorMessage);
-      }
-    },
-    [state.appointments, fetchAppointments]
-  );
-
-  /**
-   * Show cancel confirmation dialog
+   * Show cancel request modal
    */
   const showCancelConfirmation = useCallback((appointment: Appointment) => {
     setAppointmentToCancel(appointment);
-    setCancelReason(""); // Reset reason
-    setShowCancelDialog(true);
+    setShowCancelModal(true);
   }, []);
 
   /**
-   * Handle cancel confirmation
+   * Handle cancel request success
    */
-  const handleCancelConfirmation = useCallback(async () => {
-    if (!appointmentToCancel) return;
-
-    setShowCancelDialog(false);
-    await handleCancelAppointment(appointmentToCancel._id, cancelReason);
+  const handleCancelRequestSuccess = useCallback(() => {
+    setShowCancelModal(false);
     setAppointmentToCancel(null);
-    setCancelReason("");
-  }, [appointmentToCancel, cancelReason, handleCancelAppointment]);
+    fetchAppointments(); // Refresh the list
+  }, [fetchAppointments]);
 
   const handleGenerateInvoice = async (appointmentId: string) => {
     try {
@@ -514,15 +466,6 @@ const AppointmentsPage: React.FC = () => {
       toast.error(err.response?.data?.message || "Không thể tạo hóa đơn");
     }
   };
-
-  /**
-   * Handle cancel dialog close
-   */
-  const handleCancelDialogClose = useCallback(() => {
-    setShowCancelDialog(false);
-    setAppointmentToCancel(null);
-    setCancelReason("");
-  }, []);
 
   /**
    * Handle details modal close
@@ -1421,148 +1364,17 @@ const AppointmentsPage: React.FC = () => {
         />
       )}
 
-      {/* Cancel Confirmation Dialog */}
-      {showCancelDialog && appointmentToCancel && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mt-4 text-center">
-                Yêu cầu hủy lịch hẹn
-              </h3>
-              <div className="mt-4">
-                <p className="text-sm text-gray-500 mb-4">
-                  Bạn có chắc chắn muốn yêu cầu hủy lịch hẹn{" "}
-                  <span className="font-semibold text-gray-900">
-                    #{appointmentToCancel.appointmentNumber}
-                  </span>
-                  ?
-                </p>
-
-                {/* Business Rule Display */}
-                {(() => {
-                  let appointmentDate;
-                  try {
-                    if (
-                      appointmentToCancel.scheduledDate.includes("T") &&
-                      appointmentToCancel.scheduledDate.includes("Z")
-                    ) {
-                      appointmentDate = new Date(
-                        appointmentToCancel.scheduledDate
-                      );
-                    } else if (
-                      appointmentToCancel.scheduledDate.includes("/")
-                    ) {
-                      const [day, month, year] =
-                        appointmentToCancel.scheduledDate.split("/");
-                      appointmentDate = new Date(
-                        `${year}-${month.padStart(2, "0")}-${day.padStart(
-                          2,
-                          "0"
-                        )}T${appointmentToCancel.scheduledTime}`
-                      );
-                    } else {
-                      appointmentDate = new Date(
-                        `${appointmentToCancel.scheduledDate}T${appointmentToCancel.scheduledTime}`
-                      );
-                    }
-                  } catch {
-                    appointmentDate = new Date(
-                      `${appointmentToCancel.scheduledDate}T${appointmentToCancel.scheduledTime}`
-                    );
-                  }
-
-                  const now = new Date();
-                  const hoursDiff =
-                    (appointmentDate.getTime() - now.getTime()) /
-                    (1000 * 60 * 60);
-                  const isMoreThan24h = hoursDiff > 24;
-                  // const refundPercentage = isMoreThan24h ? 100 : 80;
-
-                  return (
-                    <div
-                      className={`p-3 rounded-md mb-4 ${
-                        isMoreThan24h
-                          ? "bg-green-50 border border-green-200"
-                          : "bg-orange-50 border border-orange-200"
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <div
-                          className={`flex-shrink-0 w-2 h-2 rounded-full mr-2 ${
-                            isMoreThan24h ? "bg-green-400" : "bg-orange-400"
-                          }`}
-                        ></div>
-                        <p
-                          className={`text-sm font-medium ${
-                            isMoreThan24h ? "text-green-800" : "text-orange-800"
-                          }`}
-                        >
-                          {isMoreThan24h ? "100% hoàn tiền" : "80% hoàn tiền"}
-                        </p>
-                      </div>
-                      <p
-                        className={`text-xs mt-1 ${
-                          isMoreThan24h ? "text-green-600" : "text-orange-600"
-                        }`}
-                      >
-                        {isMoreThan24h
-                          ? "Hủy trước 24h sẽ được hoàn 100% tiền"
-                          : "Hủy trong vòng 24h sẽ được hoàn 80% tiền"}
-                      </p>
-                    </div>
-                  );
-                })()}
-
-                {/* Reason Dropdown */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Lý do hủy lịch hẹn
-                  </label>
-                  <select
-                    value={cancelReason}
-                    onChange={(e) => setCancelReason(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  >
-                    <option value="">Chọn lý do hủy...</option>
-                    <option value="Thay đổi kế hoạch">Thay đổi kế hoạch</option>
-                    <option value="Xe gặp sự cố khác">Xe gặp sự cố khác</option>
-                    <option value="Không thể đến đúng giờ">
-                      Không thể đến đúng giờ
-                    </option>
-                    <option value="Tìm được dịch vụ khác">
-                      Tìm được dịch vụ khác
-                    </option>
-                    <option value="Lý do cá nhân">Lý do cá nhân</option>
-                    <option value="Khác">Khác</option>
-                  </select>
-                </div>
-
-                <p className="text-xs text-gray-400 mb-4">
-                  Yêu cầu hủy sẽ được gửi đến staff để xem xét và xử lý hoàn
-                  tiền.
-                </p>
-              </div>
-              <div className="flex justify-center space-x-3 mt-4">
-                <button
-                  onClick={handleCancelDialogClose}
-                  className="px-4 py-2 bg-gray-300 text-gray-800 text-sm font-medium rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                >
-                  Hủy bỏ
-                </button>
-                <button
-                  onClick={handleCancelConfirmation}
-                  disabled={!cancelReason}
-                  className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Gửi yêu cầu hủy
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Cancel Request Modal */}
+      {appointmentToCancel && (
+        <CancelRequestModal
+          appointment={appointmentToCancel}
+          isOpen={showCancelModal}
+          onClose={() => {
+            setShowCancelModal(false);
+            setAppointmentToCancel(null);
+          }}
+          onSuccess={handleCancelRequestSuccess}
+        />
       )}
 
       {/* Payment Info Modal */}
