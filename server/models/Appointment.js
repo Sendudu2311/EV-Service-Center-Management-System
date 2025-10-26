@@ -23,7 +23,7 @@ const appointmentSchema = new mongoose.Schema(
         serviceId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Service",
-          required: true,
+          required: false, // Changed from true to false
         },
         quantity: {
           type: Number,
@@ -32,11 +32,31 @@ const appointmentSchema = new mongoose.Schema(
         },
         price: {
           type: Number,
-          required: true,
+          required: false, // Changed from true to false
         },
         estimatedDuration: Number, // minutes
       },
     ],
+    bookingType: {
+      type: String,
+      enum: ["deposit_booking", "full_service"],
+      default: "deposit_booking",
+    },
+    depositInfo: {
+      amount: {
+        type: Number,
+        default: 200000,
+      },
+      paid: {
+        type: Boolean,
+        default: false,
+      },
+      paidAt: Date,
+      transactionId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "VNPAYTransaction",
+      },
+    },
     scheduledDate: {
       type: Date,
       required: true,
@@ -201,6 +221,15 @@ const appointmentSchema = new mongoose.Schema(
         ref: "VNPAYTransaction",
       },
     },
+
+    // Transaction references - NEW
+    transactions: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Transaction",
+        description: "All transactions related to this appointment",
+      },
+    ],
     remindersSent: {
       type: Number,
       default: 0,
@@ -711,11 +740,25 @@ appointmentSchema.methods.canBeCancelledByCustomer = function (customerId) {
     refundMessage = "80% refund (less than 24 hours)";
   }
 
+  // Calculate base amount for refund calculation
+  let baseAmount;
+  if (this.bookingType === "deposit_booking" && this.depositInfo?.paid) {
+    baseAmount = this.depositInfo.amount;
+  } else {
+    baseAmount = this.totalAmount;
+  }
+
+  const estimatedRefundAmount = Math.round(
+    (baseAmount * refundPercentage) / 100
+  );
+
   return {
     canCancel: true,
     hoursLeft: Math.round(hoursUntilAppointment * 10) / 10,
     refundPercentage,
     refundMessage,
+    baseAmount,
+    estimatedRefundAmount,
   };
 };
 
@@ -829,11 +872,20 @@ appointmentSchema.methods.requestCancellation = function (reason, userId) {
     refundPercentage = 80;
   }
 
+  // Calculate base amount for refund calculation
+  let baseAmount;
+  if (this.bookingType === "deposit_booking" && this.depositInfo?.paid) {
+    baseAmount = this.depositInfo.amount;
+  } else {
+    baseAmount = this.totalAmount;
+  }
+
   this.cancelRequest = {
     requestedAt: new Date(),
     requestedBy: userId,
     reason,
     refundPercentage,
+    baseAmount, // Store base amount for refund calculation
   };
 
   this.status = "cancel_requested";

@@ -53,6 +53,20 @@ export const createServiceReception = async (req, res) => {
       );
     }
 
+    // Check if deposit is paid for deposit_booking type
+    if (
+      appointment.bookingType === "deposit_booking" &&
+      !appointment.depositInfo?.paid
+    ) {
+      return sendError(
+        res,
+        400,
+        "Deposit payment required before creating service reception",
+        null,
+        "DEPOSIT_REQUIRED"
+      );
+    }
+
     // Verify appointment status
     if (appointment.status !== "customer_arrived") {
       return sendError(
@@ -215,6 +229,50 @@ export const createServiceReception = async (req, res) => {
     // Sync checklist data with Appointment
     await syncChecklistWithAppointment(serviceReception._id, appointment);
 
+    // Update appointment with actual services from inspection
+    console.log(
+      "🔍 [createServiceReception] recommendedServices:",
+      recommendedServices
+    );
+    console.log(
+      "🔍 [createServiceReception] recommendedServices.length:",
+      recommendedServices?.length
+    );
+    console.log(
+      "🔍 [createServiceReception] appointment.services before update:",
+      appointment.services
+    );
+
+    if (recommendedServices && recommendedServices.length > 0) {
+      console.log(
+        "✅ [createServiceReception] Updating appointment with services"
+      );
+
+      appointment.services = recommendedServices.map((service) => ({
+        serviceId: service.serviceId,
+        quantity: service.quantity || 1,
+        price: service.estimatedPrice || 0,
+        estimatedDuration: service.estimatedDuration || 60,
+      }));
+
+      // Change booking type to full service if it was deposit booking
+      if (appointment.bookingType === "deposit_booking") {
+        appointment.bookingType = "full_service";
+        console.log(
+          "🔄 [createServiceReception] Changed booking type to full_service"
+        );
+      }
+
+      console.log(
+        "🔍 [createServiceReception] appointment.services after update:",
+        appointment.services
+      );
+    } else {
+      console.log(
+        "⚠️ [createServiceReception] No recommended services to add to appointment"
+      );
+    }
+
     // Update appointment status to reception_created
     appointment.status = "reception_created";
     appointment.serviceReceptionId = serviceReception._id;
@@ -225,6 +283,11 @@ export const createServiceReception = async (req, res) => {
       notes: "Service reception created by technician",
     });
     await appointment.save();
+    console.log("✅ [createServiceReception] Appointment saved successfully");
+    console.log(
+      "🔍 [createServiceReception] Final appointment.services:",
+      appointment.services
+    );
 
     // Populate the response
     const populatedReception = await ServiceReception.findById(

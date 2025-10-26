@@ -95,19 +95,42 @@ export const generateAppointmentConfirmationTemplate = (
     scheduledTime,
     services,
     serviceCenter,
+    bookingType,
+    depositInfo,
   } = appointmentData;
   const { firstName, lastName } = userData;
 
-  // Safely handle services array
-  const servicesList =
-    (services || [])
-      .map((service) => {
-        const serviceName =
-          service.serviceName || service.name || "Unknown Service";
-        const duration = service.estimatedDuration || service.duration || 30;
-        return `<li>${serviceName} - ${duration} minutes</li>`;
-      })
-      .join("") || "<li>No services specified</li>";
+  // Handle services based on booking type
+  let servicesList;
+  let bookingTypeInfo = "";
+
+  if (bookingType === "deposit_booking") {
+    servicesList =
+      "<li>Services will be determined during vehicle inspection</li>";
+    bookingTypeInfo = `
+      <div class="deposit-info" style="background: #fef3c7; padding: 15px; border-radius: 6px; margin: 10px 0; border-left: 4px solid #f59e0b;">
+        <h4 style="color: #92400e; margin: 0 0 10px 0;">💰 Deposit Booking</h4>
+        <p style="margin: 5px 0; color: #92400e;"><strong>Deposit Amount:</strong> ${(
+          depositInfo?.amount || 200000
+        ).toLocaleString("vi-VN")} VND</p>
+        <p style="margin: 5px 0; color: #92400e;"><strong>Status:</strong> ${
+          depositInfo?.paid ? "✅ Paid" : "⏳ Pending"
+        }</p>
+        <p style="margin: 5px 0; color: #92400e; font-size: 14px;">Services will be determined after vehicle inspection. Final invoice will be generated based on actual services needed.</p>
+      </div>
+    `;
+  } else {
+    // Full service booking
+    servicesList =
+      (services || [])
+        .map((service) => {
+          const serviceName =
+            service.serviceName || service.name || "Unknown Service";
+          const duration = service.estimatedDuration || service.duration || 30;
+          return `<li>${serviceName} - ${duration} minutes</li>`;
+        })
+        .join("") || "<li>No services specified</li>";
+  }
 
   // Safely handle service center data
   const centerName = serviceCenter?.name || "EV Service Center";
@@ -134,7 +157,7 @@ export const generateAppointmentConfirmationTemplate = (
 
   const centerPhone = serviceCenter?.phone || "";
 
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Appointment Confirmed</title><style>body{font-family:Arial,sans-serif;line-height:1.6;color:#333;margin:0;padding:0}.container{max-width:600px;margin:0 auto;padding:20px}.header{background:linear-gradient(135deg,#3b82f6,#10b981);color:#fff;padding:30px;text-align:center;border-radius:10px 10px 0 0}.content{background:#f9fafb;padding:30px;border-radius:0 0 10px 10px}.badge{background:#3b82f6;color:#fff;font-size:18px;font-weight:700;text-align:center;padding:15px;border-radius:8px;margin:20px 0}.details{background:#fff;padding:20px;border-radius:8px;margin:20px 0;border-left:4px solid #3b82f6}.center{background:#f3f4f6;padding:15px;border-radius:6px;margin:10px 0}.footer{text-align:center;color:#6b7280;font-size:14px;margin-top:20px}.btn{display:inline-block;background:#10b981;color:#fff;padding:12px 30px;text-decoration:none;border-radius:6px;font-weight:700;margin:20px 0}ul{margin:10px 0;padding-left:20px}li{margin:5px 0}</style></head><body><div class="container"><div class="header"><h1>🚗 EV Service Center</h1><p>Appointment Confirmed</p></div><div class="content"><div class="badge">📅 Appointment Confirmed</div><h2>Hello ${firstName} ${lastName}!</h2><p>Your appointment has been confirmed. We look forward to serving you!</p><div class="details"><h3>Appointment Details</h3><p><strong>Number:</strong> ${
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Appointment Confirmed</title><style>body{font-family:Arial,sans-serif;line-height:1.6;color:#333;margin:0;padding:0}.container{max-width:600px;margin:0 auto;padding:20px}.header{background:linear-gradient(135deg,#3b82f6,#10b981);color:#fff;padding:30px;text-align:center;border-radius:10px 10px 0 0}.content{background:#f9fafb;padding:30px;border-radius:0 0 10px 10px}.badge{background:#3b82f6;color:#fff;font-size:18px;font-weight:700;text-align:center;padding:15px;border-radius:8px;margin:20px 0}.details{background:#fff;padding:20px;border-radius:8px;margin:20px 0;border-left:4px solid #3b82f6}.center{background:#f3f4f6;padding:15px;border-radius:6px;margin:10px 0}.footer{text-align:center;color:#6b7280;font-size:14px;margin-top:20px}.btn{display:inline-block;background:#10b981;color:#fff;padding:12px 30px;text-decoration:none;border-radius:6px;font-weight:700;margin:20px 0}ul{margin:10px 0;padding-left:20px}li{margin:5px 0}</style></head><body><div class="container"><div class="header"><h1>🚗 EV Service Center</h1><p>Appointment Confirmed</p></div><div class="content"><div class="badge">📅 Appointment Confirmed</div><h2>Hello ${firstName} ${lastName}!</h2><p>Your appointment has been confirmed. We look forward to serving you!</p>${bookingTypeInfo}<div class="details"><h3>Appointment Details</h3><p><strong>Number:</strong> ${
     appointmentNumber || "N/A"
   }</p><p><strong>Date:</strong> ${
     scheduledDate

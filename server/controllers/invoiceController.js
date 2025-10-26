@@ -3,10 +3,140 @@ import Appointment from "../models/Appointment.js";
 import ServiceReception from "../models/ServiceReception.js";
 import Service from "../models/Service.js";
 import Part from "../models/Part.js";
+import TransactionService from "../services/transactionService.js";
 
 // ==============================================================================
 // INVOICE APIS (Phase 2.4)
 // ==============================================================================
+
+// @desc    Get invoice by appointment ID
+// @route   GET /api/invoices/appointment/:appointmentId
+// @access  Private (Staff/Admin/Customer)
+export const getInvoiceByAppointment = async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+
+    // Find invoice by appointment ID
+    const invoice = await Invoice.findOne({ appointmentId })
+      .populate("customerId", "firstName lastName email phone address")
+      .populate("vehicleId", "make model year vin licensePlate")
+      .populate("generatedBy", "firstName lastName")
+      .populate({
+        path: "transactions",
+        options: { sort: { processedAt: 1 } }, // Sort by date ascending
+      })
+      .lean();
+
+    // Also get appointment to check for deposit transactions
+    const appointment = await Appointment.findById(appointmentId)
+      .populate({
+        path: "transactions",
+        match: {
+          status: { $in: ["completed", "pending"] }, // Include both completed and pending
+        },
+        options: { sort: { processedAt: 1 } },
+      })
+      .lean();
+
+    if (!invoice) {
+      return res.status(404).json({
+        success: false,
+        message: "Invoice not found for this appointment",
+      });
+    }
+
+    // Merge and deduplicate transactions from both invoice and appointment
+    const allTransactions = [];
+    const seenTransactionIds = new Set();
+
+    console.log("=== DEBUG TRANSACTIONS ===");
+    console.log("Appointment ID:", appointmentId);
+    console.log("Invoice transactions:", invoice.transactions?.length || 0);
+    console.log(
+      "Appointment transactions:",
+      appointment?.transactions?.length || 0
+    );
+
+    // Debug: Check all transactions for this appointment directly
+    const Transaction = (await import("../models/Transaction.js")).default;
+    const allAppointmentTransactions = await Transaction.find({ appointmentId })
+      .sort({ processedAt: 1 })
+      .lean();
+    console.log(
+      "Direct query - All appointment transactions:",
+      allAppointmentTransactions.map((t) => ({
+        id: t._id,
+        type: t.transactionType,
+        purpose: t.paymentPurpose,
+        amount: t.amount,
+        status: t.status,
+        processedAt: t.processedAt,
+        createdAt: t.createdAt,
+      }))
+    );
+
+    // Use direct query results instead of populate (more reliable)
+    allAppointmentTransactions.forEach((transaction) => {
+      if (!seenTransactionIds.has(transaction._id.toString())) {
+        seenTransactionIds.add(transaction._id.toString());
+        allTransactions.push(transaction);
+      }
+    });
+
+    // Sort all transactions by date
+    allTransactions.sort(
+      (a, b) => new Date(a.processedAt) - new Date(b.processedAt)
+    );
+
+    console.log(
+      "Final merged transactions:",
+      allTransactions.map((t) => ({
+        id: t._id,
+        type: t.transactionType,
+        purpose: t.paymentPurpose,
+        amount: t.amount,
+        status: t.status,
+        processedAt: t.processedAt,
+      }))
+    );
+
+    // Update invoice with merged transactions
+    invoice.transactions = allTransactions;
+
+    // Check permissions
+    const user = req.user;
+    const isCustomer = user.role === "customer";
+    const isStaffOrAdmin = user.role === "staff" || user.role === "admin";
+
+    if (
+      isCustomer &&
+      invoice.customerId._id.toString() !== user._id.toString()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. You can only view your own invoices.",
+      });
+    }
+
+    if (!isCustomer && !isStaffOrAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Insufficient permissions.",
+      });
+    }
+
+    res.json({
+      success: true,
+      data: invoice,
+    });
+  } catch (error) {
+    console.error("Error getting invoice by appointment:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
 
 // @desc    Generate invoice for completed appointment
 // @route   POST /api/invoices/generate/:appointmentId
@@ -26,7 +156,6 @@ export const generateInvoice = async (req, res) => {
     const appointment = await Appointment.findById(appointmentId)
       .populate("customerId", "firstName lastName email phone address")
       .populate("vehicleId", "make model year vin licensePlate");
-    // serviceCenterId populate removed - single center architecture
 
     if (!appointment) {
       return res.status(404).json({
@@ -57,16 +186,16 @@ export const generateInvoice = async (req, res) => {
       .populate("recommendedServices.serviceId", "name category basePrice")
       .populate("requestedParts.partId", "name partNumber pricing");
 
-    if (
-      !serviceReception ||
-      !serviceReception.evChecklistProgress.isCompleted
-    ) {
+    if (!serviceReception) {
       return res.status(400).json({
         success: false,
         message:
-          "Cannot generate invoice. EV checklist must be completed first",
+          "Cannot generate invoice. Service reception must be created first",
       });
     }
+
+    // Note: EV checklist completion check removed for deposit booking flow
+    // This allows invoice generation as soon as appointment is completed
 
     // Calculate invoice items
     const invoiceItems = {
@@ -81,8 +210,12 @@ export const generateInvoice = async (req, res) => {
 
     // NOTE: Initial booked service (1 basic service) is already paid, not included in invoice
     // Process recommended services (discovered during inspection)
-    for (const recommendedService of serviceReception.recommendedServices || []) {
-      if (recommendedService.isCompleted && recommendedService.customerApproved) {
+    for (const recommendedService of serviceReception.recommendedServices ||
+      []) {
+      if (
+        recommendedService.isCompleted &&
+        recommendedService.customerApproved
+      ) {
         const serviceTotal =
           recommendedService.serviceId.basePrice * recommendedService.quantity;
         invoiceItems.services.push({
@@ -154,13 +287,32 @@ export const generateInvoice = async (req, res) => {
     const taxAmount = (taxableAmount * taxRate) / 100;
     const totalAmount = taxableAmount + taxAmount;
 
+    // Calculate deposit and remaining amount
+    const depositAmount = appointment.depositInfo?.paid
+      ? appointment.depositInfo.amount
+      : 0;
+    const remainingAmount = Math.max(0, totalAmount - depositAmount);
+
+    // Generate invoice number
+    const invoiceNumber = `INV${new Date()
+      .getFullYear()
+      .toString()
+      .slice(-2)}${(new Date().getMonth() + 1)
+      .toString()
+      .padStart(2, "0")}${new Date()
+      .getDate()
+      .toString()
+      .padStart(2, "0")}${Math.floor(Math.random() * 1000)
+      .toString()
+      .padStart(3, "0")}`;
+
     // Create invoice
     const invoice = new Invoice({
+      invoiceNumber,
       appointmentId,
       serviceReceptionId: serviceReception._id,
       customerId: appointment.customerId._id,
       vehicleId: appointment.vehicleId._id,
-      serviceCenterId: appointment.serviceCenterId._id,
 
       // Customer and vehicle details
       customerInfo: {
@@ -169,10 +321,13 @@ export const generateInvoice = async (req, res) => {
           `${appointment.customerId.firstName} ${appointment.customerId.lastName}`,
         email: customerInfo.email || appointment.customerId.email,
         phone: customerInfo.phone || appointment.customerId.phone,
-        address:
-          customerInfo.address ||
-          appointment.customerId.address ||
-          "Not provided",
+        address: customerInfo.address ||
+          appointment.customerId.address || {
+            street: "Not provided",
+            ward: "",
+            district: "",
+            city: "",
+          },
       },
 
       vehicleInfo: {
@@ -183,13 +338,13 @@ export const generateInvoice = async (req, res) => {
         licensePlate: appointment.vehicleId.licensePlate,
       },
 
-      // Service center details
+      // Service center details - single center architecture
       serviceCenterInfo: {
-        name: appointment.serviceCenterId.name,
-        address: appointment.serviceCenterId.address,
-        phone: appointment.serviceCenterId.phone,
-        email: appointment.serviceCenterId.email,
-        taxId: appointment.serviceCenterId.taxId,
+        name: "EV Service Center",
+        address: "123 Main Street, Ho Chi Minh City",
+        phone: "+84 28 1234 5678",
+        email: "info@evservicecenter.com",
+        taxId: "0123456789",
       },
 
       // Invoice items and calculations
@@ -204,12 +359,13 @@ export const generateInvoice = async (req, res) => {
         subtotalServices,
         subtotalParts,
         subtotalLabor,
+        subtotalAdditional: additionalChargesTotal,
         subtotal,
-        discountPercentage,
-        discountAmount,
-        additionalChargesTotal,
         taxRate,
         taxAmount,
+        discountAmount,
+        depositAmount: depositAmount,
+        remainingAmount: remainingAmount,
         totalAmount,
       },
 
@@ -219,18 +375,20 @@ export const generateInvoice = async (req, res) => {
         actualServiceTime: actualServiceTime,
         estimatedServiceTime: serviceReception.estimatedServiceTime,
         workPerformed: (serviceReception.recommendedServices || [])
-          .filter(s => s.isCompleted && s.customerApproved)
+          .filter((s) => s.isCompleted && s.customerApproved)
           .map((s) => s.serviceId.name),
         evChecklistCompleted: serviceReception.evChecklistProgress.isCompleted,
       },
 
       paymentInfo: {
-        terms: paymentTerms,
+        method: appointment.depositInfo?.paid ? "e_wallet" : "cash",
+        status: remainingAmount <= 0 ? "paid" : "partial",
         dueDate:
           paymentTerms === "immediate"
             ? new Date()
             : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        status: "pending",
+        paidAmount: depositAmount,
+        remainingAmount: remainingAmount,
       },
 
       notes,
@@ -239,6 +397,11 @@ export const generateInvoice = async (req, res) => {
     });
 
     await invoice.save();
+
+    // Synchronize payment status to appointment
+    appointment.paymentStatus =
+      invoice.paymentInfo.status === "paid" ? "paid" : "partial";
+    await appointment.save();
 
     // Update appointment status to invoiced
     await appointment.updateStatus(
@@ -251,7 +414,6 @@ export const generateInvoice = async (req, res) => {
     await invoice.populate([
       { path: "customerId", select: "firstName lastName email phone" },
       { path: "vehicleId", select: "make model year vin licensePlate" },
-      { path: "serviceCenterId", select: "name address phone" },
       { path: "generatedBy", select: "firstName lastName" },
     ]);
 
@@ -327,7 +489,6 @@ export const getInvoices = async (req, res) => {
       status,
       paymentStatus,
       customerId,
-      serviceCenterId,
       dateFrom,
       dateTo,
       page = 1,
@@ -340,15 +501,13 @@ export const getInvoices = async (req, res) => {
     // Build filter based on user role
     if (req.user.role === "customer") {
       filter.customerId = req.user._id;
-    } else if (req.user.role === "staff") {
-      filter.serviceCenterId = req.user.serviceCenterId;
     }
+    // Staff can see all invoices in single center architecture
 
     // Add additional filters
     if (status) filter.status = status;
     if (paymentStatus) filter["paymentInfo.status"] = paymentStatus;
     if (customerId) filter.customerId = customerId;
-    if (serviceCenterId) filter.serviceCenterId = serviceCenterId;
 
     // Date range filter
     if (dateFrom || dateTo) {
@@ -472,6 +631,9 @@ export const processPayment = async (req, res) => {
       paidAmount,
       transactionId = "",
       paymentNotes = "",
+      billingInfo = {},
+      customerNotes = "",
+      transactionData = {},
     } = req.body;
 
     const invoice = await Invoice.findById(id);
@@ -498,33 +660,26 @@ export const processPayment = async (req, res) => {
       });
     }
 
-    // Process payment
-    const isFullPayment = paidAmount >= invoice.totals.totalAmount;
-
-    invoice.paymentInfo.status = isFullPayment ? "paid" : "partially_paid";
-    invoice.paymentInfo.paidAmount =
-      (invoice.paymentInfo.paidAmount || 0) + paidAmount;
-    invoice.paymentInfo.paidAt = new Date();
-    invoice.paymentInfo.paymentMethod = paymentMethod;
-    invoice.paymentInfo.transactionId = transactionId;
-
-    if (isFullPayment) {
-      invoice.status = "paid";
-    }
-
-    // Add payment record
-    invoice.paymentHistory.push({
-      amount: paidAmount,
+    // Use TransactionService to record payment
+    const result = await TransactionService.recordPayment(id, {
       method: paymentMethod,
-      transactionId,
-      processedBy: req.user._id,
-      processedAt: new Date(),
+      amount: paidAmount,
+      userId: invoice.customerId,
+      billingInfo,
       notes: paymentNotes,
+      customerNotes,
+      transactionData: {
+        ...transactionData,
+        transactionId,
+        processedBy: req.user._id,
+      },
     });
 
+    const { transaction, invoice: updatedInvoice, isFullPayment } = result;
+
     // Add revision history
-    invoice.revisionHistory.push({
-      version: invoice.revisionHistory.length + 1,
+    updatedInvoice.revisionHistory.push({
+      version: updatedInvoice.revisionHistory.length + 1,
       changes: `Payment processed: ${paidAmount.toLocaleString(
         "vi-VN"
       )} VND via ${paymentMethod}`,
@@ -533,18 +688,24 @@ export const processPayment = async (req, res) => {
       notes: paymentNotes,
     });
 
-    await invoice.save();
+    await updatedInvoice.save();
 
     res.status(200).json({
       success: true,
       message: "Payment processed successfully",
       data: {
-        id: invoice._id,
-        paymentStatus: invoice.paymentInfo.status,
-        paidAmount: invoice.paymentInfo.paidAmount,
+        id: updatedInvoice._id,
+        paymentStatus: updatedInvoice.paymentInfo.status,
+        paidAmount: updatedInvoice.paymentInfo.paidAmount,
         remainingAmount:
-          invoice.totals.totalAmount - invoice.paymentInfo.paidAmount,
+          updatedInvoice.totals.totalAmount -
+          updatedInvoice.paymentInfo.paidAmount,
         isFullyPaid: isFullPayment,
+        transaction: {
+          id: transaction._id,
+          transactionRef: transaction.transactionRef,
+          status: transaction.status,
+        },
       },
     });
   } catch (error) {
@@ -552,6 +713,7 @@ export const processPayment = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error processing payment",
+      error: error.message,
     });
   }
 };

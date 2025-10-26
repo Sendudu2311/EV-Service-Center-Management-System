@@ -421,50 +421,50 @@ technicianProfileSchema.methods.updatePerformanceMetrics = async function (
 // COMMENTED OUT TO DISABLE WORKLOAD MANAGEMENT
 
 // Method to assign appointment to technician
-// technicianProfileSchema.methods.assignAppointment = function (appointmentId) {
-//   // Increment current workload count
-//   this.workload.current += 1;
-//   // Add appointment to queued appointments list
-//   this.workload.queuedAppointments.push(appointmentId);
+technicianProfileSchema.methods.assignAppointment = function (appointmentId) {
+  // Increment current workload count
+  this.workload.current += 1;
+  // Add appointment to queued appointments list
+  this.workload.queuedAppointments.push(appointmentId);
 
-//   // Update availability status if technician was available
-//   if (this.availability.status === "available") {
-//     this.availability.status = "busy";
-//     this.availability.currentAppointment = appointmentId;
-//     this.availability.lastStatusUpdate = new Date();
-//   }
+  // Update availability status if technician was available
+  if (this.availability.status === "available") {
+    this.availability.status = "busy";
+    this.availability.currentAppointment = appointmentId;
+    this.availability.lastStatusUpdate = new Date();
+  }
 
-//   return this.save();
-// };
+  return this.save();
+};
 
 // Method to complete appointment
-// technicianProfileSchema.methods.completeAppointment = function (appointmentId) {
-//   // Decrement current workload count (ensure it doesn't go below 0)
-//   this.workload.current = Math.max(0, this.workload.current - 1);
-//   // Remove appointment from queued appointments list
-//   this.workload.queuedAppointments = this.workload.queuedAppointments.filter(
-//     (id) => !id.equals(appointmentId)
-//   );
+technicianProfileSchema.methods.completeAppointment = function (appointmentId) {
+  // Decrement current workload count (ensure it doesn't go below 0)
+  this.workload.current = Math.max(0, this.workload.current - 1);
+  // Remove appointment from queued appointments list
+  this.workload.queuedAppointments = this.workload.queuedAppointments.filter(
+    (id) => !id.equals(appointmentId)
+  );
 
-//   // If this was the current appointment, update status
-//   if (
-//     this.availability.currentAppointment &&
-//     this.availability.currentAppointment.equals(appointmentId)
-//   ) {
-//     this.availability.currentAppointment = null;
-//     // Set status to 'busy' if still has other appointments, otherwise 'available'
-//     this.availability.status = this.workload.current > 0 ? "busy" : "available";
-//     this.availability.lastStatusUpdate = new Date();
-//   }
+  // If this was the current appointment, update status
+  if (
+    this.availability.currentAppointment &&
+    this.availability.currentAppointment.equals(appointmentId)
+  ) {
+    this.availability.currentAppointment = null;
+    // Set status to 'busy' if still has other appointments, otherwise 'available'
+    this.availability.status = this.workload.current > 0 ? "busy" : "available";
+    this.availability.lastStatusUpdate = new Date();
+  }
 
-//   // Update statistics
-//   this.statistics.totalAppointments += 1;
-//   this.statistics.appointmentsThisMonth += 1;
-//   this.statistics.appointmentsThisWeek += 1;
-//   this.statistics.lastStatUpdate = new Date();
+  // Update statistics
+  this.statistics.totalAppointments += 1;
+  this.statistics.appointmentsThisMonth += 1;
+  this.statistics.appointmentsThisWeek += 1;
+  this.statistics.lastStatUpdate = new Date();
 
-//   return this.save();
-// };
+  return this.save();
+};
 
 // Method to reset weekly hours (run weekly via cron job)
 technicianProfileSchema.methods.resetWeeklyHours = function () {

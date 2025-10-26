@@ -89,37 +89,16 @@ export const sendAppointmentConfirmation = async (
   userData
 ) => {
   try {
-    // DEBUG: Log the incoming appointment data
-    console.log("📧 [Email Debug] Appointment data received:", {
-      appointmentNumber: appointmentData.appointmentNumber,
-      scheduledDate: appointmentData.scheduledDate,
-      scheduledTime: appointmentData.scheduledTime,
-      servicesCount: appointmentData.services?.length,
-      serviceCenterId: appointmentData.serviceCenterId,
-      hasServiceCenter: !!appointmentData.serviceCenter,
-    });
-
     // Single center architecture - use default service center data
     let serviceCenter = appointmentData.serviceCenter;
-    console.log("📧 [Email Debug] Using single center architecture");
 
     // Provide default service center data if not found
     if (!serviceCenter) {
-      console.log("📧 [Email Debug] Using default service center");
       serviceCenter = {
         name: "EV Service Center",
         address: "123 Main Street, Ho Chi Minh City",
       };
     }
-
-    // DEBUG: Log services data
-    console.log(
-      "📧 [Email Debug] Services data:",
-      appointmentData.services?.map((s) => ({
-        name: s.serviceName || s.name,
-        duration: s.estimatedDuration || s.duration,
-      }))
-    );
 
     const emailHTML = generateAppointmentConfirmationTemplate(
       {
@@ -127,20 +106,6 @@ export const sendAppointmentConfirmation = async (
         serviceCenter,
       },
       userData
-    );
-
-    // DEBUG: Log a preview of the HTML
-    console.log(
-      "📧 [Email Debug] HTML preview (first 500 chars):",
-      emailHTML.substring(0, 500)
-    );
-    console.log(
-      "📧 [Email Debug] HTML contains 'Services Booked':",
-      emailHTML.includes("Services Booked")
-    );
-    console.log(
-      "📧 [Email Debug] HTML contains 'Important Reminders':",
-      emailHTML.includes("Important Reminders")
     );
 
     const emailOptions = {
@@ -205,8 +170,6 @@ export const notifyServiceCenterStaff = async (appointmentData) => {
     // For now, send to a default admin email or skip staff notifications
     // In a real system, you would have staff emails configured
     const adminEmail = process.env.ADMIN_EMAIL || "admin@evservicecenter.com";
-
-    console.log("📧 Sending staff notification to admin:", adminEmail);
 
     const emailOptions = {
       email: adminEmail,
@@ -430,16 +393,16 @@ export const executePaymentSuccessWorkflow = async (
       userData
     );
 
-    // 3. Send payment receipt (skip for booking appointments, keep for invoice payments)
-    if (paymentData.paymentType !== "appointment") {
+    // 3. Send payment receipt (skip for booking appointments and deposits, keep for invoice payments)
+    if (
+      paymentData.paymentType !== "appointment" &&
+      paymentData.paymentType !== "deposit"
+    ) {
       results.paymentReceipt = await sendPaymentReceipt(paymentData, userData);
     } else {
-      console.log(
-        "📧 [Payment] Skipping receipt email for booking appointment"
-      );
       results.paymentReceipt = {
         success: true,
-        message: "Receipt skipped for booking",
+        message: `Receipt skipped for ${paymentData.paymentType}`,
       };
     }
 

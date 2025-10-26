@@ -222,28 +222,10 @@ export const getWorkloadDistribution = async (req, res) => {
       });
     }
 
-    const { serviceCenterId } = req.query;
+    // serviceCenterId removed - single center architecture
     let filter = { isActive: true };
 
-    // Filter by service center if specified
-    if (serviceCenterId) {
-      const technicians = await User.find({
-        role: "technician",
-        serviceCenterId: serviceCenterId,
-        isActive: true,
-      }).select("_id");
-
-      filter.technicianId = { $in: technicians.map((t) => t._id) };
-    } else if (req.user.role === "staff" && req.user.serviceCenterId) {
-      // Staff can only see their service center
-      const technicians = await User.find({
-        role: "technician",
-        serviceCenterId: req.user.serviceCenterId,
-        isActive: true,
-      }).select("_id");
-
-      filter.technicianId = { $in: technicians.map((t) => t._id) };
-    }
+    // Single center architecture - no service center filtering needed
 
     const profiles = await TechnicianProfile.find(filter)
       .populate("technicianId", "firstName lastName")
@@ -255,7 +237,7 @@ export const getWorkloadDistribution = async (req, res) => {
       technician: {
         id: profile.technicianId._id,
         name: `${profile.technicianId.firstName} ${profile.technicianId.lastName}`,
-        serviceCenter: profile.technicianId.serviceCenterId,
+        serviceCenter: "EV Service Center", // Single center architecture
       },
       workload: {
         current: profile.workload.current,
@@ -330,26 +312,19 @@ export const findBestTechnician = async (req, res) => {
       });
     }
 
-    const {
-      serviceCategories,
-      scheduledDate,
-      estimatedDuration,
-      priority,
-      serviceCenterId,
-    } = req.body;
+    const { serviceCategories, scheduledDate, estimatedDuration, priority } =
+      req.body;
 
-    if (!serviceCategories || !scheduledDate || !serviceCenterId) {
+    if (!serviceCategories || !scheduledDate) {
       return res.status(400).json({
         success: false,
-        message:
-          "Service categories, scheduled date, and service center are required",
+        message: "Service categories and scheduled date are required",
       });
     }
 
-    // Get technicians from the service center
+    // Get all technicians in single center architecture
     const technicians = await User.find({
       role: "technician",
-      serviceCenterId: serviceCenterId,
       isActive: true,
     }).select("_id");
 

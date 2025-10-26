@@ -19,10 +19,7 @@ const generateToken = (user) => {
     role: user.role,
   };
 
-  // Add serviceCenterId for staff and technicians
-  if (user.serviceCenterId && ["staff", "technician"].includes(user.role)) {
-    payload.serviceCenterId = user.serviceCenterId;
-  }
+  // serviceCenterId removed - single center architecture
 
   return jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE,
@@ -627,9 +624,9 @@ export const getUsers = async (req, res) => {
   try {
     const { role, search, isActive, page = 1, limit = 10 } = req.query;
 
-      // Previously this endpoint enforced staff/admin roles. Authorization middleware
-      // now allows any authenticated user; keep column-level filtering but do not
-      // block callers here. If future restrictions are desired, enforce via middleware.
+    // Previously this endpoint enforced staff/admin roles. Authorization middleware
+    // now allows any authenticated user; keep column-level filtering but do not
+    // block callers here. If future restrictions are desired, enforce via middleware.
 
     let filter = {};
 
@@ -686,18 +683,23 @@ export const getUsers = async (req, res) => {
 // @access  Private (authenticated)
 export const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id)
-      .select('-password -resetPasswordToken -resetPasswordExpire')
-      .populate('serviceCenterId', 'name code');
+    const user = await User.findById(req.params.id).select(
+      "-password -resetPasswordToken -resetPasswordExpire"
+    );
+    // serviceCenterId populate removed - single center architecture
 
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
 
     res.json({ success: true, data: user });
   } catch (error) {
-    console.error('Get user by id error:', error);
-    res.status(500).json({ success: false, message: 'Server error while fetching user' });
+    console.error("Get user by id error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Server error while fetching user" });
   }
 };
 
@@ -729,7 +731,7 @@ export const updateUser = async (req, res) => {
       phone: req.body.phone,
       role: req.body.role,
       isActive: req.body.isActive,
-      serviceCenterId: req.body.serviceCenterId,
+      // serviceCenterId removed - single center architecture
     };
 
     // Remove undefined fields
