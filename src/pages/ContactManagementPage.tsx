@@ -28,7 +28,7 @@ interface Contact {
       _id: string;
       firstName: string;
       lastName: string;
-    };
+    } | null;
     addedAt: string;
   }>;
 }
@@ -307,7 +307,7 @@ const ContactManagementPage: React.FC = () => {
                         <div key={index} className="bg-blue-50 rounded-lg p-3">
                           <div className="flex justify-between items-start mb-2">
                             <span className="text-sm font-medium text-blue-900">
-                              {note.addedBy.firstName} {note.addedBy.lastName}
+                              {note.addedBy?.firstName || 'System'} {note.addedBy?.lastName || ''}
                             </span>
                             <span className="text-xs text-blue-600">
                               {new Date(note.addedAt).toLocaleString()}

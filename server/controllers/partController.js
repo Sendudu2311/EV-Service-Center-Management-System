@@ -739,10 +739,11 @@ export default {
   searchCompatibleParts
 };
 
-// Bulk import parts
+// Bulk import parts with upsert support (merge or create)
 export const importParts = async (req, res) => {
   try {
     const partsArray = Array.isArray(req.body) ? req.body : req.body.parts || [];
+    const mergeOnDuplicate = req.query.merge === 'true' || req.body.mergeOnDuplicate !== false; // Default to merge
 
     if (!Array.isArray(partsArray) || partsArray.length === 0) {
       return res.status(400).json({ success: false, message: 'No parts provided for import' });
@@ -771,28 +772,109 @@ export const importParts = async (req, res) => {
         // Map common field names
         if (!data.partNumber && data.partNo) data.partNumber = data.partNo;
 
-        // Skip if duplicate partNumber exists
-        if (data.partNumber) {
-          const existing = await Part.findOne({ partNumber: data.partNumber });
-          if (existing) {
-            results.push({ success: false, message: 'Duplicate partNumber', partNumber: data.partNumber });
-            continue;
-          }
+        if (!data.partNumber) {
+          results.push({ success: false, message: 'Missing required field: partNumber' });
+          continue;
         }
 
         // Set defaults for inventory/pricing if absent
         if (!data.inventory) data.inventory = { currentStock: 0, reservedStock: 0, usedStock: 0, minStockLevel: 0, maxStockLevel: 0, reorderPoint: 0, averageUsage: 0 };
         if (!data.pricing) data.pricing = { cost: 0, retail: 0, wholesale: 0, currency: 'VND' };
 
-        const part = new Part(data);
-        await part.save();
-        results.push({ success: true, message: 'Imported', id: part._id, partNumber: part.partNumber });
+        // Check if part already exists
+        const existing = await Part.findOne({ partNumber: data.partNumber });
+
+        if (existing) {
+          if (mergeOnDuplicate) {
+            // Merge strategy: increase stock, update other fields if provided
+            const updateData = { ...data };
+            
+            // If new stock provided, ADD it to existing stock
+            if (data.inventory?.currentStock > 0) {
+              updateData.inventory = {
+                ...existing.inventory.toObject(),
+                currentStock: existing.inventory.currentStock + data.inventory.currentStock,
+                // Update other inventory fields if provided
+                ...(data.inventory.minStockLevel !== undefined && { minStockLevel: data.inventory.minStockLevel }),
+                ...(data.inventory.maxStockLevel !== undefined && { maxStockLevel: data.inventory.maxStockLevel }),
+                ...(data.inventory.reorderPoint !== undefined && { reorderPoint: data.inventory.reorderPoint })
+              };
+            }
+
+            // Update pricing only if provided and different
+            if (data.pricing && Object.keys(data.pricing).some(k => data.pricing[k] !== existing.pricing[k])) {
+              updateData.pricing = {
+                ...existing.pricing.toObject(),
+                ...data.pricing
+              };
+            }
+
+            // Update other fields (name, description, warranty, etc) if they're not empty
+            const fieldsToUpdate = ['name', 'description', 'category', 'brand', 'warranty', 'compatib' + 'ility', 'specifications'];
+            fieldsToUpdate.forEach(field => {
+              if (data[field] && JSON.stringify(data[field]) !== '{}') {
+                updateData[field] = data[field];
+              }
+            });
+
+            const updated = await Part.findByIdAndUpdate(existing._id, updateData, { new: true });
+            results.push({ 
+              success: true, 
+              message: 'Merged with existing part (stock increased)', 
+              id: updated._id, 
+              partNumber: updated.partNumber,
+              action: 'merged',
+              previousStock: existing.inventory.currentStock,
+              newStock: updated.inventory.currentStock
+            });
+          } else {
+            // Skip strategy: don't import if already exists
+            results.push({ 
+              success: false, 
+              message: 'Part already exists (duplicate partNumber)', 
+              partNumber: data.partNumber,
+              action: 'skipped'
+            });
+          }
+        } else {
+          // Create new part
+          const part = new Part(data);
+          await part.save();
+          results.push({ 
+            success: true, 
+            message: 'Created new part', 
+            id: part._id, 
+            partNumber: part.partNumber,
+            action: 'created'
+          });
+        }
       } catch (err) {
-        results.push({ success: false, message: err.message || 'Failed to import row', detail: err });
+        results.push({ 
+          success: false, 
+          message: err.message || 'Failed to import row', 
+          detail: err.toString(),
+          action: 'error'
+        });
       }
     }
 
-    res.status(200).json({ success: true, message: 'Import finished', results });
+    const createdCount = results.filter(r => r.action === 'created').length;
+    const mergedCount = results.filter(r => r.action === 'merged').length;
+    const skippedCount = results.filter(r => r.action === 'skipped').length;
+    const errorCount = results.filter(r => r.action === 'error').length;
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Import finished', 
+      summary: {
+        total: partsArray.length,
+        created: createdCount,
+        merged: mergedCount,
+        skipped: skippedCount,
+        errors: errorCount
+      },
+      results 
+    });
   } catch (error) {
     console.error('Import parts error:', error);
     res.status(500).json({ success: false, message: 'Error importing parts', error: error.message });

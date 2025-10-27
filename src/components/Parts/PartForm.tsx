@@ -480,6 +480,61 @@ const PartForm: React.FC<PartFormProps> = ({ part, isOpen, onClose }) => {
                     </div>
                   </div>
 
+                  {/* Warranty */}
+                  <div className="border-t pt-6">
+                    <h4 className="text-lg font-medium text-gray-900 mb-4">Warranty</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Duration (months)
+                        </label>
+                        <input
+                          type="number"
+                          value={formData.warranty?.duration}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            warranty: { ...prev.warranty!, duration: parseInt(e.target.value) || 0 }
+                          }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Type *
+                        </label>
+                        <select
+                          required
+                          value={formData.warranty?.type}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            warranty: { ...prev.warranty!, type: e.target.value }
+                          }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="manufacturer">Manufacturer</option>
+                          <option value="supplier">Supplier</option>
+                          <option value="service_center">Service Center</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Description
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.warranty?.description}
+                          onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            warranty: { ...prev.warranty!, description: e.target.value }
+                          }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Images */}
                   <div className="border-t pt-6">
                     <h4 className="text-lg font-medium text-gray-900 mb-4">Images</h4>
