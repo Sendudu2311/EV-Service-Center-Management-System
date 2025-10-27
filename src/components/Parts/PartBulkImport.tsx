@@ -36,6 +36,7 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
+  const [mergeOnDuplicate, setMergeOnDuplicate] = useState(true); // NEW: Merge duplicates by default
 
   const requiredFields = ['name', 'partNumber', 'category', 'brand'];
   const categories = ['battery', 'motor', 'charging', 'electronics', 'body', 'interior', 'safety', 'consumables'];
@@ -361,7 +362,6 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
           isActive: row.isActive !== undefined ? Boolean(row.isActive === 'true' || row.isActive === true) : true,
           isRecommended: row.isRecommended !== undefined ? Boolean(row.isRecommended === 'true' || row.isRecommended === true) : false,
           isDiscontinued: row.isDiscontinued !== undefined ? Boolean(row.isDiscontinued === 'true' || row.isDiscontinued === true) : false,
-          replacementParts: row.replacementParts ? (typeof row.replacementParts === 'string' ? row.replacementParts.split(',').map((s: string) => s.trim()) : row.replacementParts) : [],
           tags,
           images
         };
@@ -383,12 +383,20 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
       }
 
       const result = await response.json();
-      const successCount = result.results.filter((r: any) => r.success).length;
-      const failCount = result.results.filter((r: any) => !r.success).length;
-      if (failCount === 0) {
-        toast.success(`Successfully imported ${successCount} parts`);
+      const summary = result.summary || { created: 0, merged: 0, skipped: 0, errors: 0 };
+      const totalSuccess = summary.created + summary.merged;
+      
+      let toastMessage = `Import completed: ${totalSuccess} parts processed`;
+      if (summary.created > 0) toastMessage += ` (${summary.created} created`;
+      if (summary.merged > 0) toastMessage += `${summary.created > 0 ? ', ' : '('}${summary.merged} merged`;
+      if (summary.skipped > 0) toastMessage += `${totalSuccess > 0 ? ', ' : '('}${summary.skipped} skipped`;
+      if (summary.errors > 0) toastMessage += `${totalSuccess > 0 || summary.skipped > 0 ? ', ' : '('}${summary.errors} errors`;
+      if (summary.created > 0 || summary.merged > 0 || summary.skipped > 0 || summary.errors > 0) toastMessage += ')';
+      
+      if (totalSuccess === result.summary?.total) {
+        toast.success(toastMessage);
       } else {
-        toast.success(`Imported ${successCount} parts, ${failCount} failed`);
+        toast.success(toastMessage);
         console.warn('Import results', result.results);
       }
 
@@ -412,32 +420,66 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
         'Cost Price', 'Retail Price', 'Wholesale Price', 'Currency',
         'Supplier Name', 'Supplier Contact', 'Supplier Notes',
         'Current Stock', 'Reserved Stock', 'Min Stock Level', 'Max Stock Level', 'Reorder Point', 'Average Usage',
-        'Lead Time (days)', 'Warranty Duration (days)', 'Warranty Type', 'Warranty Description',
-        'Tags (comma separated)', 'Image URLs (comma separated)', 'Is Recommended (true/false)', 'Is Active (true/false)', 'Is Discontinued (true/false)', 'Replacement Part Numbers (comma separated)'
+        'Lead Time (days)', 
+        'Warranty Duration (months)', 'Warranty Type', 'Warranty Description',
+        'Tags (comma separated)', 'Image URLs (comma separated)', 'Is Recommended (true/false)', 'Is Active (true/false)', 'Is Discontinued (true/false)'
       ],
       [
-        '22kW Onboard Charger (Excel Test)', 'CHG-ONBOARD-22KW-001-T', 'charging', 'onboard-charger', 'ChargeMax', '', 'High-efficiency 22kW onboard charging unit',
+        '22kW Onboard Charger (Template Example)', 'CHG-ONBOARD-22KW-001', 'charging', 'onboard-charger', 'ChargeMax', '', 'High-efficiency 22kW onboard charging unit for EV',
         '400', '22', '400', '300', '150', 'efficiency:95;cooling:liquid',
-        'VinFast,Hyundai,BMW', 'VF e34,IONIQ 5', '2022', '2024', 'lithium-ion',
+        'VinFast,Hyundai,BMW', 'VF e34,IONIQ 5,i4', '2022', '2025', 'lithium-ion',
         '3500000', '5500000', '4500000', 'VND',
-        'ChargeMax Technologies', 'info@chargemax.com', 'Specialized charging equipment manufacturer',
-        '12', '1', '5', '20', '8', '3',
-        '10', '180', 'manufacturer', '6 months manufacturer warranty',
-        'charging,onboard,22kw,charger', 'https://res.cloudinary.com/.../charger.jpg', 'true', 'true', 'false', ''
+        'ChargeMax Technologies', 'info@chargemax.com', 'Specialized EV charging equipment',
+        '15', '2', '5', '25', '10', '4',
+        '10', 
+        '24', 'manufacturer', '24 months manufacturer warranty covering defects',
+        'charging,onboard,22kw,charger,fast-charging', 'https://res.cloudinary.com/de9bsmb2q/image/upload/v1759333457/ev-service/parts/dtl5pim5rzi0whrrvgkx.jpg', 'true', 'true', 'false'
       ],
       [
-        'DC-DC Converter 12V (Excel Test)', 'ELC-DC-CONVERTER-001-T', 'electronics', 'power-converter', 'PowerTech', '', 'High voltage to 12V DC converter for auxiliary systems',
+        'DC-DC Converter 12V 125A (Template Example)', 'ELC-DC-CONVERTER-125A-001', 'electronics', 'power-converter', 'PowerTech', '', 'High voltage to 12V DC converter for auxiliary systems',
         '12', '1.5', '250', '180', '80', 'inputVoltage:250-450V;outputCurrent:125A;efficiency:92',
-        'Tesla,VinFast,Hyundai', 'Model 3,Model Y,VF e34,IONIQ 5', '2020', '2024', 'lithium-ion',
+        'Tesla,VinFast,Hyundai', 'Model 3,Model Y,VF e34,IONIQ 5', '2020', '2025', 'lithium-ion',
         '2000000', '3200000', '2600000', 'VND',
         'PowerTech Solutions', 'support@powertech.com', 'Automotive power electronics specialist',
-        '18', '2', '8', '30', '12', '6',
-        '7', '120', 'manufacturer', '4 months manufacturer warranty',
-        'electronics,dc-converter,12v,power', 'https://res.cloudinary.com/.../dc_converter.jpg', 'true', 'true', 'false', ''
+        '20', '3', '8', '35', '15', '7',
+        '7', 
+        '12', 'manufacturer', '12 months manufacturer warranty',
+        'electronics,dc-converter,12v,power,auxiliary', 'https://res.cloudinary.com/de9bsmb2q/image/upload/v1759461734/ev-service/parts/k9edp8mqhw1yham2nt46.jpg', 'true', 'true', 'false'
+      ],
+      [
+        '22kW Onboard Charger (TEST: Merge with existing stock)', 'CHG-ONBOARD-22KW-001', 'charging', 'onboard-charger', 'ChargeMax', '', 'High-efficiency 22kW onboard charging unit - THIS PART EXISTS IN DB WITH STOCK 12',
+        '400', '22', '400', '300', '150', 'efficiency:95;cooling:liquid',
+        'VinFast,Hyundai,BMW', 'VF e34,IONIQ 5,i4', '2022', '2025', 'lithium-ion',
+        '3500000', '5500000', '4500000', 'VND',
+        'ChargeMax Technologies', 'info@chargemax.com', 'Specialized EV charging equipment',
+        '10', '2', '5', '25', '10', '4',
+        '10', 
+        '24', 'manufacturer', '24 months manufacturer warranty covering defects',
+        'charging,onboard,22kw,charger,fast-charging', 'https://res.cloudinary.com/de9bsmb2q/image/upload/v1759333457/ev-service/parts/dtl5pim5rzi0whrrvgkx.jpg', 'true', 'true', 'false'
       ]
     ];
 
     const worksheet = XLSX.utils.aoa_to_sheet(templateData);
+    
+    // Set column widths for better readability
+    worksheet['!cols'] = [
+      { wch: 30 }, // Part Name
+      { wch: 20 }, // Part Number
+      { wch: 15 }, // Category
+      { wch: 18 }, // Subcategory
+      { wch: 12 }, // Brand
+      { wch: 12 }, // Model
+      { wch: 25 }, // Description
+      { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 20 }, // Specifications
+      { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, // Compatibility
+      { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, // Pricing
+      { wch: 20 }, { wch: 18 }, { wch: 15 }, // Supplier
+      { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, // Inventory
+      { wch: 12 }, // Lead Time
+      { wch: 18 }, { wch: 16 }, { wch: 30 }, // Warranty
+      { wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 25 } // Other
+    ];
+    
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Parts Template');
     XLSX.writeFile(workbook, 'parts_import_template.xlsx');
@@ -500,14 +542,16 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
                     <ul className="text-sm text-blue-700 space-y-1">
                       <li>• Upload an Excel file (.xlsx or .xls) with part data</li>
                       <li>• Required columns: Part Name, Part Number, Category, Brand</li>
-                      <li>• Optional columns: Description, Cost Price, Retail Price, Current Stock, Min Stock Level</li>
+                      <li>• Optional columns: All specification, compatibility, pricing, inventory, warranty fields</li>
+                      <li>• <strong>NEW:</strong> Full warranty support including Duration (months), Type, Description</li>
                       <li>• Category must be one of: {categories.join(', ')}</li>
+                      <li>• Choose merge or skip strategy for duplicate part numbers before importing</li>
                     </ul>
                     <button
                       onClick={downloadTemplate}
-                      className="mt-3 text-sm text-blue-600 hover:text-blue-800 underline"
+                      className="mt-3 text-sm text-blue-600 hover:text-blue-800 underline font-medium"
                     >
-                      Download Template
+                      📥 Download Complete Excel Template
                     </button>
                   </div>
 
@@ -624,6 +668,35 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
                           </p>
                         )}
                       </div>
+                    </div>
+                  )}
+
+                  {/* Duplicate Handling Option */}
+                  {showPreview && importData.length > 0 && (
+                    <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                      <h4 className="font-medium text-yellow-900 mb-3">Duplicate Part Handling</h4>
+                      <label className="flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          checked={mergeOnDuplicate}
+                          onChange={() => setMergeOnDuplicate(true)}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="ml-2 text-sm text-yellow-800">
+                          <strong>Merge:</strong> If part number exists, increase stock quantity (recommended for inventory updates)
+                        </span>
+                      </label>
+                      <label className="flex items-center cursor-pointer mt-2">
+                        <input
+                          type="radio"
+                          checked={!mergeOnDuplicate}
+                          onChange={() => setMergeOnDuplicate(false)}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="ml-2 text-sm text-yellow-800">
+                          <strong>Skip:</strong> If part number exists, skip this row (recommended for new part imports)
+                        </span>
+                      </label>
                     </div>
                   )}
 

@@ -4044,6 +4044,9 @@ export const completeAppointment = async (req, res) => {
       // Continue with completion even if checklist check fails
     }
 
+    // ✅ NEW: Automatically reduce parts when appointment is completed
+    const partsReductionResult = await reducePartsForCompletedAppointment(appointmentId);
+
     // Update appointment status with correct parameters
     await appointment.updateStatus(
       "completed",
@@ -4061,6 +4064,8 @@ export const completeAppointment = async (req, res) => {
         status: appointment.status,
         completedAt: appointment.updatedAt,
         canGenerateInvoice: true,
+        // ✅ NEW: Include parts reduction details in response
+        partsReduction: partsReductionResult
       },
     });
   } catch (error) {
@@ -4661,3 +4666,167 @@ export const confirmFinalPayment = async (req, res) => {
     });
   }
 };
+
+// ============ HELPER FUNCTION: Reduce Parts on Appointment Completion ============
+// @desc    Automatically reduce parts when appointment is completed
+// @uses    Called from completeAppointment() controller
+// @logic   Reduces both requestedParts (from ServiceReception) and commonParts (from Service)
+async function reducePartsForCompletedAppointment(appointmentId) {
+  try {
+    const { ServiceReception, Service, Part } = await import("../models/index.js");
+    
+    const appointment = await Appointment.findById(appointmentId)
+      .populate({
+        path: 'serviceReceptionId',
+        populate: [
+          { path: 'requestedParts.partId' },
+          { path: 'recommendedServices.serviceId' }
+        ]
+      });
+
+    if (!appointment || !appointment.serviceReceptionId) {
+      return { success: false, message: 'No service reception found' };
+    }
+
+    const serviceReception = appointment.serviceReceptionId;
+    const partsToReduce = [];
+    const errors = [];
+
+    // ====== METHOD 1: Reduce RequestedParts (explicitly requested during service) ======
+    if (serviceReception.requestedParts && serviceReception.requestedParts.length > 0) {
+      for (const requestedPart of serviceReception.requestedParts) {
+        // Reduce ALL requested parts (regardless of approval status)
+        // Approval status is only for customer/staff decision, not for actual usage
+        
+        try {
+          const part = await Part.findById(requestedPart.partId);
+          if (!part) {
+            errors.push({
+              partNumber: requestedPart.partNumber,
+              reason: 'Part not found in database'
+            });
+            continue;
+          }
+
+          // Check if sufficient stock available
+          if (part.inventory.currentStock >= requestedPart.quantity) {
+            // Reduce current stock
+            part.inventory.currentStock -= requestedPart.quantity;
+            
+            // Track as used
+            part.inventory.usedStock += requestedPart.quantity;
+            
+            // Update average usage (weighted: 90% old + 10% new)
+            part.inventory.averageUsage = Math.round(
+              (part.inventory.averageUsage * 0.9) + (requestedPart.quantity * 0.1)
+            );
+
+            await part.save();
+
+            partsToReduce.push({
+              partId: part._id,
+              partNumber: part.partNumber,
+              partName: part.name,
+              quantity: requestedPart.quantity,
+              source: 'requestedParts',
+              reason: requestedPart.reason || 'Used in appointment',
+              newStock: part.inventory.currentStock
+            });
+          } else {
+            errors.push({
+              partNumber: requestedPart.partNumber,
+              reason: `Insufficient stock. Available: ${part.inventory.currentStock}, Requested: ${requestedPart.quantity}`
+            });
+          }
+        } catch (err) {
+          errors.push({
+            partNumber: requestedPart.partNumber,
+            reason: err.message
+          });
+        }
+      }
+    }
+
+    // ====== METHOD 2: Reduce CommonParts from Services (if service was completed) ======
+    if (serviceReception.recommendedServices && serviceReception.recommendedServices.length > 0) {
+      for (const recommendedService of serviceReception.recommendedServices) {
+        // Only process completed services
+        if (!recommendedService.isCompleted) continue;
+        
+        try {
+          const service = await Service.findById(recommendedService.serviceId)
+            .populate('commonParts.partId');
+          
+          if (!service || !service.commonParts) continue;
+
+          // Process each common part associated with the service
+          for (const commonPart of service.commonParts) {
+            // Skip optional parts
+            if (commonPart.isOptional) continue;
+
+            // Avoid double-reduction: check if already in reduce list
+            const alreadyReduced = partsToReduce.some(
+              p => p.partId.toString() === commonPart.partId._id.toString()
+            );
+            if (alreadyReduced) continue;
+
+            try {
+              const part = await Part.findById(commonPart.partId._id);
+              if (!part) continue;
+
+              if (part.inventory.currentStock >= commonPart.quantity) {
+                part.inventory.currentStock -= commonPart.quantity;
+                part.inventory.usedStock += commonPart.quantity;
+                
+                part.inventory.averageUsage = Math.round(
+                  (part.inventory.averageUsage * 0.9) + (commonPart.quantity * 0.1)
+                );
+
+                await part.save();
+
+                partsToReduce.push({
+                  partId: part._id,
+                  partNumber: part.partNumber,
+                  partName: part.name,
+                  quantity: commonPart.quantity,
+                  source: 'commonParts',
+                  reason: `Common part for ${service.name}`,
+                  newStock: part.inventory.currentStock
+                });
+              }
+            } catch (err) {
+              console.warn(`Error reducing common part for service ${service.name}:`, err.message);
+            }
+          }
+        } catch (err) {
+          console.warn(`Error processing recommended service:`, err.message);
+        }
+      }
+    }
+
+    // ====== METHOD 3: Update Appointment.partsUsed array ======
+    if (partsToReduce.length > 0) {
+      appointment.partsUsed = partsToReduce.map(p => ({
+        partId: p.partId,
+        quantity: p.quantity,
+        unitPrice: 0, // Can be populated from invoice data later
+        totalPrice: 0
+      }));
+      await appointment.save();
+    }
+
+    return {
+      success: true,
+      partsReduced: partsToReduce.length,
+      details: partsToReduce,
+      errors: errors
+    };
+  } catch (error) {
+    console.error('Error in reducePartsForCompletedAppointment:', error);
+    return {
+      success: false,
+      message: error.message,
+      partsReduced: 0
+    };
+  }
+}
