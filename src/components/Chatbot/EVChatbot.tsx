@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Send, Loader2, MessageCircle, Zap } from 'lucide-react';
+import { X, Send, Loader2 } from 'lucide-react';
 import { chatbotAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import '../../styles/MeowlChatbot.css';
 
 interface Message {
   id: string;
@@ -97,7 +98,7 @@ const EVChatbot: React.FC<EVChatbotProps> = ({ isOpen, onClose }) => {
         content: data.message || 'I apologize, but I couldn\'t generate a response.',
         timestamp: new Date(),
         blocked: data.blocked || false
-      };      setMessages(prev => [...prev, aiResponse]);
+      }; setMessages(prev => [...prev, aiResponse]);
 
     } catch (error: any) {
       console.error('Chatbot error:', error);
@@ -127,15 +128,20 @@ const EVChatbot: React.FC<EVChatbotProps> = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-         onClick={onClose}>
+      onClick={onClose}>
       <div className="card-metal w-full max-w-2xl h-[600px] flex flex-col shadow-metal-xl"
-           onClick={(e) => e.stopPropagation()}>
-        
+        onClick={(e) => e.stopPropagation()}>
+
         {/* Header */}
         <div className="panel-metal border-b-2 border-copper-600 p-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-copper-500 to-copper-700 rounded-full flex items-center justify-center shadow-metal border-2 border-copper-400">
-              <Zap className="w-6 h-6 text-white" />
+            {/* Meowl Avatar - Position and Size Adjustments */}
+            <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden shadow-metal border-2 border-copper-400 flex items-center justify-center">
+              <img 
+                src="/meowl.png"
+                alt="EV Assistant Meowl"
+                className="meowl-avatar-image"
+              />
             </div>
             <div>
               <h3 className="text-lg font-bold text-industrial-100 text-metal">EV Assistant</h3>
@@ -159,15 +165,22 @@ const EVChatbot: React.FC<EVChatbotProps> = ({ isOpen, onClose }) => {
             >
               <div className={`flex items-start space-x-2 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
                 {message.role === 'assistant' && (
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-copper-500 to-copper-700 flex items-center justify-center shadow-metal border-2 border-copper-400 flex-shrink-0">
-                    <Zap className="w-4 h-4 text-white" />
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden shadow-metal border-2 border-copper-400 flex items-center justify-center"
+                    style={{
+                      transform: 'translateY(8px)'
+                    }}
+                  >
+                    <img
+                      src="/meowl.png"
+                      alt="Assistant"
+                      className="meowl-avatar-image"
+                    />
                   </div>
                 )}
-                <div className={`rounded-lg p-3 shadow-metal ${
-                  message.role === 'user'
+                <div className={`rounded-lg p-3 shadow-metal ${message.role === 'user'
                     ? 'bg-gradient-to-br from-steel-600 to-steel-700 text-white border-2 border-steel-500'
                     : 'panel-metal text-industrial-100 border-2 border-steel-700'
-                }`}>
+                  }`}>
                   <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                   <p className="text-xs mt-1 opacity-60">
                     {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -176,12 +189,20 @@ const EVChatbot: React.FC<EVChatbotProps> = ({ isOpen, onClose }) => {
               </div>
             </div>
           ))}
-          
+
           {isLoading && (
             <div className="flex justify-start">
               <div className="flex items-start space-x-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-copper-500 to-copper-700 flex items-center justify-center shadow-metal border-2 border-copper-400">
-                  <Zap className="w-4 h-4 text-white" />
+                <div className="flex-shrink-0"
+                  style={{
+                    transform: 'translateY(8px)'
+                  }}
+                >
+                  <img
+                    src="/meowl.png"
+                    alt="Assistant Loading"
+                    className="w-8 h-8 rounded-full object-cover shadow-metal border-2 border-copper-400 opacity-75"
+                  />
                 </div>
                 <div className="panel-metal rounded-lg p-3 border-2 border-steel-700">
                   <div className="flex items-center space-x-2 text-industrial-300">
@@ -192,7 +213,7 @@ const EVChatbot: React.FC<EVChatbotProps> = ({ isOpen, onClose }) => {
               </div>
             </div>
           )}
-          
+
           <div ref={messagesEndRef} />
         </div>
 
