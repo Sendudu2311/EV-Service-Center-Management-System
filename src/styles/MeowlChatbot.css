@@ -1,0 +1,270 @@
+/* Meowl Chatbot Peeking Effect */
+
+/* Meowl Mascot Peeking from Bottom-Right Corner */
+.meowl-mascot-peek {
+  position: fixed;
+  bottom: -50px;
+  right: -160px;
+  width: 250px;
+  height: 250px;
+  cursor: pointer;
+  z-index: 40;
+  animation: meowlfloat 3s ease-in-out infinite;
+  transform: rotate(-15deg);
+  transition: right 0.4s ease;
+}
+
+.meowl-mascot-peek.peek-in {
+  right: -40px;
+}
+
+.meowl-mascot-peek:hover {
+  right: -100px;
+}
+
+.meowl-image-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.meowl-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: rotate(-25deg);
+  transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+.meowl-mascot-peek:hover .meowl-image {
+  transform: rotate(-20deg) scale(1.05);
+}
+
+/* Quest/Help Indicator Badge */
+.meowl-quest-indicator {
+  position: absolute;
+  top: 10px;
+  left: 1%;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 3px 12px rgba(245, 158, 11, 0.4);
+  animation: pulse-meowl 2s infinite;
+  border: 2px solid white;
+  font-size: 14px;
+  z-index: 1;
+}
+
+
+.meowl-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+}
+
+
+/* Float animation */
+@keyframes meowlfloat {
+  0%, 100% {
+    transform: rotate(-15deg) translateY(0px);
+  }
+  50% {
+    transform: rotate(-15deg) translateY(-15px);
+  }
+}
+
+
+
+@keyframes meowl-pulse-expand {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* Pinging animation (like lucide MessageCircle) */
+.meowl-ping {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  background: #dc2626;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  animation: meowl-ping-pulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  box-shadow: 0 0 0 rgba(220, 38, 38, 0.7);
+  z-index: 50;
+}
+
+@keyframes meowl-ping-pulse {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* Tooltip */
+.meowl-tooltip {
+  position: absolute;
+  bottom: 100%;
+  right: 20px;
+  background: linear-gradient(135deg, rgba(25, 30, 80, 0.95), rgba(15, 20, 40, 0.95));
+  border: 2px solid #c47c00;
+  color: #fef3c7;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  box-shadow: 0 4px 12px rgba(196, 124, 0, 0.3);
+  margin-bottom: 0.5rem;
+}
+
+.meowl-mascot-peek:hover .meowl-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Arrow/tail for tooltip */
+.meowl-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  right: 30px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #c47c00;
+}
+
+/* Chat Container - Adjusted for better meowl visibility */
+.meowl-chat-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.meowl-chat-modal.hidden {
+  display: none;
+}
+
+/* Close button with meowl theme */
+.meowl-close-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, rgba(200, 124, 0, 0.3), rgba(200, 124, 0, 0.1));
+  border: 2px solid #c47c00;
+  color: #fef3c7;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.meowl-close-button:hover {
+  background: linear-gradient(135deg, rgba(200, 124, 0, 0.6), rgba(200, 124, 0, 0.3));
+  border-color: #fef3c7;
+  transform: scale(1.1) rotate(90deg);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .meowl-mascot-peek {
+    width: 120px;
+    height: 120px;
+    bottom: 20px;
+    right: -70px;
+  }
+
+  .meowl-mascot-peek.peek-in {
+    right: -10px;
+  }
+
+  .meowl-mascot-peek:hover {
+    right: 0;
+  }
+
+  .meowl-image {
+    transform: rotate(-20deg);
+  }
+
+  .meowl-quest-indicator {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+    top: 15px;
+    left: 5%;
+  }
+
+  .meowl-tooltip {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  @keyframes meowlfloat {
+    0%, 100% {
+      transform: rotate(-15deg) translateY(0px);
+    }
+    50% {
+      transform: rotate(-15deg) translateY(-10px);
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .meowl-mascot-peek {
+    width: 90px;
+    height: 90px;
+    bottom: 10px;
+    right: -50px;
+  }
+
+  .meowl-mascot-peek.peek-in {
+    right: 0;
+  }
+
+  .meowl-tooltip {
+    display: none;
+  }
+
+  .meowl-quest-indicator {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+    top: 10px;
+  }
+}
