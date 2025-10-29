@@ -10,6 +10,8 @@ import HomeScreen from "../screens/HomeScreen";
 import DashboardScreen from "../screens/DashboardScreen";
 import VehiclesScreen from "../screens/VehiclesScreen";
 import AppointmentsScreen from "../screens/AppointmentsScreen";
+import AppointmentDetailsScreen from "../screens/AppointmentDetailsScreen";
+import CancelRequestScreen from "../screens/CancelRequestScreen";
 import InvoicesScreen from "../screens/InvoicesScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import PaymentResultScreen from "../screens/PaymentResultScreen";
@@ -20,6 +22,12 @@ export type RootStackParamList = {
   Main: undefined;
   Login: undefined;
   Register: undefined;
+  AppointmentDetails: {
+    appointmentId: string;
+  };
+  CancelRequest: {
+    appointment: any;
+  };
   PaymentResult: {
     success?: string;
     transactionRef?: string;
@@ -120,6 +128,11 @@ const RootNavigator = () => {
       ) : (
         <>
           <Stack.Screen name="Main" component={MainTabs} />
+          <Stack.Screen
+            name="AppointmentDetails"
+            component={AppointmentDetailsScreen}
+          />
+          <Stack.Screen name="CancelRequest" component={CancelRequestScreen} />
           <Stack.Screen
             name="PaymentResult"
             component={PaymentResultScreen}

@@ -208,15 +208,61 @@ export const appointmentsAPI = {
       })
       .catch(handleApiError),
 
+  // New cancel flow APIs
+  requestCancellation: (
+    id: string,
+    cancelData: {
+      reason: string;
+      refundMethod: "cash" | "bank_transfer";
+      customerBankInfo?: {
+        bankName: string;
+        accountNumber: string;
+        accountHolder: string;
+      };
+      customerBankProofImage?: string;
+    }
+  ) =>
+    api
+      .post<ApiResponse<any>>(
+        `/api/appointments/${id}/request-cancel`,
+        cancelData
+      )
+      .catch(handleApiError),
+
+  approveCancellation: (
+    id: string,
+    approvalData: {
+      notes?: string;
+    }
+  ) =>
+    api
+      .post<ApiResponse<any>>(
+        `/api/appointments/${id}/approve-cancel`,
+        approvalData
+      )
+      .catch(handleApiError),
+
+  processRefund: (
+    id: string,
+    refundData: {
+      notes?: string;
+      refundProofImage?: string;
+    }
+  ) =>
+    api
+      .post<ApiResponse<any>>(
+        `/api/appointments/${id}/process-refund`,
+        refundData
+      )
+      .catch(handleApiError),
+
   getAvailableTechniciansForSlot: (slotId: string) =>
     api.get<ApiResponse<any[]>>(
       `/api/appointments/available-technicians-for-slot?slotId=${slotId}`
     ),
 
   checkVehicleBookingStatus: (vehicleId: string) =>
-    api.get<ApiResponse<any>>(
-      `/api/appointments/check-vehicle-booking-status?vehicleId=${vehicleId}`
-    ),
+    api.get<ApiResponse<any>>(`/api/appointments/vehicle-status/${vehicleId}`),
 };
 
 // Vehicles API
@@ -349,6 +395,32 @@ export const partsAPI = {
 
   search: (query: string) =>
     api.get<ApiResponse<any[]>>("/api/parts/search", { params: { query } }),
+};
+
+// Upload API
+export const uploadAPI = {
+  uploadImage: (imageUri: string, description?: string) => {
+    const formData = new FormData();
+    // React Native: Append file from URI
+    formData.append("image", {
+      uri: imageUri,
+      type: "image/jpeg",
+      name: "image.jpg",
+    } as any);
+    if (description) {
+      formData.append("description", description);
+    }
+
+    // Backend returns: { success: true, imageUrl: string, publicId: string }
+    return api.post<{
+      success: boolean;
+      message: string;
+      imageUrl: string;
+      publicId: string;
+    }>("/api/upload/image", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
 };
 
 // Chatbot API

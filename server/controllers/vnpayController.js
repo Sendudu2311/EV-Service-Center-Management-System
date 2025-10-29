@@ -179,12 +179,12 @@ export const createPayment = async (req, res, next) => {
           referer: req.get("Referer"),
           orderInfo: paymentParams.vnp_OrderInfo,
           orderType: paymentParams.vnp_OrderType,
-          // Check multiple sources: explicit flag, User-Agent, or payment type
+          // ONLY detect mobile from explicit flag or User-Agent
+          // DO NOT use payment pattern (both web and mobile can have appointment without appointmentId)
           isMobileApp:
             requestIsMobileApp ||
             req.get("User-Agent")?.includes("Expo") ||
-            req.get("User-Agent")?.includes("ReactNative") ||
-            (paymentType === "appointment" && !appointmentData?.appointmentId), // Mobile bookings don't have appointmentId yet
+            req.get("User-Agent")?.includes("ReactNative"),
         },
       });
 
@@ -453,45 +453,35 @@ export const handleReturn = async (req, res, next) => {
         (transactionMetadata?.appointmentData &&
           !transactionMetadata?.appointmentData?.appointmentId);
 
-      // Strongest indicator: deposit_booking is ALWAYS from mobile app
+      // Check if this is a deposit booking (both web and mobile can have this)
       const isDepositBooking =
         transaction?.paymentPurpose === "deposit_booking";
 
-      const isAppointmentPayment =
-        isDepositBooking ||
-        transactionMetadata?.paymentType === "appointment" ||
-        hasAppointmentDataWithoutId;
-
-      // Mobile detection priority:
-      // 1. Explicit flag in metadata (most reliable)
-      // 2. deposit_booking paymentPurpose (mobile booking pattern)
-      // 3. User-Agent
-      // 4. appointmentData without appointmentId
+      // Mobile detection priority (DO NOT include isDepositBooking - web can also have deposit_booking):
+      // 1. Explicit flag in metadata (most reliable - from isMobileApp parameter)
+      // 2. User-Agent (Expo, ReactNative)
+      // 3. appointmentData without appointmentId (mobile booking pattern)
       const isMobileApp =
-        isDepositBooking || // FORCE: deposit_booking is mobile-only
-        transactionIsMobile ||
-        pendingIsMobile ||
-        userAgentIsMobile ||
-        isAppointmentPayment ||
-        hasAppointmentDataWithoutId;
+        transactionIsMobile || // Explicit flag from mobile app
+        pendingIsMobile || // Explicit flag from pending payment
+        userAgentIsMobile; // User-Agent detection
 
-      const redirectUrl = isMobileApp
-        ? `evservicecenter://payment/vnpay-return?success=${success}&transactionRef=${vnp_TxnRef}&amount=${displayAmount}`
-        : `${
-            process.env.CLIENT_URL || "http://localhost:5173"
-          }/payment/vnpay-return?success=${success}&transactionRef=${vnp_TxnRef}&amount=${displayAmount}`;
+      // Build redirect URLs
+      const webRedirectUrl = `${
+        process.env.CLIENT_URL || "http://localhost:5173"
+      }/payment/vnpay-return?success=${success}&transactionRef=${vnp_TxnRef}&amount=${displayAmount}`;
+
+      const mobileDeepLink = `evservicecenter://payment/vnpay-return?success=${success}&transactionRef=${vnp_TxnRef}&amount=${displayAmount}`;
 
       console.log("🔀 REDIRECT DECISION:");
       console.log("  Transaction paymentPurpose:", transaction?.paymentPurpose);
       console.log("  isDepositBooking:", isDepositBooking);
-      console.log("  Redirect URL:", redirectUrl);
       console.log("  isMobileApp:", isMobileApp);
       console.log("  Detection breakdown:", {
         isDepositBooking,
         transactionIsMobile,
         pendingIsMobile,
         userAgentIsMobile,
-        isAppointmentPayment,
         hasAppointmentDataWithoutId,
       });
       console.log(
@@ -503,11 +493,12 @@ export const handleReturn = async (req, res, next) => {
         pendingMetadata?.isMobileApp
       );
 
-      // FINAL CHECK: If deposit_booking, ALWAYS redirect to mobile deep link
-      // deposit_booking payments are ONLY from mobile app, never from web
-      if (isDepositBooking) {
+      // FINAL CHECK: Only redirect to mobile deep link if explicitly from mobile app
+      // For mobile apps: redirect to HTML page → deep link
+      // For web apps: redirect directly to web URL
+      if (isMobileApp) {
         console.log(
-          "✅ FORCING mobile redirect for deposit_booking payment (mobile-only pattern)"
+          "✅ Mobile app detected - redirecting to HTML page for deep link"
         );
         // Redirect to HTML page that will trigger deep link
         // Mobile browsers can't directly handle deep link schemes from server redirects
@@ -516,7 +507,12 @@ export const handleReturn = async (req, res, next) => {
         return res.redirect(htmlRedirectUrl);
       }
 
-      return res.redirect(redirectUrl);
+      // Web redirect (includes deposit_booking payments from web)
+      console.log(
+        "🌐 Web app detected - redirecting to web URL:",
+        webRedirectUrl
+      );
+      return res.redirect(webRedirectUrl);
     } else {
       console.log("No transaction found for ref:", vnp_TxnRef);
       console.log("This should not happen - transaction was found earlier");

@@ -11,12 +11,14 @@ import {
   Modal,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { appointmentsAPI, vnpayAPI } from "../services/api";
 import { useCustomEvent } from "../contexts/SocketContext";
 import AppointmentBookingScreen from "./AppointmentBookingScreen";
 
 interface Appointment {
   _id: string;
+  appointmentNumber?: string;
   vehicleId: {
     make: string;
     model: string;
@@ -31,11 +33,18 @@ interface Appointment {
   scheduledDate: string;
   scheduledTime: string;
   status: string;
-  totalAmount: number;
+  totalAmount?: number;
   customerNotes?: string;
+  bookingType?: string;
+  depositInfo?: {
+    amount: number;
+    paid?: boolean;
+  };
+  cancelRequest?: any;
 }
 
 const AppointmentsScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -46,6 +55,18 @@ const AppointmentsScreen: React.FC = () => {
     fetchAppointments();
     checkPendingPaymentOnMount();
   }, []);
+
+  // Refresh when screen is focused (e.g., after returning from other screens)
+  // This ensures the list is updated after navigating from other screens
+  useFocusEffect(
+    React.useCallback(() => {
+      // Only refresh if not the initial mount (to avoid double fetch)
+      const timer = setTimeout(() => {
+        fetchAppointments();
+      }, 100);
+      return () => clearTimeout(timer);
+    }, [])
+  );
 
   const checkPendingPaymentOnMount = async () => {
     try {
@@ -144,26 +165,19 @@ const AppointmentsScreen: React.FC = () => {
     setRefreshing(false);
   };
 
-  const handleCancelAppointment = async (appointmentId: string) => {
-    Alert.alert("Xác nhận hủy", "Bạn có chắc chắn muốn hủy lịch hẹn này?", [
-      { text: "Không", style: "cancel" },
-      {
-        text: "Hủy lịch",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await appointmentsAPI.cancel(
-              appointmentId,
-              "Khách hàng yêu cầu hủy"
-            );
-            Alert.alert("Thành công", "Đã hủy lịch hẹn");
-            fetchAppointments();
-          } catch (error) {
-            Alert.alert("Lỗi", "Không thể hủy lịch hẹn");
-          }
-        },
-      },
-    ]);
+  const handleCancelAppointment = async (appointment: Appointment) => {
+    // Fetch full appointment details to ensure we have all required fields
+    try {
+      const response = await appointmentsAPI.getById(appointment._id);
+      const fullAppointment = response.data?.data || appointment;
+
+      // Navigate to CancelRequestScreen with full appointment data (matching web flow)
+      navigation.navigate("CancelRequest", { appointment: fullAppointment });
+    } catch (error) {
+      console.error("Error fetching appointment details:", error);
+      // Fallback: navigate with available appointment data
+      navigation.navigate("CancelRequest", { appointment });
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -255,7 +269,16 @@ const AppointmentsScreen: React.FC = () => {
             </View>
           ) : (
             appointments.map((appointment) => (
-              <View key={appointment._id} style={styles.appointmentCard}>
+              <TouchableOpacity
+                key={appointment._id}
+                style={styles.appointmentCard}
+                onPress={() =>
+                  navigation.navigate("AppointmentDetails", {
+                    appointmentId: appointment._id,
+                  })
+                }
+                activeOpacity={0.7}
+              >
                 <View style={styles.appointmentHeader}>
                   <View>
                     <Text style={styles.vehicleName}>
@@ -321,12 +344,17 @@ const AppointmentsScreen: React.FC = () => {
                   appointment.status === "confirmed") && (
                   <TouchableOpacity
                     style={styles.cancelButton}
-                    onPress={() => handleCancelAppointment(appointment._id)}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleCancelAppointment(appointment);
+                    }}
                   >
-                    <Text style={styles.cancelButtonText}>Hủy lịch hẹn</Text>
+                    <Text style={styles.cancelButtonText}>
+                      Yêu cầu hủy lịch hẹn
+                    </Text>
                   </TouchableOpacity>
                 )}
-              </View>
+              </TouchableOpacity>
             ))
           )}
         </View>

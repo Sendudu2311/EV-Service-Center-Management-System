@@ -347,6 +347,10 @@ const appointmentSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
+      refundNotes: {
+        type: String,
+        description: "Notes from staff when processing refund",
+      },
       refundTransactionId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Transaction",
@@ -996,6 +1000,7 @@ appointmentSchema.methods.processRefund = function (
   this.cancelRequest.refundProcessedBy = userId;
   this.cancelRequest.refundTransactionId = refundTransactionId;
   this.cancelRequest.refundProofImage = refundProofImage;
+  this.cancelRequest.refundNotes = notes || ""; // Store notes from staff when processing refund
 
   // After successful refund, change status to cancelled
   this.status = "cancelled";

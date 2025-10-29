@@ -278,8 +278,42 @@ slotSchema.methods.getAvailableTechnicians = function () {
 slotSchema.methods.getAvailableTechniciansOptimized = async function () {
   const availableTechnicians = [];
 
+  // If slot is at full capacity, return empty array
+  if (this.bookedCount >= this.capacity) {
+    console.log(
+      `🔍 [getAvailableTechniciansOptimized] Slot ${this._id} is at full capacity (${this.bookedCount}/${this.capacity}), returning empty array`
+    );
+    return [];
+  }
+
+  const Appointment = (await import("./Appointment.js")).default;
+
   for (const technicianId of this.technicianIds) {
-    // Get technician profile data without checking workload
+    // Count current appointments for this technician in this slot
+    const appointmentCount = await Appointment.countDocuments({
+      slotId: this._id,
+      assignedTechnician: technicianId,
+      status: { $in: ["confirmed", "in_progress"] },
+    });
+
+    console.log(
+      `🔍 [getAvailableTechniciansOptimized] Technician ${technicianId}: appointmentCount=${appointmentCount}, slotBookedCount=${this.bookedCount}, slotCapacity=${this.capacity}`
+    );
+
+    // Calculate remaining capacity in slot
+    const remainingCapacity = this.capacity - this.bookedCount;
+
+    // Skip technician if:
+    // 1. Slot has no remaining capacity, OR
+    // 2. Technician already has an appointment in this slot
+    if (remainingCapacity <= 0 || appointmentCount > 0) {
+      console.log(
+        `⏭️ [getAvailableTechniciansOptimized] Skipping technician ${technicianId} - remainingCapacity=${remainingCapacity}, appointmentCount=${appointmentCount}`
+      );
+      continue;
+    }
+
+    // Get technician profile data
     const TechnicianProfile = (await import("./TechnicianProfile.js")).default;
     const technicianProfile = await TechnicianProfile.findOne({
       technicianId: technicianId,
@@ -306,6 +340,10 @@ slotSchema.methods.getAvailableTechniciansOptimized = async function () {
       });
     }
   }
+
+  console.log(
+    `✅ [getAvailableTechniciansOptimized] Found ${availableTechnicians.length} available technicians for slot ${this._id}`
+  );
 
   return availableTechnicians;
 };

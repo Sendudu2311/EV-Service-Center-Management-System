@@ -50,30 +50,45 @@ export const checkVehicleBookingStatus = async (req, res) => {
       });
     }
 
-    // Pending statuses - appointment is still active
-    const pendingStatuses = [
-      "pending",
-      "confirmed",
-      "customer_arrived",
-      "reception_created",
-      "reception_approved",
-      "parts_insufficient",
-      "waiting_for_parts",
-      "in_progress",
-      "parts_requested",
+    // Terminal states - appointments that are finished/cancelled and should NOT block new bookings
+    const terminalStatuses = [
+      "completed",
+      "invoiced",
+      "cancelled",
+      "no_show",
       "cancel_requested",
       "cancel_approved",
+      "cancel_refunded",
+      "rescheduled",
     ];
 
-    // Check for pending appointments
-    const pendingAppointments = await Appointment.find({
+    // Check for active appointments (exclude terminal states)
+    // Only appointments that are NOT in terminal states should block new bookings
+    const activeAppointments = await Appointment.find({
       vehicleId: vehicleId,
-      status: { $in: pendingStatuses },
+      status: { $nin: terminalStatuses }, // $nin = not in
     }).select(
       "appointmentNumber scheduledDate scheduledTime status coreStatus"
     );
 
-    const hasPendingAppointments = pendingAppointments.length > 0;
+    // Debug logging
+    console.log(
+      `🔍 [checkVehicleBookingStatus] Vehicle ${vehicleId}: Found ${activeAppointments.length} active appointment(s)`
+    );
+    if (activeAppointments.length > 0) {
+      console.log(
+        "📋 Active appointments:",
+        activeAppointments.map((apt) => ({
+          number: apt.appointmentNumber,
+          status: apt.status,
+          coreStatus: apt.coreStatus,
+          date: apt.scheduledDate,
+          time: apt.scheduledTime,
+        }))
+      );
+    }
+
+    const hasActiveAppointments = activeAppointments.length > 0;
 
     res.json({
       success: true,
@@ -85,10 +100,10 @@ export const checkVehicleBookingStatus = async (req, res) => {
           year: vehicle.year,
           vin: vehicle.vin,
         },
-        hasPendingAppointments,
-        pendingAppointments: hasPendingAppointments ? pendingAppointments : [],
-        message: hasPendingAppointments
-          ? "Vehicle has pending appointments"
+        hasPendingAppointments: hasActiveAppointments,
+        pendingAppointments: hasActiveAppointments ? activeAppointments : [],
+        message: hasActiveAppointments
+          ? "Vehicle has active appointments"
           : "Vehicle is available for booking",
       },
     });
@@ -255,7 +270,9 @@ export const getAppointment = async (req, res) => {
         "firstName lastName specializations phone"
       )
       .populate("serviceNotes.addedBy", "firstName lastName role")
-      .populate("checklistItems.completedBy", "firstName lastName");
+      .populate("checklistItems.completedBy", "firstName lastName")
+      .populate("cancelRequest.approvedBy", "firstName lastName")
+      .populate("cancelRequest.refundProcessedBy", "firstName lastName");
 
     if (!appointment) {
       return res.status(404).json({
@@ -4045,7 +4062,9 @@ export const completeAppointment = async (req, res) => {
     }
 
     // ✅ NEW: Automatically reduce parts when appointment is completed
-    const partsReductionResult = await reducePartsForCompletedAppointment(appointmentId);
+    const partsReductionResult = await reducePartsForCompletedAppointment(
+      appointmentId
+    );
 
     // Update appointment status with correct parameters
     await appointment.updateStatus(
@@ -4065,7 +4084,7 @@ export const completeAppointment = async (req, res) => {
         completedAt: appointment.updatedAt,
         canGenerateInvoice: true,
         // ✅ NEW: Include parts reduction details in response
-        partsReduction: partsReductionResult
+        partsReduction: partsReductionResult,
       },
     });
   } catch (error) {
@@ -4673,19 +4692,20 @@ export const confirmFinalPayment = async (req, res) => {
 // @logic   Reduces both requestedParts (from ServiceReception) and commonParts (from Service)
 async function reducePartsForCompletedAppointment(appointmentId) {
   try {
-    const { ServiceReception, Service, Part } = await import("../models/index.js");
-    
-    const appointment = await Appointment.findById(appointmentId)
-      .populate({
-        path: 'serviceReceptionId',
-        populate: [
-          { path: 'requestedParts.partId' },
-          { path: 'recommendedServices.serviceId' }
-        ]
-      });
+    const { ServiceReception, Service, Part } = await import(
+      "../models/index.js"
+    );
+
+    const appointment = await Appointment.findById(appointmentId).populate({
+      path: "serviceReceptionId",
+      populate: [
+        { path: "requestedParts.partId" },
+        { path: "recommendedServices.serviceId" },
+      ],
+    });
 
     if (!appointment || !appointment.serviceReceptionId) {
-      return { success: false, message: 'No service reception found' };
+      return { success: false, message: "No service reception found" };
     }
 
     const serviceReception = appointment.serviceReceptionId;
@@ -4693,17 +4713,20 @@ async function reducePartsForCompletedAppointment(appointmentId) {
     const errors = [];
 
     // ====== METHOD 1: Reduce RequestedParts (explicitly requested during service) ======
-    if (serviceReception.requestedParts && serviceReception.requestedParts.length > 0) {
+    if (
+      serviceReception.requestedParts &&
+      serviceReception.requestedParts.length > 0
+    ) {
       for (const requestedPart of serviceReception.requestedParts) {
         // Reduce ALL requested parts (regardless of approval status)
         // Approval status is only for customer/staff decision, not for actual usage
-        
+
         try {
           const part = await Part.findById(requestedPart.partId);
           if (!part) {
             errors.push({
               partNumber: requestedPart.partNumber,
-              reason: 'Part not found in database'
+              reason: "Part not found in database",
             });
             continue;
           }
@@ -4712,13 +4735,13 @@ async function reducePartsForCompletedAppointment(appointmentId) {
           if (part.inventory.currentStock >= requestedPart.quantity) {
             // Reduce current stock
             part.inventory.currentStock -= requestedPart.quantity;
-            
+
             // Track as used
             part.inventory.usedStock += requestedPart.quantity;
-            
+
             // Update average usage (weighted: 90% old + 10% new)
             part.inventory.averageUsage = Math.round(
-              (part.inventory.averageUsage * 0.9) + (requestedPart.quantity * 0.1)
+              part.inventory.averageUsage * 0.9 + requestedPart.quantity * 0.1
             );
 
             await part.save();
@@ -4728,35 +4751,39 @@ async function reducePartsForCompletedAppointment(appointmentId) {
               partNumber: part.partNumber,
               partName: part.name,
               quantity: requestedPart.quantity,
-              source: 'requestedParts',
-              reason: requestedPart.reason || 'Used in appointment',
-              newStock: part.inventory.currentStock
+              source: "requestedParts",
+              reason: requestedPart.reason || "Used in appointment",
+              newStock: part.inventory.currentStock,
             });
           } else {
             errors.push({
               partNumber: requestedPart.partNumber,
-              reason: `Insufficient stock. Available: ${part.inventory.currentStock}, Requested: ${requestedPart.quantity}`
+              reason: `Insufficient stock. Available: ${part.inventory.currentStock}, Requested: ${requestedPart.quantity}`,
             });
           }
         } catch (err) {
           errors.push({
             partNumber: requestedPart.partNumber,
-            reason: err.message
+            reason: err.message,
           });
         }
       }
     }
 
     // ====== METHOD 2: Reduce CommonParts from Services (if service was completed) ======
-    if (serviceReception.recommendedServices && serviceReception.recommendedServices.length > 0) {
+    if (
+      serviceReception.recommendedServices &&
+      serviceReception.recommendedServices.length > 0
+    ) {
       for (const recommendedService of serviceReception.recommendedServices) {
         // Only process completed services
         if (!recommendedService.isCompleted) continue;
-        
+
         try {
-          const service = await Service.findById(recommendedService.serviceId)
-            .populate('commonParts.partId');
-          
+          const service = await Service.findById(
+            recommendedService.serviceId
+          ).populate("commonParts.partId");
+
           if (!service || !service.commonParts) continue;
 
           // Process each common part associated with the service
@@ -4766,7 +4793,7 @@ async function reducePartsForCompletedAppointment(appointmentId) {
 
             // Avoid double-reduction: check if already in reduce list
             const alreadyReduced = partsToReduce.some(
-              p => p.partId.toString() === commonPart.partId._id.toString()
+              (p) => p.partId.toString() === commonPart.partId._id.toString()
             );
             if (alreadyReduced) continue;
 
@@ -4777,9 +4804,9 @@ async function reducePartsForCompletedAppointment(appointmentId) {
               if (part.inventory.currentStock >= commonPart.quantity) {
                 part.inventory.currentStock -= commonPart.quantity;
                 part.inventory.usedStock += commonPart.quantity;
-                
+
                 part.inventory.averageUsage = Math.round(
-                  (part.inventory.averageUsage * 0.9) + (commonPart.quantity * 0.1)
+                  part.inventory.averageUsage * 0.9 + commonPart.quantity * 0.1
                 );
 
                 await part.save();
@@ -4789,13 +4816,16 @@ async function reducePartsForCompletedAppointment(appointmentId) {
                   partNumber: part.partNumber,
                   partName: part.name,
                   quantity: commonPart.quantity,
-                  source: 'commonParts',
+                  source: "commonParts",
                   reason: `Common part for ${service.name}`,
-                  newStock: part.inventory.currentStock
+                  newStock: part.inventory.currentStock,
                 });
               }
             } catch (err) {
-              console.warn(`Error reducing common part for service ${service.name}:`, err.message);
+              console.warn(
+                `Error reducing common part for service ${service.name}:`,
+                err.message
+              );
             }
           }
         } catch (err) {
@@ -4806,11 +4836,11 @@ async function reducePartsForCompletedAppointment(appointmentId) {
 
     // ====== METHOD 3: Update Appointment.partsUsed array ======
     if (partsToReduce.length > 0) {
-      appointment.partsUsed = partsToReduce.map(p => ({
+      appointment.partsUsed = partsToReduce.map((p) => ({
         partId: p.partId,
         quantity: p.quantity,
         unitPrice: 0, // Can be populated from invoice data later
-        totalPrice: 0
+        totalPrice: 0,
       }));
       await appointment.save();
     }
@@ -4819,14 +4849,14 @@ async function reducePartsForCompletedAppointment(appointmentId) {
       success: true,
       partsReduced: partsToReduce.length,
       details: partsToReduce,
-      errors: errors
+      errors: errors,
     };
   } catch (error) {
-    console.error('Error in reducePartsForCompletedAppointment:', error);
+    console.error("Error in reducePartsForCompletedAppointment:", error);
     return {
       success: false,
       message: error.message,
-      partsReduced: 0
+      partsReduced: 0,
     };
   }
 }

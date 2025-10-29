@@ -105,10 +105,18 @@ const PaymentResultScreen: React.FC = () => {
           );
 
           // Navigate back to appointments screen after 2 seconds
+          // Note: Appointments is in MainTabs, not in RootStack
           setTimeout(() => {
             navigation.reset({
               index: 0,
-              routes: [{ name: "Appointments" as never }],
+              routes: [
+                {
+                  name: "Main",
+                  params: {
+                    screen: "Appointments",
+                  },
+                } as never,
+              ],
             });
           }, 2000);
         } else {
