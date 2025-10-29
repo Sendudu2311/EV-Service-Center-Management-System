@@ -121,6 +121,7 @@ app.use("/api/slots", slotRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 app.use("/api/contacts", contactRoutes);
 app.use("/api/reports", reportsRoutes);
+
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/upload", uploadRoutes);
 
