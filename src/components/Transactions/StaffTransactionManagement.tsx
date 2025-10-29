@@ -68,17 +68,17 @@ const paymentPurposeTranslations: Record<string, string> = {
 const getStatusColor = (status: string) => {
   const colors = {
     pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-    processing: "bg-blue-100 text-blue-800 border-blue-200",
+    processing: "bg-lime-100 text-lime-800 border-blue-200",
     completed: "bg-green-100 text-green-800 border-green-200",
     failed: "bg-red-100 text-red-800 border-red-200",
-    cancelled: "bg-gray-100 text-gray-800 border-gray-200",
+    cancelled: "bg-dark-100 text-gray-800 border-dark-200",
     expired: "bg-orange-100 text-orange-800 border-orange-200",
     refunded: "bg-purple-100 text-purple-800 border-purple-200",
     disputed: "bg-red-100 text-red-800 border-red-200",
   };
   return (
     colors[status as keyof typeof colors] ||
-    "bg-gray-100 text-gray-800 border-gray-200"
+    "bg-dark-100 text-gray-800 border-dark-200"
   );
 };
 
@@ -109,8 +109,8 @@ const getStatusInfo = (status: string) => {
     processing: {
       text: "Đang xử lý giao dịch",
       icon: ArrowPathIcon,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50"
+      color: "text-lime-600",
+      bgColor: "bg-dark-900"
     },
     completed: {
       text: "Giao dịch thành công",
@@ -127,8 +127,8 @@ const getStatusInfo = (status: string) => {
     cancelled: {
       text: "Giao dịch đã hủy",
       icon: XCircleIcon,
-      color: "text-gray-600",
-      bgColor: "bg-gray-50"
+      color: "text-text-secondary",
+      bgColor: "bg-dark-900"
     },
     expired: {
       text: "Giao dịch đã hết hạn",
@@ -534,7 +534,7 @@ const StaffTransactionManagement: React.FC = () => {
   const [expandedTransaction, setExpandedTransaction] = useState<string | null>(null);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-dark-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <style jsx>{`
           @keyframes fadeIn {
@@ -555,17 +555,17 @@ const StaffTransactionManagement: React.FC = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-white">
                 Quản lý giao dịch
               </h1>
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-text-secondary">
                 Quản lý tất cả giao dịch thanh toán trong hệ thống
               </p>
             </div>
             <div className="flex items-center space-x-3">
               <button
                 onClick={() => setShowStats(!showStats)}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                className="inline-flex items-center px-4 py-2 border border-dark-200 rounded-md shadow-sm text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900"
               >
                 <ChartBarIcon className="h-4 w-4 mr-2" />
                 {showStats ? "Ẩn thống kê" : "Hiện thống kê"}
@@ -573,7 +573,7 @@ const StaffTransactionManagement: React.FC = () => {
               <button
                 onClick={() => fetchTransactions()}
                 disabled={loading}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                className="inline-flex items-center px-4 py-2 border border-dark-200 rounded-md shadow-sm text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900 disabled:opacity-50"
               >
                 <ArrowPathIcon
                   className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
@@ -582,7 +582,7 @@ const StaffTransactionManagement: React.FC = () => {
               </button>
               <button
                 onClick={processExpiredTransactions}
-                className="inline-flex items-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50"
+                className="inline-flex items-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm text-text-muted text-red-700 bg-dark-300 hover:bg-red-50"
               >
                 <TrashIcon className="h-4 w-4 mr-2" />
                 Dọn dẹp hết hạn
@@ -593,40 +593,40 @@ const StaffTransactionManagement: React.FC = () => {
 
         {/* Statistics Panel */}
         {showStats && (
-          <div className="bg-white rounded-lg shadow-sm border mb-6 p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
+          <div className="bg-dark-300 rounded-lg shadow-sm border mb-6 p-6">
+            <h3 className="text-lg text-text-muted text-white mb-4">
               Thống kê giao dịch
             </h3>
 
             {statsLoading ? (
               <div className="animate-pulse grid grid-cols-1 md:grid-cols-4 gap-4">
                 {[...Array(4)].map((_, i) => (
-                  <div key={i} className="bg-gray-100 p-4 rounded-lg">
-                    <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-                    <div className="h-6 bg-gray-300 rounded w-1/2"></div>
+                  <div key={i} className="bg-dark-100 p-4 rounded-lg">
+                    <div className="h-4 bg-dark-300 rounded w-3/4 mb-2"></div>
+                    <div className="h-6 bg-dark-300 rounded w-1/2"></div>
                   </div>
                 ))}
               </div>
             ) : stats ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div className="bg-dark-900 p-4 rounded-lg border border-blue-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-blue-600">
+                      <p className="text-sm text-text-muted text-lime-600">
                         Tổng giao dịch
                       </p>
-                      <p className="text-2xl font-bold text-blue-900">
+                      <p className="text-2xl font-bold text-lime-900">
                         {stats.totalTransactions || 0}
                       </p>
                     </div>
-                    <DocumentTextIcon className="h-8 w-8 text-blue-500" />
+                    <DocumentTextIcon className="h-8 w-8 text-lime-500" />
                   </div>
                 </div>
 
                 <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-green-600">
+                      <p className="text-sm text-text-muted text-green-600">
                         Doanh thu
                       </p>
                       <p className="text-2xl font-bold text-green-900">
@@ -640,7 +640,7 @@ const StaffTransactionManagement: React.FC = () => {
                 <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-purple-600">
+                      <p className="text-sm text-text-muted text-purple-600">
                         Tỷ lệ thành công
                       </p>
                       <p className="text-2xl font-bold text-purple-900">
@@ -654,7 +654,7 @@ const StaffTransactionManagement: React.FC = () => {
                 <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-orange-600">
+                      <p className="text-sm text-text-muted text-orange-600">
                         Thất bại
                       </p>
                       <p className="text-2xl font-bold text-orange-900">
@@ -667,7 +667,7 @@ const StaffTransactionManagement: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-4">
+              <p className="text-text-muted text-center py-4">
                 Không có dữ liệu thống kê
               </p>
             )}
@@ -675,13 +675,13 @@ const StaffTransactionManagement: React.FC = () => {
         )}
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm border mb-6 p-6">
+        <div className="bg-dark-300 rounded-lg shadow-sm border mb-6 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-gray-900">Bộ lọc</h3>
+            <h3 className="text-lg text-text-muted text-white">Bộ lọc</h3>
             {Object.values(filters).some((value) => value) && (
               <button
                 onClick={clearFilters}
-                className="text-sm text-blue-600 hover:text-blue-500"
+                className="text-sm text-lime-600 hover:text-lime-500"
               >
                 Xóa bộ lọc
               </button>
@@ -690,15 +690,15 @@ const StaffTransactionManagement: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm text-text-muted text-text-secondary mb-1">
                 Tìm kiếm
               </label>
               <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-text-muted" />
                 <input
                   type="text"
                   placeholder="Mã giao dịch, khách hàng..."
-                  className="pl-10 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className="pl-10 w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 sm:text-sm"
                   value={filters.search}
                   onChange={(e) => handleFilterChange("search", e.target.value)}
                 />
@@ -706,11 +706,11 @@ const StaffTransactionManagement: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm text-text-muted text-text-secondary mb-1">
                 Trạng thái
               </label>
               <select
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                className="w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 sm:text-sm"
                 value={filters.status}
                 onChange={(e) => handleFilterChange("status", e.target.value)}
               >
@@ -726,11 +726,11 @@ const StaffTransactionManagement: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm text-text-muted text-text-secondary mb-1">
                 Loại giao dịch
               </label>
               <select
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                className="w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 sm:text-sm"
                 value={filters.transactionType}
                 onChange={(e) =>
                   handleFilterChange("transactionType", e.target.value)
@@ -746,11 +746,11 @@ const StaffTransactionManagement: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm text-text-muted text-text-secondary mb-1">
                 Mục đích thanh toán
               </label>
               <select
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                className="w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 sm:text-sm"
                 value={filters.paymentPurpose}
                 onChange={(e) =>
                   handleFilterChange("paymentPurpose", e.target.value)
@@ -766,12 +766,12 @@ const StaffTransactionManagement: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm text-text-muted text-text-secondary mb-1">
                 Từ ngày
               </label>
               <input
                 type="date"
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                className="w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 sm:text-sm"
                 value={filters.startDate}
                 onChange={(e) =>
                   handleFilterChange("startDate", e.target.value)
@@ -780,12 +780,12 @@ const StaffTransactionManagement: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm text-text-muted text-text-secondary mb-1">
                 Đến ngày
               </label>
               <input
                 type="date"
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                className="w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 sm:text-sm"
                 value={filters.endDate}
                 onChange={(e) => handleFilterChange("endDate", e.target.value)}
               />
@@ -799,16 +799,16 @@ const StaffTransactionManagement: React.FC = () => {
             // Loading state
             <div className="space-y-4">
               {[...Array(5)].map((_, index) => (
-                <div key={index} className="bg-white rounded-lg shadow-sm border p-6 animate-pulse">
+                <div key={index} className="bg-dark-300 rounded-lg shadow-sm border p-6 animate-pulse">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="h-6 bg-gray-300 rounded w-64 mb-3"></div>
-                      <div className="h-4 bg-gray-300 rounded w-48 mb-2"></div>
-                      <div className="h-4 bg-gray-300 rounded w-32"></div>
+                      <div className="h-6 bg-dark-300 rounded w-64 mb-3"></div>
+                      <div className="h-4 bg-dark-300 rounded w-48 mb-2"></div>
+                      <div className="h-4 bg-dark-300 rounded w-32"></div>
                     </div>
                     <div className="text-right">
-                      <div className="h-8 bg-gray-300 rounded w-32 mb-2"></div>
-                      <div className="h-6 bg-gray-300 rounded w-24"></div>
+                      <div className="h-8 bg-dark-300 rounded w-32 mb-2"></div>
+                      <div className="h-6 bg-dark-300 rounded w-24"></div>
                     </div>
                   </div>
                 </div>
@@ -816,15 +816,15 @@ const StaffTransactionManagement: React.FC = () => {
             </div>
           ) : error ? (
             // Error state
-            <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
-              <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <div className="bg-dark-300 rounded-lg shadow-sm border p-8 text-center">
+              <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-600 mb-4" />
+              <h3 className="text-lg font-semibold text-white mb-2">
                 Không thể tải giao dịch
               </h3>
-              <p className="text-gray-600 mb-4">{error}</p>
+              <p className="text-text-secondary mb-4">{error}</p>
               <button
                 onClick={() => fetchTransactions()}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                className="inline-flex items-center px-4 py-2 border border-dark-200 rounded-md shadow-sm text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900"
               >
                 <ArrowPathIcon className="h-4 w-4 mr-2" />
                 Thử lại
@@ -832,12 +832,12 @@ const StaffTransactionManagement: React.FC = () => {
             </div>
           ) : transactions.length === 0 ? (
             // Empty state
-            <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
-              <CreditCardIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <div className="bg-dark-300 rounded-lg shadow-sm border p-8 text-center">
+              <CreditCardIcon className="mx-auto h-12 w-12 text-text-muted mb-4" />
+              <h3 className="text-lg font-semibold text-white mb-2">
                 Không có giao dịch
               </h3>
-              <p className="text-gray-600">
+              <p className="text-text-secondary">
                 Không có giao dịch nào trong khoảng thời gian này.
               </p>
             </div>
@@ -856,7 +856,7 @@ const StaffTransactionManagement: React.FC = () => {
                 return (
                   <div
                     key={transaction._id}
-                    className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow overflow-hidden"
+                    className="bg-dark-300 rounded-lg shadow-sm border hover:shadow-md transition-shadow overflow-hidden"
                   >
                     {/* Main Transaction Card */}
                     <div className="p-6">
@@ -864,14 +864,14 @@ const StaffTransactionManagement: React.FC = () => {
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-3">
                             <div className="flex items-center space-x-2">
-                              <PaymentMethodIcon className="h-5 w-5 text-gray-600" />
+                              <PaymentMethodIcon className="h-5 w-5 text-text-secondary" />
                               <StatusIcon className={`h-5 w-5 ${statusInfo.color}`} />
                             </div>
                             <div>
-                              <h3 className="font-semibold text-gray-900">
+                              <h3 className="font-semibold text-white">
                                 {transaction.transactionRef || transaction._id}
                               </h3>
-                              <p className="text-sm text-gray-500">
+                              <p className="text-sm text-text-muted">
                                 {formatVietnameseDateTime(transaction.createdAt)}
                               </p>
                             </div>
@@ -879,30 +879,30 @@ const StaffTransactionManagement: React.FC = () => {
 
                           <div className="space-y-2">
                             <div className="flex items-center space-x-2">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-text-muted ${getStatusColor(
                                 transaction.status
                               )}`}>
                                 {transactionStatusTranslations[transaction.status] || transaction.status}
                               </span>
-                              <span className="text-sm text-gray-500">•</span>
-                              <span className="text-sm text-gray-600">
+                              <span className="text-sm text-text-muted">•</span>
+                              <span className="text-sm text-text-secondary">
                                 {transactionTypeTranslations[transaction.transactionType] || transaction.transactionType}
                               </span>
-                              <span className="text-sm text-gray-500">•</span>
-                              <span className="text-sm text-gray-600">
+                              <span className="text-sm text-text-muted">•</span>
+                              <span className="text-sm text-text-secondary">
                                 {paymentPurposeTranslations[transaction.paymentPurpose] || transaction.paymentPurpose}
                               </span>
                             </div>
 
                             {/* Customer preview */}
                             {customerInfo.length > 0 && (
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-text-muted">
                                 Khách hàng: {customerInfo[0].value}
                               </div>
                             )}
 
                             {transaction.notes && (
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-text-secondary">
                                 {transaction.notes}
                               </p>
                             )}
@@ -910,11 +910,11 @@ const StaffTransactionManagement: React.FC = () => {
                         </div>
 
                         <div className="text-right ml-6">
-                          <div className="text-2xl font-bold text-gray-900 mb-1">
+                          <div className="text-2xl font-bold text-white mb-1">
                             {formatVND(transaction.amount)}
                           </div>
                           {transaction.paidAmount !== transaction.amount && (
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-text-muted">
                               Đã thanh toán: {formatVND(transaction.paidAmount)}
                             </div>
                           )}
@@ -927,7 +927,7 @@ const StaffTransactionManagement: React.FC = () => {
                                   setSelectedTransaction(transaction);
                                   setRefundModal(true);
                                 }}
-                                className="inline-flex items-center px-3 py-1 border border-red-300 rounded text-xs font-medium text-red-700 bg-white hover:bg-red-50"
+                                className="inline-flex items-center px-3 py-1 border border-red-300 rounded text-xs text-text-muted text-red-700 bg-dark-300 hover:bg-red-50"
                               >
                                 <BanknotesIcon className="h-3 w-3 mr-1" />
                                 Hoàn tiền
@@ -937,7 +937,7 @@ const StaffTransactionManagement: React.FC = () => {
                             <select
                               onChange={(e) => handleUpdateStatus(transaction._id, e.target.value)}
                               value={transaction.status}
-                              className="inline-flex items-center px-3 py-1 border border-gray-300 rounded text-xs font-medium text-gray-700 bg-white hover:bg-gray-50"
+                              className="inline-flex items-center px-3 py-1 border border-dark-300 rounded text-xs text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900"
                             >
                               <option value="">Cập nhật trạng thái</option>
                               <option value="pending">Đang chờ</option>
@@ -963,7 +963,7 @@ const StaffTransactionManagement: React.FC = () => {
                       {/* Expand/Collapse Button */}
                       <button
                         onClick={() => setExpandedTransaction(isExpanded ? null : transaction._id)}
-                        className="mt-4 flex items-center space-x-2 text-blue-600 hover:text-blue-500 text-sm font-medium transition-colors"
+                        className="mt-4 flex items-center space-x-2 text-lime-600 hover:text-lime-500 text-sm text-text-muted transition-colors"
                       >
                         {isExpanded ? (
                           <>
@@ -981,20 +981,20 @@ const StaffTransactionManagement: React.FC = () => {
 
                     {/* Expanded Details */}
                     {isExpanded && (
-                      <div className="border-t border-gray-200 bg-gray-50 p-6 animate-fadeIn">
+                      <div className="border-t border-dark-200 bg-dark-900 p-6 animate-fadeIn">
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           {/* Customer Information */}
                           {customerInfo.length > 0 && (
                             <div>
-                              <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                              <h4 className="text-sm font-semibold text-white mb-3 flex items-center">
                                 <UserGroupIcon className="h-4 w-4 mr-2" />
                                 Thông tin khách hàng
                               </h4>
                               <div className="space-y-2">
                                 {customerInfo.map((detail, index) => (
-                                  <div key={index} className="flex justify-between items-center py-2 border-b border-gray-200">
-                                    <span className="text-sm text-gray-600">{detail.label}</span>
-                                    <span className="text-sm font-medium text-gray-900">{detail.value}</span>
+                                  <div key={index} className="flex justify-between items-center py-2 border-b border-dark-200">
+                                    <span className="text-sm text-text-secondary">{detail.label}</span>
+                                    <span className="text-sm text-text-muted text-white">{detail.value}</span>
                                   </div>
                                 ))}
                               </div>
@@ -1004,15 +1004,15 @@ const StaffTransactionManagement: React.FC = () => {
                           {/* Payment Method Details */}
                           {paymentDetails.length > 0 && (
                             <div>
-                              <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                              <h4 className="text-sm font-semibold text-white mb-3 flex items-center">
                                 <CreditCardIcon className="h-4 w-4 mr-2" />
                                 Chi tiết thanh toán
                               </h4>
                               <div className="space-y-2">
                                 {paymentDetails.map((detail, index) => (
-                                  <div key={index} className="flex justify-between items-center py-2 border-b border-gray-200">
-                                    <span className="text-sm text-gray-600">{detail.label}</span>
-                                    <span className="text-sm font-medium text-gray-900">{detail.value}</span>
+                                  <div key={index} className="flex justify-between items-center py-2 border-b border-dark-200">
+                                    <span className="text-sm text-text-secondary">{detail.label}</span>
+                                    <span className="text-sm text-text-muted text-white">{detail.value}</span>
                                   </div>
                                 ))}
                               </div>
@@ -1022,19 +1022,19 @@ const StaffTransactionManagement: React.FC = () => {
 
                         {/* Staff Processing Information */}
                         {staffInfo.length > 0 && (
-                          <div className="mt-6 pt-6 border-t border-gray-200">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                          <div className="mt-6 pt-6 border-t border-dark-200">
+                            <h4 className="text-sm font-semibold text-white mb-3 flex items-center">
                               <ShieldCheckIcon className="h-4 w-4 mr-2" />
                               Thông tin xử lý
                             </h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               {staffInfo.map((detail, index) => (
-                                <div key={index} className="bg-white rounded-lg p-4 border">
+                                <div key={index} className="bg-dark-300 rounded-lg p-4 border">
                                   <div className="flex items-center space-x-2">
-                                    <detail.icon className="h-4 w-4 text-blue-500" />
-                                    <span className="text-sm text-gray-600">{detail.label}</span>
+                                    <detail.icon className="h-4 w-4 text-lime-500" />
+                                    <span className="text-sm text-text-secondary">{detail.label}</span>
                                   </div>
-                                  <div className="mt-1 text-sm font-medium text-gray-900">{detail.value}</div>
+                                  <div className="mt-1 text-sm text-text-muted text-white">{detail.value}</div>
                                 </div>
                               ))}
                             </div>
@@ -1043,16 +1043,16 @@ const StaffTransactionManagement: React.FC = () => {
 
                         {/* Related Services */}
                         {(transaction.appointmentId || transaction.invoiceId) && (
-                          <div className="mt-6 pt-6 border-t border-gray-200">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                          <div className="mt-6 pt-6 border-t border-dark-200">
+                            <h4 className="text-sm font-semibold text-white mb-3 flex items-center">
                               <DocumentTextIcon className="h-4 w-4 mr-2" />
                               Dịch vụ liên quan
                             </h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               {transaction.appointmentId && (
-                                <div className="bg-white rounded-lg p-4 border">
-                                  <div className="text-sm text-gray-500 mb-1">Lịch hẹn dịch vụ</div>
-                                  <div className="text-sm font-medium text-gray-900">
+                                <div className="bg-dark-300 rounded-lg p-4 border">
+                                  <div className="text-sm text-text-muted mb-1">Lịch hẹn dịch vụ</div>
+                                  <div className="text-sm text-text-muted text-white">
                                     {typeof transaction.appointmentId === 'object'
                                       ? transaction.appointmentId.appointmentNumber || transaction.appointmentId._id
                                       : transaction.appointmentId
@@ -1061,9 +1061,9 @@ const StaffTransactionManagement: React.FC = () => {
                                 </div>
                               )}
                               {transaction.invoiceId && (
-                                <div className="bg-white rounded-lg p-4 border">
-                                  <div className="text-sm text-gray-500 mb-1">Hóa đơn thanh toán</div>
-                                  <div className="text-sm font-medium text-gray-900">
+                                <div className="bg-dark-300 rounded-lg p-4 border">
+                                  <div className="text-sm text-text-muted mb-1">Hóa đơn thanh toán</div>
+                                  <div className="text-sm text-text-muted text-white">
                                     {typeof transaction.invoiceId === 'object'
                                       ? transaction.invoiceId.invoiceNumber || transaction.invoiceId._id
                                       : transaction.invoiceId
@@ -1077,22 +1077,22 @@ const StaffTransactionManagement: React.FC = () => {
 
                         {/* Notes */}
                         {(transaction.notes || transaction.customerNotes) && (
-                          <div className="mt-6 pt-6 border-t border-gray-200">
-                            <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                          <div className="mt-6 pt-6 border-t border-dark-200">
+                            <h4 className="text-sm font-semibold text-white mb-3 flex items-center">
                               <InformationCircleIcon className="h-4 w-4 mr-2" />
                               Ghi chú
                             </h4>
                             <div className="space-y-3">
                               {transaction.notes && (
-                                <div className="bg-white rounded-lg p-4 border">
-                                  <div className="text-sm font-medium text-gray-700 mb-1">Ghi chú nội bộ</div>
-                                  <div className="text-sm text-gray-900">{transaction.notes}</div>
+                                <div className="bg-dark-300 rounded-lg p-4 border">
+                                  <div className="text-sm text-text-muted text-text-secondary mb-1">Ghi chú nội bộ</div>
+                                  <div className="text-sm text-white">{transaction.notes}</div>
                                 </div>
                               )}
                               {transaction.customerNotes && (
-                                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                                  <div className="text-sm font-medium text-blue-700 mb-1">Ghi chú khách hàng</div>
-                                  <div className="text-sm text-blue-900">{transaction.customerNotes}</div>
+                                <div className="bg-dark-900 rounded-lg p-4 border border-blue-200">
+                                  <div className="text-sm text-text-muted text-lime-700 mb-1">Ghi chú khách hàng</div>
+                                  <div className="text-sm text-lime-900">{transaction.customerNotes}</div>
                                 </div>
                               )}
                             </div>
@@ -1101,7 +1101,7 @@ const StaffTransactionManagement: React.FC = () => {
 
                         {/* Error Information */}
                         {(transaction.errorMessage || transaction.errorCode) && (
-                          <div className="mt-6 pt-6 border-t border-gray-200">
+                          <div className="mt-6 pt-6 border-t border-dark-200">
                             <h4 className="text-sm font-semibold text-red-900 mb-3 flex items-center">
                               <XCircleIcon className="h-4 w-4 mr-2" />
                               Thông tin lỗi
@@ -1109,13 +1109,13 @@ const StaffTransactionManagement: React.FC = () => {
                             <div className="bg-red-50 rounded-lg p-4 border border-red-200">
                               {transaction.errorCode && (
                                 <div className="mb-2">
-                                  <span className="text-sm font-medium text-red-700">Mã lỗi:</span>
+                                  <span className="text-sm text-text-muted text-red-700">Mã lỗi:</span>
                                   <span className="text-sm text-red-900 ml-2">{transaction.errorCode}</span>
                                 </div>
                               )}
                               {transaction.errorMessage && (
                                 <div>
-                                  <span className="text-sm font-medium text-red-700">Thông báo:</span>
+                                  <span className="text-sm text-text-muted text-red-700">Thông báo:</span>
                                   <span className="text-sm text-red-900 ml-2">{transaction.errorMessage}</span>
                                 </div>
                               )}
@@ -1124,31 +1124,31 @@ const StaffTransactionManagement: React.FC = () => {
                         )}
 
                         {/* Processing Timeline */}
-                        <div className="mt-6 pt-6 border-t border-gray-200">
-                          <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                        <div className="mt-6 pt-6 border-t border-dark-200">
+                          <h4 className="text-sm font-semibold text-white mb-3 flex items-center">
                             <ClockIcon className="h-4 w-4 mr-2" />
                           </h4>
                           <div className="space-y-2">
                             <div className="flex justify-between items-center py-2">
-                              <span className="text-sm text-gray-600">Thời gian tạo</span>
-                              <span className="text-sm font-medium text-gray-900">{formatVietnameseDateTime(transaction.createdAt)}</span>
+                              <span className="text-sm text-text-secondary">Thời gian tạo</span>
+                              <span className="text-sm text-text-muted text-white">{formatVietnameseDateTime(transaction.createdAt)}</span>
                             </div>
                             {transaction.updatedAt && (
                               <div className="flex justify-between items-center py-2">
-                                <span className="text-sm text-gray-600">Cập nhật lần cuối</span>
-                                <span className="text-sm font-medium text-gray-900">{formatVietnameseDateTime(transaction.updatedAt)}</span>
+                                <span className="text-sm text-text-secondary">Cập nhật lần cuối</span>
+                                <span className="text-sm text-text-muted text-white">{formatVietnameseDateTime(transaction.updatedAt)}</span>
                               </div>
                             )}
                             {transaction.processedAt && (
                               <div className="flex justify-between items-center py-2">
-                                <span className="text-sm text-gray-600">Thời gian xử lý</span>
-                                <span className="text-sm font-medium text-gray-900">{formatVietnameseDateTime(transaction.processedAt)}</span>
+                                <span className="text-sm text-text-secondary">Thời gian xử lý</span>
+                                <span className="text-sm text-text-muted text-white">{formatVietnameseDateTime(transaction.processedAt)}</span>
                               </div>
                             )}
                             {transaction.expiresAt && transaction.status === "pending" && (
                               <div className="flex justify-between items-center py-2">
-                                <span className="text-sm text-gray-600">Thời gian hết hạn</span>
-                                <span className="text-sm font-medium text-orange-900">{formatVietnameseDateTime(transaction.expiresAt)}</span>
+                                <span className="text-sm text-text-secondary">Thời gian hết hạn</span>
+                                <span className="text-sm text-text-muted text-orange-900">{formatVietnameseDateTime(transaction.expiresAt)}</span>
                               </div>
                             )}
                           </div>
@@ -1167,7 +1167,7 @@ const StaffTransactionManagement: React.FC = () => {
               <button
                 onClick={() => fetchTransactions(pagination.page + 1)}
                 disabled={loading}
-                className="inline-flex items-center px-6 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                className="inline-flex items-center px-6 py-3 border border-dark-200 rounded-md shadow-sm text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900 disabled:opacity-50"
               >
                 <ArrowPathIcon className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
                 Tải thêm
@@ -1179,14 +1179,14 @@ const StaffTransactionManagement: React.FC = () => {
 
       {/* Refund Modal */}
       {refundModal && selectedTransaction && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-dark-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-dark-300">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <h3 className="text-lg text-text-muted text-white mb-4">
                 Hoàn tiền giao dịch
               </h3>
 
-              <div className="mb-4 p-3 bg-gray-50 rounded">
+              <div className="mb-4 p-3 bg-dark-900 rounded">
                 <p className="text-sm">
                   <strong>Mã giao dịch:</strong>{" "}
                   {selectedTransaction.transactionRef}
@@ -1202,12 +1202,12 @@ const StaffTransactionManagement: React.FC = () => {
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Số tiền hoàn (để trống để hoàn toàn bộ)
                 </label>
                 <input
                   type="number"
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className="w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 sm:text-sm"
                   placeholder={formatVND(selectedTransaction.amount)}
                   value={refundData.amount}
                   onChange={(e) =>
@@ -1217,11 +1217,11 @@ const StaffTransactionManagement: React.FC = () => {
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Lý do hoàn tiền *
                 </label>
                 <textarea
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className="w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 sm:text-sm"
                   rows={3}
                   placeholder="Nhập lý do hoàn tiền..."
                   value={refundData.reason}
@@ -1238,13 +1238,13 @@ const StaffTransactionManagement: React.FC = () => {
                     setRefundData({ amount: "", reason: "" });
                     setSelectedTransaction(null);
                   }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                  className="px-4 py-2 text-sm text-text-muted text-text-secondary bg-dark-300 border border-dark-200 rounded-md hover:bg-dark-900"
                 >
                   Hủy
                 </button>
                 <button
                   onClick={handleRefund}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700"
+                  className="px-4 py-2 text-sm text-text-muted text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700"
                 >
                   Xác nhận hoàn tiền
                 </button>

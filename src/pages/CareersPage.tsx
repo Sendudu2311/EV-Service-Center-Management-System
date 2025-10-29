@@ -80,40 +80,40 @@ const CareersPage: React.FC = () => {
     : jobs.filter(job => job.department === selectedDepartment);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-dark-900">
       <div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
         {/* Hero Section */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Join Our Team</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <h1 className="text-4xl font-bold text-white mb-4">Join Our Team</h1>
+          <p className="text-xl text-text-secondary max-w-3xl mx-auto">
             Be part of the future of electric vehicle service. We're looking for passionate
             professionals to help shape the EV industry and deliver exceptional service experiences.
           </p>
         </div>
 
         {/* Why Join Us */}
-        <div className="bg-white rounded-lg shadow-lg p-8 mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Why Choose EV Service Center?</h2>
+        <div className="bg-dark-300 rounded-lg shadow-lg p-8 mb-12">
+          <h2 className="text-2xl font-bold text-white mb-8 text-center">Why Choose EV Service Center?</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-16 h-16 bg-lime-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-lime-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Innovation</h3>
-              <p className="text-gray-600">Work with cutting-edge EV technology and modern service equipment</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Innovation</h3>
+              <p className="text-text-secondary">Work with cutting-edge EV technology and modern service equipment</p>
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-16 h-16 bg-lime-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-dark-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Growth</h3>
-              <p className="text-gray-600">Continuous learning opportunities and career advancement paths</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Growth</h3>
+              <p className="text-text-secondary">Continuous learning opportunities and career advancement paths</p>
             </div>
 
             <div className="text-center">
@@ -122,8 +122,8 @@ const CareersPage: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Impact</h3>
-              <p className="text-gray-600">Contribute to sustainable transportation and environmental protection</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Impact</h3>
+              <p className="text-text-secondary">Contribute to sustainable transportation and environmental protection</p>
             </div>
 
             <div className="text-center">
@@ -132,24 +132,24 @@ const CareersPage: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Team</h3>
-              <p className="text-gray-600">Collaborate with passionate professionals in a supportive environment</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Team</h3>
+              <p className="text-text-secondary">Collaborate with passionate professionals in a supportive environment</p>
             </div>
           </div>
         </div>
 
         {/* Department Filter */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Filter by Department</h2>
+        <div className="bg-dark-300 rounded-lg shadow-lg p-6 mb-8">
+          <h2 className="text-xl font-bold text-white mb-4">Filter by Department</h2>
           <div className="flex flex-wrap gap-3">
             {departments.map(dept => (
               <button
                 key={dept.id}
                 onClick={() => setSelectedDepartment(dept.id)}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
+                className={`px-4 py-2 rounded-lg text-text-muted transition-colors duration-200 ${
                   selectedDepartment === dept.id
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-lime-600 text-white'
+                    : 'bg-dark-100 text-text-secondary hover:bg-dark-200'
                 }`}
               >
                 {dept.name} ({dept.count})
@@ -161,20 +161,20 @@ const CareersPage: React.FC = () => {
         {/* Job Listings */}
         <div className="space-y-6 mb-12">
           {filteredJobs.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-              <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-dark-300 rounded-lg shadow-lg p-8 text-center">
+              <svg className="w-16 h-16 text-text-muted mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0V8a2 2 0 01-2 2H8a2 2 0 01-2-2V6m8 0H8m0 0V4" />
               </svg>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No positions available</h3>
-              <p className="text-gray-600">Check back later for new opportunities in this department.</p>
+              <h3 className="text-lg text-text-muted text-white mb-2">No positions available</h3>
+              <p className="text-text-secondary">Check back later for new opportunities in this department.</p>
             </div>
           ) : (
             filteredJobs.map(job => (
-              <div key={job.id} className="bg-white rounded-lg shadow-lg p-6">
+              <div key={job.id} className="bg-dark-300 rounded-lg shadow-lg p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4">
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-1">{job.title}</h3>
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                    <h3 className="text-xl font-bold text-white mb-1">{job.title}</h3>
+                    <div className="flex flex-wrap gap-4 text-sm text-text-secondary">
                       <span className="flex items-center">
                         <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -196,16 +196,16 @@ const CareersPage: React.FC = () => {
                       </span>
                     </div>
                   </div>
-                  <button className="mt-4 lg:mt-0 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200">
+                  <button className="mt-4 lg:mt-0 bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-white hover:text-dark-900 px-6 py-2 rounded-lg text-text-muted transition-colors duration-200">
                     Apply Now
                   </button>
                 </div>
 
-                <p className="text-gray-700 mb-4">{job.description}</p>
+                <p className="text-text-secondary mb-4">{job.description}</p>
 
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Requirements:</h4>
-                  <ul className="list-disc list-inside text-gray-700 space-y-1">
+                  <h4 className="font-semibold text-white mb-2">Requirements:</h4>
+                  <ul className="list-disc list-inside text-text-secondary space-y-1">
                     {job.requirements.map((req, index) => (
                       <li key={index}>{req}</li>
                     ))}
@@ -217,42 +217,42 @@ const CareersPage: React.FC = () => {
         </div>
 
         {/* Application Process */}
-        <div className="bg-gradient-to-r from-blue-600 to-green-500 rounded-lg p-8 text-white">
+        <div className="bg-dark-900 rounded-lg p-8 text-white">
           <h2 className="text-2xl font-bold mb-6 text-center">How to Apply</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-dark-300 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold">1</span>
               </div>
               <h3 className="text-lg font-semibold mb-2">Submit Application</h3>
-              <p className="text-blue-100">Send your resume and cover letter to careers@evservicecenter.com</p>
+              <p className="text-lime-100">Send your resume and cover letter to careers@evservicecenter.com</p>
             </div>
 
             <div className="text-center">
-              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-dark-300 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold">2</span>
               </div>
               <h3 className="text-lg font-semibold mb-2">Interview Process</h3>
-              <p className="text-blue-100">Technical and behavioral interviews with our hiring team</p>
+              <p className="text-lime-100">Technical and behavioral interviews with our hiring team</p>
             </div>
 
             <div className="text-center">
-              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-dark-300 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold">3</span>
               </div>
               <h3 className="text-lg font-semibold mb-2">Join the Team</h3>
-              <p className="text-blue-100">Start your career in the exciting world of EV technology</p>
+              <p className="text-lime-100">Start your career in the exciting world of EV technology</p>
             </div>
           </div>
 
           <div className="text-center mt-8">
-            <p className="text-lg text-blue-100 mb-4">
+            <p className="text-lg text-lime-100 mb-4">
               Ready to join our team? We look forward to hearing from you!
             </p>
             <a
               href="mailto:careers@evservicecenter.com"
-              className="bg-white text-blue-600 px-8 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors duration-200"
+              className="bg-dark-300 text-lime-600 px-8 py-3 rounded-lg text-text-muted hover:bg-dark-900 transition-colors duration-200"
             >
               careers@evservicecenter.com
             </a>

@@ -399,25 +399,25 @@ const getStatusActions = (status: string): StatusAction[] => {
 };
 
 const getButtonClasses = (variant: StatusAction['variant'], disabled: boolean = false) => {
-  const baseClasses = 'inline-flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseClasses = 'inline-flex items-center px-3 py-2 rounded-md text-sm text-text-muted transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
 
   if (disabled) {
-    return `${baseClasses} bg-gray-100 text-gray-400 cursor-not-allowed`;
+    return `${baseClasses} bg-dark-100 text-text-muted cursor-not-allowed`;
   }
 
   switch (variant) {
     case 'primary':
-      return `${baseClasses} bg-blue-600 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`;
+      return `${baseClasses} bg-lime-600 text-white hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 focus:ring-2 focus:ring-lime-500 focus:ring-offset-2 focus:ring-offset-dark-900`;
     case 'secondary':
-      return `${baseClasses} bg-gray-200 text-gray-700 hover:bg-gray-300 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2`;
+      return `${baseClasses} bg-dark-200 text-text-secondary hover:bg-dark-300 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-dark-900`;
     case 'success':
-      return `${baseClasses} bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2`;
+      return `${baseClasses} bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-dark-900`;
     case 'warning':
-      return `${baseClasses} bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2`;
+      return `${baseClasses} bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:ring-offset-dark-900`;
     case 'danger':
-      return `${baseClasses} bg-red-600 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2`;
+      return `${baseClasses} bg-red-600 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-dark-900`;
     default:
-      return `${baseClasses} bg-gray-600 text-white hover:bg-gray-700`;
+      return `${baseClasses} bg-dark-600 text-white hover:bg-dark-700`;
   }
 };
 
@@ -484,21 +484,21 @@ export const getVietnameseStatus = (status: string): string => {
 
 export const getStatusColorClass = (status: string): string => {
   const statusColors: Record<string, string> = {
-    'pending': 'bg-yellow-100 text-yellow-800',
-    'confirmed': 'bg-blue-100 text-blue-800',
-    'customer_arrived': 'bg-indigo-100 text-indigo-800',
-    'reception_created': 'bg-purple-100 text-purple-800',
-    'reception_approved': 'bg-cyan-100 text-cyan-800',
-    'parts_insufficient': 'bg-red-100 text-red-800',
-    'waiting_for_parts': 'bg-orange-100 text-orange-800',
-    'rescheduled': 'bg-gray-100 text-gray-800',
-    'in_progress': 'bg-amber-100 text-amber-800',
-    'parts_requested': 'bg-pink-100 text-pink-800',
-    'completed': 'bg-green-100 text-green-800',
-    'invoiced': 'bg-emerald-100 text-emerald-800',
-    'cancelled': 'bg-red-100 text-red-800',
-    'no_show': 'bg-slate-100 text-slate-800'
+    'pending': 'bg-orange-600 text-white',
+    'confirmed': 'bg-lime-200 text-dark-900',
+    'customer_arrived': 'bg-dark-600 text-white',
+    'reception_created': 'bg-purple-600 text-white',
+    'reception_approved': 'bg-lime-200 text-dark-900',
+    'parts_insufficient': 'bg-red-600 text-white',
+    'waiting_for_parts': 'bg-orange-600 text-white',
+    'rescheduled': 'bg-text-muted text-white',
+    'in_progress': 'bg-dark-600 text-white',
+    'parts_requested': 'bg-purple-600 text-white',
+    'completed': 'bg-green-600 text-white',
+    'invoiced': 'bg-green-600 text-white',
+    'cancelled': 'bg-red-600 text-white',
+    'no_show': 'bg-text-muted text-white'
   };
 
-  return statusColors[status] || 'bg-gray-100 text-gray-800';
+  return statusColors[status] || 'bg-text-muted text-white';
 };

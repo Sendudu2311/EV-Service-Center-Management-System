@@ -132,9 +132,9 @@ const PaymentRestorationHandler: React.FC<PaymentRestorationHandlerProps> = ({
     return (
       <div className="fixed inset-0 z-50 overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-8">
+          <div className="bg-dark-300 rounded-lg p-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading...</p>
+            <p className="mt-4 text-text-secondary">Loading...</p>
           </div>
         </div>
       </div>

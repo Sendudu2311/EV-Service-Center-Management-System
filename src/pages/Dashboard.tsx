@@ -11,14 +11,14 @@ const Dashboard: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-dark-900">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-lime-200"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-dark-900">
       {/* Customer Dashboard */}
       <RoleGuard
         allowedRoles={['customer']}

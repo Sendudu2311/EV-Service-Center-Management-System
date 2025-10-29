@@ -522,14 +522,14 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-dark-300 p-6 text-left align-middle shadow-xl transition-all">
                 <div className="flex items-center justify-between mb-6">
-                  <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+                  <Dialog.Title as="h3" className="text-lg text-text-muted leading-6 text-white">
                     Bulk Import Parts
                   </Dialog.Title>
                   <button
                     onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-text-muted hover:text-text-secondary"
                   >
                     <XMarkIcon className="h-6 w-6" />
                   </button>
@@ -537,9 +537,9 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
 
                 <div className="space-y-6">
                   {/* Instructions */}
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-blue-900 mb-2">Import Instructions</h4>
-                    <ul className="text-sm text-blue-700 space-y-1">
+                  <div className="bg-dark-900 p-4 rounded-lg">
+                    <h4 className="text-text-muted text-lime-900 mb-2">Import Instructions</h4>
+                    <ul className="text-sm text-lime-700 space-y-1">
                       <li>• Upload an Excel file (.xlsx or .xls) with part data</li>
                       <li>• Required columns: Part Name, Part Number, Category, Brand</li>
                       <li>• Optional columns: All specification, compatibility, pricing, inventory, warranty fields</li>
@@ -549,7 +549,7 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
                     </ul>
                     <button
                       onClick={downloadTemplate}
-                      className="mt-3 text-sm text-blue-600 hover:text-blue-800 underline font-medium"
+                      className="mt-3 text-sm text-lime-600 hover:text-lime-800 underline text-text-muted"
                     >
                       📥 Download Complete Excel Template
                     </button>
@@ -564,19 +564,19 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
                       onChange={handleFileSelect}
                       className="hidden"
                     />
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                      <DocumentArrowUpIcon className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="border-2 border-dashed border-dark-300 rounded-lg p-6 text-center">
+                      <DocumentArrowUpIcon className="mx-auto h-12 w-12 text-text-muted" />
                       <div className="mt-4">
                         <button
                           onClick={() => fileInputRef.current?.click()}
-                          className="text-blue-600 hover:text-blue-800 font-medium"
+                          className="text-lime-600 hover:text-lime-800 text-text-muted"
                         >
                           Click to upload Excel file
                         </button>
-                        <p className="text-sm text-gray-500 mt-1">or drag and drop</p>
+                        <p className="text-sm text-text-muted mt-1">or drag and drop</p>
                       </div>
                       {selectedFile && (
-                        <p className="mt-2 text-sm text-gray-600">
+                        <p className="mt-2 text-sm text-text-secondary">
                           Selected: {selectedFile.name}
                         </p>
                       )}
@@ -588,7 +588,7 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
                     <div className="bg-red-50 p-4 rounded-lg">
                       <div className="flex items-center mb-2">
                         <ExclamationTriangleIcon className="h-5 w-5 text-red-400 mr-2" />
-                        <h4 className="font-medium text-red-900">
+                        <h4 className="text-text-muted text-red-900">
                           Validation Errors ({validationErrors.length})
                         </h4>
                       </div>
@@ -599,7 +599,7 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
                           </p>
                         ))}
                         {validationErrors.length > 10 && (
-                          <p className="text-sm text-red-700 font-medium">
+                          <p className="text-sm text-red-700 text-text-muted">
                             ... and {validationErrors.length - 10} more errors
                           </p>
                         )}
@@ -610,52 +610,52 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
                   {/* Preview Data */}
                   {showPreview && importData.length > 0 && (
                     <div>
-                      <h4 className="font-medium text-gray-900 mb-3">
+                      <h4 className="text-text-muted text-white mb-3">
                         Preview ({importData.length} rows)
                       </h4>
                       <div className="overflow-x-auto max-h-60">
                         <table className="min-w-full divide-y divide-gray-200">
-                          <thead className="bg-gray-50">
+                          <thead className="bg-dark-900">
                             <tr>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              <th className="px-3 py-2 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
                                 Name
                               </th>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              <th className="px-3 py-2 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
                                 Part Number
                               </th>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              <th className="px-3 py-2 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
                                 Category
                               </th>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              <th className="px-3 py-2 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
                                 Brand
                               </th>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              <th className="px-3 py-2 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
                                 Cost Price
                               </th>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              <th className="px-3 py-2 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
                                 Stock
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
+                          <tbody className="bg-dark-300 divide-y divide-gray-200">
                             {importData.slice(0, 5).map((row, index) => (
                               <tr key={index} className={validationErrors.some(e => e.row === index + 1) ? 'bg-red-50' : ''}>
-                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                <td className="px-3 py-2 whitespace-nowrap text-sm text-white">
                                   {row.name}
                                 </td>
-                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                <td className="px-3 py-2 whitespace-nowrap text-sm text-white">
                                   {row.partNumber}
                                 </td>
-                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                <td className="px-3 py-2 whitespace-nowrap text-sm text-white">
                                   {row.category}
                                 </td>
-                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                <td className="px-3 py-2 whitespace-nowrap text-sm text-white">
                                   {row.brand}
                                 </td>
-                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                <td className="px-3 py-2 whitespace-nowrap text-sm text-white">
                                   {row.costPrice ? `${Number(row.costPrice).toLocaleString()} VND` : '-'}
                                 </td>
-                                <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                <td className="px-3 py-2 whitespace-nowrap text-sm text-white">
                                   {row.currentStock || 0}
                                 </td>
                               </tr>
@@ -663,7 +663,7 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
                           </tbody>
                         </table>
                         {importData.length > 5 && (
-                          <p className="text-sm text-gray-500 mt-2 text-center">
+                          <p className="text-sm text-text-muted mt-2 text-center">
                             ... and {importData.length - 5} more rows
                           </p>
                         )}
@@ -674,13 +674,13 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
                   {/* Duplicate Handling Option */}
                   {showPreview && importData.length > 0 && (
                     <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                      <h4 className="font-medium text-yellow-900 mb-3">Duplicate Part Handling</h4>
+                      <h4 className="text-text-muted text-yellow-900 mb-3">Duplicate Part Handling</h4>
                       <label className="flex items-center cursor-pointer">
                         <input
                           type="radio"
                           checked={mergeOnDuplicate}
                           onChange={() => setMergeOnDuplicate(true)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded bg-dark-300 text-white border-dark-300 text-lime-600 focus:ring-lime-400"
                         />
                         <span className="ml-2 text-sm text-yellow-800">
                           <strong>Merge:</strong> If part number exists, increase stock quantity (recommended for inventory updates)
@@ -691,7 +691,7 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
                           type="radio"
                           checked={!mergeOnDuplicate}
                           onChange={() => setMergeOnDuplicate(false)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded bg-dark-300 text-white border-dark-300 text-lime-600 focus:ring-lime-400"
                         />
                         <span className="ml-2 text-sm text-yellow-800">
                           <strong>Skip:</strong> If part number exists, skip this row (recommended for new part imports)
@@ -703,13 +703,13 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
                   {/* Progress Bar */}
                   {isProcessing && (
                     <div>
-                      <div className="flex justify-between text-sm text-gray-600 mb-1">
+                      <div className="flex justify-between text-sm text-text-secondary mb-1">
                         <span>Importing parts...</span>
                         <span>{Math.round(progress)}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-dark-200 rounded-full h-2">
                         <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          className="bg-lime-600 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${progress}%` }}
                         />
                       </div>
@@ -721,21 +721,21 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
                     <button
                       onClick={resetForm}
                       disabled={isProcessing}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+                      className="px-4 py-2 text-sm text-text-muted text-text-secondary bg-dark-300 border border-dark-200 rounded-md hover:bg-dark-900 disabled:opacity-50"
                     >
                       Reset
                     </button>
                     <button
                       onClick={onClose}
                       disabled={isProcessing}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+                      className="px-4 py-2 text-sm text-text-muted text-text-secondary bg-dark-300 border border-dark-200 rounded-md hover:bg-dark-900 disabled:opacity-50"
                     >
                       Cancel
                     </button>
                     <button
                       onClick={handleImport}
                       disabled={!showPreview || validationErrors.length > 0 || isProcessing}
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50"
+                      className="px-4 py-2 text-sm text-text-muted text-white bg-lime-600 border border-transparent rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
                     >
                       {isProcessing ? 'Importing...' : `Import ${importData.length} Parts`}
                     </button>

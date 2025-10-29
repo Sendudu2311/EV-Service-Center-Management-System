@@ -4,79 +4,57 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Industrial/Metallic Theme Colors
-        industrial: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
+        // SPLASH Theme - Neon Lime + Dark Mode
+        lime: {
+          50: '#F0FF66',
+          100: '#E6FF33',
+          200: '#CCFF00', // Primary accent color
+          600: '#B3E600',
+          700: '#99CC00',
         },
-        steel: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
+        dark: {
+          50: '#4A5058',
+          100: '#3A4048',
+          200: '#2A3038',
+          300: '#1A1F2E',  // Card backgrounds
+          main: '#1A1F2E',
+          900: '#0F1419', // Main background
         },
-        copper: {
-          50: '#fef7ed',
-          100: '#fef3c7',
-          200: '#fde68a',
-          300: '#fcd34d',
-          400: '#fbbf24',
-          500: '#f59e0b',
-          600: '#d97706',
-          700: '#b45309',
-          800: '#92400e',
-          900: '#78350f',
+        text: {
+          primary: '#FFFFFF',
+          secondary: '#F5F5F5',
+          tertiary: '#E0E0E0',
+          muted: '#A0A0A0',
         },
-        chrome: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-        },
-        iron: {
-          50: '#fafafa',
-          100: '#f4f4f5',
-          200: '#e4e4e7',
-          300: '#d4d4d8',
-          400: '#a1a1aa',
-          500: '#71717a',
-          600: '#52525b',
-          700: '#3f3f46',
-          800: '#27272a',
-          900: '#18181b',
-        },
+      },
+      backgroundColor: {
+        'dark-primary': '#0F1419',
+        'dark-secondary': '#1A1F2E',
+        'dark-tertiary': '#2A3038',
+        'lime-glow': 'rgba(204, 255, 0, 0.1)',
+        'lime-glow-strong': 'rgba(204, 255, 0, 0.2)',
+        'glass': 'rgba(255, 255, 255, 0.05)',
+      },
+      textColor: {
+        'lime-glow': '#CCFF00',
+        'lime-light': '#E6FF33',
       },
       boxShadow: {
-        'metal': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-        'metal-md': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-        'metal-lg': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-        'metal-xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+        'glow': '0 0 20px rgba(204, 255, 0, 0.15)',
+        'glow-strong': '0 0 30px rgba(204, 255, 0, 0.25)',
+        'glow-lg': '0 0 40px rgba(204, 255, 0, 0.3)',
+        'dark': '0 4px 6px rgba(0, 0, 0, 0.1)',
+        'dark-md': '0 10px 15px rgba(0, 0, 0, 0.15)',
+        'dark-lg': '0 20px 25px rgba(0, 0, 0, 0.2)',
+      },
+      borderColor: {
+        'lime-accent': '#CCFF00',
+        'dark-border': '#2A3038',
       },
       backgroundImage: {
-        'metal-gradient': 'linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%)',
-        'copper-gradient': 'linear-gradient(135deg, #92400e 0%, #b45309 50%, #d97706 100%)',
-        'industrial-gradient': 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
+        'lime-gradient': 'linear-gradient(135deg, #CCFF00 0%, #E6FF33 100%)',
+        'dark-gradient': 'linear-gradient(135deg, #0F1419 0%, #1A1F2E 100%)',
+        'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
       },
       borderWidth: {
         '3': '3px',
@@ -86,72 +64,174 @@ export default {
   plugins: [
     function({ addUtilities }) {
       addUtilities({
-        '.card-metal': {
-          'background': 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(51, 65, 85, 0.95) 50%, rgba(71, 85, 105, 0.95) 100%)',
-          'border': '2px solid #475569',
-          'border-radius': '0.75rem',
-          'box-shadow': '0 25px 50px -12px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+        // ============ Card Utilities ============
+        '.card-splash': {
+          'background': '#1A1F2E',
+          'border': '1px solid #2A3038',
+          'border-radius': '0.875rem',
+          'box-shadow': '0 4px 6px rgba(0, 0, 0, 0.1)',
+          'transition': 'all 0.3s ease-in-out',
+        },
+        '.card-splash:hover': {
+          'border-color': '#CCFF00',
+          'box-shadow': '0 0 20px rgba(204, 255, 0, 0.15)',
+        },
+        '.card-glass': {
+          'background': 'rgba(255, 255, 255, 0.05)',
           'backdrop-filter': 'blur(12px)',
+          'border': '1px solid rgba(255, 255, 255, 0.1)',
+          'border-radius': '1rem',
         },
-        '.panel-metal': {
-          'background': 'linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(51, 65, 85, 0.9) 100%)',
-          'border': '1px solid #475569',
-          'border-radius': '0.5rem',
-          'box-shadow': 'inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-        },
-        '.btn-copper': {
-          'background': 'linear-gradient(135deg, #92400e 0%, #b45309 50%, #d97706 100%)',
-          'border': '2px solid #78350f',
-          'color': 'white',
+
+        // ============ Button Utilities ============
+        '.btn-lime-primary': {
+          'background': '#CCFF00',
+          'color': '#0F1419',
           'font-weight': '600',
-          'text-shadow': '0 1px 2px rgba(0, 0, 0, 0.3)',
-          'box-shadow': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-          'transition': 'all 0.2s ease-in-out',
-        },
-        '.btn-copper:hover': {
-          'background': 'linear-gradient(135deg, #b45309 0%, #d97706 50%, #f59e0b 100%)',
-          'transform': 'translateY(-1px)',
-          'box-shadow': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-        },
-        '.input-metal': {
-          'background': 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(51, 65, 85, 0.8) 100%)',
-          'border': '2px solid #475569',
+          'border': '2px solid #CCFF00',
           'border-radius': '0.5rem',
-          'color': '#f1f5f9',
-          'box-shadow': 'inset 0 2px 4px rgba(0, 0, 0, 0.1)',
+          'transition': 'all 0.2s ease-in-out',
+          'box-shadow': '0 0 20px rgba(204, 255, 0, 0.2)',
+        },
+        '.btn-lime-primary:hover': {
+          'background': '#E6FF33',
+          'border-color': '#E6FF33',
+          'transform': 'translateY(-2px)',
+          'box-shadow': '0 0 30px rgba(204, 255, 0, 0.3)',
+        },
+        '.btn-lime-primary:active': {
+          'background': '#B3E600',
+          'border-color': '#B3E600',
+          'transform': 'translateY(0)',
+        },
+        '.btn-lime-ghost': {
+          'background': 'transparent',
+          'color': '#CCFF00',
+          'border': '2px solid #CCFF00',
+          'border-radius': '0.5rem',
+          'font-weight': '600',
           'transition': 'all 0.2s ease-in-out',
         },
-        '.input-metal:focus': {
-          'border-color': '#d97706',
-          'box-shadow': '0 0 0 3px rgba(217, 119, 6, 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.1)',
+        '.btn-lime-ghost:hover': {
+          'background': 'rgba(204, 255, 0, 0.1)',
+          'box-shadow': '0 0 20px rgba(204, 255, 0, 0.2)',
+        },
+
+        // ============ Input Utilities ============
+        '.input-splash': {
+          'background': '#1A1F2E',
+          'border': '2px solid #2A3038',
+          'border-radius': '0.5rem',
+          'color': '#FFFFFF',
+          'padding': '0.625rem 1rem',
+          'transition': 'all 0.2s ease-in-out',
+        },
+        '.input-splash:focus': {
           'outline': 'none',
+          'border-color': '#CCFF00',
+          'box-shadow': '0 0 20px rgba(204, 255, 0, 0.15)',
+          'background': '#1A1F2E',
         },
-        '.input-metal::placeholder': {
-          'color': '#94a3b8',
+        '.input-splash::placeholder': {
+          'color': '#A0A0A0',
         },
-        '.scrollbar-metal': {
-          'scrollbar-width': 'thin',
-          'scrollbar-color': '#475569 #1e293b',
+
+        // ============ Badge Utilities ============
+        '.badge-lime': {
+          'background': 'rgba(204, 255, 0, 0.1)',
+          'color': '#E6FF33',
+          'border': '1px solid #CCFF00',
+          'padding': '0.375rem 0.75rem',
+          'border-radius': '9999px',
+          'font-size': '0.75rem',
+          'font-weight': '600',
         },
-        '.scrollbar-metal::-webkit-scrollbar': {
-          'width': '8px',
+        '.badge-success': {
+          'background': 'rgba(204, 255, 0, 0.1)',
+          'color': '#E6FF33',
+          'border': '1px solid #CCFF00',
         },
-        '.scrollbar-metal::-webkit-scrollbar-track': {
-          'background': '#1e293b',
-          'border-radius': '4px',
+        '.badge-error': {
+          'background': 'rgba(255, 68, 68, 0.1)',
+          'color': '#FF8888',
+          'border': '1px solid #FF4444',
         },
-        '.scrollbar-metal::-webkit-scrollbar-thumb': {
-          'background': '#475569',
-          'border-radius': '4px',
+        '.badge-warning': {
+          'background': 'rgba(255, 183, 77, 0.1)',
+          'color': '#FFD700',
+          'border': '1px solid #FFB84D',
         },
-        '.scrollbar-metal::-webkit-scrollbar-thumb:hover': {
-          'background': '#64748b',
+        '.badge-info': {
+          'background': 'rgba(75, 163, 255, 0.1)',
+          'color': '#66B3FF',
+          'border': '1px solid #4BA3FF',
         },
-        '.text-metal': {
-          'background': 'linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%)',
+
+        // ============ Loading/Animation Utilities ============
+        '.spinner-lime': {
+          'border': '2px solid rgba(204, 255, 0, 0.2)',
+          'border-top-color': '#CCFF00',
+          'border-radius': '50%',
+          'animation': 'spin 1s linear infinite',
+        },
+        '.pulse-lime': {
+          'animation': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          'background': 'rgba(204, 255, 0, 0.1)',
+        },
+
+        // ============ Glass Effect ============
+        '.glass-effect': {
+          'background': 'rgba(15, 20, 25, 0.7)',
+          'backdrop-filter': 'blur(16px)',
+          'border': '1px solid rgba(255, 255, 255, 0.1)',
+        },
+
+        // ============ Lime Glow Effect ============
+        '.lime-glow': {
+          'color': '#CCFF00',
+          'text-shadow': '0 0 10px rgba(204, 255, 0, 0.5)',
+        },
+        '.lime-glow-strong': {
+          'color': '#CCFF00',
+          'text-shadow': '0 0 20px rgba(204, 255, 0, 0.8)',
+        },
+
+        // ============ Text Utilities ============
+        '.text-gradient-lime': {
+          'background': 'linear-gradient(135deg, #CCFF00 0%, #E6FF33 100%)',
           '-webkit-background-clip': 'text',
           '-webkit-text-fill-color': 'transparent',
           'background-clip': 'text',
+        },
+
+        // ============ Scrollbar Styling ============
+        '.scrollbar-splash': {
+          'scrollbar-width': 'thin',
+          'scrollbar-color': '#2A3038 #1A1F2E',
+        },
+        '.scrollbar-splash::-webkit-scrollbar': {
+          'width': '8px',
+          'height': '8px',
+        },
+        '.scrollbar-splash::-webkit-scrollbar-track': {
+          'background': '#0F1419',
+          'border-radius': '4px',
+        },
+        '.scrollbar-splash::-webkit-scrollbar-thumb': {
+          'background': '#2A3038',
+          'border-radius': '4px',
+          'border': '2px solid #0F1419',
+        },
+        '.scrollbar-splash::-webkit-scrollbar-thumb:hover': {
+          'background': '#CCFF00',
+        },
+
+        // ============ Transition Utilities ============
+        '.transition-smooth': {
+          'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        },
+        '.transition-fast': {
+          'transition': 'all 0.15s ease-in-out',
         },
       });
     },

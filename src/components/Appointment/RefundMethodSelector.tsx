@@ -85,15 +85,15 @@ const RefundMethodSelector: React.FC<RefundMethodSelectorProps> = ({
     <div className="space-y-6">
       {/* Refund Method Selection */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
-          Phương thức hoàn tiền <span className="text-red-500">*</span>
+        <label className="block text-sm text-text-muted text-text-secondary mb-3">
+          Phương thức hoàn tiền <span className="text-red-600">*</span>
         </label>
         <div className="grid grid-cols-2 gap-4">
           <label
             className={`relative flex cursor-pointer rounded-lg p-4 border-2 ${
               refundMethod === "cash"
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-200 bg-white hover:bg-gray-50"
+                ? "border-blue-500 bg-dark-900"
+                : "border-dark-200 bg-dark-300 hover:bg-dark-900"
             } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <input
@@ -108,10 +108,10 @@ const RefundMethodSelector: React.FC<RefundMethodSelectorProps> = ({
             <div className="flex items-center">
               <span className="text-2xl mr-3">💵</span>
               <div>
-                <div className="text-sm font-medium text-gray-900">
+                <div className="text-sm text-text-muted text-white">
                   Tiền mặt
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-text-muted">
                   Nhận tiền mặt tại trung tâm
                 </div>
               </div>
@@ -121,8 +121,8 @@ const RefundMethodSelector: React.FC<RefundMethodSelectorProps> = ({
           <label
             className={`relative flex cursor-pointer rounded-lg p-4 border-2 ${
               refundMethod === "bank_transfer"
-                ? "border-blue-500 bg-blue-50"
-                : "border-gray-200 bg-white hover:bg-gray-50"
+                ? "border-blue-500 bg-dark-900"
+                : "border-dark-200 bg-dark-300 hover:bg-dark-900"
             } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <input
@@ -139,10 +139,10 @@ const RefundMethodSelector: React.FC<RefundMethodSelectorProps> = ({
             <div className="flex items-center">
               <span className="text-2xl mr-3">🏦</span>
               <div>
-                <div className="text-sm font-medium text-gray-900">
+                <div className="text-sm text-text-muted text-white">
                   Chuyển khoản
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-text-muted">
                   Chuyển khoản vào tài khoản
                 </div>
               </div>
@@ -153,21 +153,21 @@ const RefundMethodSelector: React.FC<RefundMethodSelectorProps> = ({
 
       {/* Bank Transfer Information */}
       {refundMethod === "bank_transfer" && (
-        <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-          <h4 className="text-sm font-medium text-gray-900">
+        <div className="space-y-4 p-4 bg-dark-900 rounded-lg">
+          <h4 className="text-sm text-text-muted text-white">
             Thông tin tài khoản ngân hàng
           </h4>
 
           {/* Bank Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tên ngân hàng <span className="text-red-500">*</span>
+            <label className="block text-sm text-text-muted text-text-secondary mb-1">
+              Tên ngân hàng <span className="text-red-600">*</span>
             </label>
             <input
               type="text"
               value={customerBankInfo.bankName}
               onChange={(e) => handleBankInfoChange("bankName", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
               placeholder="Ví dụ: Vietcombank, Techcombank..."
               disabled={disabled}
             />
@@ -175,8 +175,8 @@ const RefundMethodSelector: React.FC<RefundMethodSelectorProps> = ({
 
           {/* Account Number */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Số tài khoản <span className="text-red-500">*</span>
+            <label className="block text-sm text-text-muted text-text-secondary mb-1">
+              Số tài khoản <span className="text-red-600">*</span>
             </label>
             <input
               type="text"
@@ -184,7 +184,7 @@ const RefundMethodSelector: React.FC<RefundMethodSelectorProps> = ({
               onChange={(e) =>
                 handleBankInfoChange("accountNumber", e.target.value)
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
               placeholder="Nhập số tài khoản"
               disabled={disabled}
             />
@@ -192,8 +192,8 @@ const RefundMethodSelector: React.FC<RefundMethodSelectorProps> = ({
 
           {/* Account Holder */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tên chủ tài khoản <span className="text-red-500">*</span>
+            <label className="block text-sm text-text-muted text-text-secondary mb-1">
+              Tên chủ tài khoản <span className="text-red-600">*</span>
             </label>
             <input
               type="text"
@@ -201,7 +201,7 @@ const RefundMethodSelector: React.FC<RefundMethodSelectorProps> = ({
               onChange={(e) =>
                 handleBankInfoChange("accountHolder", e.target.value)
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
               placeholder="Nhập tên chủ tài khoản"
               disabled={disabled}
             />
@@ -209,8 +209,8 @@ const RefundMethodSelector: React.FC<RefundMethodSelectorProps> = ({
 
           {/* Bank Proof Image Upload */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Ảnh chứng minh tài khoản <span className="text-red-500">*</span>
+            <label className="block text-sm text-text-muted text-text-secondary mb-2">
+              Ảnh chứng minh tài khoản <span className="text-red-600">*</span>
             </label>
 
             {customerBankProofImage ? (
@@ -230,17 +230,17 @@ const RefundMethodSelector: React.FC<RefundMethodSelectorProps> = ({
                     <XMarkIcon className="h-4 w-4" />
                   </button>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-text-muted">
                   Ảnh đã upload thành công
                 </p>
               </div>
             ) : (
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
+              <div className="border-2 border-dashed border-dark-300 rounded-lg p-6 text-center">
+                <PhotoIcon className="mx-auto h-12 w-12 text-text-muted" />
                 <div className="mt-4">
                   <label
                     htmlFor="bankProofImage"
-                    className={`cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 ${
+                    className={`cursor-pointer inline-flex items-center px-4 py-2 border border-dark-200 rounded-md shadow-sm text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900 ${
                       disabled ? "opacity-50 cursor-not-allowed" : ""
                     }`}
                   >
@@ -257,7 +257,7 @@ const RefundMethodSelector: React.FC<RefundMethodSelectorProps> = ({
                     disabled={disabled || uploadingImage}
                   />
                 </div>
-                <p className="mt-2 text-xs text-gray-500">
+                <p className="mt-2 text-xs text-text-muted">
                   PNG, JPG tối đa 5MB
                 </p>
               </div>
@@ -268,8 +268,8 @@ const RefundMethodSelector: React.FC<RefundMethodSelectorProps> = ({
 
       {/* Validation Messages */}
       {refundMethod === "bank_transfer" && (
-        <div className="text-xs text-gray-600 bg-blue-50 p-3 rounded-md">
-          <p className="font-medium mb-1">Lưu ý:</p>
+        <div className="text-xs text-text-secondary bg-dark-900 p-3 rounded-md">
+          <p className="text-text-muted mb-1">Lưu ý:</p>
           <ul className="list-disc list-inside space-y-1">
             <li>Vui lòng cung cấp đầy đủ thông tin tài khoản ngân hàng</li>
             <li>Ảnh chứng minh có thể là screenshot tài khoản hoặc thẻ ATM</li>

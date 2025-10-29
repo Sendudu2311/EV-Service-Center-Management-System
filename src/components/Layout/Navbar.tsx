@@ -25,13 +25,13 @@ const Navbar: React.FC = () => {
   const getRoleColor = (role: string) => {
     switch (role) {
       case "admin":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100/20 text-red-300 border border-red-500";
       case "staff":
-        return "bg-blue-100 text-blue-800";
+        return "bg-lime-200/20 text-lime-200 border border-lime-200";
       case "technician":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100/20 text-green-300 border border-green-500";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-dark-200 text-text-muted border border-dark-100";
     }
   };
 
@@ -89,16 +89,16 @@ const Navbar: React.FC = () => {
   const navLinks = getNavLinks();
 
   return (
-    <nav className="bg-white shadow-lg border-b border-gray-200">
+    <nav className="bg-dark-300 shadow-lg border-b border-dark-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo and brand */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-green-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">EV</span>
+            <Link to="/" className="flex items-center space-x-2 group">
+              <div className="w-8 h-8 bg-gradient-to-r from-lime-200 to-lime-300 rounded-lg flex items-center justify-center shadow-glow group-hover:shadow-lg transition-all duration-200 transform group-hover:scale-110">
+                <span className="text-dark-900 font-bold text-sm">EV</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">
+              <span className="text-xl font-bold text-white group-hover:text-lime-200 transition-colors duration-200">
                 Service Center
               </span>
             </Link>
@@ -110,7 +110,7 @@ const Navbar: React.FC = () => {
               <Link
                 key={link.name}
                 to={link.href}
-                className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                className="text-text-secondary hover:text-lime-200 px-3 py-2 rounded-md text-sm text-text-muted transition-colors duration-200"
               >
                 {link.name}
               </Link>
@@ -122,13 +122,13 @@ const Navbar: React.FC = () => {
             {isAuthenticated ? (
               <>
                 {/* Notifications */}
-                <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                <button className="p-2 text-text-muted hover:text-text-secondary transition-colors duration-200">
                   <BellIcon className="h-6 w-6" />
                 </button>
 
                 {/* User menu */}
                 <Menu as="div" className="relative">
-                  <Menu.Button className="flex items-center space-x-3 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                  <Menu.Button className="flex items-center space-x-3 text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-lime-500 focus:ring-offset-2 focus:ring-offset-dark-900">
                     <div className="flex items-center space-x-3">
                       {user?.avatar ? (
                         <img
@@ -137,15 +137,15 @@ const Navbar: React.FC = () => {
                           alt={user.fullName}
                         />
                       ) : (
-                        <UserCircleIcon className="h-8 w-8 text-gray-400" />
+                        <UserCircleIcon className="h-8 w-8 text-text-muted" />
                       )}
                       <div className="hidden md:block text-left">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm text-text-muted text-white">
                           {user?.fullName}
                         </div>
                         <div className="flex items-center space-x-2">
                           <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getRoleColor(
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs text-text-muted ${getRoleColor(
                               user?.role || ""
                             )}`}
                           >
@@ -153,7 +153,7 @@ const Navbar: React.FC = () => {
                           </span>
                         </div>
                       </div>
-                      <ChevronDownIcon className="h-4 w-4 text-gray-400" />
+                      <ChevronDownIcon className="h-4 w-4 text-text-muted" />
                     </div>
                   </Menu.Button>
 
@@ -165,14 +165,14 @@ const Navbar: React.FC = () => {
                     leaveFrom="transform opacity-100 scale-100"
                     leaveTo="transform opacity-0 scale-95"
                   >
-                    <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-dark-300 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                       <Menu.Item>
                         {({ active }) => (
                           <Link
                             to="/profile"
                             className={`${
-                              active ? "bg-gray-100" : ""
-                            } flex items-center px-4 py-2 text-sm text-gray-700`}
+                              active ? "bg-dark-100" : ""
+                            } flex items-center px-4 py-2 text-sm text-text-secondary`}
                           >
                             <UserCircleIcon className="mr-3 h-4 w-4" />
                             Profile
@@ -184,8 +184,8 @@ const Navbar: React.FC = () => {
                           <Link
                             to="/settings"
                             className={`${
-                              active ? "bg-gray-100" : ""
-                            } flex items-center px-4 py-2 text-sm text-gray-700`}
+                              active ? "bg-dark-100" : ""
+                            } flex items-center px-4 py-2 text-sm text-text-secondary`}
                           >
                             <Cog6ToothIcon className="mr-3 h-4 w-4" />
                             Settings
@@ -197,8 +197,8 @@ const Navbar: React.FC = () => {
                           <button
                             onClick={handleLogout}
                             className={`${
-                              active ? "bg-gray-100" : ""
-                            } flex w-full items-center px-4 py-2 text-sm text-gray-700`}
+                              active ? "bg-dark-100" : ""
+                            } flex w-full items-center px-4 py-2 text-sm text-text-secondary`}
                           >
                             <ArrowRightOnRectangleIcon className="mr-3 h-4 w-4" />
                             Sign out
@@ -213,13 +213,13 @@ const Navbar: React.FC = () => {
               <div className="flex items-center space-x-4">
                 <Link
                   to="/login"
-                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-text-secondary hover:text-lime-200 px-3 py-2 rounded-md text-sm text-text-muted"
                 >
                   Sign in
                 </Link>
                 <Link
                   to="/register"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+                  className="bg-lime-200 hover:bg-lime-100 text-dark-900 px-4 py-2 rounded-md text-sm text-text-muted transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
                 >
                   Get started
                 </Link>
@@ -230,7 +230,7 @@ const Navbar: React.FC = () => {
             <div className="md:hidden">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                className="inline-flex items-center justify-center p-2 rounded-md text-text-muted hover:text-text-muted hover:bg-dark-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-lime-500"
               >
                 {isMobileMenuOpen ? (
                   <XMarkIcon className="block h-6 w-6" />
@@ -246,12 +246,12 @@ const Navbar: React.FC = () => {
       {/* Mobile menu */}
       {isMobileMenuOpen && (
         <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-dark-900">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.href}
-                className="text-gray-700 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium"
+                className="text-text-secondary hover:text-lime-200 block px-3 py-2 rounded-md text-base text-text-muted"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {link.name}
@@ -261,14 +261,14 @@ const Navbar: React.FC = () => {
               <>
                 <Link
                   to="/login"
-                  className="text-gray-700 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium"
+                  className="text-text-secondary hover:text-lime-200 block px-3 py-2 rounded-md text-base text-text-muted"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Sign in
                 </Link>
                 <Link
                   to="/register"
-                  className="bg-blue-600 hover:bg-blue-700 text-white block px-3 py-2 rounded-md text-base font-medium"
+                  className="bg-lime-200 hover:bg-lime-100 text-dark-900 block px-3 py-2 rounded-md text-base text-text-muted transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Get started

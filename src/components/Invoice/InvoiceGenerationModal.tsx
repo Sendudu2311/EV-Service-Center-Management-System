@@ -139,15 +139,15 @@ const InvoiceGenerationModal: React.FC<InvoiceGenerationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-4 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white mb-8">
+    <div className="fixed inset-0 bg-dark-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-4 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-dark-300 mb-8">
         <div className="flex items-center justify-between mb-6 pb-4 border-b">
-          <h2 className="text-xl font-bold text-gray-900">
+          <h2 className="text-xl font-bold text-white">
             Thông tin thanh toán
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-text-muted hover:text-text-secondary"
           >
             <XMarkIcon className="w-6 h-6" />
           </button>
@@ -155,14 +155,14 @@ const InvoiceGenerationModal: React.FC<InvoiceGenerationModalProps> = ({
 
         {/* Payment Summary */}
         {previewInvoice && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 className="text-lg font-semibold text-blue-900 mb-3">
+          <div className="mb-6 p-4 bg-dark-900 border border-blue-200 rounded-lg">
+            <h3 className="text-lg font-semibold text-lime-900 mb-3">
               Tóm tắt thanh toán
             </h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-gray-600">Tiền cọc đã trả:</span>
-                <span className="ml-2 font-semibold text-green-600">
+                <span className="text-text-secondary">Tiền cọc đã trả:</span>
+                <span className="ml-2 font-semibold text-green-600 text-green-600">
                   {previewInvoice.totals?.depositAmount
                     ? new Intl.NumberFormat("vi-VN", {
                         style: "currency",
@@ -172,8 +172,8 @@ const InvoiceGenerationModal: React.FC<InvoiceGenerationModalProps> = ({
                 </span>
               </div>
               <div>
-                <span className="text-gray-600">Tổng tiền dịch vụ:</span>
-                <span className="ml-2 font-semibold">
+                <span className="text-text-secondary">Tổng tiền dịch vụ:</span>
+                <span className="ml-2 font-semibold text-green-600">
                   {new Intl.NumberFormat("vi-VN", {
                     style: "currency",
                     currency: "VND",
@@ -200,7 +200,7 @@ const InvoiceGenerationModal: React.FC<InvoiceGenerationModalProps> = ({
         <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            className="px-4 py-2 border border-dark-200 rounded-md text-text-secondary hover:bg-dark-900"
           >
             Đóng
           </button>

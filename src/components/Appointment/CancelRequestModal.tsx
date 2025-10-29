@@ -130,16 +130,16 @@ const CancelRequestModal: React.FC<CancelRequestModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+    <div className="fixed inset-0 bg-dark-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-dark-300">
         <div className="mt-3">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-gray-900">
+            <h3 className="text-lg text-text-muted text-white">
               Yêu cầu hủy lịch hẹn
             </h3>
             <button
               onClick={handleClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-text-muted hover:text-text-secondary"
               disabled={loading}
             >
               <svg
@@ -159,34 +159,34 @@ const CancelRequestModal: React.FC<CancelRequestModalProps> = ({
           </div>
 
           {/* Appointment Info */}
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <h4 className="font-medium text-gray-900 mb-2">
+          <div className="mb-6 p-4 bg-dark-900 rounded-lg">
+            <h4 className="text-text-muted text-white mb-2">
               Thông tin lịch hẹn
             </h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-gray-600">Mã lịch hẹn:</span>
-                <span className="ml-2 font-medium">
+                <span className="text-text-secondary">Mã lịch hẹn:</span>
+                <span className="ml-2 text-text-muted">
                   {appointment.appointmentNumber}
                 </span>
               </div>
               <div>
-                <span className="text-gray-600">Ngày:</span>
-                <span className="ml-2 font-medium">
+                <span className="text-text-secondary">Ngày:</span>
+                <span className="ml-2 text-text-muted">
                   {new Date(appointment.scheduledDate).toLocaleDateString(
                     "vi-VN"
                   )}
                 </span>
               </div>
               <div>
-                <span className="text-gray-600">Giờ:</span>
-                <span className="ml-2 font-medium">
+                <span className="text-text-secondary">Giờ:</span>
+                <span className="ml-2 text-text-muted">
                   {appointment.scheduledTime}
                 </span>
               </div>
               <div>
-                <span className="text-gray-600">Tổng tiền:</span>
-                <span className="ml-2 font-medium">
+                <span className="text-text-secondary">Tổng tiền:</span>
+                <span className="ml-2 text-text-muted">
                   {(() => {
                     // For deposit booking, show deposit amount
                     if (
@@ -206,8 +206,8 @@ const CancelRequestModal: React.FC<CancelRequestModalProps> = ({
                 </span>
               </div>
               <div className="col-span-2">
-                <span className="text-gray-600">Số tiền hoàn dự kiến:</span>
-                <span className="ml-2 font-medium text-green-600">
+                <span className="text-text-secondary">Số tiền hoàn dự kiến:</span>
+                <span className="ml-2 text-text-muted text-green-600">
                   {(() => {
                     // Calculate refund amount based on 24h rule
                     const appointmentDateTime = new Date(
@@ -249,13 +249,13 @@ const CancelRequestModal: React.FC<CancelRequestModalProps> = ({
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Cancellation Reason */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Lý do hủy lịch hẹn <span className="text-red-500">*</span>
+              <label className="block text-sm text-text-muted text-text-secondary mb-2">
+                Lý do hủy lịch hẹn <span className="text-red-600">*</span>
               </label>
               <select
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 disabled={loading}
                 required
               >
@@ -282,14 +282,14 @@ const CancelRequestModal: React.FC<CancelRequestModalProps> = ({
               {/* Custom reason input when "Khác" is selected */}
               {reason === "Khác" && (
                 <div className="mt-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm text-text-muted text-text-secondary mb-2">
                     Vui lòng mô tả chi tiết{" "}
-                    <span className="text-red-500">*</span>
+                    <span className="text-red-600">*</span>
                   </label>
                   <textarea
                     value={customReason}
                     onChange={(e) => setCustomReason(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                     rows={3}
                     placeholder="Vui lòng mô tả chi tiết lý do hủy lịch hẹn..."
                     disabled={loading}
@@ -316,7 +316,7 @@ const CancelRequestModal: React.FC<CancelRequestModalProps> = ({
                 type="button"
                 onClick={handleClose}
                 disabled={loading}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 disabled:opacity-50"
+                className="px-4 py-2 bg-dark-300 text-text-secondary rounded-md hover:bg-dark-400 disabled:opacity-50"
               >
                 Hủy
               </button>

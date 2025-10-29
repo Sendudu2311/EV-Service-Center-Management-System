@@ -92,12 +92,12 @@ const CustomerServicesPage: React.FC = () => {
     const colors: Record<string, string> = {
       battery: 'bg-yellow-100 text-yellow-800',
       motor: 'bg-purple-100 text-purple-800',
-      charging: 'bg-blue-100 text-blue-800',
+      charging: 'bg-lime-100 text-lime-800',
       electronics: 'bg-green-100 text-green-800',
-      general: 'bg-gray-100 text-gray-800',
+      general: 'bg-dark-100 text-gray-800',
       diagnostic: 'bg-red-100 text-red-800',
     };
-    return colors[category] || 'bg-gray-100 text-gray-800';
+    return colors[category] || 'bg-dark-100 text-gray-800';
   };
 
   const getSkillLevelBadge = (skillLevel: string) => {
@@ -110,32 +110,32 @@ const CustomerServicesPage: React.FC = () => {
     };
     const badge = badges[skillLevel] || badges.basic;
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${badge.bg} ${badge.text}`}>
+      <span className={`px-2 py-1 text-xs text-text-muted rounded-full ${badge.bg} ${badge.text}`}>
         {badge.label}
       </span>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-dark-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <WrenchScrewdriverIcon className="h-8 w-8 text-blue-600" />
+          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+            <WrenchScrewdriverIcon className="h-8 w-8 text-lime-600" />
             Danh sách dịch vụ
           </h1>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-text-secondary">
             Xem các dịch vụ bảo dưỡng và sửa chữa xe điện chúng tôi cung cấp
           </p>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <div className="bg-dark-300 rounded-lg shadow-sm border border-dark-200 p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Search */}
             <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm text-text-muted text-text-secondary mb-2">
                 <MagnifyingGlassIcon className="h-4 w-4 inline mr-1" />
                 Tìm kiếm
               </label>
@@ -144,20 +144,20 @@ const CustomerServicesPage: React.FC = () => {
                 placeholder="Tên, mô tả, mã dịch vụ..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-4 py-2 text-sm"
+                className="w-full border border-dark-300 rounded-md px-4 py-2 text-sm"
               />
             </div>
 
             {/* Category Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm text-text-muted text-text-secondary mb-2">
                 <FunnelIcon className="h-4 w-4 inline mr-1" />
                 Danh mục
               </label>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-4 py-2 text-sm"
+                className="w-full border border-dark-300 rounded-md px-4 py-2 text-sm"
               >
                 {categories.map((cat) => (
                   <option key={cat.value} value={cat.value}>
@@ -169,13 +169,13 @@ const CustomerServicesPage: React.FC = () => {
 
             {/* Subcategory Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm text-text-muted text-text-secondary mb-2">
                 Loại dịch vụ
               </label>
               <select
                 value={selectedSubcategory}
                 onChange={(e) => setSelectedSubcategory(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-4 py-2 text-sm"
+                className="w-full border border-dark-300 rounded-md px-4 py-2 text-sm"
               >
                 <option value="all">Tất cả</option>
                 <option value="diagnostic">Chẩn đoán</option>
@@ -190,7 +190,7 @@ const CustomerServicesPage: React.FC = () => {
         </div>
 
         {/* Results Count */}
-        <div className="mb-4 text-sm text-gray-600">
+        <div className="mb-4 text-sm text-text-secondary">
           Hiển thị {filteredServices.length} / {services.length} dịch vụ
         </div>
 
@@ -198,44 +198,44 @@ const CustomerServicesPage: React.FC = () => {
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Đang tải danh sách dịch vụ...</p>
+            <p className="mt-4 text-text-secondary">Đang tải danh sách dịch vụ...</p>
           </div>
         ) : filteredServices.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-            <WrenchScrewdriverIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">Không tìm thấy dịch vụ nào</p>
+          <div className="bg-dark-300 rounded-lg shadow-sm border border-dark-200 p-12 text-center">
+            <WrenchScrewdriverIcon className="h-16 w-16 text-text-secondary mx-auto mb-4" />
+            <p className="text-text-secondary">Không tìm thấy dịch vụ nào</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredServices.map((service) => (
               <div
                 key={service._id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow overflow-hidden"
+                className="bg-dark-300 rounded-lg shadow-sm border border-dark-200 hover:shadow-md transition-shadow overflow-hidden"
               >
                 <div className="p-6">
                   {/* Header */}
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">{service.name}</h3>
-                      <p className="text-xs text-gray-500 font-mono">{service.code}</p>
+                      <h3 className="text-lg font-semibold text-white mb-1">{service.name}</h3>
+                      <p className="text-xs text-text-muted font-mono">{service.code}</p>
                     </div>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getCategoryBadgeColor(service.category)}`}>
+                    <span className={`px-2 py-1 text-xs text-text-muted rounded-full ${getCategoryBadgeColor(service.category)}`}>
                       {service.category}
                     </span>
                   </div>
 
                   {/* Description */}
-                  <p className="text-sm text-gray-600 mb-4 line-clamp-2">{service.description}</p>
+                  <p className="text-sm text-text-secondary mb-4 line-clamp-2">{service.description}</p>
 
                   {/* Details */}
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Giá:</span>
-                      <span className="font-semibold text-blue-600">{formatVND(service.basePrice)}</span>
+                      <span className="text-text-secondary">Giá:</span>
+                      <span className="font-semibold text-lime-600">{formatVND(service.basePrice)}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Thời gian:</span>
-                      <span className="text-gray-900">{service.estimatedDuration} phút</span>
+                      <span className="text-text-secondary">Thời gian:</span>
+                      <span className="text-white">{service.estimatedDuration} phút</span>
                     </div>
                   </div>
 
@@ -246,7 +246,7 @@ const CustomerServicesPage: React.FC = () => {
                         <svg className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        <span className="text-xs font-medium text-green-800">Bảo hành {service.warranty.duration} ngày</span>
+                        <span className="text-xs text-text-muted text-green-800">Bảo hành {service.warranty.duration} ngày</span>
                       </div>
                       <p className="text-xs text-green-700">{service.warranty.description}</p>
                     </div>

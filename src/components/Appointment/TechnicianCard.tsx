@@ -44,13 +44,13 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
   const getAvailabilityColor = (status: string) => {
     switch (status) {
       case "available":
-        return "text-emerald-700 bg-emerald-50 border-emerald-200";
+        return "text-emerald-600 bg-dark-300 border-emerald-500";
       case "busy":
-        return "text-amber-700 bg-amber-50 border-amber-200";
+        return "text-amber-600 bg-dark-300 border-amber-500";
       case "offline":
-        return "text-gray-700 bg-gray-50 border-gray-200";
+        return "text-text-secondary bg-dark-900 border-dark-200";
       default:
-        return "text-gray-700 bg-gray-50 border-gray-200";
+        return "text-text-secondary bg-dark-900 border-dark-200";
     }
   };
 
@@ -86,11 +86,11 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
     <div
       className={`relative p-5 rounded-xl transition-all duration-300 ${
         disabled
-          ? "cursor-not-allowed opacity-50 bg-gray-50"
+          ? "cursor-not-allowed opacity-50 bg-dark-900"
           : isSelected
-          ? "shadow-lg ring-2 ring-blue-500 ring-offset-2 cursor-pointer scale-[1.02]"
-          : "shadow-sm hover:shadow-md cursor-pointer hover:scale-[1.01] bg-white"
-      } ${isSelected ? "bg-gradient-to-br from-blue-50 to-white" : ""}`}
+          ? "shadow-lg ring-2 ring-lime-600 ring-offset-2 ring-offset-dark-900 cursor-pointer scale-[1.02] bg-dark-300"
+          : "shadow-sm hover:shadow-md cursor-pointer hover:scale-[1.01] bg-dark-300"
+      }`}
       onClick={disabled ? undefined : () => onSelect(technician.id)}
     >
       {/* Recommended Badge */}
@@ -110,24 +110,24 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
             <UserIcon className="w-8 h-8 text-white" />
           </div>
           {isSelected && (
-            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center shadow-sm">
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-dark-9000 rounded-full flex items-center justify-center shadow-sm">
               <CheckBadgeIcon className="w-4 h-4 text-white" />
             </div>
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-lg text-gray-900 mb-1 truncate">
+          <h3 className="font-bold text-lg text-white mb-1 truncate">
             {technician.name}
           </h3>
-          <div className="flex items-center gap-3 text-sm text-gray-600">
+          <div className="flex items-center gap-3 text-sm text-text-secondary">
             <div className="flex items-center gap-1">
               <ClockIcon className="w-4 h-4" />
               <span>{technician.yearsExperience} years</span>
             </div>
-            <span className="text-gray-400">•</span>
+            <span className="text-text-muted">•</span>
             <div className="flex items-center gap-1">
               <StarIcon className="w-4 h-4 text-amber-500" />
-              <span className="font-semibold text-gray-900">
+              <span className="font-semibold text-white">
                 {(technician.performance.customerRating || 0).toFixed(1)}
               </span>
             </div>
@@ -149,17 +149,17 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
                   ? "bg-emerald-500 animate-pulse"
                   : technician.availability.status === "busy"
                   ? "bg-amber-500"
-                  : "bg-gray-400"
+                  : "bg-dark-400"
               }`}
             />
             {getAvailabilityText(technician.availability.status)}
           </span>
-          <span className="text-xs font-medium text-gray-600 bg-gray-100 px-3 py-1.5 rounded-lg">
+          <span className="text-xs bg-dark-300 text-text-secondary px-3 py-1.5 rounded-lg">
             {Math.round(technician.availability.workloadPercentage)}% workload
           </span>
         </div>
         {!isAvailableForSlot && (
-          <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-red-700 bg-red-50 px-3 py-2 rounded-lg border border-red-200">
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-text-muted text-red-600 bg-dark-300 px-3 py-2 rounded-lg border border-red-600">
             <ClockIcon className="w-4 h-4 flex-shrink-0" />
             Not available for selected time slot
           </div>
@@ -168,30 +168,30 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
 
       {/* Performance Metrics */}
       <div className="grid grid-cols-3 gap-2 mb-4">
-        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-2.5 text-center border border-gray-200 min-h-[60px] flex flex-col justify-center">
+        <div className="bg-dark-300 rounded-lg p-2.5 text-center border border-dark-200 min-h-[60px] flex flex-col justify-center">
           <div className="flex items-center justify-center gap-1 mb-1">
             <StarIcon className="w-4 h-4 text-amber-500 flex-shrink-0" />
-            <span className="font-bold text-sm text-gray-900 truncate">
+            <span className="font-bold text-sm text-white truncate">
               {(technician.performance.customerRating || 0).toFixed(1)}
             </span>
           </div>
-          <div className="text-xs font-medium text-gray-600 leading-tight">
+          <div className="text-xs text-text-muted text-text-secondary leading-tight">
             Rating
           </div>
         </div>
-        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-2.5 text-center border border-gray-200 min-h-[60px] flex flex-col justify-center">
-          <div className="font-bold text-sm text-gray-900 mb-1 truncate">
+        <div className="bg-dark-300 rounded-lg p-2.5 text-center border border-dark-200 min-h-[60px] flex flex-col justify-center">
+          <div className="font-bold text-sm text-white mb-1 truncate">
             {technician.performance.completedJobs}
           </div>
-          <div className="text-xs font-medium text-gray-600 leading-tight">
+          <div className="text-xs text-text-muted text-text-secondary leading-tight">
             Jobs Done
           </div>
         </div>
-        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-2.5 text-center border border-gray-200 min-h-[60px] flex flex-col justify-center">
-          <div className="font-bold text-sm text-gray-900 mb-1 truncate">
+        <div className="bg-dark-300 rounded-lg p-2.5 text-center border border-dark-200 min-h-[60px] flex flex-col justify-center">
+          <div className="font-bold text-sm text-white mb-1 truncate">
             {Math.round(technician.performance.efficiency)}%
           </div>
-          <div className="text-xs font-medium text-gray-600 leading-tight">
+          <div className="text-xs text-text-muted text-text-secondary leading-tight">
             Efficiency
           </div>
         </div>
@@ -200,14 +200,14 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
       {/* Specializations */}
       {technician.specializations.length > 0 && (
         <div className="mb-4">
-          <div className="text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+          <div className="text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wide">
             Specializations
           </div>
           <div className="flex flex-wrap gap-1.5">
             {technician.specializations.map((spec) => (
               <span
                 key={spec}
-                className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200"
+                className="inline-flex items-center px-2.5 py-1 rounded-md text-xs text-text-muted bg-dark-200 text-lime-600 border border-dark-100"
               >
                 {spec}
               </span>
@@ -218,32 +218,32 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
 
       {/* Relevant Skills for Selected Services */}
       {hasRelevantSkills && (
-        <div className="border-t border-gray-200 pt-4">
-          <div className="text-xs font-semibold text-gray-700 mb-2.5 uppercase tracking-wide">
+        <div className="border-t border-dark-200 pt-4">
+          <div className="text-xs font-semibold text-text-secondary mb-2.5 uppercase tracking-wide">
             Skills Match
           </div>
           <div className="space-y-2">
             {relevantSkills.slice(0, 3).map((skill) => (
               <div
                 key={skill.category}
-                className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 border border-gray-200"
+                className="flex items-center justify-between bg-dark-900 rounded-lg px-3 py-2 border border-dark-200"
               >
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <CpuChipIcon className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                  <span className="capitalize text-sm font-medium text-gray-900 truncate">
+                  <CpuChipIcon className="w-4 h-4 text-text-muted flex-shrink-0" />
+                  <span className="capitalize text-sm text-text-muted text-white truncate">
                     {skill.category}
                   </span>
                   {skill.certified && (
                     <CheckBadgeIcon className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                   )}
                 </div>
-                <span className="text-xs font-semibold text-gray-700 bg-white px-2 py-1 rounded border border-gray-300 ml-2 flex-shrink-0">
+                <span className="text-xs font-semibold text-text-secondary bg-dark-300 px-2 py-1 rounded border border-dark-300 ml-2 flex-shrink-0">
                   {getSkillLevel(skill.level)}
                 </span>
               </div>
             ))}
             {relevantSkills.length > 3 && (
-              <div className="text-xs font-medium text-gray-500 text-center pt-1">
+              <div className="text-xs text-text-muted text-text-muted text-center pt-1">
                 +{relevantSkills.length - 3} more skills
               </div>
             )}

@@ -142,17 +142,17 @@ const StaffDashboard: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-600 text-white';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-orange-600 text-white';
       case 'completed':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-lime-200 text-dark-900';
       case 'in_progress':
-        return 'bg-indigo-100 text-indigo-800';
+        return 'bg-dark-600 text-white';
       case 'cancelled':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-600 text-white';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-text-muted text-white';
     }
   };
 
@@ -208,26 +208,26 @@ const StaffDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-dark-900">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-dark-300 shadow-sm border-b">
         <div className="px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Staff Dashboard</h1>
-              <p className="mt-1 text-sm text-gray-500">
+              <h1 className="text-2xl font-bold text-white">Staff Dashboard</h1>
+              <p className="mt-1 text-sm text-text-muted">
                 Xin chào, {user?.firstName} {user?.lastName}
               </p>
             </div>
 
             {/* Tab Navigation */}
-            <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+            <div className="flex space-x-1 bg-dark-100 p-1 rounded-lg">
               <button
                 onClick={() => setActiveTab('appointments')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-md text-sm text-text-muted transition-colors ${
                   activeTab === 'appointments'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-dark-300 text-lime-600 shadow-sm'
+                    : 'text-text-muted hover:text-text-secondary'
                 }`}
               >
                 <div className="flex items-center space-x-2">
@@ -237,10 +237,10 @@ const StaffDashboard: React.FC = () => {
               </button>
               <button
                 onClick={() => setActiveTab('reception-review')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-md text-sm text-text-muted transition-colors ${
                   activeTab === 'reception-review'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'bg-dark-300 text-lime-600 shadow-sm'
+                    : 'text-text-muted hover:text-text-secondary'
                 }`}
               >
                 <div className="flex items-center space-x-2">
@@ -266,17 +266,17 @@ const StaffDashboard: React.FC = () => {
             {/* Stats Cards */}
             {dashboardData && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white p-6 rounded-lg shadow">
+                <div className="bg-dark-300 p-6 rounded-lg shadow">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
-                      <Calendar className="h-8 w-8 text-blue-600" />
+                      <Calendar className="h-8 w-8 text-lime-600" />
                     </div>
                     <div className="ml-5 w-0 flex-1">
                       <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">
+                        <dt className="text-sm text-text-muted text-text-muted truncate">
                           Lịch hẹn hôm nay
                         </dt>
-                        <dd className="text-lg font-medium text-gray-900">
+                        <dd className="text-lg text-text-muted text-white">
                           {dashboardData.totalAppointmentsToday}
                         </dd>
                       </dl>
@@ -284,17 +284,17 @@ const StaffDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-lg shadow">
+                <div className="bg-dark-300 p-6 rounded-lg shadow">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
                       <Clock className="h-8 w-8 text-yellow-600" />
                     </div>
                     <div className="ml-5 w-0 flex-1">
                       <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">
+                        <dt className="text-sm text-text-muted text-text-muted truncate">
                           Chờ xác nhận
                         </dt>
-                        <dd className="text-lg font-medium text-gray-900">
+                        <dd className="text-lg text-text-muted text-white">
                           {dashboardData.pendingAppointments}
                         </dd>
                       </dl>
@@ -302,17 +302,17 @@ const StaffDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-lg shadow">
+                <div className="bg-dark-300 p-6 rounded-lg shadow">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
                       <Users className="h-8 w-8 text-green-600" />
                     </div>
                     <div className="ml-5 w-0 flex-1">
                       <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">
+                        <dt className="text-sm text-text-muted text-text-muted truncate">
                           Đang thực hiện
                         </dt>
-                        <dd className="text-lg font-medium text-gray-900">
+                        <dd className="text-lg text-text-muted text-white">
                           {dashboardData.inProgressAppointments}
                         </dd>
                       </dl>
@@ -320,17 +320,17 @@ const StaffDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-lg shadow">
+                <div className="bg-dark-300 p-6 rounded-lg shadow">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
                       <CheckCircle className="h-8 w-8 text-purple-600" />
                     </div>
                     <div className="ml-5 w-0 flex-1">
                       <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">
+                        <dt className="text-sm text-text-muted text-text-muted truncate">
                           Hoàn thành tuần này
                         </dt>
-                        <dd className="text-lg font-medium text-gray-900">
+                        <dd className="text-lg text-text-muted text-white">
                           {dashboardData.completedThisWeek}
                         </dd>
                       </dl>
@@ -341,15 +341,15 @@ const StaffDashboard: React.FC = () => {
             )}
 
             {/* Pending Appointments */}
-            <div className="bg-white shadow rounded-lg">
+            <div className="bg-dark-300 shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900">
+                  <h3 className="text-lg leading-6 text-text-muted text-white">
                     Lịch hẹn cần xử lý
                   </h3>
                   <button
                     onClick={immediateFetchDashboard}
-                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="inline-flex items-center px-3 py-2 border border-dark-200 bg-dark-300 text-white shadow-sm text-sm leading-4 text-text-muted rounded-md text-text-secondary bg-dark-300 hover:bg-dark-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-500"
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Làm mới
@@ -358,9 +358,9 @@ const StaffDashboard: React.FC = () => {
 
                 {!dashboardData || !dashboardData.recentAppointments || dashboardData.recentAppointments.length === 0 ? (
                   <div className="text-center py-12">
-                    <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">Không có lịch hẹn</h3>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <Calendar className="mx-auto h-12 w-12 text-text-muted" />
+                    <h3 className="mt-2 text-sm text-text-muted text-white">Không có lịch hẹn</h3>
+                    <p className="mt-1 text-sm text-text-muted">
                       Hiện tại không có lịch hẹn nào cần xử lý.
                     </p>
                   </div>
@@ -372,25 +372,25 @@ const StaffDashboard: React.FC = () => {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-4">
                               <div className="flex-shrink-0">
-                                <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                                  <User className="h-6 w-6 text-gray-600" />
+                                <div className="h-10 w-10 rounded-full bg-dark-300 flex items-center justify-center">
+                                  <User className="h-6 w-6 text-text-secondary" />
                                 </div>
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-gray-900 truncate">
+                                <p className="text-sm text-text-muted text-white truncate">
                                   {appointment.customerId?.firstName} {appointment.customerId?.lastName}
                                 </p>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-text-muted">
                                   {appointment.vehicleId?.make} {appointment.vehicleId?.model} •{' '}
                                   {appointment.vehicleId?.licensePlate}
                                 </p>
-                                <p className="text-xs text-gray-400">
+                                <p className="text-xs text-text-muted">
                                   {format(new Date(appointment.scheduledDateTime), 'dd/MM/yyyy HH:mm')}
                                 </p>
                               </div>
                             </div>
                             <div className="flex items-center space-x-3">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(appointment.status)}`}>
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-text-muted ${getStatusColor(appointment.status)}`}>
                                 {appointment.status}
                               </span>
 
@@ -398,7 +398,7 @@ const StaffDashboard: React.FC = () => {
                                 <button
                                   onClick={() => handleConfirmAppointment(appointment._id)}
                                   disabled={actionLoading === appointment._id}
-                                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+                                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs text-text-muted rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-green-500 disabled:opacity-50"
                                 >
                                   {actionLoading === appointment._id ? (
                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -413,7 +413,7 @@ const StaffDashboard: React.FC = () => {
                                   {assigningTechnician === appointment._id ? (
                                     <div className="flex items-center space-x-2">
                                       <select
-                                        className="text-xs border-gray-300 rounded"
+                                        className="text-xs border-dark-300 rounded"
                                         onChange={(e) => handleAssignTechnician(appointment._id, e.target.value)}
                                       >
                                         <option value="">Chọn kỹ thuật viên</option>
@@ -425,7 +425,7 @@ const StaffDashboard: React.FC = () => {
                                       </select>
                                       <button
                                         onClick={() => setAssigningTechnician(null)}
-                                        className="text-gray-500 hover:text-gray-700"
+                                        className="text-text-muted hover:text-text-secondary"
                                       >
                                         <X className="h-4 w-4" />
                                       </button>
@@ -434,7 +434,7 @@ const StaffDashboard: React.FC = () => {
                                     <>
                                       <button
                                         onClick={() => setAssigningTechnician(appointment._id)}
-                                        className="inline-flex items-center px-2 py-1 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                                        className="inline-flex items-center px-2 py-1 border border-dark-300 shadow-sm text-xs text-text-muted rounded text-text-secondary bg-dark-300 hover:bg-dark-900"
                                       >
                                         <User className="h-3 w-3 mr-1" />
                                         Phân công
@@ -442,7 +442,7 @@ const StaffDashboard: React.FC = () => {
                                       <button
                                         onClick={() => handleAutoAssign(appointment._id)}
                                         disabled={actionLoading === appointment._id}
-                                        className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                                        className="inline-flex items-center px-2 py-1 border border-transparent text-xs text-text-muted rounded text-white bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
                                       >
                                         {actionLoading === appointment._id ? (
                                           <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>

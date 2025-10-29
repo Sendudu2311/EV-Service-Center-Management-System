@@ -279,12 +279,12 @@ const getTechName = (slot: any) => {
   const days = getWeekDates();
 
   return (
-    <div className="p-4">
-      <h3 className="text-lg font-semibold mb-4">Slot Manager — Weekly Timetable</h3>
+    <div className="p-4 bg-dark-300">
+      <h3 className="text-text-secondary mt-2">Slot Manager — Weekly Timetable</h3>
 
       <div className="flex items-center gap-4 mb-4 flex-wrap">
         <div className="flex items-center gap-2">
-          <label className="text-sm text-gray-600">Week start (Mon)</label>
+          <label className="text-sm text-text-secondary">Week start (Mon)</label>
           <input 
             type="date" 
             value={weekStart} 
@@ -304,42 +304,42 @@ const getTechName = (slot: any) => {
                 toast.info('Only Monday can be selected. Adjusted to nearest Monday.');
               }
             }}
-            className="rounded-md border-gray-300" 
+            className="rounded-md border-dark-300" 
           />
         </div>
         
         <button
           onClick={handleAutoAssignAll}
-          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-medium text-sm flex items-center gap-2"
+          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-text-muted text-sm flex items-center gap-2"
         >
           
           Auto Assign For Entire Week
         </button>
       </div>
 
-      <div className="overflow-auto border rounded-md bg-white">
+      <div className="overflow-auto border rounded-md bg-dark-300">
         <table className="min-w-full table-auto">
           <thead>
             <tr>
-              <th className="border px-2 py-2">Time</th>
+              <th className="border px-2 py-2 text-text-muted">Time</th>
               {days.map(d=> (
-                <th key={d} className="border px-2 py-2">{new Date(d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</th>
+                <th key={d} className="border px-2 py-2 text-text-muted">{new Date(d).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {slotRanges.map(([start,end])=> (
               <tr key={start}>
-                <td className="border px-2 py-2 font-medium">{start} — {end}</td>
+                <td className="border px-2 py-2 text-text-muted ">{start} — {end}</td>
                 {days.map(d=>{
                   const slot = slotsWeekMap[d]?.[start] || null;
                   const slotDateTime = new Date(`${d}T${start}`);
                   const isPast = slotDateTime < new Date();
                   return (
-                    <td key={`${d}-${start}`} className="border px-2 py-2 align-top">
-                      <div className="text-xs text-gray-600 mb-1">
+                    <td key={`${d}-${start}`} className="border px-2 py-2 text-text-muted align-top">
+                      <div className="text-xs text-text-secondary mb-1">
                         {slot ? (
-                          <span className="font-medium">
+                          <span className="text-text-muted">
                             {slot.status} • Cap: {slot.capacity} • Booked: {slot.bookedCount || 0}
                           </span>
                         ) : (
@@ -352,8 +352,8 @@ const getTechName = (slot: any) => {
                         // Slot has technicians assigned - show only names and edit button
                         <>
                           <div className="mb-2">
-                            <div className="text-sm font-medium text-gray-700 mb-1">Technicians:</div>
-                            <div className="text-xs text-gray-600">{getTechName(slot)}</div>
+                            <div className="text-sm text-text-muted text-text-secondary mb-1">Technicians:</div>
+                            <div className="text-xs text-text-secondary">{getTechName(slot)}</div>
                           </div>
                           <div className="flex gap-2">
                             <button 
@@ -372,7 +372,7 @@ const getTechName = (slot: any) => {
                                 setEditing({date: d, start, slot, selectedTechIds: currentTechIds, capacity: slot?.capacity || 1});
                               }} 
                               disabled={isPast}
-                              className={`px-2 py-1 rounded text-xs ${isPast ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                              className={`px-2 py-1 rounded text-xs ${isPast ? 'bg-dark-300 text-text-muted cursor-not-allowed' : 'bg-lime-600 text-white hover:bg-lime-100 transition-all duration-200 transform hover:scale-105'}`}
                             >
                               Edit
                             </button>
@@ -381,7 +381,7 @@ const getTechName = (slot: any) => {
                       ) : (
                         // Slot has no technicians - show placeholder and both buttons
                         <>
-                          <div className="mb-2 text-gray-400 italic">No technicians assigned</div>
+                          <div className="mb-2 text-text-muted italic">No technicians assigned</div>
                           <div className="flex gap-2">
                             <button 
                               onClick={()=>{
@@ -389,14 +389,14 @@ const getTechName = (slot: any) => {
                                 setEditing({date: d, start, slot, selectedTechIds: [], capacity: slot?.capacity || 1});
                               }} 
                               disabled={isPast}
-                              className={`px-2 py-1 rounded text-xs ${isPast ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                              className={`px-2 py-1 rounded text-xs ${isPast ? 'bg-dark-300 text-text-muted cursor-not-allowed' : 'bg-lime-600 text-white hover:bg-lime-100 transition-all duration-200 transform hover:scale-105'}`}
                             >
                               Edit
                             </button>
                             <button 
                               onClick={()=>handleAutoAssign(d,start)} 
                               disabled={isPast}
-                              className={`px-2 py-1 rounded text-xs ${isPast ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-700'}`}
+                              className={`px-2 py-1 rounded text-xs ${isPast ? 'bg-dark-300 text-text-muted cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-700'}`}
                             >
                               Auto Assign
                             </button>
@@ -413,12 +413,12 @@ const getTechName = (slot: any) => {
       </div>
 
       {editing && (
-        <div className="mt-4 p-4 border rounded-md bg-white">
-          <h4 className="font-medium mb-2">Assign technicians for {editing.date} {editing.start}</h4>
+        <div className="mt-4 p-4 border rounded-md bg-dark-300">
+          <h4 className="text-text-muted mb-2">Assign technicians for {editing.date} {editing.start}</h4>
           
           {/* Capacity Configuration */}
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+          <div className="mb-4 p-3 bg-dark-900 border border-blue-200 rounded-md">
+            <label className="block text-sm text-text-muted text-text-secondary mb-2">
               Slot Capacity (Max Appointments)
             </label>
             <input
@@ -427,9 +427,9 @@ const getTechName = (slot: any) => {
               max="20"
               value={editing.capacity}
               onChange={(e) => setEditing({ ...editing, capacity: parseInt(e.target.value) || 1 })}
-              className="w-32 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              className="w-32 rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400"
             />
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-text-secondary mt-1">
               How many appointments can be booked in this time slot
             </p>
           </div>
@@ -441,17 +441,17 @@ const getTechName = (slot: any) => {
                 const allTechIds = technicians.map(t => t.technicianId?._id || t._id);
                 setEditing({ ...editing, selectedTechIds: allTechIds });
               }}
-              className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
+              className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
             >
               Select All
             </button>
             <button
               onClick={() => setEditing({ ...editing, selectedTechIds: [] })}
-              className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200"
+              className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
             >
               Deselect All
             </button>
-            <span className="text-xs text-gray-500 self-center">
+            <span className="text-xs text-text-muted self-center">
               {editing.selectedTechIds.length} of {technicians.length} selected
             </span>
           </div>
@@ -467,7 +467,7 @@ const getTechName = (slot: any) => {
                 const isChecked = editing.selectedTechIds.includes(techId);
                 
                 return (
-                  <label key={t._id} className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                  <label key={t._id} className="flex items-center space-x-2 cursor-pointer hover:bg-dark-900 p-2 rounded">
                     <input
                       type="checkbox"
                       checked={isChecked}
@@ -478,7 +478,7 @@ const getTechName = (slot: any) => {
                         console.log('Checkbox changed:', { techId, checked: e.target.checked, newSelectedIds });
                         setEditing({ ...editing, selectedTechIds: newSelectedIds });
                       }}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded bg-dark-300 text-white border-dark-300 text-lime-600 focus:ring-lime-400"
                     />
                     <span className="text-sm">{techName}</span>
                   </label>
@@ -492,13 +492,13 @@ const getTechName = (slot: any) => {
                 console.log('Save button clicked with selectedTechIds and capacity:', editing.selectedTechIds, editing.capacity);
                 await handleAssign(editing.date, editing.start, editing.selectedTechIds, editing.capacity);
               }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="px-4 py-2 bg-lime-600 text-white rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
             >
               Save
             </button>
             <button 
               onClick={() => setEditing(null)} 
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              className="px-4 py-2 bg-dark-200 text-text-secondary rounded-md hover:bg-dark-300"
             >
               Cancel
             </button>
