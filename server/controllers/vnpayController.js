@@ -24,6 +24,7 @@ export const createPayment = async (req, res, next) => {
       orderInfo,
       appointmentData,
       paymentType = "appointment",
+      isMobileApp: requestIsMobileApp = false, // Explicit flag from mobile app
     } = req.body;
 
     if (!amount || amount <= 0) {
@@ -70,14 +71,34 @@ export const createPayment = async (req, res, next) => {
     const vnpayAmount = Math.round(amount);
 
     // Create payment URL parameters
+    // Get server URL - use IP from request host if available (important for mobile)
+    // Mobile devices can't access localhost, need actual IP
+    let serverUrl = process.env.SERVER_URL;
+
+    if (!serverUrl) {
+      // Try to detect from request headers
+      const protocol = req.protocol || "http";
+      const host = req.get("host") || req.get("x-forwarded-host");
+
+      if (host) {
+        serverUrl = `${protocol}://${host}`;
+      } else {
+        // Fallback to localhost for web, but this won't work for mobile
+        serverUrl = "http://localhost:3000";
+      }
+    }
+
+    console.log(
+      "🌐 VNPay Return URL will be:",
+      `${serverUrl}/api/vnpay/return`
+    );
+
     const paymentParams = {
       vnp_TxnRef: transactionRef,
       vnp_OrderInfo: orderInfo || `Thanh toan dich vu xe dien ${amount} VND`,
       vnp_OrderType: "other",
       vnp_Amount: vnpayAmount,
-      vnp_ReturnUrl: `${
-        process.env.SERVER_URL || "http://localhost:3000"
-      }/api/vnpay/return`,
+      vnp_ReturnUrl: `${serverUrl}/api/vnpay/return`,
       vnp_IpAddr: req.ip || "127.0.0.1",
       vnp_CreateDate: parseInt(
         new Date()
@@ -158,6 +179,12 @@ export const createPayment = async (req, res, next) => {
           referer: req.get("Referer"),
           orderInfo: paymentParams.vnp_OrderInfo,
           orderType: paymentParams.vnp_OrderType,
+          // Check multiple sources: explicit flag, User-Agent, or payment type
+          isMobileApp:
+            requestIsMobileApp ||
+            req.get("User-Agent")?.includes("Expo") ||
+            req.get("User-Agent")?.includes("ReactNative") ||
+            (paymentType === "appointment" && !appointmentData?.appointmentId), // Mobile bookings don't have appointmentId yet
         },
       });
 
@@ -192,8 +219,18 @@ export const createPayment = async (req, res, next) => {
       createdAt: new Date(),
       appointmentData: appointmentData,
       transactionId: transaction._id,
+      metadata: transaction.metadata, // Copy metadata from transaction for mobile detection
       ...paymentParams,
     };
+
+    console.log(
+      "📱 Stored pendingPayment with metadata:",
+      JSON.stringify({
+        transactionRef,
+        isMobileApp: transaction.metadata?.isMobileApp,
+        paymentPurpose: transaction.paymentPurpose,
+      })
+    );
 
     res.json({
       success: true,
@@ -368,13 +405,117 @@ export const handleReturn = async (req, res, next) => {
         }
       }
 
-      // Redirect to frontend
+      // Redirect to frontend or mobile app deep link
       const displayAmount = parseInt(vnp_Amount) / 100;
-      const redirectUrl = `${
-        process.env.CLIENT_URL || "http://localhost:5173"
-      }/payment/vnpay-return?success=${success}&transactionRef=${vnp_TxnRef}&amount=${displayAmount}`;
 
-      console.log("Redirecting to frontend:", redirectUrl);
+      // DEBUG: Log all relevant data
+      console.log("=== MOBILE DETECTION DEBUG ===");
+      console.log("Transaction exists:", !!transaction);
+      console.log("Pending payment exists:", !!pendingPayment);
+      console.log("Transaction metadata:", transaction?.metadata);
+      console.log("Pending payment metadata:", pendingPayment?.metadata);
+      console.log("Transaction paymentPurpose:", transaction?.paymentPurpose);
+      console.log("AppointmentData:", pendingPayment?.appointmentData);
+
+      // Check if this is a mobile request - check transaction metadata first (most reliable)
+      const userAgent = req.get("User-Agent") || "";
+      console.log("User-Agent:", userAgent.substring(0, 100));
+
+      // Parse metadata if it's a string (MongoDB sometimes stores as string)
+      let transactionMetadata = transaction?.metadata;
+      if (typeof transactionMetadata === "string") {
+        try {
+          transactionMetadata = JSON.parse(transactionMetadata);
+        } catch (e) {
+          console.log("Could not parse transaction metadata as JSON");
+        }
+      }
+
+      let pendingMetadata = pendingPayment?.metadata;
+      if (typeof pendingMetadata === "string") {
+        try {
+          pendingMetadata = JSON.parse(pendingMetadata);
+        } catch (e) {
+          console.log("Could not parse pending metadata as JSON");
+        }
+      }
+
+      const transactionIsMobile = transactionMetadata?.isMobileApp === true;
+      const pendingIsMobile = pendingMetadata?.isMobileApp === true;
+      const userAgentIsMobile =
+        userAgent.includes("Expo") || userAgent.includes("ReactNative");
+
+      // Also check if paymentPurpose is deposit_booking (mobile appointments use this)
+      // AND has appointmentData but NO appointmentId (mobile booking pattern)
+      const hasAppointmentDataWithoutId =
+        (pendingPayment?.appointmentData &&
+          !pendingPayment?.appointmentData?.appointmentId) ||
+        (transactionMetadata?.appointmentData &&
+          !transactionMetadata?.appointmentData?.appointmentId);
+
+      // Strongest indicator: deposit_booking is ALWAYS from mobile app
+      const isDepositBooking =
+        transaction?.paymentPurpose === "deposit_booking";
+
+      const isAppointmentPayment =
+        isDepositBooking ||
+        transactionMetadata?.paymentType === "appointment" ||
+        hasAppointmentDataWithoutId;
+
+      // Mobile detection priority:
+      // 1. Explicit flag in metadata (most reliable)
+      // 2. deposit_booking paymentPurpose (mobile booking pattern)
+      // 3. User-Agent
+      // 4. appointmentData without appointmentId
+      const isMobileApp =
+        isDepositBooking || // FORCE: deposit_booking is mobile-only
+        transactionIsMobile ||
+        pendingIsMobile ||
+        userAgentIsMobile ||
+        isAppointmentPayment ||
+        hasAppointmentDataWithoutId;
+
+      const redirectUrl = isMobileApp
+        ? `evservicecenter://payment/vnpay-return?success=${success}&transactionRef=${vnp_TxnRef}&amount=${displayAmount}`
+        : `${
+            process.env.CLIENT_URL || "http://localhost:5173"
+          }/payment/vnpay-return?success=${success}&transactionRef=${vnp_TxnRef}&amount=${displayAmount}`;
+
+      console.log("🔀 REDIRECT DECISION:");
+      console.log("  Transaction paymentPurpose:", transaction?.paymentPurpose);
+      console.log("  isDepositBooking:", isDepositBooking);
+      console.log("  Redirect URL:", redirectUrl);
+      console.log("  isMobileApp:", isMobileApp);
+      console.log("  Detection breakdown:", {
+        isDepositBooking,
+        transactionIsMobile,
+        pendingIsMobile,
+        userAgentIsMobile,
+        isAppointmentPayment,
+        hasAppointmentDataWithoutId,
+      });
+      console.log(
+        "  Transaction metadata.isMobileApp:",
+        transactionMetadata?.isMobileApp
+      );
+      console.log(
+        "  Pending metadata.isMobileApp:",
+        pendingMetadata?.isMobileApp
+      );
+
+      // FINAL CHECK: If deposit_booking, ALWAYS redirect to mobile deep link
+      // deposit_booking payments are ONLY from mobile app, never from web
+      if (isDepositBooking) {
+        console.log(
+          "✅ FORCING mobile redirect for deposit_booking payment (mobile-only pattern)"
+        );
+        // Redirect to HTML page that will trigger deep link
+        // Mobile browsers can't directly handle deep link schemes from server redirects
+        const htmlRedirectUrl = `/vnpay-redirect.html?success=${success}&transactionRef=${vnp_TxnRef}&amount=${displayAmount}`;
+        console.log("📱 Redirecting to HTML page:", htmlRedirectUrl);
+        return res.redirect(htmlRedirectUrl);
+      }
+
       return res.redirect(redirectUrl);
     } else {
       console.log("No transaction found for ref:", vnp_TxnRef);

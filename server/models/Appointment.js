@@ -453,6 +453,12 @@ appointmentSchema.methods.calculateTotal = function () {
     total += part.totalPrice;
   });
 
+  // Add deposit amount if deposit has been paid (for deposit_booking)
+  // This ensures totalAmount includes the 200,000 VND deposit
+  if (this.bookingType === "deposit_booking" && this.depositInfo?.paid) {
+    total += this.depositInfo.amount || 200000; // Default to 200,000 if not specified
+  }
+
   this.totalAmount = total;
   return total;
 };

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Đang xử lý thanh toán...</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 20px;
+        padding: 40px 30px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        max-width: 400px;
+        width: 100%;
+      }
+
+      .spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      h1 {
+        color: #333;
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+
+      p {
+        color: #666;
+        font-size: 16px;
+        margin-bottom: 20px;
+        line-height: 1.8;
+        text-align: left;
+      }
+
+      .status {
+        display: none;
+        padding: 15px;
+        border-radius: 10px;
+        margin-top: 20px;
+      }
+
+      .status.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .status.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      .button {
+        display: inline-block;
+        background: #667eea;
+        color: white;
+        padding: 15px 30px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 600;
+        margin-top: 15px;
+        transition: transform 0.2s, background 0.2s;
+      }
+
+      .button:hover {
+        background: #5568d3;
+        transform: translateY(-2px);
+      }
+
+      .button:active {
+        transform: translateY(0);
+      }
+
+      #manualOpen {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="spinner"></div>
+      <h1>Đang xử lý thanh toán...</h1>
+      <p id="message">Vui lòng chờ trong giây lát</p>
+
+      <div id="statusBox" class="status"></div>
+
+      <a href="#" id="manualOpen" class="button">Mở ứng dụng</a>
+    </div>
+
+    <script>
+      // Get URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const success = urlParams.get("success");
+      const transactionRef = urlParams.get("transactionRef");
+      const amount = urlParams.get("amount");
+      const error = urlParams.get("error");
+
+      const messageEl = document.getElementById("message");
+      const statusBox = document.getElementById("statusBox");
+      const manualOpenBtn = document.getElementById("manualOpen");
+
+      // Build deep link URL
+      const deepLinkUrl = `evservicecenter://payment/vnpay-return?success=${
+        success || "false"
+      }&transactionRef=${transactionRef || ""}&amount=${amount || "0"}${
+        error ? "&error=" + encodeURIComponent(error) : ""
+      }`;
+
+      console.log("Deep link URL:", deepLinkUrl);
+
+      // Function to attempt opening the app
+      function openApp() {
+        console.log("Attempting to open app with deep link...");
+
+        // Method 1: Direct window.location (works on most browsers)
+        window.location.href = deepLinkUrl;
+
+        // Method 2: Create invisible iframe (fallback for some browsers)
+        setTimeout(() => {
+          const iframe = document.createElement("iframe");
+          iframe.style.display = "none";
+          iframe.src = deepLinkUrl;
+          document.body.appendChild(iframe);
+
+          setTimeout(() => {
+            document.body.removeChild(iframe);
+          }, 1000);
+        }, 500);
+      }
+
+      // Function to show manual open button
+      function showManualOpen() {
+        messageEl.textContent =
+          "Nếu ứng dụng không tự động mở, vui lòng nhấn nút bên dưới";
+        manualOpenBtn.style.display = "inline-block";
+        manualOpenBtn.href = deepLinkUrl;
+      }
+
+      // Main execution
+      if (success === "true") {
+        messageEl.innerHTML =
+          "✅ Thanh toán thành công!<br><br>📱 <strong>Vui lòng MỞ LẠI ỨNG DỤNG</strong> để hoàn tất đặt lịch.<br><br>Cách mở lại app:<br>• Nhấn nút Home rồi mở lại Expo Go<br>• Hoặc dùng App Switcher (vuốt lên từ dưới)";
+        statusBox.textContent = "✓ Giao dịch thành công";
+        statusBox.className = "status success";
+        statusBox.style.display = "block";
+
+        // Show instruction
+        manualOpenBtn.textContent = "Tôi đã hiểu";
+        manualOpenBtn.style.display = "inline-block";
+        manualOpenBtn.href = "#";
+        manualOpenBtn.onclick = (e) => {
+          e.preventDefault();
+          messageEl.innerHTML =
+            "✅ Bạn có thể đóng trình duyệt này.<br><br>Mở lại ứng dụng Expo Go để xem lịch hẹn của bạn!";
+        };
+      } else {
+        messageEl.innerHTML =
+          "❌ Thanh toán không thành công.<br><br>📱 Vui lòng mở lại ứng dụng.";
+        statusBox.textContent = "✗ Giao dịch thất bại";
+        statusBox.className = "status error";
+        statusBox.style.display = "block";
+
+        // Show instruction
+        manualOpenBtn.textContent = "Tôi đã hiểu";
+        manualOpenBtn.style.display = "inline-block";
+        manualOpenBtn.href = "#";
+        manualOpenBtn.onclick = (e) => {
+          e.preventDefault();
+          messageEl.innerHTML =
+            "Bạn có thể đóng trình duyệt và mở lại ứng dụng.";
+        };
+      }
+    </script>
+  </body>
+</html>
