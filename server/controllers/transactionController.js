@@ -49,22 +49,18 @@ export const getAllTransactions = async (req, res) => {
     const total = await Transaction.countDocuments(filters);
     const totalPages = Math.ceil(total / limit);
 
-    res.json(
-      sendSuccess({
-        transactions,
-        pagination: {
-          currentPage: parseInt(page),
-          totalPages,
-          totalItems: total,
-          itemsPerPage: parseInt(limit),
-        },
-      })
-    );
+    sendSuccess(res, 200, "Transactions retrieved successfully", {
+      transactions,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalItems: total,
+        itemsPerPage: parseInt(limit),
+      },
+    });
   } catch (error) {
     console.error("Error getting all transactions:", error);
-    res
-      .status(500)
-      .json(sendError("Error getting transactions", error.message));
+    sendError(res, 500, "Error getting transactions", error.message);
   }
 };
 
@@ -83,16 +79,19 @@ export const getMyTransactions = async (req, res) => {
       limit: parseInt(limit),
     };
 
+    console.log("🔍 Getting transactions for user:", req.user._id);
+    console.log("📋 Filters:", filters);
+
     const transactions = await TransactionService.getTransactionHistory(
       filters
     );
 
-    res.json(sendSuccess({ transactions }));
+    console.log("✅ Found transactions:", transactions?.length || 0);
+
+    sendSuccess(res, 200, "Transactions retrieved successfully", { transactions });
   } catch (error) {
     console.error("Error getting user transactions:", error);
-    res
-      .status(500)
-      .json(sendError("Error getting your transactions", error.message));
+    sendError(res, 500, "Error getting your transactions", error.message);
   }
 };
 
@@ -106,20 +105,20 @@ export const getTransactionById = async (req, res) => {
     const transaction = await TransactionService.getTransactionById(id);
 
     if (!transaction) {
-      return res.status(404).json(sendError("Transaction not found"));
+      return sendNotFoundError(res, "Transaction");
     }
 
     // Check if user can access this transaction
     if (req.user.role !== "admin" && req.user.role !== "staff") {
       if (transaction.userId._id.toString() !== req.user._id.toString()) {
-        return res.status(403).json(sendError("Access denied"));
+        return sendAuthorizationError(res, "Access denied");
       }
     }
 
-    res.json(sendSuccess({ transaction }));
+    sendSuccess(res, 200, "Transaction retrieved successfully", { transaction });
   } catch (error) {
     console.error("Error getting transaction by ID:", error);
-    res.status(500).json(sendError("Error getting transaction", error.message));
+    sendError(res, 500, "Error getting transaction", error.message);
   }
 };
 
@@ -141,11 +140,11 @@ export const recordCashPayment = async (req, res) => {
 
     // Validate required fields
     if (!userId || !amount) {
-      return res.status(400).json(sendError("User ID and amount are required"));
+      return sendError(res, 400, "User ID and amount are required");
     }
 
     if (amount <= 0) {
-      return res.status(400).json(sendError("Amount must be greater than 0"));
+      return sendError(res, 400, "Amount must be greater than 0");
     }
 
     // Determine payment purpose
@@ -173,17 +172,12 @@ export const recordCashPayment = async (req, res) => {
       transactionData
     );
 
-    res.status(201).json(
-      sendSuccess({
-        message: "Cash payment recorded successfully",
-        transaction,
-      })
-    );
+    sendSuccess(res, 201, "Cash payment recorded successfully", {
+      transaction,
+    });
   } catch (error) {
     console.error("Error recording cash payment:", error);
-    res
-      .status(500)
-      .json(sendError("Error recording cash payment", error.message));
+    sendError(res, 500, "Error recording cash payment", error.message);
   }
 };
 
@@ -215,7 +209,7 @@ export const recordCardPayment = async (req, res) => {
     }
 
     if (amount <= 0) {
-      return res.status(400).json(sendError("Amount must be greater than 0"));
+      return sendError(res, 400, "Amount must be greater than 0");
     }
 
     // Determine payment purpose
@@ -243,17 +237,12 @@ export const recordCardPayment = async (req, res) => {
       transactionData
     );
 
-    res.status(201).json(
-      sendSuccess({
-        message: "Card payment recorded successfully",
-        transaction,
-      })
-    );
+    sendSuccess(res, 201, "Card payment recorded successfully", {
+      transaction,
+    });
   } catch (error) {
     console.error("Error recording card payment:", error);
-    res
-      .status(500)
-      .json(sendError("Error recording card payment", error.message));
+    sendError(res, 500, "Error recording card payment", error.message);
   }
 };
 
@@ -290,7 +279,7 @@ export const recordBankTransferPayment = async (req, res) => {
     }
 
     if (amount <= 0) {
-      return res.status(400).json(sendError("Amount must be greater than 0"));
+      return sendError(res, 400, "Amount must be greater than 0");
     }
 
     // Determine payment purpose
@@ -341,7 +330,7 @@ export const processRefund = async (req, res) => {
     const { amount, reason, customerNotes } = req.body;
 
     if (!reason) {
-      return res.status(400).json(sendError("Refund reason is required"));
+      return sendError(res, 400, "Refund reason is required");
     }
 
     const refundData = {
@@ -363,7 +352,7 @@ export const processRefund = async (req, res) => {
     );
   } catch (error) {
     console.error("Error processing refund:", error);
-    res.status(500).json(sendError("Error processing refund", error.message));
+    sendError(res, 500, "Error processing refund", error.message);
   }
 };
 
@@ -376,7 +365,7 @@ export const updateTransactionStatus = async (req, res) => {
     const { status, additionalData } = req.body;
 
     if (!status) {
-      return res.status(400).json(sendError("Status is required"));
+      return sendError(res, 400, "Status is required");
     }
 
     const transaction = await TransactionService.updateTransactionStatus(
@@ -414,7 +403,7 @@ export const getTransactionStatistics = async (req, res) => {
       dateRange
     );
 
-    res.json(sendSuccess({ statistics }));
+    sendSuccess(res, 200, "Statistics retrieved successfully", { statistics });
   } catch (error) {
     console.error("Error getting transaction statistics:", error);
     res
