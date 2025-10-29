@@ -68,9 +68,9 @@ const VehicleImageGallery: React.FC<VehicleImageGalleryProps> = ({
   if (!images || images.length === 0) {
     return (
       <div className="text-center py-8">
-        <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">No images</h3>
-        <p className="mt-1 text-sm text-gray-500">
+        <PhotoIcon className="mx-auto h-12 w-12 text-text-muted" />
+        <h3 className="mt-2 text-sm text-text-muted text-white">No images</h3>
+        <p className="mt-1 text-sm text-text-muted">
           {canUpload ? 'Get started by uploading an image.' : 'No images available for this vehicle.'}
         </p>
         {canUpload && (
@@ -86,7 +86,7 @@ const VehicleImageGallery: React.FC<VehicleImageGalleryProps> = ({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="mt-3 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              className="mt-3 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 text-text-muted rounded-md text-white bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400 disabled:opacity-50"
             >
               <PlusIcon className="h-4 w-4 mr-1" />
               {uploading ? 'Uploading...' : 'Add Image'}
@@ -113,7 +113,7 @@ const VehicleImageGallery: React.FC<VehicleImageGalleryProps> = ({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            className="inline-flex items-center px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md shadow-sm text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400 disabled:opacity-50"
           >
             <PlusIcon className="h-4 w-4 mr-1" />
             {uploading ? 'Uploading...' : 'Add Image'}
@@ -128,12 +128,12 @@ const VehicleImageGallery: React.FC<VehicleImageGalleryProps> = ({
             <img
               src={image.url}
               alt={image.description || `Vehicle image ${index + 1}`}
-              className="w-full h-32 object-cover rounded-lg border border-gray-300 shadow-sm hover:shadow-md transition-shadow"
+              className="w-full h-32 object-cover rounded-lg border border-dark-300 shadow-sm hover:shadow-md transition-shadow"
               onClick={() => openImageModal(image.url)}
             />
             <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-2 rounded-b-lg opacity-0 group-hover:opacity-100 transition-opacity">
               <p className="truncate">{image.description || 'Vehicle image'}</p>
-              <p className="text-gray-300">
+              <p className="text-text-secondary">
                 {new Date(image.uploadDate).toLocaleDateString()}
               </p>
             </div>
@@ -153,7 +153,7 @@ const VehicleImageGallery: React.FC<VehicleImageGalleryProps> = ({
             />
             <button
               onClick={closeImageModal}
-              className="absolute top-4 right-4 text-white hover:text-gray-300"
+              className="absolute top-4 right-4 text-white hover:text-text-secondary"
             >
               <span className="sr-only">Close</span>
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

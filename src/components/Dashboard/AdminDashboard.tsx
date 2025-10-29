@@ -92,13 +92,13 @@ const AdminDashboard: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-600 text-white';
       case 'maintenance':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-orange-600 text-white';
       case 'inactive':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-600 text-white';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-text-muted text-white';
     }
   };
 
@@ -114,10 +114,10 @@ const AdminDashboard: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900">Failed to load dashboard</h2>
+          <h2 className="text-xl font-semibold text-white">Failed to load dashboard</h2>
           <button 
             onClick={fetchDashboardData}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-lime-600 text-white rounded-lg hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
           >
             Retry
           </button>
@@ -131,8 +131,8 @@ const AdminDashboard: React.FC = () => {
       name: 'Service Centers',
       value: dashboardData.stats.serviceCenters.toString(),
       icon: BuildingOfficeIcon,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
+      color: 'text-lime-600',
+      bgColor: 'bg-lime-100',
       change: `${dashboardData.serviceCenterPerformance.filter(sc => sc.status === 'active').length} active`,
       trend: 'up'
     },
@@ -169,10 +169,10 @@ const AdminDashboard: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-white">
           Admin Dashboard
         </h1>
-        <p className="text-gray-600 mt-2">
+        <p className="text-text-secondary mt-2">
           Welcome back, {user?.firstName}! Here's your system overview and analytics.
         </p>
       </div>
@@ -180,14 +180,14 @@ const AdminDashboard: React.FC = () => {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {stats.map((stat) => (
-          <div key={stat.name} className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+          <div key={stat.name} className="bg-dark-300 rounded-xl shadow-sm p-6 border border-dark-100">
             <div className="flex items-center">
               <div className={`p-3 rounded-lg ${stat.bgColor}`}>
                 <stat.icon className={`h-6 w-6 ${stat.color}`} />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">{stat.name}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-sm text-text-muted text-text-secondary">{stat.name}</p>
+                <p className="text-2xl font-bold text-white">{stat.value}</p>
               </div>
             </div>
             <div className="mt-4 flex items-center">
@@ -201,8 +201,8 @@ const AdminDashboard: React.FC = () => {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Revenue Chart */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue & Appointments Trend</h3>
+        <div className="bg-dark-300 rounded-xl shadow-sm border border-dark-100 p-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Revenue & Appointments Trend</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={dashboardData.revenueData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -222,8 +222,8 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Service Distribution */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Service Distribution</h3>
+        <div className="bg-dark-300 rounded-xl shadow-sm border border-dark-100 p-6">
+          <h3 className="text-lg font-semibold text-white mb-4">Service Distribution</h3>
           {dashboardData.serviceDistribution.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -244,8 +244,8 @@ const AdminDashboard: React.FC = () => {
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex items-center justify-center h-[300px] text-gray-500">
-              <p>No service data available</p>
+            <div className="flex items-center justify-center h-[300px] text-text-muted">
+              <p className="text-white">No service data available</p>
             </div>
           )}
         </div>
@@ -254,46 +254,46 @@ const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Service Centers */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="p-6 border-b border-gray-100">
-              <h2 className="text-xl font-semibold text-gray-900">Service Centers Performance</h2>
+          <div className="bg-dark-300 rounded-xl shadow-sm border border-dark-100">
+            <div className="p-6 border-b border-dark-100">
+              <h2 className="text-xl font-semibold text-white">Service Centers Performance</h2>
             </div>
             <div className="p-6">
               <div className="space-y-4">
                 {dashboardData.serviceCenterPerformance.map((center) => (
-                  <div key={center._id} className="border border-gray-200 rounded-lg p-4">
+                  <div key={center._id} className="border border-dark-200 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <h3 className="font-medium text-gray-900">{center.name}</h3>
-                        <p className="text-sm text-gray-600">{center.location}</p>
-                        <p className="text-xs text-gray-500">Manager: {center.manager}</p>
+                        <h3 className="text-text-muted text-white">{center.name}</h3>
+                        <p className="text-sm text-text-secondary">{center.location}</p>
+                        <p className="text-xs text-text-muted">Manager: {center.manager}</p>
                       </div>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(center.status)}`}>
+                      <span className={`px-2 py-1 text-xs text-text-muted rounded-full ${getStatusColor(center.status)}`}>
                         {center.status}
                       </span>
                     </div>
                     
                     <div className="grid grid-cols-3 gap-4">
                       <div className="text-center">
-                        <p className="text-2xl font-bold text-gray-900">{center.appointments}</p>
-                        <p className="text-sm text-gray-600">Appointments</p>
+                        <p className="text-2xl font-bold text-white">{center.appointments}</p>
+                        <p className="text-sm text-text-secondary">Appointments</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-2xl font-bold text-gray-900">{formatCurrency(center.revenue)}</p>
-                        <p className="text-sm text-gray-600">Revenue</p>
+                        <p className="text-2xl font-bold text-white">{formatCurrency(center.revenue)}</p>
+                        <p className="text-sm text-text-secondary">Revenue</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-2xl font-bold text-gray-900">{center.efficiency}%</p>
-                        <p className="text-sm text-gray-600">Efficiency</p>
+                        <p className="text-2xl font-bold text-white">{center.efficiency}%</p>
+                        <p className="text-sm text-text-secondary">Efficiency</p>
                       </div>
                     </div>
 
                     <div className="mt-4">
                       <div className="flex items-center justify-between text-sm mb-1">
-                        <span className="text-gray-600">Efficiency</span>
-                        <span className="text-gray-900 font-medium">{center.efficiency}%</span>
+                        <span className="text-text-secondary">Efficiency</span>
+                        <span className="text-white text-text-muted">{center.efficiency}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-dark-200 rounded-full h-2">
                         <div 
                           className={`h-2 rounded-full ${center.efficiency >= 90 ? 'bg-green-500' : center.efficiency >= 80 ? 'bg-yellow-500' : 'bg-red-500'}`}
                           style={{ width: `${Math.min(center.efficiency, 100)}%` }}
@@ -309,23 +309,23 @@ const AdminDashboard: React.FC = () => {
 
         {/* Recent Activity */}
         <div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-            <div className="p-6 border-b border-gray-100">
-              <h2 className="text-xl font-semibold text-gray-900">Recent Activity</h2>
+          <div className="bg-dark-300 rounded-xl shadow-sm border border-dark-100">
+            <div className="p-6 border-b border-dark-100">
+              <h2 className="text-xl font-semibold text-white">Recent Activity</h2>
             </div>
             <div className="p-6">
               <div className="space-y-4">
                 {dashboardData.recentActivity.length === 0 ? (
-                  <p className="text-gray-500 text-center py-4">No recent activity</p>
+                  <p className="text-text-muted text-center py-4">No recent activity</p>
                 ) : (
                   dashboardData.recentActivity.map((activity) => (
-                    <div key={activity._id} className="border-l-4 border-blue-500 p-4 rounded-r-lg bg-blue-50">
+                    <div key={activity._id} className="border-l-4 border-blue-500 p-4 rounded-r-lg bg-dark-900">
                       <div className="flex items-start">
-                        <ExclamationTriangleIcon className="h-5 w-5 text-blue-600 mt-0.5 mr-3" />
+                        <ExclamationTriangleIcon className="h-5 w-5 text-lime-600 mt-0.5 mr-3" />
                         <div className="flex-1">
-                          <p className="text-sm text-gray-900">{activity.message}</p>
-                          <p className="text-sm text-gray-600">#{activity.appointmentNumber}</p>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-sm text-white">{activity.message}</p>
+                          <p className="text-sm text-text-secondary">#{activity.appointmentNumber}</p>
+                          <p className="text-xs text-text-muted mt-1">
                             {new Date(activity.time).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
@@ -343,27 +343,27 @@ const AdminDashboard: React.FC = () => {
           </div>
 
           {/* System Overview */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 mt-8">
-            <div className="p-6 border-b border-gray-100">
-              <h2 className="text-xl font-semibold text-gray-900">System Overview</h2>
+          <div className="bg-dark-300 rounded-xl shadow-sm border border-dark-100 mt-8">
+            <div className="p-6 border-b border-dark-100">
+              <h2 className="text-xl font-semibold text-white">System Overview</h2>
             </div>
             <div className="p-6">
               <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-700">Total Appointments</span>
-                  <span className="text-sm text-gray-900">{formatNumber(dashboardData.stats.totalAppointments)}</span>
+                <div className="flex justify-between items-center p-3 bg-dark-900 rounded-lg">
+                  <span className="text-sm text-text-muted text-text-secondary">Total Appointments</span>
+                  <span className="text-sm text-white">{formatNumber(dashboardData.stats.totalAppointments)}</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-700">Completed Services</span>
-                  <span className="text-sm text-gray-900">{formatNumber(dashboardData.stats.completedAppointments)}</span>
+                <div className="flex justify-between items-center p-3 bg-dark-900 rounded-lg">
+                  <span className="text-sm text-text-muted text-text-secondary">Completed Services</span>
+                  <span className="text-sm text-white">{formatNumber(dashboardData.stats.completedAppointments)}</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-700">Staff Members</span>
-                  <span className="text-sm text-gray-900">{dashboardData.stats.userBreakdown.staff}</span>
+                <div className="flex justify-between items-center p-3 bg-dark-900 rounded-lg">
+                  <span className="text-sm text-text-muted text-text-secondary">Staff Members</span>
+                  <span className="text-sm text-white">{dashboardData.stats.userBreakdown.staff}</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-700">Technicians</span>
-                  <span className="text-sm text-gray-900">{dashboardData.stats.userBreakdown.technicians}</span>
+                <div className="flex justify-between items-center p-3 bg-dark-900 rounded-lg">
+                  <span className="text-sm text-text-muted text-text-secondary">Technicians</span>
+                  <span className="text-sm text-white">{dashboardData.stats.userBreakdown.technicians}</span>
                 </div>
               </div>
             </div>

@@ -246,7 +246,7 @@ const EVChecklistComponent: React.FC<Props> = ({
       case 'fair': return 'text-yellow-600 bg-yellow-100';
       case 'poor': return 'text-red-600 bg-red-100';
       case 'unsafe': return 'text-red-800 bg-red-200';
-      default: return 'text-gray-600 bg-gray-100';
+      default: return 'text-text-secondary bg-dark-100';
     }
   };
 
@@ -294,19 +294,19 @@ const EVChecklistComponent: React.FC<Props> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className="bg-dark-300 rounded-lg shadow-lg p-6">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-white">
               Checklist Xe Điện EV
             </h2>
-            <p className="text-gray-600">
+            <p className="text-text-secondary">
               {vehicleData.make} {vehicleData.model} {vehicleData.year} - {vehicleData.licensePlate}
             </p>
           </div>
-          <div className={`px-4 py-2 rounded-full font-medium ${getConditionColor(watchedOverallCondition)}`}>
+          <div className={`px-4 py-2 rounded-full text-text-muted ${getConditionColor(watchedOverallCondition)}`}>
             Tình trạng: {
               {
                 'excellent': 'Xuất sắc',
@@ -321,7 +321,7 @@ const EVChecklistComponent: React.FC<Props> = ({
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
+      <div className="border-b border-dark-200 mb-6">
         <nav className="-mb-px flex space-x-8">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -330,10 +330,10 @@ const EVChecklistComponent: React.FC<Props> = ({
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key as any)}
-                className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm ${
+                className={`flex items-center py-2 px-1 border-b-2 text-text-muted text-sm ${
                   activeTab === tab.key
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-blue-500 text-lime-600'
+                    : 'border-transparent text-text-muted hover:text-text-secondary hover:border-dark-300'
                 }`}
               >
                 <Icon className="h-5 w-5 mr-2" />
@@ -348,11 +348,11 @@ const EVChecklistComponent: React.FC<Props> = ({
         {/* Battery Checks Tab */}
         {activeTab === 'battery' && (
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-900">Kiểm tra Pin và Hệ thống Điện</h3>
+            <h3 className="text-lg font-semibold text-white">Kiểm tra Pin và Hệ thống Điện</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Điện áp (V)
                 </label>
                 <input
@@ -360,15 +360,15 @@ const EVChecklistComponent: React.FC<Props> = ({
                   step="0.1"
                   {...register('batteryChecks.voltage', { valueAsNumber: true })}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 />
                 {errors.batteryChecks?.voltage && (
-                  <p className="text-red-500 text-xs mt-1">{errors.batteryChecks.voltage.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.batteryChecks.voltage.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Dòng điện (A)
                 </label>
                 <input
@@ -376,30 +376,30 @@ const EVChecklistComponent: React.FC<Props> = ({
                   step="0.1"
                   {...register('batteryChecks.current', { valueAsNumber: true })}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 />
                 {errors.batteryChecks?.current && (
-                  <p className="text-red-500 text-xs mt-1">{errors.batteryChecks.current.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.batteryChecks.current.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Nhiệt độ (°C)
                 </label>
                 <input
                   type="number"
                   {...register('batteryChecks.temperature', { valueAsNumber: true })}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 />
                 {errors.batteryChecks?.temperature && (
-                  <p className="text-red-500 text-xs mt-1">{errors.batteryChecks.temperature.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.batteryChecks.temperature.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Mức sạc (%)
                 </label>
                 <input
@@ -408,15 +408,15 @@ const EVChecklistComponent: React.FC<Props> = ({
                   max="100"
                   {...register('batteryChecks.stateOfCharge', { valueAsNumber: true })}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 />
                 {errors.batteryChecks?.stateOfCharge && (
-                  <p className="text-red-500 text-xs mt-1">{errors.batteryChecks.stateOfCharge.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.batteryChecks.stateOfCharge.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Sức khỏe pin (%)
                 </label>
                 <input
@@ -425,15 +425,15 @@ const EVChecklistComponent: React.FC<Props> = ({
                   max="100"
                   {...register('batteryChecks.stateOfHealth', { valueAsNumber: true })}
                   disabled={readOnly}
-                  className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${getBatteryHealthColor(watchedBattery.stateOfHealth)}`}
+                  className={`w-full px-3 py-2 border border-dark-200 rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400 ${getBatteryHealthColor(watchedBattery.stateOfHealth)}`}
                 />
                 {errors.batteryChecks?.stateOfHealth && (
-                  <p className="text-red-500 text-xs mt-1">{errors.batteryChecks.stateOfHealth.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.batteryChecks.stateOfHealth.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Điện trở cách ly (MΩ)
                 </label>
                 <input
@@ -441,77 +441,77 @@ const EVChecklistComponent: React.FC<Props> = ({
                   step="0.1"
                   {...register('batteryChecks.isolationResistance', { valueAsNumber: true })}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 />
                 {errors.batteryChecks?.isolationResistance && (
-                  <p className="text-red-500 text-xs mt-1">{errors.batteryChecks.isolationResistance.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.batteryChecks.isolationResistance.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Cân bằng Cell
                 </label>
                 <select
                   {...register('batteryChecks.cellBalance')}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 >
                   <option value="good">Tốt</option>
                   <option value="fair">Khá</option>
                   <option value="poor">Kém</option>
                 </select>
                 {errors.batteryChecks?.cellBalance && (
-                  <p className="text-red-500 text-xs mt-1">{errors.batteryChecks.cellBalance.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.batteryChecks.cellBalance.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Quản lý nhiệt
                 </label>
                 <select
                   {...register('batteryChecks.thermalManagement')}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 >
                   <option value="normal">Bình thường</option>
                   <option value="warning">Cảnh báo</option>
                   <option value="critical">Nguy hiểm</option>
                 </select>
                 {errors.batteryChecks?.thermalManagement && (
-                  <p className="text-red-500 text-xs mt-1">{errors.batteryChecks.thermalManagement.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.batteryChecks.thermalManagement.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Hệ thống làm mát
                 </label>
                 <select
                   {...register('batteryChecks.coolingSystem')}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 >
                   <option value="working">Hoạt động tốt</option>
                   <option value="reduced">Giảm hiệu suất</option>
                   <option value="failed">Hỏng</option>
                 </select>
                 {errors.batteryChecks?.coolingSystem && (
-                  <p className="text-red-500 text-xs mt-1">{errors.batteryChecks.coolingSystem.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.batteryChecks.coolingSystem.message}</p>
                 )}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm text-text-muted text-text-secondary mb-1">
                 Ghi chú kiểm tra pin
               </label>
               <textarea
                 rows={3}
                 {...register('batteryChecks.notes')}
                 disabled={readOnly}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 placeholder="Ghi chú thêm về tình trạng pin..."
               />
             </div>
@@ -521,17 +521,17 @@ const EVChecklistComponent: React.FC<Props> = ({
         {/* Charging System Tab */}
         {activeTab === 'charging' && (
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-900">Kiểm tra Hệ thống Sạc</h3>
+            <h3 className="text-lg font-semibold text-white">Kiểm tra Hệ thống Sạc</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Tình trạng cổng sạc
                 </label>
                 <select
                   {...register('chargingSystemChecks.chargingPortCondition')}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 >
                   <option value="excellent">Xuất sắc</option>
                   <option value="good">Tốt</option>
@@ -539,18 +539,18 @@ const EVChecklistComponent: React.FC<Props> = ({
                   <option value="poor">Kém</option>
                 </select>
                 {errors.chargingSystemChecks?.chargingPortCondition && (
-                  <p className="text-red-500 text-xs mt-1">{errors.chargingSystemChecks.chargingPortCondition.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.chargingSystemChecks.chargingPortCondition.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Tình trạng dây cáp
                 </label>
                 <select
                   {...register('chargingSystemChecks.cableCondition')}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 >
                   <option value="excellent">Xuất sắc</option>
                   <option value="good">Tốt</option>
@@ -558,36 +558,36 @@ const EVChecklistComponent: React.FC<Props> = ({
                   <option value="poor">Kém</option>
                 </select>
                 {errors.chargingSystemChecks?.cableCondition && (
-                  <p className="text-red-500 text-xs mt-1">{errors.chargingSystemChecks.cableCondition.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.chargingSystemChecks.cableCondition.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Sạc tích hợp (AC)
                 </label>
                 <select
                   {...register('chargingSystemChecks.onboardCharger')}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 >
                   <option value="working">Hoạt động tốt</option>
                   <option value="reduced">Giảm hiệu suất</option>
                   <option value="failed">Hỏng</option>
                 </select>
                 {errors.chargingSystemChecks?.onboardCharger && (
-                  <p className="text-red-500 text-xs mt-1">{errors.chargingSystemChecks.onboardCharger.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.chargingSystemChecks.onboardCharger.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Sạc nhanh DC
                 </label>
                 <select
                   {...register('chargingSystemChecks.dcFastCharging')}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 >
                   <option value="working">Hoạt động tốt</option>
                   <option value="reduced">Giảm hiệu suất</option>
@@ -595,12 +595,12 @@ const EVChecklistComponent: React.FC<Props> = ({
                   <option value="not_available">Không có</option>
                 </select>
                 {errors.chargingSystemChecks?.dcFastCharging && (
-                  <p className="text-red-500 text-xs mt-1">{errors.chargingSystemChecks.dcFastCharging.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.chargingSystemChecks.dcFastCharging.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Tốc độ sạc (kW)
                 </label>
                 <input
@@ -608,41 +608,41 @@ const EVChecklistComponent: React.FC<Props> = ({
                   step="0.1"
                   {...register('chargingSystemChecks.chargingSpeed', { valueAsNumber: true })}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 />
                 {errors.chargingSystemChecks?.chargingSpeed && (
-                  <p className="text-red-500 text-xs mt-1">{errors.chargingSystemChecks.chargingSpeed.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.chargingSystemChecks.chargingSpeed.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Cung cấp điện
                 </label>
                 <select
                   {...register('chargingSystemChecks.powerDelivery')}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 >
                   <option value="normal">Bình thường</option>
                   <option value="reduced">Giảm</option>
                   <option value="intermittent">Không ổn định</option>
                 </select>
                 {errors.chargingSystemChecks?.powerDelivery && (
-                  <p className="text-red-500 text-xs mt-1">{errors.chargingSystemChecks.powerDelivery.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.chargingSystemChecks.powerDelivery.message}</p>
                 )}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm text-text-muted text-text-secondary mb-1">
                 Ghi chú hệ thống sạc
               </label>
               <textarea
                 rows={3}
                 {...register('chargingSystemChecks.notes')}
                 disabled={readOnly}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 placeholder="Ghi chú thêm về hệ thống sạc..."
               />
             </div>
@@ -652,17 +652,17 @@ const EVChecklistComponent: React.FC<Props> = ({
         {/* Motor System Tab */}
         {activeTab === 'motor' && (
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-900">Kiểm tra Hệ thống Động cơ</h3>
+            <h3 className="text-lg font-semibold text-white">Kiểm tra Hệ thống Động cơ</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Hiệu suất động cơ
                 </label>
                 <select
                   {...register('motorSystemChecks.motorPerformance')}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 >
                   <option value="excellent">Xuất sắc</option>
                   <option value="good">Tốt</option>
@@ -670,90 +670,90 @@ const EVChecklistComponent: React.FC<Props> = ({
                   <option value="poor">Kém</option>
                 </select>
                 {errors.motorSystemChecks?.motorPerformance && (
-                  <p className="text-red-500 text-xs mt-1">{errors.motorSystemChecks.motorPerformance.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.motorSystemChecks.motorPerformance.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Tình trạng inverter
                 </label>
                 <select
                   {...register('motorSystemChecks.inverterCondition')}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 >
                   <option value="normal">Bình thường</option>
                   <option value="warning">Cảnh báo</option>
                   <option value="critical">Nguy hiểm</option>
                 </select>
                 {errors.motorSystemChecks?.inverterCondition && (
-                  <p className="text-red-500 text-xs mt-1">{errors.motorSystemChecks.inverterCondition.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.motorSystemChecks.inverterCondition.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Tình trạng hộp số
                 </label>
                 <select
                   {...register('motorSystemChecks.transmissionCondition')}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 >
                   <option value="smooth">Êm ái</option>
                   <option value="rough">Giật cục</option>
                   <option value="noisy">Ồn ào</option>
                 </select>
                 {errors.motorSystemChecks?.transmissionCondition && (
-                  <p className="text-red-500 text-xs mt-1">{errors.motorSystemChecks.transmissionCondition.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.motorSystemChecks.transmissionCondition.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Phanh tái sinh
                 </label>
                 <select
                   {...register('motorSystemChecks.regenerativeBraking')}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 >
                   <option value="working">Hoạt động tốt</option>
                   <option value="reduced">Giảm hiệu suất</option>
                   <option value="failed">Hỏng</option>
                 </select>
                 {errors.motorSystemChecks?.regenerativeBraking && (
-                  <p className="text-red-500 text-xs mt-1">{errors.motorSystemChecks.regenerativeBraking.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.motorSystemChecks.regenerativeBraking.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Làm mát động cơ
                 </label>
                 <select
                   {...register('motorSystemChecks.coolingSystem')}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 >
                   <option value="working">Hoạt động tốt</option>
                   <option value="reduced">Giảm hiệu suất</option>
                   <option value="failed">Hỏng</option>
                 </select>
                 {errors.motorSystemChecks?.coolingSystem && (
-                  <p className="text-red-500 text-xs mt-1">{errors.motorSystemChecks.coolingSystem.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.motorSystemChecks.coolingSystem.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Mức độ rung động
                 </label>
                 <select
                   {...register('motorSystemChecks.vibrationLevel')}
                   disabled={readOnly}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 >
                   <option value="none">Không có</option>
                   <option value="minimal">Tối thiểu</option>
@@ -761,20 +761,20 @@ const EVChecklistComponent: React.FC<Props> = ({
                   <option value="excessive">Quá mức</option>
                 </select>
                 {errors.motorSystemChecks?.vibrationLevel && (
-                  <p className="text-red-500 text-xs mt-1">{errors.motorSystemChecks.vibrationLevel.message}</p>
+                  <p className="text-red-600 text-xs mt-1">{errors.motorSystemChecks.vibrationLevel.message}</p>
                 )}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm text-text-muted text-text-secondary mb-1">
                 Ghi chú hệ thống động cơ
               </label>
               <textarea
                 rows={3}
                 {...register('motorSystemChecks.notes')}
                 disabled={readOnly}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 placeholder="Ghi chú thêm về động cơ..."
               />
             </div>
@@ -784,7 +784,7 @@ const EVChecklistComponent: React.FC<Props> = ({
         {/* Safety Checks Tab */}
         {activeTab === 'safety' && (
           <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-900">Kiểm tra An toàn</h3>
+            <h3 className="text-lg font-semibold text-white">Kiểm tra An toàn</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
@@ -803,29 +803,29 @@ const EVChecklistComponent: React.FC<Props> = ({
                     type="checkbox"
                     {...register(`safetyChecks.${check.key}` as any)}
                     disabled={readOnly}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-lime-600 focus:ring-lime-400 border-dark-300 rounded"
                   />
-                  <label className="text-sm font-medium text-gray-700">
+                  <label className="text-sm text-text-muted text-text-secondary">
                     {check.label}
                   </label>
                   {watch(`safetyChecks.${check.key}` as any) ? (
                     <CheckCircleIcon className="h-5 w-5 text-green-500" />
                   ) : (
-                    <XCircleIcon className="h-5 w-5 text-red-500" />
+                    <XCircleIcon className="h-5 w-5 text-red-600" />
                   )}
                 </div>
               ))}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm text-text-muted text-text-secondary mb-1">
                 Ghi chú an toàn
               </label>
               <textarea
                 rows={3}
                 {...register('safetyChecks.notes')}
                 disabled={readOnly}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                 placeholder="Ghi chú thêm về an toàn..."
               />
             </div>
@@ -836,12 +836,12 @@ const EVChecklistComponent: React.FC<Props> = ({
         {activeTab === 'diagnostics' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Mã lỗi chẩn đoán</h3>
+              <h3 className="text-lg font-semibold text-white">Mã lỗi chẩn đoán</h3>
               {!readOnly && (
                 <button
                   type="button"
                   onClick={addDiagnosticCode}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="px-4 py-2 bg-lime-600 text-white rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                 >
                   Thêm mã lỗi
                 </button>
@@ -850,9 +850,9 @@ const EVChecklistComponent: React.FC<Props> = ({
 
             <div className="space-y-4">
               {diagnosticFields.map((field, index) => (
-                <div key={field.id} className="border border-gray-200 rounded-lg p-4">
+                <div key={field.id} className="border border-dark-200 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium text-gray-900">Mã lỗi #{index + 1}</h4>
+                    <h4 className="text-text-muted text-white">Mã lỗi #{index + 1}</h4>
                     {!readOnly && (
                       <button
                         type="button"
@@ -866,29 +866,29 @@ const EVChecklistComponent: React.FC<Props> = ({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-1">
                         Mã lỗi
                       </label>
                       <input
                         type="text"
                         {...register(`diagnosticCodes.${index}.code`)}
                         disabled={readOnly}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                         placeholder="P0001, B1234, ..."
                       />
                       {errors.diagnosticCodes?.[index]?.code && (
-                        <p className="text-red-500 text-xs mt-1">{errors.diagnosticCodes[index]?.code?.message}</p>
+                        <p className="text-red-600 text-xs mt-1">{errors.diagnosticCodes[index]?.code?.message}</p>
                       )}
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-1">
                         Mức độ
                       </label>
                       <select
                         {...register(`diagnosticCodes.${index}.severity`)}
                         disabled={readOnly}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                       >
                         <option value="info">Thông tin</option>
                         <option value="warning">Cảnh báo</option>
@@ -897,29 +897,29 @@ const EVChecklistComponent: React.FC<Props> = ({
                     </div>
 
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-1">
                         Mô tả
                       </label>
                       <textarea
                         rows={2}
                         {...register(`diagnosticCodes.${index}.description`)}
                         disabled={readOnly}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                         placeholder="Mô tả chi tiết về lỗi..."
                       />
                       {errors.diagnosticCodes?.[index]?.description && (
-                        <p className="text-red-500 text-xs mt-1">{errors.diagnosticCodes[index]?.description?.message}</p>
+                        <p className="text-red-600 text-xs mt-1">{errors.diagnosticCodes[index]?.description?.message}</p>
                       )}
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-1">
                         Trạng thái
                       </label>
                       <select
                         {...register(`diagnosticCodes.${index}.status`)}
                         disabled={readOnly}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                       >
                         <option value="active">Đang hoạt động</option>
                         <option value="pending">Chờ xử lý</option>
@@ -931,8 +931,8 @@ const EVChecklistComponent: React.FC<Props> = ({
               ))}
 
               {diagnosticFields.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <DocumentTextIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <div className="text-center py-8 text-text-muted">
+                  <DocumentTextIcon className="h-12 w-12 mx-auto mb-4 text-text-muted" />
                   <p>Chưa có mã lỗi nào được ghi nhận</p>
                 </div>
               )}
@@ -944,12 +944,12 @@ const EVChecklistComponent: React.FC<Props> = ({
         {activeTab === 'photos' && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Hình ảnh</h3>
+              <h3 className="text-lg font-semibold text-white">Hình ảnh</h3>
               {!readOnly && (
                 <button
                   type="button"
                   onClick={addPhoto}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="px-4 py-2 bg-lime-600 text-white rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                 >
                   Thêm ảnh
                 </button>
@@ -958,9 +958,9 @@ const EVChecklistComponent: React.FC<Props> = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {photoFields.map((field, index) => (
-                <div key={field.id} className="border border-gray-200 rounded-lg p-4">
+                <div key={field.id} className="border border-dark-200 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium text-gray-900">Ảnh #{index + 1}</h4>
+                    <h4 className="text-text-muted text-white">Ảnh #{index + 1}</h4>
                     {!readOnly && (
                       <button
                         type="button"
@@ -974,13 +974,13 @@ const EVChecklistComponent: React.FC<Props> = ({
 
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-1">
                         Loại ảnh
                       </label>
                       <select
                         {...register(`photos.${index}.type`)}
                         disabled={readOnly}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                       >
                         <option value="battery">Pin</option>
                         <option value="charging">Hệ thống sạc</option>
@@ -990,27 +990,27 @@ const EVChecklistComponent: React.FC<Props> = ({
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-1">
                         Mô tả
                       </label>
                       <input
                         type="text"
                         {...register(`photos.${index}.description`)}
                         disabled={readOnly}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                         placeholder="Mô tả ảnh..."
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-1">
                         URL ảnh
                       </label>
                       <input
                         type="url"
                         {...register(`photos.${index}.url`)}
                         disabled={readOnly}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                         placeholder="https://..."
                       />
                     </div>
@@ -1019,8 +1019,8 @@ const EVChecklistComponent: React.FC<Props> = ({
               ))}
 
               {photoFields.length === 0 && (
-                <div className="col-span-2 text-center py-8 text-gray-500">
-                  <PhotoIcon className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <div className="col-span-2 text-center py-8 text-text-muted">
+                  <PhotoIcon className="h-12 w-12 mx-auto mb-4 text-text-muted" />
                   <p>Chưa có ảnh nào được thêm</p>
                 </div>
               )}
@@ -1030,17 +1030,17 @@ const EVChecklistComponent: React.FC<Props> = ({
 
         {/* Summary Section */}
         <div className="mt-8 space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900">Tổng kết</h3>
+          <h3 className="text-lg font-semibold text-white">Tổng kết</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm text-text-muted text-text-secondary mb-1">
                 Tình trạng tổng thể
               </label>
               <select
                 {...register('overallCondition')}
                 disabled={readOnly}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
               >
                 <option value="excellent">Xuất sắc</option>
                 <option value="good">Tốt</option>
@@ -1049,12 +1049,12 @@ const EVChecklistComponent: React.FC<Props> = ({
                 <option value="unsafe">Không an toàn</option>
               </select>
               {errors.overallCondition && (
-                <p className="text-red-500 text-xs mt-1">{errors.overallCondition.message}</p>
+                <p className="text-red-600 text-xs mt-1">{errors.overallCondition.message}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm text-text-muted text-text-secondary mb-1">
                 Tuổi thọ còn lại (%)
               </label>
               <input
@@ -1063,38 +1063,38 @@ const EVChecklistComponent: React.FC<Props> = ({
                 max="100"
                 {...register('estimatedLifeRemaining', { valueAsNumber: true })}
                 disabled={readOnly}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
               />
               {errors.estimatedLifeRemaining && (
-                <p className="text-red-500 text-xs mt-1">{errors.estimatedLifeRemaining.message}</p>
+                <p className="text-red-600 text-xs mt-1">{errors.estimatedLifeRemaining.message}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm text-text-muted text-text-secondary mb-1">
                 Ngày bảo trì tiếp theo
               </label>
               <input
                 type="date"
                 {...register('nextMaintenanceDate')}
                 disabled={readOnly}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
               />
               {errors.nextMaintenanceDate && (
-                <p className="text-red-500 text-xs mt-1">{errors.nextMaintenanceDate.message}</p>
+                <p className="text-red-600 text-xs mt-1">{errors.nextMaintenanceDate.message}</p>
               )}
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm text-text-muted text-text-secondary mb-1">
               Ghi chú của kỹ thuật viên
             </label>
             <textarea
               rows={4}
               {...register('technicianNotes')}
               disabled={readOnly}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
               placeholder="Ghi chú tổng thể về tình trạng xe..."
             />
           </div>
@@ -1102,14 +1102,14 @@ const EVChecklistComponent: React.FC<Props> = ({
           {/* Recommended Actions */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm text-text-muted text-text-secondary">
                 Hành động khuyến nghị
               </label>
               {!readOnly && (
                 <button
                   type="button"
                   onClick={addAction}
-                  className="text-sm px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  className="text-sm px-3 py-1 bg-lime-600 text-white rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                 >
                   Thêm
                 </button>
@@ -1123,7 +1123,7 @@ const EVChecklistComponent: React.FC<Props> = ({
                     type="text"
                     {...register(`recommendedActions.${index}`)}
                     disabled={readOnly}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                     placeholder="Hành động khuyến nghị..."
                   />
                   {!readOnly && (
@@ -1139,7 +1139,7 @@ const EVChecklistComponent: React.FC<Props> = ({
               ))}
 
               {actionFields.length === 0 && (
-                <p className="text-gray-500 text-sm italic">Chưa có hành động khuyến nghị nào</p>
+                <p className="text-text-muted text-sm italic">Chưa có hành động khuyến nghị nào</p>
               )}
             </div>
           </div>
@@ -1147,18 +1147,18 @@ const EVChecklistComponent: React.FC<Props> = ({
 
         {/* Actions */}
         {!readOnly && (
-          <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+          <div className="flex items-center justify-end space-x-4 pt-6 border-t border-dark-200">
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              className="px-4 py-2 border border-dark-200 rounded-md text-text-secondary hover:bg-dark-900"
             >
               Hủy
             </button>
             <button
               type="submit"
               disabled={loading || !isValid}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-lime-600 text-white rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 disabled:bg-dark-400 disabled:cursor-not-allowed"
             >
               {loading ? 'Đang lưu...' : 'Lưu Checklist'}
             </button>

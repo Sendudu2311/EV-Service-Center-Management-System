@@ -198,10 +198,10 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
 
   if (!appointmentDate || !appointmentTime) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-text-muted">
         <div className="mb-4">
           <svg
-            className="mx-auto h-12 w-12 text-gray-300"
+            className="mx-auto h-12 w-12 text-text-secondary"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -224,10 +224,10 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-white">
             Choose Technician (Optional)
           </h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-text-secondary">
             Select a preferred technician or let us assign the best available
             one
           </p>
@@ -236,7 +236,7 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
           <button
             type="button"
             onClick={clearSelection}
-            className="text-sm text-blue-600 hover:text-blue-700"
+            className="text-sm text-lime-600 hover:text-lime-700"
           >
             Clear selection
           </button>
@@ -250,21 +250,21 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, index) => (
             <div key={index} className="animate-pulse">
-              <div className="bg-gray-200 rounded-lg h-64"></div>
+              <div className="bg-dark-200 rounded-lg h-64"></div>
             </div>
           ))}
         </div>
       ) : loading ? (
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-600">
+          <span className="ml-2 text-text-secondary">
             Finding available technicians...
           </span>
         </div>
       ) : filteredTechnicians.length > 0 ? (
         <>
           {/* Results Count */}
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-text-secondary">
             {filteredTechnicians.length} technician
             {filteredTechnicians.length !== 1 ? "s" : ""} available
           </div>
@@ -287,10 +287,10 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
           </div>
         </>
       ) : (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-text-muted">
           <div className="mb-4">
             <svg
-              className="mx-auto h-12 w-12 text-gray-300"
+              className="mx-auto h-12 w-12 text-text-secondary"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -303,7 +303,7 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
               />
             </svg>
           </div>
-          <p className="text-lg font-medium text-gray-900 mb-2">
+          <p className="text-lg text-text-muted text-white mb-2">
             No technicians available for this time slot.
           </p>
           <p className="text-sm">
@@ -315,11 +315,11 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
 
       {/* Auto-assignment Notice */}
       {!selectedTechnicianId && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-dark-900 border border-blue-200 rounded-lg p-4">
           <div className="flex items-start">
             <div className="flex-shrink-0">
               <svg
-                className="w-5 h-5 text-blue-400"
+                className="w-5 h-5 text-lime-400"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -330,11 +330,11 @@ const TechnicianSelection: React.FC<TechnicianSelectionProps> = ({
                 />
               </svg>
             </div>
-            <div className="ml-3">
-              <h4 className="text-sm font-medium text-blue-800">
+            <div className="bg-dark-900 ml-3">
+              <h4 className="text-sm text-text-muted text-white">
                 Auto-assignment enabled
               </h4>
-              <p className="text-sm text-blue-700 mt-1">
+              <p className="text-sm text-text-secondary mt-1">
                 If you don't select a technician, we'll automatically assign the
                 best available technician based on their skills, availability,
                 and performance.

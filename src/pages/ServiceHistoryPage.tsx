@@ -116,9 +116,24 @@ const ServiceHistoryPage: React.FC = () => {
   const fetchCompletedAppointments = async () => {
     try {
       setLoading(true);
-      const response = await appointmentsAPI.getCustomerAppointments({ status: 'completed' });
-      const data = response.data?.data || response.data || [];
-      setAppointments(Array.isArray(data) ? data : []);
+      // Fetch both completed and invoiced appointments
+      const [completedResponse, invoicedResponse] = await Promise.all([
+        appointmentsAPI.getCustomerAppointments({ status: 'completed' }),
+        appointmentsAPI.getCustomerAppointments({ status: 'invoiced' })
+      ]);
+      
+      const completedData = Array.isArray(completedResponse.data?.data) ? completedResponse.data.data : 
+                           Array.isArray(completedResponse.data) ? completedResponse.data : [];
+      const invoicedData = Array.isArray(invoicedResponse.data?.data) ? invoicedResponse.data.data : 
+                          Array.isArray(invoicedResponse.data) ? invoicedResponse.data : [];
+      
+      // Combine and remove duplicates
+      const allAppointments = [...completedData, ...invoicedData];
+      const uniqueAppointments = Array.from(
+        new Map(allAppointments.map(apt => [apt._id, apt])).values()
+      );
+      
+      setAppointments(uniqueAppointments);
     } catch (error) {
       console.error('Error fetching service history:', error);
       toast.error('Không thể tải lịch sử dịch vụ');
@@ -139,7 +154,7 @@ const ServiceHistoryPage: React.FC = () => {
           <StarIcon
             key={star}
             className={`h-4 w-4 ${
-              star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+              star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-text-secondary'
             }`}
           />
         ))}
@@ -148,15 +163,15 @@ const ServiceHistoryPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-dark-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <ClipboardDocumentListIcon className="h-8 w-8 text-blue-600" />
+          <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+            <ClipboardDocumentListIcon className="h-8 w-8 text-lime-600" />
             Lịch sử dịch vụ
           </h1>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-2 text-text-secondary">
             Xem các dịch vụ đã hoàn thành và thông tin bảo hành
           </p>
         </div>
@@ -165,12 +180,12 @@ const ServiceHistoryPage: React.FC = () => {
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Đang tải lịch sử dịch vụ...</p>
+            <p className="mt-4 text-text-secondary">Đang tải lịch sử dịch vụ...</p>
           </div>
         ) : appointments.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-            <ClipboardDocumentListIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">Chưa có dịch vụ nào được hoàn thành</p>
+          <div className="bg-dark-300 rounded-lg shadow-sm border border-dark-200 p-12 text-center">
+            <ClipboardDocumentListIcon className="h-16 w-16 text-text-secondary mx-auto mb-4" />
+            <p className="text-text-secondary">Chưa có dịch vụ nào được hoàn thành hoặc thanh toán</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -180,33 +195,33 @@ const ServiceHistoryPage: React.FC = () => {
               return (
                 <div
                   key={appointment._id}
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                  className="bg-dark-300 rounded-lg shadow-sm border border-dark-200 overflow-hidden hover:shadow-md transition-shadow"
                 >
                   <div className="p-6">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">
+                          <h3 className="text-lg font-semibold text-white">
                             {appointment.appointmentNumber}
                           </h3>
-                          <span className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                          <span className="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full bg-dark-300 text-green-600">
                             <CheckCircleIcon className="h-4 w-4" />
                             Đã hoàn thành
                           </span>
                         </div>
                         {vehicle ? (
-                          <p className="text-sm text-gray-600">
+                          <p className="text-sm text-text-secondary">
                             {vehicle.make} {vehicle.model} {vehicle.year}
                             {vehicle.vin && <span className="ml-2">• {vehicle.vin}</span>}
                           </p>
                         ) : (
-                          <p className="text-sm text-gray-500">Thông tin xe không có sẵn</p>
+                          <p className="text-sm text-text-muted">Thông tin xe không có sẵn</p>
                         )}
                       </div>
                       <button
                         onClick={() => handleViewDetails(appointment)}
-                        className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
+                        className="px-4 py-2 text-sm text-text-muted text-lime-600 hover:text-lime-700 hover:bg-dark-900 rounded-md transition-colors"
                       >
                         Xem chi tiết
                       </button>
@@ -214,19 +229,19 @@ const ServiceHistoryPage: React.FC = () => {
 
                   {/* Date and Time */}
                   <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <CalendarIcon className="h-5 w-5 text-gray-400" />
+                    <div className="flex items-center gap-2 text-sm text-text-secondary">
+                      <CalendarIcon className="h-5 w-5 text-text-muted" />
                       <span>Hoàn thành: {formatVietnameseDateTime(appointment.actualCompletion)}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <ClockIcon className="h-5 w-5 text-gray-400" />
+                    <div className="flex items-center gap-2 text-sm text-text-secondary">
+                      <ClockIcon className="h-5 w-5 text-text-muted" />
                       <span>Đặt lúc: {formatVietnameseDateTime(appointment.createdAt)}</span>
                     </div>
                   </div>
 
                   {/* Services with Warranty */}
                   <div className="mb-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <h4 className="text-sm text-text-muted text-text-secondary mb-2 flex items-center gap-2">
                       <WrenchScrewdriverIcon className="h-4 w-4" />
                       Dịch vụ đã thực hiện:
                     </h4>
@@ -237,31 +252,31 @@ const ServiceHistoryPage: React.FC = () => {
                           : null;
                         
                         return (
-                          <li key={index} className="flex items-start justify-between gap-2 p-3 bg-gray-50 rounded-md">
+                          <li key={index} className="flex items-start justify-between gap-2 p-3 bg-dark-900 rounded-md">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
-                                <span className="text-sm font-medium text-gray-900">
+                                <span className="text-sm text-text-muted text-white">
                                   {service.serviceId.name}
                                 </span>
                                 {service.serviceId.warranty && warrantyStatus && (
-                                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full ${getWarrantyBadgeColor(warrantyStatus)}`}>
+                                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs text-text-muted rounded-full ${getWarrantyBadgeColor(warrantyStatus)}`}>
                                     <ShieldCheckIcon className="h-3 w-3" />
                                     {getWarrantyStatusText(warrantyStatus)}
                                   </span>
                                 )}
                               </div>
                               {service.serviceId.warranty && (
-                                <p className="text-xs text-gray-600">
+                                <p className="text-xs text-text-secondary">
                                   Bảo hành: {formatWarrantyDuration(service.serviceId.warranty.duration)} - {service.serviceId.warranty.description}
                                   {warrantyStatus && (
-                                    <span className="ml-2 text-blue-600">
+                                    <span className="ml-2 text-lime-600">
                                       (Hết hạn: {warrantyStatus.expiryDate.toLocaleDateString('vi-VN')})
                                     </span>
                                   )}
                                 </p>
                               )}
                             </div>
-                            <span className="text-sm font-medium text-gray-900 whitespace-nowrap">
+                            <span className="text-sm text-text-muted text-white whitespace-nowrap">
                               {formatVND(service.price)}
                             </span>
                           </li>
@@ -273,7 +288,7 @@ const ServiceHistoryPage: React.FC = () => {
                   {/* Parts Used with Warranty */}
                   {appointment.partsUsed && appointment.partsUsed.length > 0 && (
                     <div className="mb-4">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                      <h4 className="text-sm text-text-muted text-text-secondary mb-2 flex items-center gap-2">
                         <CubeIcon className="h-4 w-4" />
                         Phụ tùng đã sử dụng:
                       </h4>
@@ -284,34 +299,34 @@ const ServiceHistoryPage: React.FC = () => {
                             : null;
                           
                           return (
-                            <li key={index} className="flex items-start justify-between gap-2 p-3 bg-blue-50 rounded-md border border-blue-200">
+                            <li key={index} className="flex items-start justify-between gap-2 p-3 bg-dark-900 rounded-md border border-blue-200">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <span className="text-sm font-medium text-gray-900">
+                                  <span className="text-sm text-text-muted text-white">
                                     {part.partId.name}
                                   </span>
                                   {part.partId.warranty && warrantyStatus && (
-                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full ${getWarrantyBadgeColor(warrantyStatus)}`}>
+                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs text-text-muted rounded-full ${getWarrantyBadgeColor(warrantyStatus)}`}>
                                       <ShieldCheckIcon className="h-3 w-3" />
                                       {getWarrantyStatusText(warrantyStatus)}
                                     </span>
                                   )}
                                 </div>
-                                <p className="text-xs text-gray-600">
+                                <p className="text-xs text-text-secondary">
                                   Mã: {part.partId.partNumber} • Số lượng: {part.quantity}
                                 </p>
                                 {part.partId.warranty && (
-                                  <p className="text-xs text-blue-700 mt-1">
+                                  <p className="text-xs text-lime-700 mt-1">
                                     Bảo hành: {formatWarrantyDuration(part.partId.warranty.duration)} - {part.partId.warranty.description}
                                     {warrantyStatus && (
-                                      <span className="ml-2 font-medium">
+                                      <span className="ml-2 text-text-muted">
                                         (Hết hạn: {warrantyStatus.expiryDate.toLocaleDateString('vi-VN')})
                                       </span>
                                     )}
                                   </p>
                                 )}
                               </div>
-                              <span className="text-sm font-medium text-gray-900 whitespace-nowrap">
+                              <span className="text-sm text-text-muted text-white whitespace-nowrap">
                                 {formatVND(part.unitPrice * part.quantity)}
                               </span>
                             </li>
@@ -326,7 +341,7 @@ const ServiceHistoryPage: React.FC = () => {
                     <div className="mb-4 p-3 bg-yellow-50 rounded-md border border-yellow-200">
                       <div className="flex items-center gap-2 mb-2">
                         <ChatBubbleLeftRightIcon className="h-4 w-4 text-yellow-700" />
-                        <span className="text-sm font-medium text-yellow-900">Đánh giá của bạn:</span>
+                        <span className="text-sm text-text-muted text-yellow-900">Đánh giá của bạn:</span>
                         {renderRatingStars(appointment.feedback.rating)}
                       </div>
                       <p className="text-sm text-yellow-800">{appointment.feedback.comment}</p>
@@ -334,9 +349,9 @@ const ServiceHistoryPage: React.FC = () => {
                   )}
 
                   {/* Total */}
-                  <div className="pt-4 border-t border-gray-200">
+                  <div className="pt-4 border-t border-dark-200">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-700">Tổng chi phí:</span>
+                      <span className="text-sm text-text-muted text-text-secondary">Tổng chi phí:</span>
                       <span className="text-lg font-bold text-green-600">
                         {formatVND(appointment.totalAmount)}
                       </span>
@@ -353,20 +368,20 @@ const ServiceHistoryPage: React.FC = () => {
         {showDetailsModal && selectedAppointment && (
           <div className="fixed inset-0 z-50 overflow-y-auto" onClick={() => setShowDetailsModal(false)}>
             <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-              <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" />
+              <div className="fixed inset-0 transition-opacity bg-dark-9000 bg-opacity-75" />
               
               <div 
-                className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"
+                className="inline-block align-bottom bg-dark-300 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="bg-dark-300 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-gray-900">
+                    <h3 className="text-xl font-bold text-white">
                       Chi tiết dịch vụ - {selectedAppointment.appointmentNumber}
                     </h3>
                     <button
                       onClick={() => setShowDetailsModal(false)}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-text-muted hover:text-text-secondary"
                     >
                       <span className="text-2xl">×</span>
                     </button>
@@ -376,12 +391,12 @@ const ServiceHistoryPage: React.FC = () => {
                     {/* Technician Notes */}
                     {selectedAppointment.serviceNotes && selectedAppointment.serviceNotes.length > 0 && (
                       <div>
-                        <h4 className="text-md font-medium text-gray-900 mb-3">Ghi chú kỹ thuật viên</h4>
+                        <h4 className="text-md text-text-muted text-white mb-3">Ghi chú kỹ thuật viên</h4>
                         <div className="space-y-2">
                           {selectedAppointment.serviceNotes.map((note, index) => (
-                            <div key={index} className="p-3 bg-gray-50 rounded-md border border-gray-200">
-                              <p className="text-sm text-gray-900 mb-1">{note.note}</p>
-                              <p className="text-xs text-gray-500">
+                            <div key={index} className="p-3 bg-dark-900 rounded-md border border-dark-200">
+                              <p className="text-sm text-white mb-1">{note.note}</p>
+                              <p className="text-xs text-text-muted">
                                 {note.addedBy.fullName} • {formatVietnameseDateTime(note.addedAt)}
                               </p>
                             </div>
@@ -393,21 +408,21 @@ const ServiceHistoryPage: React.FC = () => {
                     {/* Workflow History */}
                     {selectedAppointment.workflowHistory && selectedAppointment.workflowHistory.length > 0 && (
                       <div>
-                        <h4 className="text-md font-medium text-gray-900 mb-3">Lịch sử tiến trình</h4>
+                        <h4 className="text-md text-text-muted text-white mb-3">Lịch sử tiến trình</h4>
                         <div className="space-y-2">
                           {selectedAppointment.workflowHistory.map((history, index) => (
                             <div key={index} className="flex gap-3">
                               <div className="flex-shrink-0">
-                                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                                  <CheckCircleIcon className="h-4 w-4 text-blue-600" />
+                                <div className="w-8 h-8 rounded-full bg-lime-100 flex items-center justify-center">
+                                  <CheckCircleIcon className="h-4 w-4 text-lime-600" />
                                 </div>
                               </div>
                               <div className="flex-1">
-                                <p className="text-sm font-medium text-gray-900">{history.reason}</p>
+                                <p className="text-sm text-text-muted text-white">{history.reason}</p>
                                 {history.notes && (
-                                  <p className="text-sm text-gray-600">{history.notes}</p>
+                                  <p className="text-sm text-text-secondary">{history.notes}</p>
                                 )}
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-text-muted">
                                   {formatVietnameseDateTime(history.changedAt)}
                                 </p>
                               </div>
@@ -419,10 +434,10 @@ const ServiceHistoryPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <div className="bg-dark-900 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                   <button
                     onClick={() => setShowDetailsModal(false)}
-                    className="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
+                    className="w-full inline-flex justify-center rounded-md border border-dark-300 shadow-sm px-4 py-2 bg-dark-300 text-base text-text-muted text-text-secondary hover:bg-dark-900 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm"
                   >
                     Đóng
                   </button>

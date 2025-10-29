@@ -93,27 +93,27 @@ const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "high":
-        return "text-red-600 bg-red-100";
+        return "text-white bg-red-600";
       case "normal":
-        return "text-blue-600 bg-blue-100";
+        return "text-dark-900 bg-lime-200";
       case "low":
-        return "text-green-600 bg-green-100";
+        return "text-white bg-green-600";
       default:
-        return "text-gray-600 bg-gray-100";
+        return "text-white bg-text-muted";
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg">
+    <div className="bg-dark-300 rounded-lg shadow-lg">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 rounded-t-lg">
+      <div className="bg-gradient-to-r from-lime-200 to-lime-300 px-6 py-4 rounded-t-lg">
         <div className="flex items-center">
           <CheckCircleIcon className="h-8 w-8 text-white mr-3" />
           <div>
             <h2 className="text-xl font-bold text-white">
               Confirm Your Appointment
             </h2>
-            <p className="text-blue-100">
+            <p className="text-lime-100">
               Please review your booking details before proceeding to payment
             </p>
           </div>
@@ -123,28 +123,28 @@ const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
       {/* Content */}
       <div className="p-6 space-y-6">
         {/* Vehicle Information */}
-        <div className="bg-gray-50 rounded-lg p-4">
+        <div className="bg-dark-900 rounded-lg p-4">
           <div className="flex items-center mb-3">
-            <UserIcon className="h-5 w-5 text-gray-600 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900">
+            <UserIcon className="h-5 w-5 text-text-secondary mr-2" />
+            <h3 className="text-lg font-semibold text-white">
               Vehicle Information
             </h3>
           </div>
           {selectedVehicle ? (
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-600">Make & Model</p>
-                <p className="font-medium">
+                <p className="text-sm text-text-secondary">Make & Model</p>
+                <p className="text-text-muted">
                   {selectedVehicle.make} {selectedVehicle.model}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Year</p>
-                <p className="font-medium">{selectedVehicle.year}</p>
+                <p className="text-sm text-text-secondary">Year</p>
+                <p className="text-text-muted">{selectedVehicle.year}</p>
               </div>
               <div className="col-span-2">
-                <p className="text-sm text-gray-600">VIN</p>
-                <p className="font-medium font-mono text-sm">
+                <p className="text-sm text-text-secondary">VIN</p>
+                <p className="text-text-muted font-mono text-sm">
                   {selectedVehicle.vin}
                 </p>
               </div>
@@ -155,44 +155,44 @@ const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
         </div>
 
         {/* Service Center Information */}
-        <div className="bg-gray-50 rounded-lg p-4">
+        <div className="bg-dark-900 rounded-lg p-4">
           <div className="flex items-center mb-3">
-            <MapPinIcon className="h-5 w-5 text-gray-600 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900">
+            <MapPinIcon className="h-5 w-5 text-text-secondary mr-2" />
+            <h3 className="text-lg font-semibold text-white">
               Service Center
             </h3>
           </div>
           <div>
-            <p className="font-medium text-lg">EV Service Center</p>
-            <p className="text-gray-600">
+            <p className="text-text-muted text-lg">EV Service Center</p>
+            <p className="text-text-secondary">
               123 Main Street, Ho Chi Minh City, Vietnam
             </p>
           </div>
         </div>
 
         {/* Date & Time */}
-        <div className="bg-gray-50 rounded-lg p-4">
+        <div className="bg-dark-900 rounded-lg p-4">
           <div className="flex items-center mb-3">
-            <ClockIcon className="h-5 w-5 text-gray-600 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900">
+            <ClockIcon className="h-5 w-5 text-text-secondary mr-2" />
+            <h3 className="text-lg font-semibold text-white">
               Appointment Schedule
             </h3>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-sm text-gray-600">Date</p>
-              <p className="font-medium">
+              <p className="text-sm text-text-secondary">Date</p>
+              <p className="text-text-muted">
                 {formatDate(formData.scheduledDate)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Time</p>
-              <p className="font-medium">{formData.scheduledTime}</p>
+              <p className="text-sm text-text-secondary">Time</p>
+              <p className="text-text-muted">{formData.scheduledTime}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Priority</p>
+              <p className="text-sm text-text-secondary">Priority</p>
               <span
-                className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(
+                className={`inline-flex px-2 py-1 text-xs text-text-muted rounded-full ${getPriorityColor(
                   formData.priority
                 )}`}
               >
@@ -204,10 +204,10 @@ const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
         </div>
 
         {/* Selected Services */}
-        <div className="bg-gray-50 rounded-lg p-4">
+        <div className="bg-dark-900 rounded-lg p-4">
           <div className="flex items-center mb-3">
-            <WrenchScrewdriverIcon className="h-5 w-5 text-gray-600 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900">
+            <WrenchScrewdriverIcon className="h-5 w-5 text-text-secondary mr-2" />
+            <h3 className="text-lg font-semibold text-white">
               Selected Services
             </h3>
           </div>
@@ -216,26 +216,26 @@ const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
               {selectedServices.map((service) => (
                 <div
                   key={service._id}
-                  className="flex justify-between items-start bg-white rounded-md p-3 border"
+                  className="flex justify-between items-start bg-dark-300 rounded-md p-3 border"
                 >
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">
+                    <h4 className="text-text-muted text-white">
                       {service.name}
                     </h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-text-secondary">
                       {service.description}
                     </p>
                     <div className="flex items-center mt-2 space-x-4">
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-text-muted">
                         Category: {service.category}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-text-muted">
                         Duration: {service.estimatedDuration} min
                       </span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-blue-600">
+                    <p className="font-semibold text-lime-600">
                       {formatCurrency(service.basePrice)}
                     </p>
                   </div>
@@ -249,15 +249,15 @@ const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
 
         {/* Technician Information */}
         {selectedTechnician && (
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">
+          <div className="bg-dark-900 rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-white mb-3">
               Assigned Technician
             </h3>
-            <div className="bg-white rounded-md p-3 border">
-              <p className="font-medium">
+            <div className="bg-dark-300 rounded-md p-3 border">
+              <p className="text-text-muted">
                 {selectedTechnician.firstName} {selectedTechnician.lastName}
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-text-secondary">
                 Specializations: {selectedTechnician.specialization.join(", ")}
               </p>
             </div>
@@ -266,27 +266,27 @@ const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
 
         {/* Customer Notes */}
         {formData.customerNotes && (
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">
+          <div className="bg-dark-900 rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-white mb-3">
               Special Instructions
             </h3>
-            <div className="bg-white rounded-md p-3 border">
-              <p className="text-gray-700">{formData.customerNotes}</p>
+            <div className="bg-dark-300 rounded-md p-3 border">
+              <p className="text-text-secondary">{formData.customerNotes}</p>
             </div>
           </div>
         )}
 
         {/* Total Amount */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-dark-900 border border-blue-200 rounded-lg p-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-blue-900">
+            <h3 className="text-lg font-semibold text-lime-900">
               Total Amount
             </h3>
             <div className="text-right">
-              <p className="text-2xl font-bold text-blue-600">
+              <p className="text-2xl font-bold text-lime-600">
                 {formatCurrency(totalAmount)}
               </p>
-              <p className="text-sm text-blue-600">
+              <p className="text-sm text-lime-600">
                 Including all selected services
               </p>
             </div>
@@ -295,16 +295,16 @@ const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
 
         {/* Payment Information */}
         {paymentVerified ? (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="bg-dark-200 border border-green-600 rounded-lg p-4">
             <div className="flex items-start">
               <div className="flex-shrink-0">
-                <CheckCircleIcon className="h-5 w-5 text-green-400" />
+                <CheckCircleIcon className="h-5 w-5 text-green-600" />
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-green-800">
+                <h3 className="text-sm font-medium text-white">
                   Payment Verified
                 </h3>
-                <div className="mt-2 text-sm text-green-700">
+                <div className="mt-2 text-sm text-text-secondary">
                   <ul className="list-disc list-inside space-y-1">
                     <li>Your payment has been successfully processed</li>
                     <li>
@@ -320,11 +320,11 @@ const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
             </div>
           </div>
         ) : (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="bg-dark-300 border border-yellow-600 rounded-lg p-4">
             <div className="flex items-start">
               <div className="flex-shrink-0">
                 <svg
-                  className="h-5 w-5 text-yellow-400"
+                  className="h-5 w-5 text-yellow-600"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -336,10 +336,10 @@ const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
                 </svg>
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-yellow-800">
+                <h3 className="text-sm text-text-muted text-yellow-600">
                   Payment Information
                 </h3>
-                <div className="mt-2 text-sm text-yellow-700">
+                <div className="mt-2 text-sm text-yellow-600">
                   <ul className="list-disc list-inside space-y-1">
                     <li>You will be redirected to VNPay secure payment page</li>
                     <li>
@@ -359,12 +359,12 @@ const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
       </div>
 
       {/* Action Buttons */}
-      <div className="bg-gray-50 px-6 py-4 rounded-b-lg flex justify-between">
+      <div className="bg-dark-900 px-6 py-4 rounded-b-lg flex justify-between">
         <button
           type="button"
           onClick={onBack}
           disabled={loading}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+          className="inline-flex items-center px-4 py-2 border border-dark-200 bg-dark-300 text-white rounded-md shadow-sm text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400 disabled:opacity-50"
         >
           Back to Edit
         </button>
@@ -373,7 +373,7 @@ const AppointmentConfirmation: React.FC<AppointmentConfirmationProps> = ({
           type="button"
           onClick={onConfirm}
           disabled={loading || totalAmount <= 0}
-          className="inline-flex items-center px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+          className="inline-flex items-center px-6 py-2 border border-transparent rounded-md shadow-sm text-sm text-text-muted text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-green-500 disabled:opacity-50"
         >
           {loading ? (
             <>

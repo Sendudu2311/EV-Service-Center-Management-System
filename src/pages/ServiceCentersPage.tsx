@@ -239,22 +239,22 @@ const ServiceCentersPage: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900">Access Denied</h2>
-          <p className="text-gray-600 mt-2">You need admin privileges to access this page.</p>
+          <h2 className="text-xl font-semibold text-white">Access Denied</h2>
+          <p className="text-text-secondary mt-2">You need admin privileges to access this page.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-dark-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Service Centers</h1>
-              <p className="text-gray-600 mt-2">Manage service center locations and configurations</p>
+              <h1 className="text-3xl font-bold text-white">Service Centers</h1>
+              <p className="text-text-secondary mt-2">Manage service center locations and configurations</p>
             </div>
             <button
               onClick={() => {
@@ -262,7 +262,7 @@ const ServiceCentersPage: React.FC = () => {
                 setEditingCenter(null);
                 setShowModal(true);
               }}
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm text-white bg-lime-600 hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400"
             >
               <PlusIcon className="h-4 w-4 mr-2" />
               Add Service Center
@@ -278,17 +278,17 @@ const ServiceCentersPage: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {serviceCenters.map((center) => (
-              <div key={center._id} className="bg-white shadow rounded-lg overflow-hidden">
+              <div key={center._id} className="bg-dark-300 shadow rounded-lg overflow-hidden">
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{center.name}</h3>
-                      <p className="text-sm text-gray-600">Code: {center.code}</p>
+                      <h3 className="text-lg font-semibold text-white">{center.name}</h3>
+                      <p className="text-sm text-text-secondary">Code: {center.code}</p>
                     </div>
                     <div className="flex space-x-2">
                       <button
                         onClick={() => handleEdit(center)}
-                        className="text-blue-600 hover:text-blue-700"
+                        className="text-lime-600 hover:text-lime-700"
                       >
                         <PencilIcon className="h-4 w-4" />
                       </button>
@@ -303,49 +303,49 @@ const ServiceCentersPage: React.FC = () => {
 
                   <div className="space-y-3">
                     <div className="flex items-start space-x-2">
-                      <MapPinIcon className="h-4 w-4 text-gray-400 mt-0.5" />
-                      <div className="text-sm text-gray-600">
-                        <p>{center.address.street}</p>
-                        <p>{center.address.city}, {center.address.state} {center.address.zipCode}</p>
+                      <MapPinIcon className="h-4 w-4 text-text-muted mt-0.5" />
+                      <div className="text-sm text-text-secondary">
+                        <p className="text-white">{center.address.street}</p>
+                        <p className="text-white">{center.address.city}, {center.address.state} {center.address.zipCode}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <PhoneIcon className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">{center.contact.phone}</span>
+                      <PhoneIcon className="h-4 w-4 text-text-muted" />
+                      <span className="text-sm text-text-secondary">{center.contact.phone}</span>
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <BuildingOfficeIcon className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">Manager: {center.contact.managerName}</span>
+                      <BuildingOfficeIcon className="h-4 w-4 text-text-muted" />
+                      <span className="text-sm text-text-secondary">Manager: {center.contact.managerName}</span>
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <WrenchScrewdriverIcon className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">
+                      <WrenchScrewdriverIcon className="h-4 w-4 text-text-muted" />
+                      <span className="text-sm text-text-secondary">
                         {center.capacity.totalBays} bays total ({center.capacity.quickServiceBays} quick, {center.capacity.specialtyBays} specialty)
                       </span>
                     </div>
 
                     <div className="flex items-start space-x-2">
-                      <ClockIcon className="h-4 w-4 text-gray-400 mt-0.5" />
-                      <span className="text-sm text-gray-600">{formatWorkingHours(center.workingHours)}</span>
+                      <ClockIcon className="h-4 w-4 text-text-muted mt-0.5" />
+                      <span className="text-sm text-text-secondary">{formatWorkingHours(center.workingHours)}</span>
                     </div>
                   </div>
 
                   <div className="mt-4">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Services:</p>
+                    <p className="text-sm text-text-muted text-text-secondary mb-2">Services:</p>
                     <div className="flex flex-wrap gap-1">
                       {center.services.slice(0, 3).map((service) => (
                         <span
                           key={typeof service === 'object' ? service._id : service}
-                          className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                          className="inline-flex items-center px-2 py-1 rounded text-xs bg-dark-300 text-lime-600"
                         >
                           {typeof service === 'object' ? service.name : service}
                         </span>
                       ))}
                       {center.services.length > 3 && (
-                        <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                        <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-dark-300 text-text-secondary">
                           +{center.services.length - 3} more
                         </span>
                       )}
@@ -354,7 +354,7 @@ const ServiceCentersPage: React.FC = () => {
 
                   <div className="mt-4 flex items-center justify-between">
                     <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-text-muted ${
                         center.isActive
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
@@ -362,7 +362,7 @@ const ServiceCentersPage: React.FC = () => {
                     >
                       {center.isActive ? 'Active' : 'Inactive'}
                     </span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-text-muted">
                       Created {new Date(center.createdAt).toLocaleDateString()}
                     </span>
                   </div>
@@ -374,10 +374,10 @@ const ServiceCentersPage: React.FC = () => {
 
         {/* Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+          <div className="fixed inset-0 bg-dark-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-dark-300">
               <div className="mt-3">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <h3 className="text-lg font-semibold text-white mb-4">
                   {editingCenter ? 'Edit Service Center' : 'Add New Service Center'}
                 </h3>
 
@@ -385,59 +385,59 @@ const ServiceCentersPage: React.FC = () => {
                   {/* Basic Information */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Name</label>
+                      <label className="block text-sm text-text-muted text-text-secondary">Name</label>
                       <input
                         type="text"
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border-dark-300 rounded-md shadow-sm focus:ring-lime-400 focus:border-lime-400"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Code</label>
+                      <label className="block text-sm text-text-muted text-text-secondary">Code</label>
                       <input
                         type="text"
                         required
                         value={formData.code}
                         onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1 block w-full border-dark-300 rounded-md shadow-sm focus:ring-lime-400 focus:border-lime-400"
                       />
                     </div>
                   </div>
 
                   {/* Address */}
                   <div>
-                    <h4 className="text-md font-medium text-gray-900 mb-2">Address</h4>
+                    <h4 className="text-md text-text-muted text-white mb-2">Address</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">Street</label>
+                        <label className="block text-sm text-text-muted text-text-secondary">Street</label>
                         <input
                           type="text"
                           required
                           value={formData.address.street}
                           onChange={(e) => setFormData({ ...formData, address: { ...formData.address, street: e.target.value } })}
-                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          className="mt-1 block w-full border-dark-300 rounded-md shadow-sm focus:ring-lime-400 focus:border-lime-400"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">City</label>
+                        <label className="block text-sm text-text-muted text-text-secondary">City</label>
                         <input
                           type="text"
                           required
                           value={formData.address.city}
                           onChange={(e) => setFormData({ ...formData, address: { ...formData.address, city: e.target.value } })}
-                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          className="mt-1 block w-full border-dark-300 rounded-md shadow-sm focus:ring-lime-400 focus:border-lime-400"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">State</label>
+                        <label className="block text-sm text-text-muted text-text-secondary">State</label>
                         <input
                           type="text"
                           required
                           value={formData.address.state}
                           onChange={(e) => setFormData({ ...formData, address: { ...formData.address, state: e.target.value } })}
-                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          className="mt-1 block w-full border-dark-300 rounded-md shadow-sm focus:ring-lime-400 focus:border-lime-400"
                         />
                       </div>
                     </div>
@@ -445,36 +445,36 @@ const ServiceCentersPage: React.FC = () => {
 
                   {/* Contact */}
                   <div>
-                    <h4 className="text-md font-medium text-gray-900 mb-2">Contact Information</h4>
+                    <h4 className="text-md text-text-muted text-white mb-2">Contact Information</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Manager Name</label>
+                        <label className="block text-sm text-text-muted text-text-secondary">Manager Name</label>
                         <input
                           type="text"
                           required
                           value={formData.contact.managerName}
                           onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, managerName: e.target.value } })}
-                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          className="mt-1 block w-full border-dark-300 rounded-md shadow-sm focus:ring-lime-400 focus:border-lime-400"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Phone</label>
+                        <label className="block text-sm text-text-muted text-text-secondary">Phone</label>
                         <input
                           type="tel"
                           required
                           value={formData.contact.phone}
                           onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, phone: e.target.value } })}
-                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          className="mt-1 block w-full border-dark-300 rounded-md shadow-sm focus:ring-lime-400 focus:border-lime-400"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Email</label>
+                        <label className="block text-sm text-text-muted text-text-secondary">Email</label>
                         <input
                           type="email"
                           required
                           value={formData.contact.email}
                           onChange={(e) => setFormData({ ...formData, contact: { ...formData.contact, email: e.target.value } })}
-                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                          className="mt-1 block w-full border-dark-300 rounded-md shadow-sm focus:ring-lime-400 focus:border-lime-400"
                         />
                       </div>
                     </div>
@@ -482,7 +482,7 @@ const ServiceCentersPage: React.FC = () => {
 
                   {/* Services */}
                   <div>
-                    <h4 className="text-md font-medium text-gray-900 mb-2">Services Offered</h4>
+                    <h4 className="text-md text-text-muted text-white mb-2">Services Offered</h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                       {availableServices.map((service) => (
                         <label key={service._id} className="flex items-center">
@@ -490,9 +490,9 @@ const ServiceCentersPage: React.FC = () => {
                             type="checkbox"
                             checked={formData.services.includes(service._id)}
                             onChange={() => handleServiceToggle(service._id)}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            className="h-4 w-4 text-lime-600 focus:ring-lime-400 border-dark-300 rounded"
                           />
-                          <span className="ml-2 text-sm text-gray-700">{service.name}</span>
+                          <span className="ml-2 text-sm text-text-secondary">{service.name}</span>
                         </label>
                       ))}
                     </div>
@@ -503,14 +503,14 @@ const ServiceCentersPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowModal(false)}
-                      className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                      className="px-4 py-2 border border-dark-300 rounded-md shadow-sm text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={loading}
-                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-white bg-lime-600 hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400 disabled:opacity-50"
                     >
                       {loading ? 'Saving...' : editingCenter ? 'Update' : 'Create'}
                     </button>

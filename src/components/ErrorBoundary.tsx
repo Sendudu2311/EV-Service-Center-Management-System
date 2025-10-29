@@ -58,22 +58,22 @@ class ErrorBoundary extends Component<Props, State> {
 
       // Default fallback UI
       return (
-        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-dark-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
           <div className="sm:mx-auto sm:w-full sm:max-w-md">
-            <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            <div className="bg-dark-300 py-8 px-4 shadow sm:rounded-lg sm:px-10">
               <div className="text-center">
                 <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-400" />
-                <h2 className="mt-4 text-lg font-medium text-gray-900">
+                <h2 className="mt-4 text-lg text-text-muted text-white">
                   Oops! Something went wrong
                 </h2>
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-text-secondary">
                   We encountered an unexpected error. Please try again.
                 </p>
 
                 {/* Show error details in development */}
                 {process.env.NODE_ENV === 'development' && this.state.error && (
                   <details className="mt-4 text-left">
-                    <summary className="text-sm font-medium text-gray-700 cursor-pointer">
+                    <summary className="text-sm text-text-muted text-text-secondary cursor-pointer">
                       Error Details (Development Only)
                     </summary>
                     <div className="mt-2 p-3 bg-red-50 rounded border border-red-200">
@@ -89,14 +89,14 @@ class ErrorBoundary extends Component<Props, State> {
                   <button
                     type="button"
                     onClick={this.handleRetry}
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm text-white bg-lime-600 hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-500"
                   >
                     Try Again
                   </button>
                   <button
                     type="button"
                     onClick={this.handleReload}
-                    className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="w-full flex justify-center py-2 px-4 border border-dark-200 bg-dark-300 text-white rounded-md shadow-sm text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-500"
                   >
                     Reload Page
                   </button>

@@ -364,11 +364,11 @@ const WorkQueuePage: React.FC = () => {
       case "high":
         return "bg-orange-100 text-orange-800";
       case "normal":
-        return "bg-blue-100 text-blue-800";
+        return "bg-lime-100 text-lime-800";
       case "low":
-        return "bg-gray-100 text-gray-800";
+        return "bg-dark-100 text-gray-800";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-dark-100 text-gray-800";
     }
   };
 
@@ -377,7 +377,7 @@ const WorkQueuePage: React.FC = () => {
       case "pending":
         return "bg-yellow-100 text-yellow-800";
       case "confirmed":
-        return "bg-blue-100 text-blue-800";
+        return "bg-lime-100 text-lime-800";
       case "in_progress":
         return "bg-purple-100 text-purple-800";
       case "completed":
@@ -385,7 +385,7 @@ const WorkQueuePage: React.FC = () => {
       case "cancelled":
         return "bg-red-100 text-red-800";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-dark-100 text-gray-800";
     }
   };
 
@@ -407,12 +407,12 @@ const WorkQueuePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-dark-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Work Queue</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-white">Work Queue</h1>
+          <p className="text-text-secondary mt-2">
             Manage your assigned appointments and work tasks
           </p>
         </div>
@@ -420,7 +420,7 @@ const WorkQueuePage: React.FC = () => {
         {/* Stats Cards */}
         {stats && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="bg-dark-300 overflow-hidden shadow rounded-lg">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
@@ -428,10 +428,10 @@ const WorkQueuePage: React.FC = () => {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
+                      <dt className="text-sm text-text-muted text-text-muted truncate">
                         Pending
                       </dt>
-                      <dd className="text-lg font-medium text-gray-900">
+                      <dd className="text-lg text-text-muted text-white">
                         {stats.pendingAppointments}
                       </dd>
                     </dl>
@@ -440,7 +440,7 @@ const WorkQueuePage: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="bg-dark-300 overflow-hidden shadow rounded-lg">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
@@ -448,10 +448,10 @@ const WorkQueuePage: React.FC = () => {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
+                      <dt className="text-sm text-text-muted text-text-muted truncate">
                         In Progress
                       </dt>
-                      <dd className="text-lg font-medium text-gray-900">
+                      <dd className="text-lg text-text-muted text-white">
                         {stats.inProgressAppointments}
                       </dd>
                     </dl>
@@ -460,7 +460,7 @@ const WorkQueuePage: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="bg-dark-300 overflow-hidden shadow rounded-lg">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
@@ -468,10 +468,10 @@ const WorkQueuePage: React.FC = () => {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
+                      <dt className="text-sm text-text-muted text-text-muted truncate">
                         Completed Today
                       </dt>
-                      <dd className="text-lg font-medium text-gray-900">
+                      <dd className="text-lg text-text-muted text-white">
                         {stats.completedToday}
                       </dd>
                     </dl>
@@ -480,18 +480,18 @@ const WorkQueuePage: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="bg-dark-300 overflow-hidden shadow rounded-lg">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    <ClipboardDocumentListIcon className="h-6 w-6 text-blue-400" />
+                    <ClipboardDocumentListIcon className="h-6 w-6 text-lime-400" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
+                      <dt className="text-sm text-text-muted text-text-muted truncate">
                         Avg. Time (hours)
                       </dt>
-                      <dd className="text-lg font-medium text-gray-900">
+                      <dd className="text-lg text-text-muted text-white">
                         {stats.averageCompletionTime}
                       </dd>
                     </dl>
@@ -505,29 +505,29 @@ const WorkQueuePage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Appointments List */}
           <div className="lg:col-span-2">
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-6 py-4 border-b border-gray-200">
+            <div className="bg-dark-300 shadow rounded-lg">
+              <div className="px-6 py-4 border-b border-dark-200">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-lg font-semibold text-white">
                     Appointments
                   </h2>
                   <div className="flex space-x-2">
                     <button
                       onClick={() => setActiveTab("assigned")}
-                      className={`px-3 py-1 rounded-md text-sm font-medium ${
+                      className={`px-3 py-1 rounded-md text-sm text-text-muted ${
                         activeTab === "assigned"
-                          ? "bg-blue-100 text-blue-700"
-                          : "text-gray-500 hover:text-gray-700"
+                          ? "bg-lime-100 text-lime-700"
+                          : "text-text-muted hover:text-text-secondary"
                       }`}
                     >
                       My Assignments
                     </button>
                     <button
                       onClick={() => setActiveTab("available")}
-                      className={`px-3 py-1 rounded-md text-sm font-medium ${
+                      className={`px-3 py-1 rounded-md text-sm text-text-muted ${
                         activeTab === "available"
-                          ? "bg-blue-100 text-blue-700"
-                          : "text-gray-500 hover:text-gray-700"
+                          ? "bg-lime-100 text-lime-700"
+                          : "text-text-muted hover:text-text-secondary"
                       }`}
                     >
                       Available
@@ -539,11 +539,11 @@ const WorkQueuePage: React.FC = () => {
               <div className="divide-y divide-gray-200">
                 {appointments.length === 0 ? (
                   <div className="p-6 text-center">
-                    <WrenchScrewdriverIcon className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">
+                    <WrenchScrewdriverIcon className="mx-auto h-12 w-12 text-text-muted" />
+                    <h3 className="mt-2 text-sm text-text-muted text-white">
                       No appointments
                     </h3>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-text-muted">
                       {activeTab === "assigned"
                         ? "No appointments assigned to you"
                         : "No available appointments"}
@@ -589,9 +589,9 @@ const WorkQueuePage: React.FC = () => {
                     return paginatedAppointments.map((appointment) => (
                       <div
                         key={appointment._id}
-                        className={`p-6 hover:bg-gray-50 cursor-pointer ${
+                        className={`p-6 hover:bg-dark-900 cursor-pointer ${
                           selectedAppointment?._id === appointment._id
-                            ? "bg-blue-50"
+                            ? "bg-dark-900"
                             : ""
                         }`}
                         onClick={() => setSelectedAppointment(appointment)}
@@ -600,38 +600,38 @@ const WorkQueuePage: React.FC = () => {
                           <div className="flex items-center space-x-4">
                             <div>
                               <div className="flex items-center space-x-2">
-                                <span className="font-semibold text-gray-900">
+                                <span className="font-semibold text-white">
                                   #{appointment.appointmentNumber}
                                 </span>
                                 <span
-                                  className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(
+                                  className={`px-2 py-1 rounded-full text-xs text-text-muted ${getPriorityColor(
                                     appointment.priority
                                   )}`}
                                 >
                                   {appointment.priority}
                                 </span>
                               </div>
-                              <p className="text-sm text-gray-600 mt-1">
+                              <p className="text-sm text-text-secondary mt-1">
                                 {appointment.customerId.firstName}{" "}
                                 {appointment.customerId.lastName} •{" "}
                                 {appointment.vehicleId.make}{" "}
                                 {appointment.vehicleId.model}
                               </p>
-                              <p className="text-sm text-gray-500">
+                              <p className="text-sm text-text-muted">
                                 {formatDate(appointment.scheduledDate)}
                               </p>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
                             <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                              className={`px-2 py-1 rounded-full text-xs text-text-muted ${getStatusColor(
                                 appointment.status
                               )}`}
                             >
                               {appointment.status.replace("_", " ")}
                             </span>
                             {appointment.priority === "urgent" && (
-                              <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />
+                              <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />
                             )}
                           </div>
                         </div>
@@ -651,7 +651,7 @@ const WorkQueuePage: React.FC = () => {
                             {appointment.services?.map((service, index) => (
                               <span
                                 key={index}
-                                className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800"
+                                className="inline-flex items-center px-2 py-1 rounded text-xs bg-dark-300 text-text-secondary"
                               >
                                 {service?.serviceId?.name || "Unknown Service"}
                                 {(service?.quantity || 0) > 1 &&
@@ -668,7 +668,7 @@ const WorkQueuePage: React.FC = () => {
 
               {/* Pagination */}
               {appointments.length > itemsPerPage && (
-                <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+                <div className="flex items-center justify-between border-t border-dark-200 bg-dark-300 px-4 py-3 sm:px-6">
                   {/* Mobile pagination */}
                   <div className="flex flex-1 justify-between sm:hidden">
                     <button
@@ -676,7 +676,7 @@ const WorkQueuePage: React.FC = () => {
                         setCurrentPage(Math.max(1, currentPage - 1))
                       }
                       disabled={currentPage === 1}
-                      className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="relative inline-flex items-center rounded-md border border-dark-200 bg-dark-300 px-4 py-2 text-sm text-text-muted text-text-secondary hover:bg-dark-900 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Trước
                     </button>
@@ -693,7 +693,7 @@ const WorkQueuePage: React.FC = () => {
                         currentPage ===
                         Math.ceil(appointments.length / itemsPerPage)
                       }
-                      className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="relative ml-3 inline-flex items-center rounded-md border border-dark-200 bg-dark-300 px-4 py-2 text-sm text-text-muted text-text-secondary hover:bg-dark-900 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Sau
                     </button>
@@ -702,20 +702,20 @@ const WorkQueuePage: React.FC = () => {
                   {/* Desktop pagination */}
                   <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-sm text-gray-700">
+                      <p className="text-sm text-text-secondary">
                         Hiển thị{" "}
-                        <span className="font-medium">
+                        <span className="text-text-muted">
                           {(currentPage - 1) * itemsPerPage + 1}
                         </span>{" "}
                         đến{" "}
-                        <span className="font-medium">
+                        <span className="text-text-muted">
                           {Math.min(
                             currentPage * itemsPerPage,
                             appointments.length
                           )}
                         </span>{" "}
                         trong{" "}
-                        <span className="font-medium">
+                        <span className="text-text-muted">
                           {appointments.length}
                         </span>{" "}
                         công việc
@@ -731,7 +731,7 @@ const WorkQueuePage: React.FC = () => {
                             setCurrentPage(Math.max(1, currentPage - 1))
                           }
                           disabled={currentPage === 1}
-                          className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="relative inline-flex items-center rounded-l-md px-2 py-2 text-text-muted ring-1 ring-inset ring-gray-300 hover:bg-dark-900 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <span className="sr-only">Trước</span>
                           <svg
@@ -760,8 +760,8 @@ const WorkQueuePage: React.FC = () => {
                             onClick={() => setCurrentPage(page)}
                             className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
                               currentPage === page
-                                ? "z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                                : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                                ? "z-10 bg-lime-200 text-dark-900 focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400"
+                                : "text-white ring-1 ring-inset ring-gray-300 hover:bg-dark-900 focus:z-20 focus:outline-offset-0"
                             }`}
                           >
                             {page}
@@ -780,7 +780,7 @@ const WorkQueuePage: React.FC = () => {
                             currentPage ===
                             Math.ceil(appointments.length / itemsPerPage)
                           }
-                          className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="relative inline-flex items-center rounded-r-md px-2 py-2 text-text-muted ring-1 ring-inset ring-gray-300 hover:bg-dark-900 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <span className="sr-only">Sau</span>
                           <svg
@@ -807,9 +807,9 @@ const WorkQueuePage: React.FC = () => {
           {/* Appointment Details */}
           <div>
             {selectedAppointment ? (
-              <div className="bg-white shadow rounded-lg">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900">
+              <div className="bg-dark-300 shadow rounded-lg">
+                <div className="px-6 py-4 border-b border-dark-200">
+                  <h3 className="text-lg font-semibold text-white">
                     Appointment #{selectedAppointment.appointmentNumber}
                   </h3>
 
@@ -817,30 +817,30 @@ const WorkQueuePage: React.FC = () => {
                   <div className="mt-4 flex space-x-4">
                     <button
                       onClick={() => setDetailsTab("overview")}
-                      className={`px-3 py-1 rounded-md text-sm font-medium ${
+                      className={`px-3 py-1 rounded-md text-sm text-text-muted ${
                         detailsTab === "overview"
-                          ? "bg-blue-100 text-blue-700"
-                          : "text-gray-500 hover:text-gray-700"
+                          ? "bg-lime-100 text-lime-700"
+                          : "text-text-muted hover:text-text-secondary"
                       }`}
                     >
                       Overview
                     </button>
                     <button
                       onClick={() => setDetailsTab("checklist")}
-                      className={`px-3 py-1 rounded-md text-sm font-medium ${
+                      className={`px-3 py-1 rounded-md text-sm text-text-muted ${
                         detailsTab === "checklist"
-                          ? "bg-blue-100 text-blue-700"
-                          : "text-gray-500 hover:text-gray-700"
+                          ? "bg-lime-100 text-lime-700"
+                          : "text-text-muted hover:text-text-secondary"
                       }`}
                     >
                       Checklist
                     </button>
                     <button
                       onClick={() => setDetailsTab("parts")}
-                      className={`px-3 py-1 rounded-md text-sm font-medium ${
+                      className={`px-3 py-1 rounded-md text-sm text-text-muted ${
                         detailsTab === "parts"
-                          ? "bg-blue-100 text-blue-700"
-                          : "text-gray-500 hover:text-gray-700"
+                          ? "bg-lime-100 text-lime-700"
+                          : "text-text-muted hover:text-text-secondary"
                       }`}
                     >
                       <CubeIcon className="w-4 h-4 inline mr-1" />
@@ -855,27 +855,27 @@ const WorkQueuePage: React.FC = () => {
                     <div className="space-y-6">
                       {/* Customer & Vehicle Info */}
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900 mb-2">
+                        <h4 className="text-sm text-text-muted text-white mb-2">
                           Customer & Vehicle
                         </h4>
-                        <div className="space-y-1 text-sm text-gray-600">
+                        <div className="space-y-1 text-sm text-text-secondary">
                           <p>
-                            <span className="font-medium">Customer:</span>{" "}
+                            <span className="text-text-muted">Customer:</span>{" "}
                             {selectedAppointment.customerId.firstName}{" "}
                             {selectedAppointment.customerId.lastName}
                           </p>
                           <p>
-                            <span className="font-medium">Phone:</span>{" "}
+                            <span className="text-text-muted">Phone:</span>{" "}
                             {selectedAppointment.customerId.phone}
                           </p>
                           <p>
-                            <span className="font-medium">Vehicle:</span>{" "}
+                            <span className="text-text-muted">Vehicle:</span>{" "}
                             {selectedAppointment.vehicleId.year}{" "}
                             {selectedAppointment.vehicleId.make}{" "}
                             {selectedAppointment.vehicleId.model}
                           </p>
                           <p>
-                            <span className="font-medium">VIN:</span>{" "}
+                            <span className="text-text-muted">VIN:</span>{" "}
                             {selectedAppointment.vehicleId.vin}
                           </p>
                         </div>
@@ -883,7 +883,7 @@ const WorkQueuePage: React.FC = () => {
 
                       {/* Services */}
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900 mb-2">
+                        <h4 className="text-sm text-text-muted text-white mb-2">
                           Services
                         </h4>
                         <div className="space-y-2">
@@ -891,24 +891,24 @@ const WorkQueuePage: React.FC = () => {
                             (service, index) => (
                               <div
                                 key={index}
-                                className="bg-gray-50 p-3 rounded-lg"
+                                className="bg-dark-900 p-3 rounded-lg"
                               >
                                 <div className="flex items-center justify-between">
-                                  <span className="font-medium text-gray-900">
+                                  <span className="text-text-muted text-white">
                                     {service?.serviceId?.name ||
                                       "Unknown Service"}
                                   </span>
-                                  <span className="text-sm text-gray-600">
+                                  <span className="text-sm text-text-secondary">
                                     {service?.serviceId?.estimatedDuration || 0}{" "}
                                     mins
                                   </span>
                                 </div>
-                                <p className="text-sm text-gray-600 mt-1">
+                                <p className="text-sm text-text-secondary mt-1">
                                   Category:{" "}
                                   {service?.serviceId?.category || "Unknown"}
                                 </p>
                                 {service.quantity > 1 && (
-                                  <p className="text-sm text-gray-600">
+                                  <p className="text-sm text-text-secondary">
                                     Quantity: {service.quantity}
                                   </p>
                                 )}
@@ -920,7 +920,7 @@ const WorkQueuePage: React.FC = () => {
 
                       {/* Status Actions */}
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900 mb-2">
+                        <h4 className="text-sm text-text-muted text-white mb-2">
                           Status Actions
                         </h4>
                         <StatusActionButton
@@ -933,7 +933,7 @@ const WorkQueuePage: React.FC = () => {
 
                       {/* Service Notes */}
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900 mb-2">
+                        <h4 className="text-sm text-text-muted text-white mb-2">
                           Service Notes
                         </h4>
                         <div className="space-y-2">
@@ -941,10 +941,10 @@ const WorkQueuePage: React.FC = () => {
                             (note, index) => (
                               <div
                                 key={index}
-                                className="bg-gray-50 p-3 rounded text-sm"
+                                className="bg-dark-900 p-3 rounded text-sm"
                               >
-                                <p className="text-gray-900">{note.note}</p>
-                                <p className="text-gray-500 text-xs mt-1">
+                                <p className="text-white">{note.note}</p>
+                                <p className="text-text-muted text-xs mt-1">
                                   By {note.addedBy.firstName}{" "}
                                   {note.addedBy.lastName} on{" "}
                                   {formatDate(note.addedAt)}
@@ -958,13 +958,13 @@ const WorkQueuePage: React.FC = () => {
                               value={newNote}
                               onChange={(e) => setNewNote(e.target.value)}
                               placeholder="Add service note..."
-                              className="flex-1 border border-gray-300 rounded-md px-3 py-1 text-sm"
+                              className="flex-1 border border-dark-200 rounded-md px-3 py-1 text-sm"
                             />
                             <button
                               onClick={() =>
                                 handleAddServiceNote(selectedAppointment._id)
                               }
-                              className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                              className="px-3 py-1 bg-lime-200 text-dark-900 text-sm rounded hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                             >
                               Add
                             </button>
@@ -984,7 +984,7 @@ const WorkQueuePage: React.FC = () => {
                             (item) => (
                               <div
                                 key={item._id}
-                                className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg"
+                                className="flex items-center space-x-2 p-3 bg-dark-900 rounded-lg"
                               >
                                 <input
                                   type="checkbox"
@@ -996,19 +996,19 @@ const WorkQueuePage: React.FC = () => {
                                       e.target.checked
                                     )
                                   }
-                                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                  className="h-4 w-4 text-lime-600 focus:ring-lime-500 border-dark-200 rounded"
                                 />
                                 <span
                                   className={`text-sm flex-1 ${
                                     item.isCompleted
-                                      ? "line-through text-gray-500"
-                                      : "text-gray-900"
+                                      ? "line-through text-text-muted"
+                                      : "text-white"
                                   }`}
                                 >
                                   {item.item}
                                 </span>
                                 {item.isCompleted && item.completedBy && (
-                                  <span className="text-xs text-gray-500">
+                                  <span className="text-xs text-text-muted">
                                     by {item.completedBy.firstName}
                                   </span>
                                 )}
@@ -1017,9 +1017,9 @@ const WorkQueuePage: React.FC = () => {
                           )}
                         </div>
                       ) : (
-                        <div className="text-center py-8 text-gray-500">
-                          <ClipboardDocumentListIcon className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-                          <p>No checklist items for this appointment</p>
+                        <div className="text-center py-8 text-text-muted">
+                          <ClipboardDocumentListIcon className="mx-auto h-12 w-12 text-text-secondary mb-4" />
+                          <p className="text-white">No checklist items for this appointment</p>
                         </div>
                       )}
                     </div>
@@ -1050,13 +1050,13 @@ const WorkQueuePage: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="bg-white shadow rounded-lg p-6">
+              <div className="bg-dark-300 shadow rounded-lg p-6">
                 <div className="text-center">
-                  <ClipboardDocumentListIcon className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">
+                  <ClipboardDocumentListIcon className="mx-auto h-12 w-12 text-text-muted" />
+                  <h3 className="mt-2 text-sm text-text-muted text-white">
                     Select an appointment
                   </h3>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-text-muted">
                     Choose an appointment from the list to view details and take
                     actions.
                   </p>

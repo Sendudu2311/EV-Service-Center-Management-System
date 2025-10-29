@@ -295,22 +295,22 @@ const PartsSelection: React.FC<PartsSelectionProps> = ({
         <div className={`p-4 rounded-lg border ${
           isWorkflowDisabled 
             ? 'bg-orange-50 border-orange-200' 
-            : 'bg-blue-50 border-blue-200'
+            : 'bg-dark-900 border-blue-200'
         }`}>
           <div className="flex items-center">
             {isWorkflowDisabled ? (
               <ExclamationTriangleIcon className="w-5 h-5 text-orange-600 mr-2" />
             ) : (
-              <CheckCircleIcon className="w-5 h-5 text-blue-600 mr-2" />
+              <CheckCircleIcon className="w-5 h-5 text-lime-600 mr-2" />
             )}
             <div>
-              <p className={`text-sm font-medium ${
-                isWorkflowDisabled ? 'text-orange-800' : 'text-blue-800'
+              <p className={`text-sm text-text-muted ${
+                isWorkflowDisabled ? 'text-orange-800' : 'text-lime-800'
               }`}>
                 Appointment Status: {workflowInfo.appointmentStatus}
               </p>
               <p className={`text-sm ${
-                isWorkflowDisabled ? 'text-orange-700' : 'text-blue-700'
+                isWorkflowDisabled ? 'text-orange-600' : 'text-lime-600'
               }`}>
                 {workflowInfo.restrictions.message}
               </p>
@@ -322,10 +322,10 @@ const PartsSelection: React.FC<PartsSelectionProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg font-semibold text-white">
             {mode === 'reserve' ? 'Parts Selection' : 'Parts Usage'}
           </h3>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-text-secondary">
             {mode === 'reserve' 
               ? 'Select parts needed for this appointment'
               : 'Mark which parts were actually used'
@@ -339,7 +339,7 @@ const PartsSelection: React.FC<PartsSelectionProps> = ({
             <button
               onClick={handleReserveParts}
               disabled={submitting || disabled || isWorkflowDisabled}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm text-text-muted rounded-md text-white bg-lime-600 hover:bg-dark-9000 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-600 disabled:opacity-50"
             >
               <CubeIcon className="w-4 h-4 mr-2" />
               {submitting ? 'Reserving...' : `Reserve ${selectedParts.length} Part${selectedParts.length !== 1 ? 's' : ''}`}
@@ -350,7 +350,7 @@ const PartsSelection: React.FC<PartsSelectionProps> = ({
             <button
               onClick={handleUseParts}
               disabled={submitting || disabled || isWorkflowDisabled}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm text-text-muted rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-green-500 disabled:opacity-50"
             >
               <CheckCircleIcon className="w-4 h-4 mr-2" />
               {submitting ? 'Updating...' : 'Mark as Used'}
@@ -361,15 +361,15 @@ const PartsSelection: React.FC<PartsSelectionProps> = ({
 
       {/* Reserved Parts Summary */}
       {reservedParts.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-blue-900 mb-2">
+        <div className="bg-dark-900 border border-blue-200 rounded-lg p-4">
+          <h4 className="text-sm text-text-muted text-lime-900 mb-2">
             Reserved Parts ({reservedParts.length})
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {reservedParts.map((part) => (
               <div key={part.partId} className="flex items-center justify-between text-sm">
-                <span className="text-blue-800">{part.name} ({part.partNumber})</span>
-                <span className="font-medium text-blue-900">Qty: {part.quantity}</span>
+                <span className="text-lime-800">{part.name} ({part.partNumber})</span>
+                <span className="text-text-muted text-lime-900">Qty: {part.quantity}</span>
               </div>
             ))}
           </div>
@@ -384,10 +384,10 @@ const PartsSelection: React.FC<PartsSelectionProps> = ({
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                className={`px-3 py-1 rounded-md text-sm text-text-muted transition-colors ${
                   activeCategory === category
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-lime-600 text-white'
+                    : 'bg-dark-100 text-text-secondary hover:bg-dark-200'
                 }`}
               >
                 {category === 'all' ? 'All Categories' : category.charAt(0).toUpperCase() + category.slice(1)}
@@ -398,31 +398,31 @@ const PartsSelection: React.FC<PartsSelectionProps> = ({
           {/* Search */}
           {activeCategory !== 'all' && (
             <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-text-muted" />
               <input
                 type="text"
                 placeholder="Search parts..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-dark-200 bg-dark-300 text-white rounded-lg focus:ring-2 focus:ring-lime-500 focus:border-transparent"
               />
             </div>
           )}
 
           {/* Parts List */}
           {activeCategory === 'all' ? (
-            <div className="text-center py-8 text-gray-500">
-              <CubeIcon className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-              <p>Select a category to view available parts</p>
+            <div className="text-center py-8 text-text-muted">
+              <CubeIcon className="mx-auto h-12 w-12 text-text-secondary mb-4" />
+              <p className="text-white">Select a category to view available parts</p>
             </div>
           ) : loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             </div>
           ) : filteredParts.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <CubeIcon className="mx-auto h-12 w-12 text-gray-300 mb-4" />
-              <p>No parts available for this category</p>
+            <div className="text-center py-8 text-text-muted">
+              <CubeIcon className="mx-auto h-12 w-12 text-text-secondary mb-4" />
+              <p className="text-white">No parts available for this category</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -435,31 +435,31 @@ const PartsSelection: React.FC<PartsSelectionProps> = ({
                   <div
                     key={part._id}
                     className={`border rounded-lg p-4 ${
-                      selectedQty > 0 ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                      selectedQty > 0 ? 'border-blue-500 bg-dark-900' : 'border-dark-200'
                     }`}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
-                        <h5 className="font-medium text-gray-900">{part.name}</h5>
-                        <p className="text-sm text-gray-600">{part.partNumber}</p>
-                        <p className="text-xs text-gray-500">{part.brand} • {part.model}</p>
+                        <h5 className="text-text-muted text-white">{part.name}</h5>
+                        <p className="text-sm text-text-secondary">{part.partNumber}</p>
+                        <p className="text-xs text-text-muted">{part.brand} • {part.model}</p>
                       </div>
                       {part.isRecommended && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs text-text-muted bg-dark-200 text-green-600">
                           Recommended
                         </span>
                       )}
                     </div>
 
-                    <p className="text-sm text-gray-600 mb-3">{part.description}</p>
+                    <p className="text-sm text-text-secondary mb-3">{part.description}</p>
 
                     <div className="flex items-center justify-between mb-3">
                       <div className="text-sm">
-                        <span className="font-medium text-gray-900">
+                        <span className="text-text-muted text-white">
                           {formatCurrency(part.pricing.retail, part.pricing.currency)}
                         </span>
                       </div>
-                      <div className={`text-sm ${isLowStock ? 'text-orange-600' : 'text-gray-600'}`}>
+                      <div className={`text-sm ${isLowStock ? 'text-orange-600' : 'text-text-secondary'}`}>
                         <span className="flex items-center">
                           {isLowStock && <ExclamationTriangleIcon className="w-4 h-4 mr-1" />}
                           Stock: {availableStock}
@@ -473,22 +473,22 @@ const PartsSelection: React.FC<PartsSelectionProps> = ({
                         <button
                           onClick={() => updateSelectedPartQuantity(part._id, -1)}
                           disabled={disabled || selectedQty <= 0 || isWorkflowDisabled}
-                          className="p-1 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                          className="p-1 rounded border border-dark-300 hover:bg-dark-900 disabled:opacity-50"
                         >
                           <MinusIcon className="w-4 h-4" />
                         </button>
-                        <span className="w-8 text-center font-medium">{selectedQty}</span>
+                        <span className="w-8 text-center text-text-muted">{selectedQty}</span>
                         <button
                           onClick={() => updateSelectedPartQuantity(part._id, 1)}
                           disabled={disabled || selectedQty >= availableStock || isWorkflowDisabled}
-                          className="p-1 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                          className="p-1 rounded border border-dark-300 hover:bg-dark-900 disabled:opacity-50"
                         >
                           <PlusIcon className="w-4 h-4" />
                         </button>
                       </div>
                       
                       {selectedQty > 0 && (
-                        <span className="text-sm font-medium text-blue-600">
+                        <span className="text-sm text-text-muted text-lime-600">
                           {formatCurrency(part.pricing.retail * selectedQty, part.pricing.currency)}
                         </span>
                       )}
@@ -503,36 +503,36 @@ const PartsSelection: React.FC<PartsSelectionProps> = ({
 
       {mode === 'use' && reservedParts.length > 0 && (
         <div className="space-y-4">
-          <h4 className="font-medium text-gray-900">Mark Parts as Used</h4>
+          <h4 className="text-text-muted text-white">Mark Parts as Used</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {reservedParts.map((part) => {
               const selectedQty = getSelectedQuantity(part.partId);
               
               return (
-                <div key={part.partId} className="border border-gray-200 rounded-lg p-4">
+                <div key={part.partId} className="border border-dark-200 rounded-lg p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <h5 className="font-medium text-gray-900">{part.name}</h5>
-                      <p className="text-sm text-gray-600">{part.partNumber}</p>
+                      <h5 className="text-text-muted text-white">{part.name}</h5>
+                      <p className="text-sm text-text-secondary">{part.partNumber}</p>
                     </div>
-                    <span className="text-sm text-gray-500">Reserved: {part.quantity}</span>
+                    <span className="text-sm text-text-muted">Reserved: {part.quantity}</span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Quantity Used:</span>
+                    <span className="text-sm text-text-secondary">Quantity Used:</span>
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => updateSelectedPartQuantity(part.partId, -1)}
                         disabled={disabled || selectedQty <= 0 || isWorkflowDisabled}
-                        className="p-1 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                        className="p-1 rounded border border-dark-300 hover:bg-dark-900 disabled:opacity-50"
                       >
                         <MinusIcon className="w-4 h-4" />
                       </button>
-                      <span className="w-8 text-center font-medium">{selectedQty}</span>
+                      <span className="w-8 text-center text-text-muted">{selectedQty}</span>
                       <button
                         onClick={() => updateSelectedPartQuantity(part.partId, 1)}
                         disabled={disabled || selectedQty >= part.quantity || isWorkflowDisabled}
-                        className="p-1 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                        className="p-1 rounded border border-dark-300 hover:bg-dark-900 disabled:opacity-50"
                       >
                         <PlusIcon className="w-4 h-4" />
                       </button>
@@ -547,12 +547,12 @@ const PartsSelection: React.FC<PartsSelectionProps> = ({
 
       {/* Total Cost */}
       {selectedParts.length > 0 && (
-        <div className="bg-gray-50 rounded-lg p-4">
+        <div className="bg-dark-900 rounded-lg p-4">
           <div className="flex items-center justify-between">
-            <span className="font-medium text-gray-900">
+            <span className="text-text-muted text-white">
               Total {mode === 'reserve' ? 'Cost' : 'Parts Used'}:
             </span>
-            <span className="text-lg font-bold text-gray-900">
+            <span className="text-lg font-bold text-white">
               {mode === 'reserve' && formatCurrency(getTotalCost())}
               {mode === 'use' && `${selectedParts.reduce((sum, p) => sum + p.quantity, 0)} parts`}
             </span>

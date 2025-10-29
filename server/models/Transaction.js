@@ -48,13 +48,11 @@ const transactionSchema = new mongoose.Schema(
     appointmentId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Appointment",
-      index: true,
       description: "Related appointment (if applicable)",
     },
     invoiceId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Invoice",
-      index: true,
       description: "Related invoice (if applicable)",
     },
 

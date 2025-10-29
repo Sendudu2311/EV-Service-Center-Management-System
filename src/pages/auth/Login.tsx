@@ -53,22 +53,22 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-dark-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <div className="flex justify-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-green-500 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-2xl">EV</span>
+          <div className="flex justify-center group">
+            <div className="w-16 h-16 bg-gradient-to-r from-lime-200 to-lime-300 rounded-xl flex items-center justify-center shadow-glow group-hover:shadow-lg transition-all duration-200 transform group-hover:scale-110">
+              <span className="text-dark-900 font-bold text-2xl">EV</span>
             </div>
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-white">
             Sign in to your account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-text-secondary">
             Or{" "}
             <Link
               to="/register"
-              className="font-medium text-blue-600 hover:text-blue-500"
+              className="text-text-muted text-lime-600 hover:text-lime-500"
             >
               create a new account
             </Link>
@@ -80,7 +80,7 @@ const Login: React.FC = () => {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm text-text-muted text-text-secondary"
               >
                 Email address
               </label>
@@ -90,7 +90,7 @@ const Login: React.FC = () => {
                 type="email"
                 autoComplete="email"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                className="mt-1 appearance-none relative block w-full px-3 py-3 border border-dark-300 bg-dark-300 placeholder-text-muted text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-lime-400 focus:z-10 sm:text-sm"
                 placeholder="Enter your email"
                 value={formData.email}
                 onChange={handleChange}
@@ -100,7 +100,7 @@ const Login: React.FC = () => {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm text-text-muted text-text-secondary"
               >
                 Password
               </label>
@@ -111,7 +111,7 @@ const Login: React.FC = () => {
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   required
-                  className="appearance-none relative block w-full px-3 py-3 pr-10 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                  className="appearance-none relative block w-full px-3 py-3 pr-10 border border-dark-300 bg-dark-300 placeholder-text-muted text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 focus:border-lime-400 focus:z-10 sm:text-sm"
                   placeholder="Enter your password"
                   value={formData.password}
                   onChange={handleChange}
@@ -122,9 +122,9 @@ const Login: React.FC = () => {
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeSlashIcon className="h-5 w-5 text-gray-400" />
+                    <EyeSlashIcon className="h-5 w-5 text-text-muted" />
                   ) : (
-                    <EyeIcon className="h-5 w-5 text-gray-400" />
+                    <EyeIcon className="h-5 w-5 text-text-muted" />
                   )}
                 </button>
               </div>
@@ -135,7 +135,7 @@ const Login: React.FC = () => {
             <div className="text-sm">
               <Link
                 to="/forgot-password"
-                className="font-medium text-blue-600 hover:text-blue-500"
+                className="text-text-muted text-lime-600 hover:text-lime-500"
               >
                 Forgot your password?
               </Link>
@@ -146,7 +146,7 @@ const Login: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm text-text-muted rounded-lg text-white bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               {isLoading ? (
                 <div className="flex items-center">
@@ -163,10 +163,10 @@ const Login: React.FC = () => {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+                <div className="w-full border-t border-dark-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-50 text-gray-500">
+                <span className="px-2 bg-dark-900 text-text-muted">
                   Or continue with
                 </span>
               </div>
@@ -191,10 +191,10 @@ const Login: React.FC = () => {
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
+                <div className="w-full border-t border-dark-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-gray-50 text-gray-500">
+                <span className="px-2 bg-dark-900 text-text-muted">
                   Demo Accounts
                 </span>
               </div>
@@ -209,7 +209,7 @@ const Login: React.FC = () => {
                     password: "Customer123!@#",
                   })
                 }
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                className="w-full inline-flex justify-center py-2 px-4 border border-dark-300 rounded-md shadow-sm bg-dark-300 text-sm text-text-muted text-text-muted hover:bg-dark-900"
               >
                 Customer
               </button>
@@ -221,7 +221,7 @@ const Login: React.FC = () => {
                     password: "Staff123!@#",
                   })
                 }
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                className="w-full inline-flex justify-center py-2 px-4 border border-dark-300 rounded-md shadow-sm bg-dark-300 text-sm text-text-muted text-text-muted hover:bg-dark-900"
               >
                 Staff
               </button>
@@ -233,7 +233,7 @@ const Login: React.FC = () => {
                     password: "Tech123!@#",
                   })
                 }
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                className="w-full inline-flex justify-center py-2 px-4 border border-dark-300 rounded-md shadow-sm bg-dark-300 text-sm text-text-muted text-text-muted hover:bg-dark-900"
               >
                 Technician
               </button>
@@ -245,7 +245,7 @@ const Login: React.FC = () => {
                     password: "Admin123!@#",
                   })
                 }
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                className="w-full inline-flex justify-center py-2 px-4 border border-dark-300 rounded-md shadow-sm bg-dark-300 text-sm text-text-muted text-text-muted hover:bg-dark-900"
               >
                 Admin
               </button>

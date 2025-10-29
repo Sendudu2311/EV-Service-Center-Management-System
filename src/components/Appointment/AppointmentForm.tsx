@@ -492,12 +492,12 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="bg-dark-300 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header - Modern & Elegant */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-5 flex-shrink-0">
+        <div className="bg-dark-900 px-6 py-5 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="bg-white bg-opacity-20 rounded-lg p-2">
+              <div className="bg-dark-300 bg-opacity-20 rounded-lg p-2">
                 <svg
                   className="w-6 h-6 text-white"
                   fill="none"
@@ -518,7 +518,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                     ? "Đặt lịch hẹn mới"
                     : "Xác nhận thông tin"}
                 </h3>
-                <p className="text-blue-100 text-sm mt-0.5">
+                <p className="text-text-secondary text-sm mt-0.5">
                   {currentStep === "input"
                     ? "Chọn thông tin dịch vụ và thời gian"
                     : "Kiểm tra và hoàn tất đặt lịch"}
@@ -527,7 +527,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
             </div>
             <button
               onClick={onCancel}
-              className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-all duration-200"
+              className="text-white hover:bg-dark-300 hover:bg-opacity-20 rounded-lg p-2 transition-all duration-200"
               aria-label="Đóng"
             >
               <XMarkIcon className="h-6 w-6" />
@@ -540,8 +540,8 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 ${
                   currentStep === "input"
-                    ? "bg-white text-blue-600 shadow-lg scale-110"
-                    : "bg-white text-blue-600"
+                    ? "bg-dark-300 text-lime-600 shadow-lg scale-110"
+                    : "bg-dark-300 text-lime-600"
                 }`}
               >
                 {currentStep === "input" ? (
@@ -550,13 +550,13 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                   <CheckIcon className="w-5 h-5" />
                 )}
               </div>
-              <span className="ml-2 text-white font-medium text-sm">
+              <span className="ml-2 text-white text-text-muted text-sm">
                 Thông tin
               </span>
             </div>
-            <div className="w-20 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
+            <div className="w-20 h-1 bg-dark-300 bg-opacity-30 rounded-full overflow-hidden">
               <div
-                className={`h-full bg-white transition-all duration-500 ${
+                className={`h-full bg-dark-300 transition-all duration-500 ${
                   currentStep === "confirmation" ? "w-full" : "w-0"
                 }`}
               ></div>
@@ -565,17 +565,17 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 ${
                   currentStep === "confirmation"
-                    ? "bg-white text-blue-600 shadow-lg scale-110"
-                    : "bg-white bg-opacity-30 text-white"
+                    ? "bg-dark-300 text-lime-600 shadow-lg scale-110"
+                    : "bg-dark-300 bg-opacity-30 text-white"
                 }`}
               >
                 2
               </div>
               <span
-                className={`ml-2 font-medium text-sm transition-colors ${
+                className={`ml-2 text-text-muted text-sm transition-colors ${
                   currentStep === "confirmation"
                     ? "text-white"
-                    : "text-blue-100"
+                    : "text-text-secondary"
                 }`}
               >
                 Xác nhận
@@ -589,10 +589,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
           {currentStep === "input" ? (
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Vehicle & Date Section */}
-              <div className="bg-gray-50 rounded-xl p-5 space-y-4">
-                <h4 className="font-semibold text-gray-900 flex items-center">
+              <div className="bg-dark-900 rounded-xl p-5 space-y-4">
+                <h4 className="font-semibold text-white flex items-center">
                   <svg
-                    className="w-5 h-5 mr-2 text-blue-600"
+                    className="w-5 h-5 mr-2 text-lime-600"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -608,8 +608,8 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Chọn phương tiện <span className="text-red-500">*</span>
+                    <label className="block text-sm text-text-muted text-text-secondary mb-2">
+                      Chọn phương tiện <span className="text-red-600">*</span>
                     </label>
                     <select
                       name="vehicleId"
@@ -617,7 +617,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                       onChange={handleChange}
                       required
                       disabled={paymentVerified}
-                      className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed py-2.5 px-4"
+                      className="w-full rounded-lg bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all duration-200 disabled:bg-dark-100 disabled:cursor-not-allowed py-2.5 px-4"
                     >
                       <option value="">Chọn xe của bạn</option>
                       {vehicles.map((vehicle) => (
@@ -629,8 +629,8 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Ngày hẹn <span className="text-red-500">*</span>
+                    <label className="block text-sm text-text-muted text-text-secondary mb-2">
+                      Ngày hẹn <span className="text-red-600">*</span>
                     </label>
                     <input
                       type="date"
@@ -640,7 +640,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                       min={new Date().toISOString().split("T")[0]}
                       required
                       disabled={paymentVerified}
-                      className="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed py-2.5 px-4"
+                      className="w-full rounded-lg bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all duration-200 disabled:bg-dark-100 disabled:cursor-not-allowed py-2.5 px-4"
                     />
                   </div>
                 </div>
@@ -648,10 +648,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
 
               {/* Time Slots Section */}
               {formData.scheduledDate && slots.length > 0 && (
-                <div className="bg-gray-50 rounded-xl p-5">
-                  <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
+                <div className="bg-dark-900 rounded-xl p-5">
+                  <h4 className="font-semibold text-white mb-4 flex items-center">
                     <svg
-                      className="w-5 h-5 mr-2 text-blue-600"
+                      className="w-5 h-5 mr-2 text-lime-600"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -663,7 +663,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    Chọn khung giờ <span className="text-red-500 ml-1">*</span>
+                    Chọn khung giờ <span className="text-red-600 ml-1">*</span>
                   </h4>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                     {slots.map((slot) => {
@@ -683,12 +683,12 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                           type="button"
                           onClick={() => handleSlotSelect(slot._id)}
                           disabled={!isAvailable || paymentVerified}
-                          className={`p-4 rounded-lg border-2 font-medium transition-all duration-200 transform hover:scale-105 ${
+                          className={`p-4 rounded-lg border-2 text-text-muted transition-all duration-200 transform hover:scale-105 ${
                             isSelected
-                              ? "border-blue-500 bg-blue-50 text-blue-700 shadow-md"
+                              ? "border-lime-600 bg-lime-600 text-dark-900 shadow-md font-semibold hover:bg-dark-9000"
                               : isAvailable
-                              ? "border-gray-200 hover:border-blue-300 bg-white text-gray-700 hover:shadow-sm"
-                              : "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-60"
+                              ? "border-dark-200 hover:border-blue-300 bg-dark-300 text-text-secondary hover:shadow-sm"
+                              : "border-dark-200 bg-dark-100 text-text-muted cursor-not-allowed opacity-60"
                           }`}
                         >
                           <div className="text-base font-bold">
@@ -696,7 +696,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                           </div>
                           <div
                             className={`text-xs mt-1 ${
-                              isSelected ? "text-blue-600" : "text-gray-500"
+                              isSelected ? "text-dark-900" : "text-text-muted"
                             }`}
                           >
                             {isAvailable
@@ -713,10 +713,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
               {formData.scheduledDate &&
                 formData.services.length > 0 &&
                 slots.length === 0 && (
-                  <div className="bg-amber-50 border-l-4 border-amber-400 rounded-lg p-4">
+                  <div className="bg-dark-300 border-l-4 border-blue-400 rounded-lg p-4">
                     <div className="flex">
                       <svg
-                        className="w-5 h-5 text-amber-400 mr-3 flex-shrink-0"
+                        className="w-5 h-5 text-blue-400 mr-3 flex-shrink-0"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
@@ -726,7 +726,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                           clipRule="evenodd"
                         />
                       </svg>
-                      <p className="text-sm text-amber-800">
+                      <p className="text-sm text-text-secondary">
                         Không có khung giờ khả dụng cho ngày này. Vui lòng chọn
                         ngày khác.
                       </p>
@@ -735,10 +735,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                 )}
 
               {/* Service Info Card */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-100 rounded-xl p-5">
+              <div className="bg-dark-900 rounded-xl p-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
+                    <div className="w-12 h-12 bg-dark-9000 rounded-xl flex items-center justify-center shadow-lg">
                       <svg
                         className="w-6 h-6 text-white"
                         fill="currentColor"
@@ -752,19 +752,19 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                       </svg>
                     </div>
                     <div>
-                      <span className="text-sm text-gray-600 block">
+                      <span className="text-sm text-text-secondary block">
                         Dịch vụ
                       </span>
-                      <span className="text-base font-semibold text-gray-900">
+                      <span className="text-base font-semibold text-white">
                         Đặt lịch kiểm tra
                       </span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-sm text-gray-600 block">
+                    <span className="text-sm text-text-secondary block">
                       Tổng chi phí
                     </span>
-                    <span className="text-2xl font-bold text-blue-600">
+                    <span className="text-2xl font-bold text-lime-600">
                       {new Intl.NumberFormat("vi-VN", {
                         style: "currency",
                         currency: "VND",
@@ -776,10 +776,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
 
               {/* Technician Selection */}
               {formData.scheduledDate && formData.scheduledTime && (
-                <div className="bg-gray-50 rounded-xl p-5">
-                  <h4 className="font-semibold text-gray-900 mb-4 flex items-center">
+                <div className="bg-dark-900 rounded-xl p-5">
+                  <h4 className="font-semibold text-white mb-4 flex items-center">
                     <svg
-                      className="w-5 h-5 mr-2 text-blue-600"
+                      className="w-5 h-5 mr-2 text-lime-600"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -807,7 +807,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
               )}
 
               {(!formData.scheduledDate || !formData.scheduledTime) && (
-                <div className="bg-blue-50 border-l-4 border-blue-400 rounded-lg p-4">
+                <div className="bg-dark-300 border-l-4 border-blue-400 rounded-lg p-4">
                   <div className="flex">
                     <svg
                       className="w-5 h-5 text-blue-400 mr-3 flex-shrink-0"
@@ -820,7 +820,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                         clipRule="evenodd"
                       />
                     </svg>
-                    <p className="text-sm text-blue-700">
+                    <p className="text-sm text-text-secondary">
                       Vui lòng chọn ngày và khung giờ để xem danh sách kỹ thuật
                       viên khả dụng
                     </p>
@@ -829,10 +829,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
               )}
 
               {/* Customer Notes */}
-              <div className="bg-gray-50 rounded-xl p-5">
-                <label className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+              <div className="bg-dark-900 rounded-xl p-5">
+                <label className="text-sm text-text-muted text-text-secondary mb-2 flex items-center">
                   <svg
-                    className="w-5 h-5 mr-2 text-blue-600"
+                    className="w-5 h-5 mr-2 text-lime-600"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -852,18 +852,18 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                   onChange={handleChange}
                   rows={3}
                   disabled={paymentVerified}
-                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed p-3"
+                  className="block w-full rounded-lg bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all duration-200 disabled:bg-dark-100 disabled:cursor-not-allowed p-3"
                   placeholder="Nhập thông tin chi tiết về yêu cầu của bạn..."
                 />
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+              <div className="flex justify-end space-x-3 pt-4 border-t border-dark-200">
                 <button
                   type="button"
                   onClick={onCancel}
                   disabled={loading}
-                  className="px-6 py-3 border-2 border-gray-300 rounded-lg text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  className="px-6 py-3 border-2 border-dark-300 rounded-lg text-sm font-semibold text-text-secondary bg-dark-300 hover:bg-dark-900 hover:border-dark-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 >
                   Hủy bỏ
                 </button>
@@ -876,7 +876,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                     loading ||
                     checkingVehicle
                   }
-                  className="px-8 py-3 border-2 border-transparent rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                  className="px-8 py-3 border-2 border-transparent rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-lime-200 to-lime-300 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
                 >
                   {loading || checkingVehicle ? (
                     <span className="flex items-center">
@@ -913,9 +913,9 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
             // Step 2: Confirmation View
             <div className="space-y-6">
               {/* Confirmation Card */}
-              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 space-y-5 shadow-sm">
+              <div className="bg-dark-300 rounded-xl p-6 space-y-5 shadow-sm">
                 <div className="flex items-center space-x-2 mb-4">
-                  <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-dark-9000 rounded-lg flex items-center justify-center">
                     <svg
                       className="w-6 h-6 text-white"
                       fill="none"
@@ -930,16 +930,16 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                       />
                     </svg>
                   </div>
-                  <h4 className="text-lg font-bold text-gray-900">
+                  <h4 className="text-lg font-bold text-white">
                     Chi tiết đặt lịch
                   </h4>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                  <div className="bg-dark-300 rounded-lg p-4 shadow-sm border border-dark-200">
                     <div className="flex items-center mb-2">
                       <svg
-                        className="w-5 h-5 text-gray-400 mr-2"
+                        className="w-5 h-5 text-text-muted mr-2"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -951,25 +951,25 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                           d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                         />
                       </svg>
-                      <h5 className="text-sm font-medium text-gray-500">
+                      <h5 className="text-sm text-text-muted text-text-muted">
                         Thông tin xe
                       </h5>
                     </div>
-                    <p className="text-lg font-semibold text-gray-900 mb-1">
+                    <p className="text-lg font-semibold text-white mb-1">
                       {selectedVehicle?.make} {selectedVehicle?.model}
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-text-secondary">
                       Năm: {selectedVehicle?.year}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-text-muted mt-1">
                       VIN: {selectedVehicle?.vin}
                     </p>
                   </div>
 
-                  <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                  <div className="bg-dark-300 rounded-lg p-4 shadow-sm border border-dark-200">
                     <div className="flex items-center mb-2">
                       <svg
-                        className="w-5 h-5 text-gray-400 mr-2"
+                        className="w-5 h-5 text-text-muted mr-2"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -981,24 +981,24 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                           d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
                         />
                       </svg>
-                      <h5 className="text-sm font-medium text-gray-500">
+                      <h5 className="text-sm text-text-muted text-text-muted">
                         Dịch vụ
                       </h5>
                     </div>
-                    <p className="text-lg font-semibold text-gray-900">
+                    <p className="text-lg font-semibold text-white">
                       Đặt lịch kiểm tra
                     </p>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-text-secondary mt-1">
                       Thời gian ước tính: 60 phút
                     </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                  <div className="bg-dark-300 rounded-lg p-4 shadow-sm border border-dark-200">
                     <div className="flex items-center mb-2">
                       <svg
-                        className="w-5 h-5 text-gray-400 mr-2"
+                        className="w-5 h-5 text-text-muted mr-2"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1010,11 +1010,11 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                           d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                         />
                       </svg>
-                      <h5 className="text-sm font-medium text-gray-500">
+                      <h5 className="text-sm text-text-muted text-text-muted">
                         Ngày hẹn
                       </h5>
                     </div>
-                    <p className="text-lg font-semibold text-gray-900">
+                    <p className="text-lg font-semibold text-white">
                       {new Date(formData.scheduledDate).toLocaleDateString(
                         "vi-VN",
                         {
@@ -1027,10 +1027,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                     </p>
                   </div>
 
-                  <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                  <div className="bg-dark-300 rounded-lg p-4 shadow-sm border border-dark-200">
                     <div className="flex items-center mb-2">
                       <svg
-                        className="w-5 h-5 text-gray-400 mr-2"
+                        className="w-5 h-5 text-text-muted mr-2"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1042,11 +1042,11 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                           d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                       </svg>
-                      <h5 className="text-sm font-medium text-gray-500">
+                      <h5 className="text-sm text-text-muted text-text-muted">
                         Khung giờ
                       </h5>
                     </div>
-                    <p className="text-lg font-semibold text-gray-900">
+                    <p className="text-lg font-semibold text-white">
                       {selectedSlot &&
                         utcToVietnameseDateTime(new Date(selectedSlot.start))
                           .time}
@@ -1055,10 +1055,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                 </div>
 
                 {selectedTechnician && (
-                  <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                  <div className="bg-dark-300 rounded-lg p-4 shadow-sm border border-dark-200">
                     <div className="flex items-center mb-3">
                       <svg
-                        className="w-5 h-5 text-gray-400 mr-2"
+                        className="w-5 h-5 text-text-muted mr-2"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1070,12 +1070,12 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                           d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                         />
                       </svg>
-                      <h5 className="text-sm font-medium text-gray-500">
+                      <h5 className="text-sm text-text-muted text-text-muted">
                         Kỹ thuật viên
                       </h5>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-dark-9000 flex items-center justify-center">
                         <svg
                           className="w-6 h-6 text-white"
                           fill="none"
@@ -1091,7 +1091,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                         </svg>
                       </div>
                       <div className="flex-1">
-                        <p className="text-lg font-semibold text-gray-900">
+                        <p className="text-lg font-semibold text-white">
                           {selectedTechnician.firstName}{" "}
                           {selectedTechnician.lastName}
                         </p>
@@ -1103,13 +1103,13 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                                 .map((spec: string) => (
                                   <span
                                     key={spec}
-                                    className="inline-flex items-center px-2 py-1 rounded text-xs bg-blue-100 text-blue-700"
+                                    className="inline-flex items-center px-2 py-1 rounded text-xs bg-dark-200 text-lime-600"
                                   >
                                     {spec}
                                   </span>
                                 ))}
                               {selectedTechnician.specialization.length > 2 && (
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-text-muted">
                                   +
                                   {selectedTechnician.specialization.length - 2}{" "}
                                   more
@@ -1123,10 +1123,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                 )}
 
                 {!selectedTechnician && formData.technicianId && (
-                  <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                  <div className="bg-dark-300 rounded-lg p-4 shadow-sm border border-dark-200">
                     <div className="flex items-center mb-3">
                       <svg
-                        className="w-5 h-5 text-gray-400 mr-2"
+                        className="w-5 h-5 text-text-muted mr-2"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1138,14 +1138,14 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                           d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
                         />
                       </svg>
-                      <h5 className="text-sm font-medium text-gray-500">
+                      <h5 className="text-sm text-text-muted text-text-muted">
                         Kỹ thuật viên
                       </h5>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-dark-300 flex items-center justify-center">
                         <svg
-                          className="w-6 h-6 text-gray-600"
+                          className="w-6 h-6 text-text-secondary"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1159,10 +1159,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                         </svg>
                       </div>
                       <div className="flex-1">
-                        <p className="text-lg font-semibold text-gray-900">
+                        <p className="text-lg font-semibold text-white">
                           Kỹ thuật viên đã chọn
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-text-secondary">
                           Thông tin chi tiết sẽ được hiển thị sau khi xác nhận
                         </p>
                       </div>
@@ -1171,10 +1171,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                 )}
 
                 {formData.customerNotes && (
-                  <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                  <div className="bg-dark-300 rounded-lg p-4 shadow-sm border border-dark-200">
                     <div className="flex items-center mb-2">
                       <svg
-                        className="w-5 h-5 text-gray-400 mr-2"
+                        className="w-5 h-5 text-text-muted mr-2"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1186,20 +1186,20 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                           d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
                         />
                       </svg>
-                      <h5 className="text-sm font-medium text-gray-500">
+                      <h5 className="text-sm text-text-muted text-text-muted">
                         Ghi chú
                       </h5>
                     </div>
-                    <p className="text-base text-gray-700 leading-relaxed">
+                    <p className="text-base text-text-secondary leading-relaxed">
                       {formData.customerNotes}
                     </p>
                   </div>
                 )}
 
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-5 shadow-lg">
+                <div className="bg-dark-900 rounded-lg p-5 shadow-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+                      <div className="w-12 h-12 bg-dark-300 bg-opacity-20 rounded-lg flex items-center justify-center">
                         <svg
                           className="w-7 h-7 text-white"
                           fill="none"
@@ -1215,7 +1215,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                         </svg>
                       </div>
                       <div>
-                        <p className="text-sm text-blue-100">Tổng thanh toán</p>
+                        <p className="text-sm text-text-secondary">Tổng thanh toán</p>
                         <p className="text-3xl font-bold text-white">
                           {calculateTotalAmount().toLocaleString("vi-VN")} ₫
                         </p>
@@ -1227,9 +1227,9 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
 
               {/* Payment Status */}
               {paymentVerified && pendingAppointment?.paymentInfo && (
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-5 shadow-sm">
+                <div className="bg-dark-300 border-2 border-blue-600 rounded-xl p-5 shadow-sm">
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <div className="w-12 h-12 bg-dark-9000 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg">
                       <svg
                         className="h-7 w-7 text-white"
                         fill="none"
@@ -1245,16 +1245,16 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <p className="text-base font-bold text-blue-800">
+                      <p className="text-base font-bold text-white">
                         Đang xử lý đặt lịch...
                       </p>
-                      <p className="text-sm text-blue-700 mt-1">
+                      <p className="text-sm text-text-secondary mt-1">
                         Mã giao dịch:{" "}
                         <span className="font-mono font-semibold">
                           {pendingAppointment.paymentInfo.transactionRef}
                         </span>
                       </p>
-                      <p className="text-xs text-blue-600 mt-1">
+                      <p className="text-xs text-text-muted mt-1">
                         Hệ thống đang tự động tạo lịch hẹn cho bạn. Vui lòng
                         chờ...
                       </p>
@@ -1264,12 +1264,12 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
               )}
 
               {/* Action Buttons */}
-              <div className="flex justify-between pt-4 border-t border-gray-200">
+              <div className="flex justify-between pt-4 border-t border-dark-200">
                 <button
                   type="button"
                   onClick={handleBackToInput}
                   disabled={loading || paymentVerified}
-                  className="px-6 py-3 border-2 border-gray-300 rounded-lg text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                  className="px-6 py-3 border-2 border-dark-300 rounded-lg text-sm font-semibold text-text-secondary bg-dark-300 hover:bg-dark-900 hover:border-dark-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 >
                   ← Quay lại
                 </button>
@@ -1308,7 +1308,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                       type="button"
                       onClick={handleCreatePayment}
                       disabled={loading}
-                      className="px-8 py-3 border-2 border-transparent rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                      className="px-8 py-3 border-2 border-transparent rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-lime-200 to-lime-300 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
                     >
                       {loading ? (
                         <span className="flex items-center">

@@ -129,20 +129,20 @@ const InvoicesPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const colors = {
-      'draft': 'bg-gray-100 text-gray-800',
+      'draft': 'bg-dark-100 text-gray-800',
       'pending_approval': 'bg-yellow-100 text-yellow-800',
-      'approved': 'bg-blue-100 text-blue-800',
+      'approved': 'bg-dark-100 text-lime-800',
       'sent': 'bg-indigo-100 text-indigo-800',
       'viewed': 'bg-purple-100 text-purple-800',
       'paid': 'bg-green-100 text-green-800',
       'overdue': 'bg-red-100 text-red-800',
-      'cancelled': 'bg-gray-100 text-gray-800',
+      'cancelled': 'bg-dark-100 text-gray-800',
       'refunded': 'bg-orange-100 text-orange-800',
     };
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-text-muted ${
+        colors[status as keyof typeof colors] || 'bg-dark-100 text-gray-800'
       }`}>
         {invoiceStatusTranslations[status] || status}
       </span>
@@ -159,8 +159,8 @@ const InvoicesPage: React.FC = () => {
     };
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-text-muted ${
+        colors[status as keyof typeof colors] || 'bg-dark-100 text-gray-800'
       }`}>
         {paymentStatusTranslations[status] || status}
       </span>
@@ -197,15 +197,15 @@ const InvoicesPage: React.FC = () => {
     if (!selectedInvoice || !showPaymentModal) return null;
 
     return (
-      <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+      <div className="fixed inset-0 bg-dark-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-dark-300">
           <div className="mt-3">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <h3 className="text-lg font-semibold text-white mb-4">
               Ghi nhận thanh toán
             </h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Số tiền thanh toán *
                 </label>
                 <input
@@ -213,22 +213,22 @@ const InvoicesPage: React.FC = () => {
                   value={paymentData.amount}
                   onChange={(e) => setPaymentData({ ...paymentData, amount: Number(e.target.value) })}
                   max={selectedInvoice.paymentInfo.remainingAmount}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className="block w-full rounded-md border-dark-200 shadow-sm focus:border-lime-400 focus:ring-lime-500 sm:text-sm"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-text-muted mt-1">
                   Còn lại: {formatVND(selectedInvoice.paymentInfo.remainingAmount)}
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Phương thức thanh toán *
                 </label>
                 <select
                   value={paymentData.method}
                   onChange={(e) => setPaymentData({ ...paymentData, method: e.target.value as any })}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className="block w-full rounded-md border-dark-200 shadow-sm focus:border-lime-400 focus:ring-lime-500 sm:text-sm"
                   required
                 >
                   {Object.entries(paymentMethodTranslations).map(([key, value]) => (
@@ -238,33 +238,33 @@ const InvoicesPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Mã giao dịch
                 </label>
                 <input
                   type="text"
                   value={paymentData.transactionRef}
                   onChange={(e) => setPaymentData({ ...paymentData, transactionRef: e.target.value })}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className="block w-full rounded-md border-dark-200 shadow-sm focus:border-lime-400 focus:ring-lime-500 sm:text-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm text-text-muted text-text-secondary mb-1">
                   Ghi chú
                 </label>
                 <textarea
                   value={paymentData.notes}
                   onChange={(e) => setPaymentData({ ...paymentData, notes: e.target.value })}
                   rows={3}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className="block w-full rounded-md border-dark-200 shadow-sm focus:border-lime-400 focus:ring-lime-500 sm:text-sm"
                 />
               </div>
 
               <div className="flex items-center space-x-3 pt-4">
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md"
+                  className="flex-1 bg-lime-200 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-dark-900 text-text-muted py-2 px-4 rounded-md"
                 >
                   Ghi nhận
                 </button>
@@ -274,7 +274,7 @@ const InvoicesPage: React.FC = () => {
                     setShowPaymentModal(false);
                     setSelectedInvoice(null);
                   }}
-                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-medium py-2 px-4 rounded-md"
+                  className="flex-1 bg-dark-300 hover:bg-dark-400 text-text-secondary text-text-muted py-2 px-4 rounded-md"
                 >
                   Hủy
                 </button>
@@ -287,28 +287,28 @@ const InvoicesPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-dark-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="md:flex md:items-center md:justify-between mb-8">
           <div className="min-w-0 flex-1">
-            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+            <h2 className="text-2xl font-bold leading-7 text-white sm:truncate sm:text-3xl sm:tracking-tight">
               Quản lý hóa đơn
             </h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-text-muted">
               Quản lý hóa đơn và thanh toán cho dịch vụ bảo dưỡng xe điện
             </p>
           </div>
           <div className="mt-4 flex md:ml-4 md:mt-0 space-x-3">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+              className="inline-flex items-center rounded-md bg-dark-300 px-3 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-dark-900"
             >
               <FunnelIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
               Bộ lọc
             </button>
             {(user?.role === 'admin' || user?.role === 'staff') && (
-              <button className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
+              <button className="inline-flex items-center rounded-md bg-lime-200 px text-dark-900 shadow-sm hover:bg-lime-100">
                 <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
                 Tạo hóa đơn
               </button>
@@ -320,28 +320,28 @@ const InvoicesPage: React.FC = () => {
         <div className="mb-6">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+              <MagnifyingGlassIcon className="h-5 w-5 text-text-muted" />
             </div>
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              className="block w-full pl-10 pr-3 py-2 border border-dark-200 rounded-md leading-5 bg-dark-300 placeholder-text-muted focus:outline-none focus:placeholder-text-muted focus:ring-1 focus:ring-lime-500 focus:border-lime-400 sm:text-sm"
               placeholder="Tìm kiếm hóa đơn..."
             />
           </div>
 
           {showFilters && (
-            <div className="mt-4 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="mt-4 bg-dark-300 rounded-lg shadow-sm border border-dark-200 p-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm text-text-muted text-text-secondary mb-1">
                     Trạng thái hóa đơn
                   </label>
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    className="block w-full rounded-md border-dark-200 shadow-sm focus:border-lime-400 focus:ring-lime-500 sm:text-sm"
                   >
                     <option value="">Tất cả trạng thái</option>
                     {Object.entries(invoiceStatusTranslations).map(([key, value]) => (
@@ -350,13 +350,13 @@ const InvoicesPage: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm text-text-muted text-text-secondary mb-1">
                     Trạng thái thanh toán
                   </label>
                   <select
                     value={paymentStatusFilter}
                     onChange={(e) => setPaymentStatusFilter(e.target.value)}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    className="block w-full rounded-md border-dark-200 shadow-sm focus:border-lime-400 focus:ring-lime-500 sm:text-sm"
                   >
                     <option value="">Tất cả</option>
                     {Object.entries(paymentStatusTranslations).map(([key, value]) => (
@@ -365,25 +365,25 @@ const InvoicesPage: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm text-text-muted text-text-secondary mb-1">
                     Từ ngày
                   </label>
                   <input
                     type="date"
                     value={dateRange.start}
                     onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    className="block w-full rounded-md border-dark-200 shadow-sm focus:border-lime-400 focus:ring-lime-500 sm:text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm text-text-muted text-text-secondary mb-1">
                     Đến ngày
                   </label>
                   <input
                     type="date"
                     value={dateRange.end}
                     onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    className="block w-full rounded-md border-dark-200 shadow-sm focus:border-lime-400 focus:ring-lime-500 sm:text-sm"
                   />
                 </div>
               </div>
@@ -395,7 +395,7 @@ const InvoicesPage: React.FC = () => {
                     setPaymentStatusFilter('');
                     setDateRange({ start: '', end: '' });
                   }}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium"
+                  className="bg-dark-200 hover:bg-dark-300 text-text-secondary px-4 py-2 rounded-md text-sm"
                 >
                   Xóa bộ lọc
                 </button>
@@ -429,11 +429,11 @@ const InvoicesPage: React.FC = () => {
               color: 'emerald'
             }
           ].map((stat) => (
-            <div key={stat.label} className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+            <div key={stat.label} className="bg-dark-300 overflow-hidden shadow-sm rounded-lg border border-dark-200">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-500 truncate">{stat.label}</p>
+                    <p className="text-sm text-text-muted text-text-muted truncate">{stat.label}</p>
                     <p className={`text-2xl font-semibold text-${stat.color}-600`}>
                       {typeof stat.value === 'number' ? stat.value : stat.value}
                     </p>
@@ -445,7 +445,7 @@ const InvoicesPage: React.FC = () => {
         </div>
 
         {/* Invoices List */}
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+        <div className="bg-dark-300 shadow-sm rounded-lg border border-dark-200">
           <div className="px-4 py-5 sm:p-6">
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -453,9 +453,9 @@ const InvoicesPage: React.FC = () => {
               </div>
             ) : invoices.length === 0 ? (
               <div className="text-center py-12">
-                <DocumentCheckIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-semibold text-gray-900">Không có hóa đơn</h3>
-                <p className="mt-1 text-sm text-gray-500">
+                <DocumentCheckIcon className="mx-auto h-12 w-12 text-text-muted" />
+                <h3 className="mt-2 text-sm font-semibold text-white">Không có hóa đơn</h3>
+                <p className="mt-1 text-sm text-text-muted">
                   Chưa có hóa đơn nào được tạo.
                 </p>
               </div>
@@ -464,12 +464,12 @@ const InvoicesPage: React.FC = () => {
                 {(invoices || []).map((invoice) => (
                   <div
                     key={invoice._id}
-                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                    className="border border-dark-200 rounded-lg p-4 hover:bg-dark-900 transition-colors"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-4 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">
+                          <h3 className="text-lg font-semibold text-white">
                             {formatInvoiceNumber(invoice.invoiceNumber)}
                           </h3>
                           {getStatusBadge(invoice.status)}
@@ -478,29 +478,29 @@ const InvoicesPage: React.FC = () => {
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-3">
                           <div>
-                            <p className="text-sm font-medium text-gray-500">Khách hàng</p>
-                            <p className="text-sm text-gray-900">{invoice.customerInfo.name}</p>
-                            <p className="text-sm text-gray-500">{invoice.customerInfo.phone}</p>
+                            <p className="text-sm text-text-muted text-text-muted">Khách hàng</p>
+                            <p className="text-sm text-white">{invoice.customerInfo.name}</p>
+                            <p className="text-sm text-text-muted">{invoice.customerInfo.phone}</p>
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-500">Xe</p>
-                            <p className="text-sm text-gray-900">
+                            <p className="text-sm text-text-muted text-text-muted">Xe</p>
+                            <p className="text-sm text-white">
                               {invoice.vehicleInfo.make} {invoice.vehicleInfo.model} {invoice.vehicleInfo.year}
                             </p>
-                            <p className="text-sm text-gray-500">{invoice.vehicleInfo.licensePlate}</p>
+                            <p className="text-sm text-text-muted">{invoice.vehicleInfo.licensePlate}</p>
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-500">Thông tin thanh toán</p>
-                            <p className="text-sm text-gray-900 font-semibold">
+                            <p className="text-sm text-text-muted text-text-muted">Thông tin thanh toán</p>
+                            <p className="text-sm text-white font-semibold">
                               {formatVND(invoice.totals.totalAmount)}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-text-muted">
                               Đã thanh toán: {formatVND(invoice.paymentInfo.paidAmount)}
                             </p>
                           </div>
                         </div>
 
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-text-muted">
                           Tạo: {formatVietnameseDateTime(invoice.createdAt)} bởi {invoice.generatedBy.firstName} {invoice.generatedBy.lastName}
                         </div>
                       </div>
@@ -511,7 +511,7 @@ const InvoicesPage: React.FC = () => {
                             setSelectedInvoice(invoice);
                             setShowDetailsModal(true);
                           }}
-                          className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                          className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-dark-900 bg-lime-200bg-lime-200 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                         >
                           <EyeIcon className="h-4 w-4" />
                         </button>
@@ -546,7 +546,7 @@ const InvoicesPage: React.FC = () => {
                           </button>
                         )}
 
-                        <button className="inline-flex items-center p-2 border border-gray-300 rounded-full shadow-sm text-gray-700 bg-white hover:bg-gray-50">
+                        <button className="inline-flex items-center p-2 border border-dark-200 rounded-full shadow-sm text-text-secondary bg-dark-300 hover:bg-dark-900">
                           <PrinterIcon className="h-4 w-4" />
                         </button>
                       </div>

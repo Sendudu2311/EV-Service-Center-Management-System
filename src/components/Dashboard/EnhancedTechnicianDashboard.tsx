@@ -282,12 +282,12 @@ const EnhancedTechnicianDashboard: React.FC = () => {
 
   const getPriorityColor = (priority: string) => {
     const colors = {
-      'low': 'text-gray-500',
-      'normal': 'text-blue-500',
+      'low': 'text-text-muted',
+      'normal': 'text-lime-500',
       'high': 'text-orange-500',
-      'urgent': 'text-red-500',
+      'urgent': 'text-red-600',
     };
-    return colors[priority as keyof typeof colors] || 'text-gray-500';
+    return colors[priority as keyof typeof colors] || 'text-text-muted';
   };
 
   const handleStartWork = async (appointmentId: string) => {
@@ -361,16 +361,16 @@ const EnhancedTechnicianDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-dark-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <div className="md:flex md:items-center md:justify-between">
             <div className="min-w-0 flex-1">
-              <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+              <h2 className="text-2xl font-bold leading-7 text-white sm:truncate sm:text-3xl sm:tracking-tight">
                 Kỹ thuật viên - {user?.firstName} {user?.lastName}
               </h2>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-text-muted">
                 Hôm nay: {formatVietnameseDateTime(currentTime.toISOString()).split(' ')[0]}
               </p>
               <div className="flex items-center mt-2">
@@ -385,7 +385,7 @@ const EnhancedTechnicianDashboard: React.FC = () => {
             <div className="mt-4 flex md:ml-4 md:mt-0 space-x-3">
               <Link
                 to="/work-queue"
-                className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+                className="inline-flex items-center rounded-md bg-lime-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-dark-9000"
               >
                 <ClipboardDocumentListIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
                 Hàng đợi công việc
@@ -426,13 +426,13 @@ const EnhancedTechnicianDashboard: React.FC = () => {
             return (
               <div
                 key={stat.name}
-                className="relative bg-white pt-5 px-4 pb-12 sm:pt-6 sm:px-6 shadow-sm rounded-lg overflow-hidden"
+                className="relative bg-dark-300 pt-5 px-4 pb-12 sm:pt-6 sm:px-6 shadow-sm rounded-lg overflow-hidden"
               >
                 <div>
                   <div className={`absolute rounded-md p-3 bg-${stat.color}-500`}>
                     <Icon className="h-6 w-6 text-white" />
                   </div>
-                  <p className="ml-16 text-sm font-medium text-gray-500 truncate">{stat.name}</p>
+                  <p className="ml-16 text-sm text-text-muted text-text-muted truncate">{stat.name}</p>
                 </div>
                 <div className="ml-16 pb-6 flex items-baseline">
                   <p className={`text-2xl font-semibold text-${stat.color}-600`}>
@@ -447,39 +447,39 @@ const EnhancedTechnicianDashboard: React.FC = () => {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* Current Task */}
           <div className="lg:col-span-1">
-            <div className="bg-white shadow-sm rounded-lg">
+            <div className="bg-dark-300 shadow-sm rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                <h3 className="text-lg leading-6 text-text-muted text-white mb-4">
                   Công việc hiện tại
                 </h3>
                 {currentTask ? (
                   <div className="space-y-4">
                     <div className="border-l-4 border-blue-500 pl-4">
-                      <h4 className="text-lg font-semibold text-gray-900">
+                      <h4 className="text-lg font-semibold text-white">
                         #{currentTask.appointmentNumber}
                       </h4>
-                      <p className="text-sm text-gray-600">{currentTask.customerName}</p>
-                      <p className="text-sm text-gray-500">{currentTask.vehicleInfo}</p>
-                      <p className="text-sm text-blue-600 font-medium mt-2">
+                      <p className="text-sm text-text-secondary">{currentTask.customerName}</p>
+                      <p className="text-sm text-text-muted">{currentTask.vehicleInfo}</p>
+                      <p className="text-sm text-lime-600 text-text-muted mt-2">
                         {currentTask.currentStep}
                       </p>
                     </div>
 
                     {/* Progress Bar */}
                     <div>
-                      <div className="flex justify-between text-sm text-gray-600 mb-1">
+                      <div className="flex justify-between text-sm text-text-secondary mb-1">
                         <span>Tiến độ</span>
                         <span>{currentTask.progress}%</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-dark-200 rounded-full h-2">
                         <div
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          className="bg-lime-600 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${currentTask.progress}%` }}
                         ></div>
                       </div>
                     </div>
 
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-text-muted">
                       <p>Bắt đầu: {getTimeSinceStart(currentTask.startedAt)} trước</p>
                       <p>Dự kiến hoàn thành: {formatVietnameseDateTime(currentTask.estimatedCompletion)}</p>
                     </div>
@@ -488,7 +488,7 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                       {currentTask.status === 'reception_approved' && (
                         <button
                           onClick={() => handleStartWork(currentTask._id)}
-                          className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+                          className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm text-text-muted rounded-md text-white bg-green-600 hover:bg-green-700"
                         >
                           <PlayIcon className="h-4 w-4 mr-1" />
                           Bắt đầu
@@ -497,7 +497,7 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                       {currentTask.status === 'in_progress' && (
                         <button
                           onClick={() => handleCompleteWork(currentTask._id)}
-                          className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                          className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm text-text-muted rounded-md text-white bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                         >
                           <CheckCircleIcon className="h-4 w-4 mr-1" />
                           Hoàn thành
@@ -505,7 +505,7 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                       )}
                       <Link
                         to={`/service-reception/${currentTask._id}`}
-                        className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                        className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-dark-300 text-sm text-text-muted rounded-md text-text-secondary bg-dark-300 hover:bg-dark-900"
                       >
                         <ClipboardDocumentListIcon className="h-4 w-4 mr-1" />
                         Chi tiết
@@ -514,9 +514,9 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                   </div>
                 ) : (
                   <div className="text-center py-6">
-                    <WrenchScrewdriverIcon className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-semibold text-gray-900">Không có công việc</h3>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <WrenchScrewdriverIcon className="mx-auto h-12 w-12 text-text-muted" />
+                    <h3 className="mt-2 text-sm font-semibold text-white">Không có công việc</h3>
+                    <p className="mt-1 text-sm text-text-muted">
                       Hiện tại bạn không có công việc nào đang thực hiện.
                     </p>
                   </div>
@@ -527,16 +527,16 @@ const EnhancedTechnicianDashboard: React.FC = () => {
 
           {/* Work Queue */}
           <div className="lg:col-span-2">
-            <div className="bg-white shadow-sm rounded-lg">
+            <div className="bg-dark-300 shadow-sm rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                <h3 className="text-lg leading-6 text-text-muted text-white mb-4">
                   Hàng đợi công việc
                 </h3>
                 {workQueue.length === 0 ? (
                   <div className="text-center py-6">
-                    <ClockIcon className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-semibold text-gray-900">Không có công việc</h3>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <ClockIcon className="mx-auto h-12 w-12 text-text-muted" />
+                    <h3 className="mt-2 text-sm font-semibold text-white">Không có công việc</h3>
+                    <p className="mt-1 text-sm text-text-muted">
                       Hàng đợi công việc hiện đang trống.
                     </p>
                   </div>
@@ -546,34 +546,34 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                     {workQueue.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((item) => (
                       <div
                         key={item._id}
-                        className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                        className="border border-dark-200 rounded-lg p-4 hover:bg-dark-900 transition-colors"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-2">
-                              <h4 className="text-sm font-semibold text-gray-900">
+                              <h4 className="text-sm font-semibold text-white">
                                 #{item.appointmentNumber}
                               </h4>
-                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                                item.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs text-text-muted ${
+                                item.status === 'confirmed' ? 'bg-lime-100 text-lime-800' :
                                 item.status === 'customer_arrived' ? 'bg-indigo-100 text-indigo-800' :
                                 item.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-gray-100 text-gray-800'
+                                'bg-dark-100 text-gray-800'
                               }`}>
                                 {appointmentStatusTranslations[item.status] || item.status}
                               </span>
                               <ExclamationTriangleIcon className={`h-4 w-4 ${getPriorityColor(item.priority || 'normal')}`} />
                             </div>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-text-secondary">
                               {item.customerId?.firstName || ''} {item.customerId?.lastName || ''} - {item.customerId?.phone || ''}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-text-muted">
                               {item.vehicleId?.make || ''} {item.vehicleId?.model || ''} - {item.vehicleId?.licensePlate || ''}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-text-muted">
                               {formatVietnameseDateTime(combineDateTime(item.scheduledDate, item.scheduledTime))}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-text-muted">
                               Thời gian ước tính: {formatDuration(item.estimatedDuration || 60)}
                             </p>
                           </div>
@@ -581,7 +581,7 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                             {item.status === 'customer_arrived' && (
                               <Link
                                 to={`/service-reception/${item._id}`}
-                                className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-blue-600 hover:bg-blue-700"
+                                className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                               >
                                 Tạo phiếu
                               </Link>
@@ -602,29 +602,29 @@ const EnhancedTechnicianDashboard: React.FC = () => {
 
                   {/* Pagination */}
                   {workQueue.length > itemsPerPage && (
-                    <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4">
+                    <div className="flex items-center justify-between border-t border-dark-200 bg-dark-300 px-4 py-3 sm:px-6 mt-4">
                       <div className="flex flex-1 justify-between sm:hidden">
                         <button
                           onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                           disabled={currentPage === 1}
-                          className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="relative inline-flex items-center rounded-md border border-dark-300 bg-dark-300 px-4 py-2 text-sm text-text-muted text-text-secondary hover:bg-dark-900 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Trước
                         </button>
                         <button
                           onClick={() => setCurrentPage(Math.min(Math.ceil(workQueue.length / itemsPerPage), currentPage + 1))}
                           disabled={currentPage >= Math.ceil(workQueue.length / itemsPerPage)}
-                          className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="relative ml-3 inline-flex items-center rounded-md border border-dark-300 bg-dark-300 px-4 py-2 text-sm text-text-muted text-text-secondary hover:bg-dark-900 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Sau
                         </button>
                       </div>
                       <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                         <div>
-                          <p className="text-sm text-gray-700">
-                            Hiển thị <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> đến{' '}
-                            <span className="font-medium">{Math.min(currentPage * itemsPerPage, workQueue.length)}</span> trong{' '}
-                            <span className="font-medium">{workQueue.length}</span> công việc
+                          <p className="text-sm text-text-secondary">
+                            Hiển thị <span className="text-text-muted">{(currentPage - 1) * itemsPerPage + 1}</span> đến{' '}
+                            <span className="text-text-muted">{Math.min(currentPage * itemsPerPage, workQueue.length)}</span> trong{' '}
+                            <span className="text-text-muted">{workQueue.length}</span> công việc
                           </p>
                         </div>
                         <div>
@@ -632,7 +632,7 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                             <button
                               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                               disabled={currentPage === 1}
-                              className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="relative inline-flex items-center rounded-l-md px-2 py-2 text-text-muted ring-1 ring-inset ring-dark-200 hover:bg-dark-900 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <span className="sr-only">Trước</span>
                               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -645,8 +645,8 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                                 onClick={() => setCurrentPage(page)}
                                 className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
                                   currentPage === page
-                                    ? 'z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
-                                    : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                                    ? 'z-10 bg-lime-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400'
+                                    : 'text-white ring-1 ring-inset ring-dark-200 hover:bg-dark-900 focus:z-20 focus:outline-offset-0'
                                 }`}
                               >
                                 {page}
@@ -655,7 +655,7 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                             <button
                               onClick={() => setCurrentPage(Math.min(Math.ceil(workQueue.length / itemsPerPage), currentPage + 1))}
                               disabled={currentPage >= Math.ceil(workQueue.length / itemsPerPage)}
-                              className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="relative inline-flex items-center rounded-r-md px-2 py-2 text-text-muted ring-1 ring-inset ring-dark-200 hover:bg-dark-900 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <span className="sr-only">Sau</span>
                               <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -676,73 +676,73 @@ const EnhancedTechnicianDashboard: React.FC = () => {
 
         {/* Service Receptions List */}
         <div className="mt-8">
-          <div className="bg-white shadow-sm rounded-lg">
+          <div className="bg-dark-300 shadow-sm rounded-lg">
             <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+              <h3 className="text-lg leading-6 text-text-muted text-white mb-4">
                 Phiếu tiếp nhận đã tạo
               </h3>
               {serviceReceptions.length === 0 ? (
                 <div className="text-center py-6">
-                  <ClipboardDocumentListIcon className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-semibold text-gray-900">Chưa có phiếu tiếp nhận</h3>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <ClipboardDocumentListIcon className="mx-auto h-12 w-12 text-text-muted" />
+                  <h3 className="mt-2 text-sm font-semibold text-white">Chưa có phiếu tiếp nhận</h3>
+                  <p className="mt-1 text-sm text-text-muted">
                     Bạn chưa tạo phiếu tiếp nhận nào.
                   </p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-dark-900">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
                           Số phiếu
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
                           Khách hàng
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
                           Xe
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
                           Dịch vụ / Phụ tùng
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
                           Trạng thái duyệt
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
                           Ngày tạo
                         </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-3 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
                           Thao tác
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-dark-300 divide-y divide-gray-200">
                       {serviceReceptions.map((reception) => (
-                        <tr key={reception._id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <tr key={reception._id} className="hover:bg-dark-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted text-white">
                             {reception.receptionNumber}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted">
                             {reception.customerId?.firstName} {reception.customerId?.lastName}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted">
                             {reception.vehicleId?.make} {reception.vehicleId?.model}
                             <br />
-                            <span className="text-xs text-gray-400">{reception.vehicleId?.licensePlate}</span>
+                            <span className="text-xs text-text-muted">{reception.vehicleId?.licensePlate}</span>
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-500">
+                          <td className="px-6 py-4 text-sm text-text-muted">
                             <div className="max-w-xs">
-                              <div className="text-blue-600">{reception.recommendedServices?.length || 0} dịch vụ</div>
+                              <div className="text-lime-600">{reception.recommendedServices?.length || 0} dịch vụ</div>
                               <div className="text-purple-600">{reception.requestedParts?.length || 0} phụ tùng</div>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-text-muted ${
                               reception.submissionStatus?.staffReviewStatus === 'approved' ? 'bg-green-100 text-green-800' :
                               reception.submissionStatus?.staffReviewStatus === 'rejected' ? 'bg-red-100 text-red-800' :
                               reception.submissionStatus?.submittedToStaff ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-gray-100 text-gray-800'
+                              'bg-dark-100 text-gray-800'
                             }`}>
                               {reception.submissionStatus?.staffReviewStatus === 'approved' ? 'Đã duyệt' :
                                reception.submissionStatus?.staffReviewStatus === 'rejected' ? 'Từ chối' :
@@ -750,13 +750,13 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                                'Chưa gửi'}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted">
                             {formatVietnameseDateTime(reception.createdAt)}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted">
                             <button
                               onClick={() => setSelectedReception(reception)}
-                              className="text-blue-600 hover:text-blue-900"
+                              className="text-lime-600 hover:text-lime-900"
                             >
                               Xem chi tiết
                             </button>
@@ -773,15 +773,15 @@ const EnhancedTechnicianDashboard: React.FC = () => {
 
         {/* Service Reception Detail Modal */}
         {selectedReception && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+          <div className="fixed inset-0 bg-dark-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-dark-300">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-2xl font-bold text-gray-900">
+                <h3 className="text-2xl font-bold text-white">
                   Chi tiết phiếu tiếp nhận - {selectedReception.receptionNumber}
                 </h3>
                 <button
                   onClick={() => setSelectedReception(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-text-muted hover:text-text-secondary"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -792,29 +792,29 @@ const EnhancedTechnicianDashboard: React.FC = () => {
               <div className="space-y-6">
                 {/* Customer & Vehicle Info */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Thông tin khách hàng</h4>
-                    <p className="text-gray-900">
+                  <div className="bg-dark-900 p-4 rounded-lg">
+                    <h4 className="text-sm font-semibold text-text-secondary mb-2">Thông tin khách hàng</h4>
+                    <p className="text-white">
                       {selectedReception.customerId?.firstName} {selectedReception.customerId?.lastName}
                     </p>
                   </div>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Thông tin xe</h4>
-                    <p className="text-gray-900">
+                  <div className="bg-dark-900 p-4 rounded-lg">
+                    <h4 className="text-sm font-semibold text-text-secondary mb-2">Thông tin xe</h4>
+                    <p className="text-white">
                       {selectedReception.vehicleId?.make} {selectedReception.vehicleId?.model}
                     </p>
-                    <p className="text-sm text-gray-500">{selectedReception.vehicleId?.licensePlate}</p>
+                    <p className="text-sm text-text-muted">{selectedReception.vehicleId?.licensePlate}</p>
                   </div>
                 </div>
 
                 {/* Status */}
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Trạng thái duyệt</h4>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                <div className="bg-dark-900 p-4 rounded-lg">
+                  <h4 className="text-sm font-semibold text-text-secondary mb-2">Trạng thái duyệt</h4>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm text-text-muted ${
                     selectedReception.submissionStatus?.staffReviewStatus === 'approved' ? 'bg-green-100 text-green-800' :
                     selectedReception.submissionStatus?.staffReviewStatus === 'rejected' ? 'bg-red-100 text-red-800' :
                     selectedReception.submissionStatus?.submittedToStaff ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-800'
+                    'bg-dark-100 text-gray-800'
                   }`}>
                     {selectedReception.submissionStatus?.staffReviewStatus === 'approved' ? 'Đã duyệt' :
                      selectedReception.submissionStatus?.staffReviewStatus === 'rejected' ? 'Từ chối' :
@@ -825,8 +825,8 @@ const EnhancedTechnicianDashboard: React.FC = () => {
 
                 {/* EV Checklist */}
                 {selectedReception.evChecklistItems && selectedReception.evChecklistItems.length > 0 && (
-                  <div className="bg-white border border-gray-200 rounded-lg p-4">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-3">EV Checklist</h4>
+                  <div className="bg-dark-300 border border-dark-200 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-text-secondary mb-3">EV Checklist</h4>
                     <div className="space-y-3">
                       {['battery', 'charging', 'motor', 'safety', 'general'].map(category => {
                         const categoryItems = selectedReception.evChecklistItems?.filter(
@@ -844,18 +844,18 @@ const EnhancedTechnicianDashboard: React.FC = () => {
 
                         return (
                           <div key={category} className="border-l-4 border-blue-500 pl-3">
-                            <h5 className="font-medium text-sm text-gray-700 mb-2">{categoryLabels[category]}</h5>
+                            <h5 className="text-text-muted text-sm text-text-secondary mb-2">{categoryLabels[category]}</h5>
                             <div className="space-y-2">
                               {categoryItems.map(item => (
                                 <div key={item.id} className="flex items-start space-x-2 text-sm">
                                   <CheckCircleIcon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${
-                                    item.status === 'critical' ? 'text-red-500' :
+                                    item.status === 'critical' ? 'text-red-600' :
                                     item.status === 'warning' ? 'text-yellow-500' :
                                     'text-green-500'
                                   }`} />
                                   <div className="flex-1">
                                     <div className="flex items-center justify-between">
-                                      <span className="text-gray-900">{item.label}</span>
+                                      <span className="text-white">{item.label}</span>
                                       {item.status && (
                                         <span className={`text-xs px-2 py-0.5 rounded ${
                                           item.status === 'critical' ? 'bg-red-100 text-red-800' :
@@ -868,7 +868,7 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                                       )}
                                     </div>
                                     {item.notes && (
-                                      <p className="text-xs text-gray-600 mt-1 italic">{item.notes}</p>
+                                      <p className="text-xs text-text-secondary mt-1 italic">{item.notes}</p>
                                     )}
                                   </div>
                                 </div>
@@ -885,86 +885,86 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                         <div className="text-lg font-bold text-green-600">
                           {selectedReception.evChecklistItems?.filter(i => i.status === 'good').length || 0}
                         </div>
-                        <div className="text-xs text-gray-600">Tốt</div>
+                        <div className="text-xs text-text-secondary">Tốt</div>
                       </div>
                       <div>
                         <div className="text-lg font-bold text-yellow-600">
                           {selectedReception.evChecklistItems?.filter(i => i.status === 'warning').length || 0}
                         </div>
-                        <div className="text-xs text-gray-600">Cảnh báo</div>
+                        <div className="text-xs text-text-secondary">Cảnh báo</div>
                       </div>
                       <div>
                         <div className="text-lg font-bold text-red-600">
                           {selectedReception.evChecklistItems?.filter(i => i.status === 'critical').length || 0}
                         </div>
-                        <div className="text-xs text-gray-600">Nghiêm trọng</div>
+                        <div className="text-xs text-text-secondary">Nghiêm trọng</div>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {/* Recommended Services */}
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                <div className="bg-dark-300 border border-dark-200 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-text-secondary mb-3">
                     Dịch vụ đề xuất ({selectedReception.recommendedServices?.length || 0})
                   </h4>
                   {selectedReception.recommendedServices && selectedReception.recommendedServices.length > 0 ? (
                     <div className="space-y-2">
                       {selectedReception.recommendedServices.map((service, index) => (
-                        <div key={index} className="bg-blue-50 p-3 rounded">
-                          <p className="font-medium text-gray-900">{service.serviceName}</p>
+                        <div key={index} className="bg-dark-900 p-3 rounded">
+                          <p className="text-text-muted text-white">{service.serviceName}</p>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-500 text-sm">Không có dịch vụ đề xuất</p>
+                    <p className="text-text-muted text-sm">Không có dịch vụ đề xuất</p>
                   )}
                 </div>
 
                 {/* Requested Parts */}
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                <div className="bg-dark-300 border border-dark-200 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-text-secondary mb-3">
                     Phụ tùng yêu cầu ({selectedReception.requestedParts?.length || 0})
                   </h4>
                   {selectedReception.requestedParts && selectedReception.requestedParts.length > 0 ? (
                     <div className="space-y-2">
                       {selectedReception.requestedParts.map((part, index) => (
                         <div key={index} className="bg-purple-50 p-3 rounded">
-                          <p className="font-medium text-gray-900">{part.partName}</p>
+                          <p className="text-text-muted text-white">{part.partName}</p>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-500 text-sm">Không có phụ tùng yêu cầu</p>
+                    <p className="text-text-muted text-sm">Không có phụ tùng yêu cầu</p>
                   )}
                 </div>
 
                 {/* Created Date */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Ngày tạo</h4>
-                  <p className="text-gray-900">{formatVietnameseDateTime(selectedReception.createdAt)}</p>
+                <div className="bg-dark-900 p-4 rounded-lg">
+                  <h4 className="text-sm font-semibold text-text-secondary mb-2">Ngày tạo</h4>
+                  <p className="text-white">{formatVietnameseDateTime(selectedReception.createdAt)}</p>
                 </div>
               </div>
 
               <div className="mt-6 flex justify-between items-center">
                 {selectedReception.submissionStatus?.staffReviewStatus === 'rejected' && (
                   <div className="text-sm">
-                    <p className="text-red-600 font-medium">Lý do từ chối:</p>
-                    <p className="text-gray-700">{selectedReception.submissionStatus.reviewNotes || 'Không có lý do cụ thể'}</p>
+                    <p className="text-red-600 text-text-muted">Lý do từ chối:</p>
+                    <p className="text-text-secondary">{selectedReception.submissionStatus.reviewNotes || 'Không có lý do cụ thể'}</p>
                   </div>
                 )}
                 <div className="flex space-x-2 ml-auto">
                   {selectedReception.submissionStatus?.staffReviewStatus === 'rejected' && (
                     <button
                       onClick={() => handleResubmitReception(selectedReception._id)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                      className="px-4 py-2 bg-lime-600 text-white rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                     >
                       Gửi lại để duyệt
                     </button>
                   )}
                   <button
                     onClick={() => setSelectedReception(null)}
-                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                    className="px-4 py-2 bg-dark-200 text-gray-800 rounded-md hover:bg-dark-300"
                   >
                     Đóng
                   </button>

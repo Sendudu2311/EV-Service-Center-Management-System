@@ -186,7 +186,7 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
       <div className="w-full">
         <button
           disabled
-          className="w-full flex justify-center items-center py-3 px-4 border border-gray-300 rounded-lg shadow-sm bg-gray-100 text-gray-400 cursor-not-allowed"
+          className="w-full flex justify-center items-center py-3 px-4 border border-dark-200 rounded-lg shadow-sm bg-dark-100 text-text-muted cursor-not-allowed"
         >
           <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
             <path

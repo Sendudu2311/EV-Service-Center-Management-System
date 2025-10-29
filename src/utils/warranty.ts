@@ -98,7 +98,7 @@ export const getWarrantyTypeLabel = (type: string): string => {
  */
 export const getWarrantyBadgeColor = (status: WarrantyStatus): string => {
   if (status.isExpired) {
-    return 'bg-gray-100 text-gray-800';
+    return 'bg-dark-100 text-gray-800';
   } else if (status.isExpiring) {
     return 'bg-yellow-100 text-yellow-800';
   } else {

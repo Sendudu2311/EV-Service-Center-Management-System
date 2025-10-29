@@ -142,16 +142,16 @@ const ServicesList: React.FC<ServicesListProps> = ({ onEditService }) => {
   const getCategoryBadge = (category: string) => {
     const colors = {
       'battery': 'bg-green-100 text-green-800',
-      'motor': 'bg-blue-100 text-blue-800',
+      'motor': 'bg-lime-100 text-lime-800',
       'charging': 'bg-yellow-100 text-yellow-800',
       'electronics': 'bg-purple-100 text-purple-800',
       'body': 'bg-orange-100 text-orange-800',
-      'general': 'bg-gray-100 text-gray-800',
+      'general': 'bg-dark-100 text-gray-800',
       'diagnostic': 'bg-red-100 text-red-800'
     };
     
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800'}`}>
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs ${colors[category as keyof typeof colors] || 'bg-dark-300 text-text-secondary'}`}>
         {category.charAt(0).toUpperCase() + category.slice(1)}
       </span>
     );
@@ -168,19 +168,19 @@ const ServicesList: React.FC<ServicesListProps> = ({ onEditService }) => {
   return (
     <div className="space-y-6">
       {/* Search and Filters */}
-      <div className="bg-white p-6 rounded-lg shadow">
+      <div className="bg-dark-300 p-6 rounded-lg shadow">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-4">
           {/* Search */}
           <div className="relative flex-1 max-w-md">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+              <MagnifyingGlassIcon className="h-5 w-5 text-text-muted" />
             </div>
             <input
               type="text"
               placeholder="Search services..."
               value={searchTerm}
               onChange={handleSearch}
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full pl-10 pr-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md leading-5 bg-dark-300 placeholder-text-muted focus:outline-none focus:placeholder-text-muted focus:ring-1 focus:ring-lime-400 focus:border-lime-400"
             />
           </div>
 
@@ -189,7 +189,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ onEditService }) => {
             <select
               value={filters.category}
               onChange={(e) => handleFilterChange('category', e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 bg-white text-sm focus:ring-blue-500 focus:border-blue-500"
+              className="border border-dark-200 bg-dark-300 text-white rounded-md px-3 py-2 bg-dark-300 text-sm focus:ring-lime-400 focus:border-lime-400"
             >
               <option value="">All Categories</option>
               <option value="battery">Battery</option>
@@ -204,7 +204,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ onEditService }) => {
             <select
               value={filters.isActive}
               onChange={(e) => handleFilterChange('isActive', e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 bg-white text-sm focus:ring-blue-500 focus:border-blue-500"
+              className="border border-dark-200 bg-dark-300 text-white rounded-md px-3 py-2 bg-dark-300 text-sm focus:ring-lime-400 focus:border-lime-400"
             >
               <option value="true">Active</option>
               <option value="false">Inactive</option>
@@ -216,26 +216,26 @@ const ServicesList: React.FC<ServicesListProps> = ({ onEditService }) => {
       {/* Services Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {services.map((service) => (
-          <div key={service._id} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+          <div key={service._id} className="bg-dark-300 rounded-lg shadow hover:shadow-md transition-shadow">
             <div className="p-6">
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1">{service.name}</h3>
+                  <h3 className="text-lg font-semibold text-white mb-1">{service.name}</h3>
                   <div className="flex space-x-2 mb-2">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-dark-300 text-lime-600">
                       {service.code}
                     </span>
                     {getCategoryBadge(service.category)}
                     {service.subcategory && (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-dark-300 text-green-600">
                         {service.subcategory}
                       </span>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-text-muted ${
                     service.isActive 
                       ? 'bg-green-100 text-green-800' 
                       : 'bg-red-100 text-red-800'
@@ -246,44 +246,44 @@ const ServicesList: React.FC<ServicesListProps> = ({ onEditService }) => {
               </div>
 
               {/* Description */}
-              <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+              <p className="text-sm text-text-secondary mb-4 line-clamp-2">
                 {service.description}
               </p>
 
               {/* Details */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Duration:</span>
-                  <span className="flex items-center">
-                    <ClockIcon className="h-4 w-4 mr-1 text-gray-400" />
+                  <span className="text-text-muted">Duration:</span>
+                  <span className="flex items-center text-text-muted">
+                    <ClockIcon className="h-4 w-4 mr-1 text-text-muted" />
                     {formatDuration(service.estimatedDuration)}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Base Price:</span>
-                  <span className="font-medium">{formatPrice(service.basePrice)}</span>
+                  <span className="text-text-muted">Base Price:</span>
+                  <span className="text-text-muted">{formatPrice(service.basePrice)}</span>
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Skill Level:</span>
-                  <span className="capitalize">{service.skillLevel}</span>
+                  <span className="text-text-muted">Skill Level:</span>
+                  <span className="capitalize text-text-muted">{service.skillLevel}</span>
                 </div>
 
                 {service.commonParts && service.commonParts.length > 0 && (
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500">Parts Required:</span>
-                    <span>{service.commonParts.length} items</span>
+                    <span className="text-text-muted">Parts Required:</span>
+                    <span className="text-text-muted">{service.commonParts.length} items</span>
                   </div>
                 )}
               </div>
 
               {/* Actions */}
-              <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="mt-4 pt-4 border-t border-dark-200">
                 <div className="flex space-x-2">
                   <button
                     onClick={() => onEditService?.(service)}
-                    className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                    className="flex-1 bg-lime-600 text-white px-3 py-2 rounded-md text-sm hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 transition-colors"
                   >
                     Edit
                   </button>
@@ -296,34 +296,34 @@ const ServicesList: React.FC<ServicesListProps> = ({ onEditService }) => {
 
       {/* Pagination */}
       {!loading && totalPages > 1 && (
-        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6 mt-6 rounded-lg shadow">
+        <div className="bg-dark-300 px-4 py-3 flex items-center justify-between border-t border-dark-200 sm:px-6 mt-6 rounded-lg shadow">
           <div className="flex-1 flex justify-between sm:hidden">
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="relative inline-flex items-center px-4 py-2 border border-dark-300 text-sm text-text-muted rounded-md text-text-secondary bg-dark-300 hover:bg-dark-900 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
             <button
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="ml-3 relative inline-flex items-center px-4 py-2 border border-dark-300 text-sm text-text-muted rounded-md text-text-secondary bg-dark-300 hover:bg-dark-900 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
           </div>
           <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm text-gray-700">
+              <p className="text-sm text-text-secondary">
                 Showing{' '}
-                <span className="font-medium">{((currentPage - 1) * itemsPerPage) + 1}</span>
+                <span className="text-text-muted">{((currentPage - 1) * itemsPerPage) + 1}</span>
                 {' '}to{' '}
-                <span className="font-medium">
+                <span className="text-text-muted">
                   {Math.min(currentPage * itemsPerPage, totalServices)}
                 </span>
                 {' '}of{' '}
-                <span className="font-medium">{totalServices}</span>
+                <span className="text-text-muted">{totalServices}</span>
                 {' '}results
               </p>
             </div>
@@ -332,7 +332,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ onEditService }) => {
                 <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-dark-300 bg-dark-300 text-sm text-text-muted text-text-muted hover:bg-dark-900 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
@@ -352,10 +352,10 @@ const ServicesList: React.FC<ServicesListProps> = ({ onEditService }) => {
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                      className={`relative inline-flex items-center px-4 py-2 border text-sm text-text-muted ${
                         currentPage === pageNum
-                          ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                          ? 'z-10 bg-dark-900 border-blue-500 text-lime-600'
+                          : 'bg-dark-300 border-dark-300 text-text-muted hover:bg-dark-900'
                       }`}
                     >
                       {pageNum}
@@ -365,7 +365,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ onEditService }) => {
                 <button
                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages}
-                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-dark-300 bg-dark-300 text-sm text-text-muted text-text-muted hover:bg-dark-900 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>
@@ -377,8 +377,8 @@ const ServicesList: React.FC<ServicesListProps> = ({ onEditService }) => {
 
       {services.length === 0 && !loading && (
         <div className="text-center py-12">
-          <div className="text-gray-500 text-lg">No services found</div>
-          <p className="text-gray-400 mt-2">Try adjusting your search or filters</p>
+          <div className="text-text-muted text-lg">No services found</div>
+          <p className="text-text-muted mt-2">Try adjusting your search or filters</p>
         </div>
       )}
 

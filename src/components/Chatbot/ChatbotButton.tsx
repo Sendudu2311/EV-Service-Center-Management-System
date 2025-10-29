@@ -21,7 +21,7 @@ const ChatbotButton: React.FC = () => {
           {/* Close Icon Overlay */}
           {isOpen && (
             <div className="absolute inset-0 rounded-full flex items-center justify-center pointer-events-none">
-              <X className="w-6 h-6 text-copper-400" />
+              <X className="w-6 h-6 text-lime-600" />
             </div>
           )}
         </div>

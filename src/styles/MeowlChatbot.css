@@ -48,16 +48,16 @@
   left: 1%;
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #f59e0b, #f97316);
+  background: #CCFF00;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: #0F1419;
   font-weight: bold;
-  box-shadow: 0 3px 12px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 0 12px rgba(204, 255, 0, 0.4);
   animation: pulse-meowl 2s infinite;
-  border: 2px solid white;
+  border: 2px solid #0F1419;
   font-size: 14px;
   z-index: 1;
 }
@@ -127,9 +127,9 @@
   position: absolute;
   bottom: 100%;
   right: 20px;
-  background: linear-gradient(135deg, rgba(25, 30, 80, 0.95), rgba(15, 20, 40, 0.95));
-  border: 2px solid #c47c00;
-  color: #fef3c7;
+  background: #1A1F2E;
+  border: 2px solid #CCFF00;
+  color: #CCFF00;
   padding: 0.75rem 1rem;
   border-radius: 8px;
   font-size: 0.85rem;
@@ -138,7 +138,7 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
-  box-shadow: 0 4px 12px rgba(196, 124, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(204, 255, 0, 0.2);
   margin-bottom: 0.5rem;
 }
 
@@ -157,7 +157,7 @@
   height: 0;
   border-left: 6px solid transparent;
   border-right: 6px solid transparent;
-  border-top: 6px solid #c47c00;
+  border-top: 6px solid #CCFF00;
 }
 
 /* Chat Container - Adjusted for better meowl visibility */
@@ -183,9 +183,9 @@
   right: 1rem;
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, rgba(200, 124, 0, 0.3), rgba(200, 124, 0, 0.1));
-  border: 2px solid #c47c00;
-  color: #fef3c7;
+  background: rgba(204, 255, 0, 0.1);
+  border: 2px solid #CCFF00;
+  color: #CCFF00;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -196,8 +196,8 @@
 }
 
 .meowl-close-button:hover {
-  background: linear-gradient(135deg, rgba(200, 124, 0, 0.6), rgba(200, 124, 0, 0.3));
-  border-color: #fef3c7;
+  background: rgba(204, 255, 0, 0.2);
+  border-color: #CCFF00;
   transform: scale(1.1) rotate(90deg);
 }
 

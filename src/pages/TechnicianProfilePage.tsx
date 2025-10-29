@@ -148,8 +148,8 @@ const SKILL_CATEGORIES = [
 const AVAILABILITY_STATUS = {
   available: { label: 'Sẵn sàng', color: 'bg-green-100 text-green-800' },
   busy: { label: 'Bận', color: 'bg-yellow-100 text-yellow-800' },
-  break: { label: 'Nghỉ giải lao', color: 'bg-blue-100 text-blue-800' },
-  offline: { label: 'Ngoại tuyến', color: 'bg-gray-100 text-gray-800' },
+  break: { label: 'Nghỉ giải lao', color: 'bg-lime-100 text-lime-800' },
+  offline: { label: 'Ngoại tuyến', color: 'bg-dark-100 text-gray-800' },
   sick_leave: { label: 'Nghỉ ốm', color: 'bg-red-100 text-red-800' },
   vacation: { label: 'Nghỉ phép', color: 'bg-purple-100 text-purple-800' }
 };
@@ -289,9 +289,9 @@ const TechnicianProfilePage: React.FC = () => {
   if (user?.role !== 'technician') {
     return (
       <div className="text-center py-12">
-        <UserIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Không có quyền truy cập</h3>
-        <p className="text-gray-500">Trang này chỉ dành cho kỹ thuật viên.</p>
+        <UserIcon className="h-12 w-12 text-text-muted mx-auto mb-4" />
+        <h3 className="text-lg text-text-muted text-white mb-2">Không có quyền truy cập</h3>
+        <p className="text-text-muted">Trang này chỉ dành cho kỹ thuật viên.</p>
       </div>
     );
   }
@@ -300,7 +300,7 @@ const TechnicianProfilePage: React.FC = () => {
     return (
       <div className="text-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-500">Đang tải thông tin hồ sơ...</p>
+        <p className="mt-4 text-text-muted">Đang tải thông tin hồ sơ...</p>
       </div>
     );
   }
@@ -308,9 +308,9 @@ const TechnicianProfilePage: React.FC = () => {
   if (!profile) {
     return (
       <div className="text-center py-12">
-        <UserIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Không tìm thấy hồ sơ</h3>
-        <p className="text-gray-500">Vui lòng liên hệ quản trị viên để được hỗ trợ.</p>
+        <UserIcon className="h-12 w-12 text-text-muted mx-auto mb-4" />
+        <h3 className="text-lg text-text-muted text-white mb-2">Không tìm thấy hồ sơ</h3>
+        <p className="text-text-muted">Vui lòng liên hệ quản trị viên để được hỗ trợ.</p>
       </div>
     );
   }
@@ -318,23 +318,23 @@ const TechnicianProfilePage: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg mb-6">
+      <div className="bg-dark-300 shadow rounded-lg mb-6">
         <div className="px-4 py-5 sm:p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <UserIcon className="h-12 w-12 text-gray-400" />
+                <UserIcon className="h-12 w-12 text-text-muted" />
               </div>
               <div className="ml-4">
-                <h1 className="text-2xl font-bold text-gray-900">{`${profile.technicianId.firstName} ${profile.technicianId.lastName}`}</h1>
-                <p className="text-gray-500">{profile.technicianId.email}</p>
+                <h1 className="text-2xl font-bold text-white">{`${profile.technicianId.firstName} ${profile.technicianId.lastName}`}</h1>
+                <p className="text-text-muted">{profile.technicianId.email}</p>
                 <div className="mt-2 flex items-center space-x-4">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-text-muted ${
                     AVAILABILITY_STATUS[profile.availability.status]?.color
                   }`}>
                     {AVAILABILITY_STATUS[profile.availability.status]?.label}
                   </span>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-text-muted">
                     Tỷ lệ công việc: {Math.round((profile.workload.current / profile.workload.capacity) * 100)}%
                   </span>
                 </div>
@@ -346,10 +346,10 @@ const TechnicianProfilePage: React.FC = () => {
                   key={status}
                   onClick={() => updateAvailability(status)}
                   disabled={updating || profile.availability.status === status}
-                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                  className={`px-3 py-1 rounded text-sm text-text-muted transition-colors ${
                     profile.availability.status === status
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      ? 'bg-lime-600 text-white'
+                      : 'bg-dark-200 text-text-secondary hover:bg-dark-300'
                   } disabled:opacity-50`}
                 >
                   {config.label}
@@ -362,38 +362,38 @@ const TechnicianProfilePage: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-dark-300 rounded-lg shadow p-6">
           <div className="flex items-center">
-            <CheckIcon className="h-8 w-8 text-green-600" />
+            <CheckIcon className="h-8 w-8 text-white" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Lịch hẹn hoàn thành</p>
-              <p className="text-2xl font-bold text-gray-900">{profile.performance.completedJobs}</p>
+              <p className="text-sm text-text-muted text-text-muted">Lịch hẹn hoàn thành</p>
+              <p className="text-2xl font-bold text-white">{profile.performance.completedJobs}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-dark-300 rounded-lg shadow p-6">
           <div className="flex items-center">
-            <WrenchScrewdriverIcon className="h-8 w-8 text-blue-600" />
+            <WrenchScrewdriverIcon className="h-8 w-8 text-lime-600" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Đánh giá trung bình</p>
-              <p className="text-2xl font-bold text-gray-900">{(profile.performance.customerRating || 0).toFixed(1)}/5</p>
+              <p className="text-sm text-text-muted text-text-muted">Đánh giá trung bình</p>
+              <p className="text-2xl font-bold text-white">{(profile.performance.customerRating || 0).toFixed(1)}/5</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-dark-300 rounded-lg shadow p-6">
           <div className="flex items-center">
             <ClockIcon className="h-8 w-8 text-purple-600" />
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Tổng giờ làm việc</p>
-              <p className="text-2xl font-bold text-gray-900">{profile.workingHours.currentWeekHours}h</p>
+              <p className="text-sm text-text-muted text-text-muted">Tổng giờ làm việc</p>
+              <p className="text-2xl font-bold text-white">{profile.workingHours.currentWeekHours}h</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="border-b border-gray-200">
+      <div className="bg-dark-300 shadow rounded-lg">
+        <div className="border-b border-dark-200">
           <nav className="-mb-px flex">
             {[
               { id: 'profile', label: 'Thông tin cá nhân', icon: UserIcon },
@@ -403,10 +403,10 @@ const TechnicianProfilePage: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`group inline-flex items-center py-4 px-6 border-b-2 font-medium text-sm ${
+                className={`group inline-flex items-center py-4 px-6 border-b-2 text-text-muted text-sm ${
                   activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-blue-500 text-lime-600'
+                    : 'border-transparent text-text-muted hover:text-text-secondary hover:border-dark-300'
                 }`}
               >
                 <tab.icon className="h-5 w-5 mr-2" />
@@ -421,25 +421,25 @@ const TechnicianProfilePage: React.FC = () => {
           {activeTab === 'profile' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Thông tin liên hệ</h3>
+                <h3 className="text-lg text-text-muted text-white mb-4">Thông tin liên hệ</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <p className="mt-1 text-sm text-gray-900">{profile.technicianId.email}</p>
+                    <label className="block text-sm text-text-muted text-text-secondary">Email</label>
+                    <p className="mt-1 text-sm text-white">{profile.technicianId.email}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
-                    <p className="mt-1 text-sm text-gray-900">{profile.technicianId.phone}</p>
+                    <label className="block text-sm text-text-muted text-text-secondary">Số điện thoại</label>
+                    <p className="mt-1 text-sm text-white">{profile.technicianId.phone}</p>
                   </div>
                 </div>
               </div>
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Chuyên môn</h3>
+                <h3 className="text-lg text-text-muted text-white mb-4">Chuyên môn</h3>
                 <div className="flex flex-wrap gap-2">
                   {profile.technicianId.specializations.map((spec: string, index: number) => (
                     <span
                       key={index}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-dark-300 text-lime-600"
                     >
                       {spec}
                     </span>
@@ -453,20 +453,20 @@ const TechnicianProfilePage: React.FC = () => {
           {activeTab === 'schedule' && (
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium text-gray-900">Lịch làm việc</h3>
+                <h3 className="text-lg text-text-muted text-white">Lịch làm việc</h3>
                 <div className="flex space-x-2">
                   {editingHours ? (
                     <>
                       <button
                         onClick={updateWorkingHours}
                         disabled={updating}
-                        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-white bg-lime-600 hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
                       >
                         {updating ? 'Đang lưu...' : 'Lưu'}
                       </button>
                       <button
                         onClick={() => setEditingHours(false)}
-                        className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                        className="px-4 py-2 border border-dark-300 rounded-md shadow-sm text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900"
                       >
                         Hủy
                       </button>
@@ -474,7 +474,7 @@ const TechnicianProfilePage: React.FC = () => {
                   ) : (
                     <button
                       onClick={() => setEditingHours(true)}
-                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-white bg-lime-600 hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105"
                     >
                       Chỉnh sửa
                     </button>
@@ -482,10 +482,10 @@ const TechnicianProfilePage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="bg-dark-300 border border-dark-200 rounded-lg p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Loại ca làm việc</label>
+                    <label className="block text-sm text-text-muted text-text-secondary mb-2">Loại ca làm việc</label>
                     <select
                       value={profile?.workShift?.type || 'flexible'}
                       onChange={(e) => {
@@ -493,7 +493,7 @@ const TechnicianProfilePage: React.FC = () => {
                         console.log('Update workShift type:', e.target.value);
                       }}
                       disabled={!editingHours}
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      className="w-full rounded-md border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400"
                     >
                       <option value="morning">Sáng</option>
                       <option value="afternoon">Chiều</option>
@@ -502,7 +502,7 @@ const TechnicianProfilePage: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Giờ bắt đầu</label>
+                    <label className="block text-sm text-text-muted text-text-secondary mb-2">Giờ bắt đầu</label>
                     <input
                       type="time"
                       value={profile?.workShift?.startTime || '08:00'}
@@ -511,11 +511,11 @@ const TechnicianProfilePage: React.FC = () => {
                         console.log('Update start time:', e.target.value);
                       }}
                       disabled={!editingHours}
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      className="w-full rounded-md border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Giờ kết thúc</label>
+                    <label className="block text-sm text-text-muted text-text-secondary mb-2">Giờ kết thúc</label>
                     <input
                       type="time"
                       value={profile?.workShift?.endTime || '17:00'}
@@ -524,13 +524,13 @@ const TechnicianProfilePage: React.FC = () => {
                         console.log('Update end time:', e.target.value);
                       }}
                       disabled={!editingHours}
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      className="w-full rounded-md border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400"
                     />
                   </div>
                 </div>
 
                 <div className="mt-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Ngày làm việc trong tuần</label>
+                  <label className="block text-sm text-text-muted text-text-secondary mb-2">Ngày làm việc trong tuần</label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
                       <label key={day} className="flex items-center">
@@ -542,9 +542,9 @@ const TechnicianProfilePage: React.FC = () => {
                             console.log('Update day:', day, e.target.checked);
                           }}
                           disabled={!editingHours}
-                          className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                          className="rounded border-dark-300 text-lime-600 shadow-sm focus:border-lime-400 focus:ring-lime-400"
                         />
-                        <span className="ml-2 text-sm text-gray-700">
+                        <span className="ml-2 text-sm text-text-secondary">
                           {day === 'monday' ? 'Thứ hai' :
                            day === 'tuesday' ? 'Thứ ba' :
                            day === 'wednesday' ? 'Thứ tư' :
@@ -564,10 +564,10 @@ const TechnicianProfilePage: React.FC = () => {
           {activeTab === 'skills' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">Kỹ năng chuyên môn</h3>
+                <h3 className="text-lg text-text-muted text-white">Kỹ năng chuyên môn</h3>
                 <button
                   onClick={() => setShowAddSkill(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-text-muted text-white bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
                   Thêm kỹ năng
@@ -576,17 +576,17 @@ const TechnicianProfilePage: React.FC = () => {
 
               {/* Add Skill Form */}
               {showAddSkill && (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <h4 className="text-md font-medium text-gray-900 mb-4">Thêm kỹ năng mới</h4>
+                <div className="bg-dark-900 p-4 rounded-lg">
+                  <h4 className="text-md text-text-muted text-white mb-4">Thêm kỹ năng mới</h4>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-1">
                         Danh mục
                       </label>
                       <select
                         value={newSkill.serviceCategory}
                         onChange={(e) => setNewSkill({ ...newSkill, serviceCategory: e.target.value })}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
                       >
                         <option value="">Chọn danh mục</option>
                         {SKILL_CATEGORIES.map((category) => (
@@ -595,13 +595,13 @@ const TechnicianProfilePage: React.FC = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-1">
                         Trình độ (1-5)
                       </label>
                       <select
                         value={newSkill.proficiencyLevel}
                         onChange={(e) => setNewSkill({ ...newSkill, proficiencyLevel: Number(e.target.value) })}
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
                       >
                         {[1, 2, 3, 4, 5].map((level) => (
                           <option key={level} value={level}>
@@ -615,9 +615,9 @@ const TechnicianProfilePage: React.FC = () => {
                         type="checkbox"
                         checked={newSkill.certificationRequired || false}
                         onChange={(e) => setNewSkill({ ...newSkill, certificationRequired: e.target.checked })}
-                        className="h-4 w-4 text-blue-600 rounded border-gray-300 mr-2"
+                        className="h-4 w-4 text-lime-600 rounded border-dark-300 mr-2"
                       />
-                      <label className="text-sm font-medium text-gray-700">
+                      <label className="text-sm text-text-muted text-text-secondary">
                         Có chứng chỉ
                       </label>
                     </div>
@@ -625,7 +625,7 @@ const TechnicianProfilePage: React.FC = () => {
                       <button
                         onClick={addSkill}
                         disabled={updating}
-                        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-text-muted text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
                       >
                         Thêm
                       </button>
@@ -634,7 +634,7 @@ const TechnicianProfilePage: React.FC = () => {
                           setShowAddSkill(false);
                           setNewSkill({ serviceCategory: '', proficiencyLevel: 1, trainingNeeded: false, certificationRequired: false });
                         }}
-                        className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                        className="px-4 py-2 border border-dark-300 rounded-md shadow-sm text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900"
                       >
                         Hủy
                       </button>
@@ -646,26 +646,26 @@ const TechnicianProfilePage: React.FC = () => {
               {/* Skills List */}
               <div className="space-y-4">
                 {profile.skillMatrix.map((skill, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg">
+                  <div key={index} className="flex items-center justify-between p-4 bg-dark-300 border border-dark-200 rounded-lg">
                     <div className="flex items-center space-x-4">
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900">{skill.serviceCategory}</h4>
+                        <h4 className="text-sm text-text-muted text-white">{skill.serviceCategory}</h4>
                         <div className="flex items-center space-x-2 mt-1">
                           <div className="flex space-x-1">
                             {[1, 2, 3, 4, 5].map((level) => (
                               <div
                                 key={level}
                                 className={`w-3 h-3 rounded-full ${
-                                  level <= skill.proficiencyLevel ? 'bg-blue-500' : 'bg-gray-200'
+                                  level <= skill.proficiencyLevel ? 'bg-dark-9000' : 'bg-dark-200'
                                 }`}
                               />
                             ))}
                           </div>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-text-muted">
                             Trình độ {skill.proficiencyLevel}/5
                           </span>
                           {skill.certificationRequired && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-dark-300 text-yellow-600">
                               Cần chứng chỉ
                             </span>
                           )}
@@ -675,16 +675,16 @@ const TechnicianProfilePage: React.FC = () => {
                     <button
                       onClick={() => removeSkill(index)}
                       disabled={updating}
-                      className="p-1 text-gray-400 hover:text-red-500 disabled:opacity-50"
+                      className="p-1 text-text-muted hover:text-red-600 disabled:opacity-50"
                     >
                       <XMarkIcon className="h-5 w-5" />
                     </button>
                   </div>
                 ))}
                 {profile.skillMatrix.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    <WrenchScrewdriverIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>Chưa có kỹ năng nào được thêm.</p>
+                  <div className="text-center py-8 text-text-muted">
+                    <WrenchScrewdriverIcon className="h-12 w-12 mx-auto mb-4 text-text-secondary" />
+                    <p className="text-white">Chưa có kỹ năng nào được thêm.</p>
                     <p className="text-sm">Hãy thêm kỹ năng để cải thiện hồ sơ của bạn.</p>
                   </div>
                 )}

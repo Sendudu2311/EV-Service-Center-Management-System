@@ -352,7 +352,7 @@ const CustomerProfilePage: React.FC = () => {
       case "completed":
         return "bg-green-100 text-green-800";
       case "confirmed":
-        return "bg-blue-100 text-blue-800";
+        return "bg-lime-100 text-lime-800";
       case "pending":
         return "bg-yellow-100 text-yellow-800";
       case "cancelled":
@@ -360,7 +360,7 @@ const CustomerProfilePage: React.FC = () => {
       case "in_progress":
         return "bg-indigo-100 text-indigo-800";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-dark-100 text-gray-800";
     }
   };
 
@@ -442,11 +442,11 @@ const CustomerProfilePage: React.FC = () => {
   if (user?.role !== "customer") {
     return (
       <div className="text-center py-12">
-        <UserIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
+        <UserIcon className="h-12 w-12 text-text-muted mx-auto mb-4" />
+        <h3 className="text-lg text-text-muted text-white mb-2">
           Không có quyền truy cập
         </h3>
-        <p className="text-gray-500">Trang này chỉ dành cho khách hàng.</p>
+        <p className="text-text-muted">Trang này chỉ dành cho khách hàng.</p>
       </div>
     );
   }
@@ -455,7 +455,7 @@ const CustomerProfilePage: React.FC = () => {
     return (
       <div className="text-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-500">Đang tải thông tin hồ sơ...</p>
+        <p className="mt-4 text-text-muted">Đang tải thông tin hồ sơ...</p>
       </div>
     );
   }
@@ -463,16 +463,16 @@ const CustomerProfilePage: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg mb-6">
+      <div className="bg-dark-300 shadow rounded-lg mb-6">
         <div className="px-4 py-5 sm:p-6">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <UserIcon className="h-12 w-12 text-gray-400" />
+              <UserIcon className="h-12 w-12 text-text-muted" />
             </div>
             <div className="ml-4">
-              <h1 className="text-2xl font-bold text-gray-900">{user?.name}</h1>
-              <p className="text-gray-500">{user?.email}</p>
-              <p className="text-gray-500">{user?.phone}</p>
+              <h1 className="text-2xl font-bold text-white">{user?.name}</h1>
+              <p className="text-text-muted">{user?.email}</p>
+              <p className="text-text-muted">{user?.phone}</p>
             </div>
           </div>
         </div>
@@ -481,51 +481,51 @@ const CustomerProfilePage: React.FC = () => {
       {/* Stats Cards */}
       {customerStats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-dark-300 rounded-lg shadow p-6">
             <div className="flex items-center">
-              <ClipboardDocumentListIcon className="h-8 w-8 text-blue-600" />
+              <ClipboardDocumentListIcon className="h-8 w-8 text-lime-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
+                <p className="text-sm text-text-muted text-text-muted">
                   Tổng lịch hẹn
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-white">
                   {customerStats.totalAppointments}
                 </p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-dark-300 rounded-lg shadow p-6">
             <div className="flex items-center">
               <CheckCircleIcon className="h-8 w-8 text-green-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
+                <p className="text-sm text-text-muted text-text-muted">
                   Đã hoàn thành
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-white">
                   {customerStats.completedAppointments}
                 </p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-dark-300 rounded-lg shadow p-6">
             <div className="flex items-center">
               <TruckIcon className="h-8 w-8 text-purple-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
+                <p className="text-sm text-text-muted text-text-muted">
                   Tổng chi tiêu
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-white">
                   {formatVND(customerStats.totalSpent)}
                 </p>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-dark-300 rounded-lg shadow p-6">
             <div className="flex items-center">
               <ClockIcon className="h-8 w-8 text-orange-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Đánh giá TB</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm text-text-muted text-text-muted">Đánh giá TB</p>
+                <p className="text-2xl font-bold text-white">
                   {(customerStats.avgRating || 0).toFixed(1)}/5
                 </p>
               </div>
@@ -535,8 +535,8 @@ const CustomerProfilePage: React.FC = () => {
       )}
 
       {/* Tabs */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="border-b border-gray-200">
+      <div className="bg-dark-300 shadow rounded-lg">
+        <div className="border-b border-dark-200">
           <nav className="-mb-px flex">
             {[
               { id: "profile", label: "Thông tin cá nhân", icon: UserIcon },
@@ -554,10 +554,10 @@ const CustomerProfilePage: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`group inline-flex items-center py-4 px-6 border-b-2 font-medium text-sm ${
+                className={`group inline-flex items-center py-4 px-6 border-b-2 text-text-muted text-sm ${
                   activeTab === tab.id
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                    ? "border-blue-500 text-lime-600"
+                    : "border-transparent text-text-muted hover:text-text-secondary hover:border-dark-300"
                 }`}
               >
                 <tab.icon className="h-5 w-5 mr-2" />
@@ -572,33 +572,33 @@ const CustomerProfilePage: React.FC = () => {
           {activeTab === "profile" && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                <h3 className="text-lg text-text-muted text-white mb-4">
                   Thông tin liên hệ
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm text-text-muted text-text-secondary">
                       Họ và tên
                     </label>
-                    <p className="mt-1 text-sm text-gray-900">{user?.name}</p>
+                    <p className="mt-1 text-sm text-white">{user?.name}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm text-text-muted text-text-secondary">
                       Email
                     </label>
-                    <p className="mt-1 text-sm text-gray-900">{user?.email}</p>
+                    <p className="mt-1 text-sm text-white">{user?.email}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm text-text-muted text-text-secondary">
                       Số điện thoại
                     </label>
-                    <p className="mt-1 text-sm text-gray-900">{user?.phone}</p>
+                    <p className="mt-1 text-sm text-white">{user?.phone}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm text-text-muted text-text-secondary">
                       Địa chỉ
                     </label>
-                    <p className="mt-1 text-sm text-gray-900">
+                    <p className="mt-1 text-sm text-white">
                       {user?.address || "Chưa cập nhật"}
                     </p>
                   </div>
@@ -607,15 +607,15 @@ const CustomerProfilePage: React.FC = () => {
 
               {customerStats && (
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                  <h3 className="text-lg text-text-muted text-white mb-4">
                     Thông tin dịch vụ
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm text-text-muted text-text-secondary">
                         Lần bảo dưỡng gần nhất
                       </label>
-                      <p className="mt-1 text-sm text-gray-900">
+                      <p className="mt-1 text-sm text-white">
                         {customerStats.lastServiceDate
                           ? formatVietnameseDateTime(
                               customerStats.lastServiceDate
@@ -624,10 +624,10 @@ const CustomerProfilePage: React.FC = () => {
                       </p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm text-text-muted text-text-secondary">
                         Dịch vụ khuyến nghị tiếp theo
                       </label>
-                      <p className="mt-1 text-sm text-gray-900">
+                      <p className="mt-1 text-sm text-white">
                         {customerStats.nextRecommendedService ||
                           "Chưa có khuyến nghị"}
                       </p>
@@ -642,12 +642,12 @@ const CustomerProfilePage: React.FC = () => {
           {activeTab === "vehicles" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-lg text-text-muted text-white">
                   Danh sách xe
                 </h3>
                 <button
                   onClick={() => setShowAddVehicle(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-white bg-lime-600 hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
                   Thêm xe
@@ -656,13 +656,13 @@ const CustomerProfilePage: React.FC = () => {
 
               {/* Add/Edit Vehicle Form */}
               {(showAddVehicle || editingVehicle) && (
-                <div className="bg-gray-50 p-6 rounded-lg">
-                  <h4 className="text-md font-medium text-gray-900 mb-4">
+                <div className="bg-dark-900 p-6 rounded-lg">
+                  <h4 className="text-md text-text-muted text-white mb-4">
                     {editingVehicle ? "Chỉnh sửa thông tin xe" : "Thêm xe mới"}
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-1">
                         Hãng xe
                       </label>
                       <input
@@ -674,12 +674,12 @@ const CustomerProfilePage: React.FC = () => {
                             make: e.target.value,
                           })
                         }
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
                         placeholder="VinFast, Tesla, ..."
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-1">
                         Mẫu xe
                       </label>
                       <input
@@ -691,12 +691,12 @@ const CustomerProfilePage: React.FC = () => {
                             model: e.target.value,
                           })
                         }
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
                         placeholder="VF8, Model 3, ..."
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-1">
                         Năm sản xuất
                       </label>
                       <input
@@ -708,13 +708,13 @@ const CustomerProfilePage: React.FC = () => {
                             year: Number(e.target.value),
                           })
                         }
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
                         min="2000"
                         max={new Date().getFullYear() + 1}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-1">
                         Biển số xe
                       </label>
                       <input
@@ -726,12 +726,12 @@ const CustomerProfilePage: React.FC = () => {
                             licensePlate: e.target.value.toUpperCase(),
                           })
                         }
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
                         placeholder="30A-12345"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-1">
                         Loại pin
                       </label>
                       <select
@@ -742,7 +742,7 @@ const CustomerProfilePage: React.FC = () => {
                             batteryType: e.target.value,
                           })
                         }
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
                       >
                         <option value="">Chọn loại pin</option>
                         <option value="LiFePO4">LiFePO4</option>
@@ -752,7 +752,7 @@ const CustomerProfilePage: React.FC = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-1">
                         Dung lượng pin (kWh)
                       </label>
                       <input
@@ -764,13 +764,13 @@ const CustomerProfilePage: React.FC = () => {
                             batteryCapacity: Number(e.target.value),
                           })
                         }
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
                         min="0"
                         step="0.1"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-1">
                         Cổng sạc
                       </label>
                       <select
@@ -781,7 +781,7 @@ const CustomerProfilePage: React.FC = () => {
                             chargingPort: e.target.value,
                           })
                         }
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
                       >
                         <option value="">Chọn cổng sạc</option>
                         <option value="CCS2">CCS2</option>
@@ -791,7 +791,7 @@ const CustomerProfilePage: React.FC = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-1">
                         Công suất sạc tối đa (kW)
                       </label>
                       <input
@@ -803,12 +803,12 @@ const CustomerProfilePage: React.FC = () => {
                             maxChargingPower: Number(e.target.value),
                           })
                         }
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
                         min="0"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-1">
                         Màu sắc
                       </label>
                       <input
@@ -820,7 +820,7 @@ const CustomerProfilePage: React.FC = () => {
                             color: e.target.value,
                           })
                         }
-                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
                         placeholder="Đen, Trắng, Xanh, ..."
                       />
                     </div>
@@ -834,9 +834,9 @@ const CustomerProfilePage: React.FC = () => {
                             isDefault: e.target.checked,
                           })
                         }
-                        className="h-4 w-4 text-blue-600 rounded border-gray-300 mr-2"
+                        className="h-4 w-4 text-lime-600 rounded border-dark-300 mr-2"
                       />
-                      <label className="text-sm font-medium text-gray-700">
+                      <label className="text-sm text-text-muted text-text-secondary">
                         Đặt làm xe mặc định
                       </label>
                     </div>
@@ -845,7 +845,7 @@ const CustomerProfilePage: React.FC = () => {
                     <button
                       onClick={editingVehicle ? updateVehicle : addVehicle}
                       disabled={updating}
-                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-white bg-lime-600 hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
                     >
                       {updating
                         ? "Đang lưu..."
@@ -870,7 +870,7 @@ const CustomerProfilePage: React.FC = () => {
                           isDefault: false,
                         });
                       }}
-                      className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                      className="px-4 py-2 border border-dark-300 rounded-md shadow-sm text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900"
                     >
                       Hủy
                     </button>
@@ -883,45 +883,45 @@ const CustomerProfilePage: React.FC = () => {
                 {vehicles.map((vehicle) => (
                   <div
                     key={vehicle._id}
-                    className="bg-white border border-gray-200 rounded-lg p-6"
+                    className="bg-dark-300 border border-dark-200 rounded-lg p-6"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-2">
-                          <h4 className="text-lg font-medium text-gray-900">
+                          <h4 className="text-lg text-text-muted text-white">
                             {vehicle.make} {vehicle.model} ({vehicle.year})
                           </h4>
                           {vehicle.isDefault && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-dark-300 text-lime-600">
                               Mặc định
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mb-3">
-                          <span className="font-medium">Biển số:</span>{" "}
+                        <p className="text-sm text-text-secondary mb-3">
+                          <span className="text-text-muted">Biển số:</span>{" "}
                           {vehicle.licensePlate}
                         </p>
-                        <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+                        <div className="grid grid-cols-2 gap-2 text-sm text-text-secondary">
                           <p>
-                            <span className="font-medium">Pin:</span>{" "}
+                            <span className="text-text-muted">Pin:</span>{" "}
                             {vehicle.batteryType} - {vehicle.batteryCapacity}kWh
                           </p>
                           <p>
-                            <span className="font-medium">Cổng sạc:</span>{" "}
+                            <span className="text-text-muted">Cổng sạc:</span>{" "}
                             {vehicle.chargingPort}
                           </p>
                           <p>
-                            <span className="font-medium">Công suất sạc:</span>{" "}
+                            <span className="text-text-muted">Công suất sạc:</span>{" "}
                             {vehicle.maxChargingPower}kW
                           </p>
                           <p>
-                            <span className="font-medium">Màu:</span>{" "}
+                            <span className="text-text-muted">Màu:</span>{" "}
                             {vehicle.color}
                           </p>
                         </div>
                         {vehicle.lastServiceDate && (
-                          <p className="text-sm text-gray-600 mt-2">
-                            <span className="font-medium">
+                          <p className="text-sm text-text-secondary mt-2">
+                            <span className="text-text-muted">
                               Bảo dưỡng gần nhất:
                             </span>{" "}
                             {formatVietnameseDateTime(vehicle.lastServiceDate)}
@@ -933,7 +933,7 @@ const CustomerProfilePage: React.FC = () => {
                           <button
                             onClick={() => setDefaultVehicle(vehicle._id)}
                             disabled={updating}
-                            className="p-2 text-gray-400 hover:text-blue-500 disabled:opacity-50"
+                            className="p-2 text-text-muted hover:text-lime-500 disabled:opacity-50"
                             title="Đặt làm mặc định"
                           >
                             <CheckCircleIcon className="h-5 w-5" />
@@ -944,7 +944,7 @@ const CustomerProfilePage: React.FC = () => {
                             setEditingVehicle(vehicle);
                             setVehicleForm(vehicle);
                           }}
-                          className="p-2 text-gray-400 hover:text-blue-500"
+                          className="p-2 text-text-muted hover:text-lime-500"
                           title="Chỉnh sửa"
                         >
                           <PencilIcon className="h-5 w-5" />
@@ -952,7 +952,7 @@ const CustomerProfilePage: React.FC = () => {
                         <button
                           onClick={() => deleteVehicle(vehicle._id)}
                           disabled={updating || vehicle.isDefault}
-                          className="p-2 text-gray-400 hover:text-red-500 disabled:opacity-50"
+                          className="p-2 text-text-muted hover:text-red-600 disabled:opacity-50"
                           title="Xóa"
                         >
                           <TrashIcon className="h-5 w-5" />
@@ -963,9 +963,9 @@ const CustomerProfilePage: React.FC = () => {
                 ))}
 
                 {vehicles.length === 0 && (
-                  <div className="col-span-2 text-center py-12 text-gray-500">
-                    <TruckIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>Chưa có xe nào được thêm.</p>
+                  <div className="col-span-2 text-center py-12 text-text-muted">
+                    <TruckIcon className="h-12 w-12 mx-auto mb-4 text-text-secondary" />
+                    <p className="text-white">Chưa có xe nào được thêm.</p>
                     <p className="text-sm">Hãy thêm xe để đặt lịch dịch vụ.</p>
                   </div>
                 )}
@@ -977,7 +977,7 @@ const CustomerProfilePage: React.FC = () => {
           {activeTab === "history" && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-lg text-text-muted text-white">
                   Lịch sử dịch vụ
                 </h3>
               </div>
@@ -985,7 +985,7 @@ const CustomerProfilePage: React.FC = () => {
               {/* Filters */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm text-text-muted text-text-secondary mb-1">
                     Trạng thái
                   </label>
                   <select
@@ -996,7 +996,7 @@ const CustomerProfilePage: React.FC = () => {
                         status: e.target.value,
                       })
                     }
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                    className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
                   >
                     <option value="">Tất cả trạng thái</option>
                     <option value="pending">Chờ xác nhận</option>
@@ -1007,7 +1007,7 @@ const CustomerProfilePage: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm text-text-muted text-text-secondary mb-1">
                     Xe
                   </label>
                   <select
@@ -1018,7 +1018,7 @@ const CustomerProfilePage: React.FC = () => {
                         vehicleId: e.target.value,
                       })
                     }
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                    className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
                   >
                     <option value="">Tất cả xe</option>
                     {vehicles.map((vehicle) => (
@@ -1029,7 +1029,7 @@ const CustomerProfilePage: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm text-text-muted text-text-secondary mb-1">
                     Từ ngày
                   </label>
                   <input
@@ -1041,11 +1041,11 @@ const CustomerProfilePage: React.FC = () => {
                         dateFrom: e.target.value,
                       })
                     }
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                    className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm text-text-muted text-text-secondary mb-1">
                     Đến ngày
                   </label>
                   <input
@@ -1057,7 +1057,7 @@ const CustomerProfilePage: React.FC = () => {
                         dateTo: e.target.value,
                       })
                     }
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                    className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
                   />
                 </div>
               </div>
@@ -1067,16 +1067,16 @@ const CustomerProfilePage: React.FC = () => {
                 {appointments.map((appointment) => (
                   <div
                     key={appointment._id}
-                    className="bg-white border border-gray-200 rounded-lg p-6"
+                    className="bg-dark-300 border border-dark-200 rounded-lg p-6"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-4 mb-3">
-                          <h4 className="text-lg font-medium text-gray-900">
+                          <h4 className="text-lg text-text-muted text-white">
                             #{appointment.appointmentNumber}
                           </h4>
                           <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-text-muted ${getStatusColor(
                               appointment.status
                             )}`}
                           >
@@ -1090,26 +1090,26 @@ const CustomerProfilePage: React.FC = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <p className="text-sm text-gray-600">
-                              <span className="font-medium">Xe:</span>{" "}
+                            <p className="text-sm text-text-secondary">
+                              <span className="text-text-muted">Xe:</span>{" "}
                               {appointment.vehicle.make}{" "}
                               {appointment.vehicle.model} (
                               {appointment.vehicle.licensePlate})
                             </p>
-                            <p className="text-sm text-gray-600">
-                              <span className="font-medium">Thời gian:</span>{" "}
+                            <p className="text-sm text-text-secondary">
+                              <span className="text-text-muted">Thời gian:</span>{" "}
                               {formatVietnameseDateTime(
                                 appointment.scheduledDate,
                                 appointment.scheduledTime
                               )}
                             </p>
-                            <p className="text-sm text-gray-600">
-                              <span className="font-medium">Trung tâm:</span>{" "}
+                            <p className="text-sm text-text-secondary">
+                              <span className="text-text-muted">Trung tâm:</span>{" "}
                               {appointment.serviceCenter.name}
                             </p>
                             {appointment.technician && (
-                              <p className="text-sm text-gray-600">
-                                <span className="font-medium">
+                              <p className="text-sm text-text-secondary">
+                                <span className="text-text-muted">
                                   Kỹ thuật viên:
                                 </span>{" "}
                                 {appointment.technician.name}
@@ -1118,10 +1118,10 @@ const CustomerProfilePage: React.FC = () => {
                           </div>
                           <div>
                             <div className="mb-2">
-                              <p className="text-sm font-medium text-gray-600 mb-1">
+                              <p className="text-sm text-text-muted text-text-secondary mb-1">
                                 Dịch vụ:
                               </p>
-                              <ul className="text-sm text-gray-600 space-y-1">
+                              <ul className="text-sm text-text-secondary space-y-1">
                                 {appointment.services.map((service, index) => (
                                   <li key={index}>
                                     • {service.name} -{" "}
@@ -1130,19 +1130,19 @@ const CustomerProfilePage: React.FC = () => {
                                 ))}
                               </ul>
                             </div>
-                            <p className="text-sm text-gray-600">
-                              <span className="font-medium">Tổng tiền:</span>{" "}
+                            <p className="text-sm text-text-secondary">
+                              <span className="text-text-muted">Tổng tiền:</span>{" "}
                               <span className="font-semibold text-green-600">
                                 {formatVND(appointment.totalAmount)}
                               </span>
                             </p>
-                            <p className="text-sm text-gray-600">
-                              <span className="font-medium">Đặt lúc:</span>{" "}
+                            <p className="text-sm text-text-secondary">
+                              <span className="text-text-muted">Đặt lúc:</span>{" "}
                               {formatVietnameseDateTime(appointment.createdAt)}
                             </p>
                             {appointment.completedAt && (
-                              <p className="text-sm text-gray-600">
-                                <span className="font-medium">Hoàn thành:</span>{" "}
+                              <p className="text-sm text-text-secondary">
+                                <span className="text-text-muted">Hoàn thành:</span>{" "}
                                 {formatVietnameseDateTime(
                                   appointment.completedAt
                                 )}
@@ -1155,7 +1155,7 @@ const CustomerProfilePage: React.FC = () => {
                       <div className="flex space-x-2 ml-4">
                         <button
                           onClick={() => setSelectedAppointment(appointment)}
-                          className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                          className="px-4 py-2 border border-dark-300 rounded-md text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900"
                         >
                           <EyeIcon className="h-4 w-4 mr-1 inline" />
                           Chi tiết
@@ -1169,7 +1169,7 @@ const CustomerProfilePage: React.FC = () => {
                               )
                             }
                             disabled={updating}
-                            className="px-4 py-2 border border-red-300 rounded-md text-sm font-medium text-red-700 bg-white hover:bg-red-50 disabled:opacity-50"
+                            className="px-4 py-2 border border-red-300 rounded-md text-sm text-text-muted text-red-700 bg-dark-300 hover:bg-red-50 disabled:opacity-50"
                           >
                             <XCircleIcon className="h-4 w-4 mr-1 inline" />
                             Hủy lịch
@@ -1181,9 +1181,9 @@ const CustomerProfilePage: React.FC = () => {
                 ))}
 
                 {appointments.length === 0 && (
-                  <div className="text-center py-12 text-gray-500">
-                    <CalendarIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>Chưa có lịch hẹn nào.</p>
+                  <div className="text-center py-12 text-text-muted">
+                    <CalendarIcon className="h-12 w-12 mx-auto mb-4 text-text-secondary" />
+                    <p className="text-white">Chưa có lịch hẹn nào.</p>
                     <p className="text-sm">
                       Hãy đặt lịch dịch vụ để bắt đầu sử dụng.
                     </p>
@@ -1194,7 +1194,7 @@ const CustomerProfilePage: React.FC = () => {
               {/* Pagination */}
               {pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-700">
+                  <div className="text-sm text-text-secondary">
                     Hiển thị {appointments.length} trong tổng số{" "}
                     {pagination.total} lịch hẹn
                   </div>
@@ -1207,11 +1207,11 @@ const CustomerProfilePage: React.FC = () => {
                         }))
                       }
                       disabled={pagination.page === 1}
-                      className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                      className="px-3 py-2 border border-dark-300 rounded-md text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900 disabled:opacity-50"
                     >
                       Trước
                     </button>
-                    <span className="px-3 py-2 text-sm text-gray-700">
+                    <span className="px-3 py-2 text-sm text-text-secondary">
                       Trang {pagination.page}/{pagination.totalPages}
                     </span>
                     <button
@@ -1222,7 +1222,7 @@ const CustomerProfilePage: React.FC = () => {
                         }))
                       }
                       disabled={pagination.page === pagination.totalPages}
-                      className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                      className="px-3 py-2 border border-dark-300 rounded-md text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900 disabled:opacity-50"
                     >
                       Sau
                     </button>
@@ -1236,36 +1236,36 @@ const CustomerProfilePage: React.FC = () => {
 
       {/* Appointment Detail Modal */}
       {selectedAppointment && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-dark-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-dark-300">
             <div className="mt-3">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-lg text-text-muted text-white">
                   Chi tiết lịch hẹn #{selectedAppointment.appointmentNumber}
                 </h3>
                 <button
                   onClick={() => setSelectedAppointment(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-text-muted hover:text-text-secondary"
                 >
                   <XCircleIcon className="h-6 w-6" />
                 </button>
               </div>
 
               <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="p-4 bg-dark-900 rounded-lg">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">Xe:</span>{" "}
+                      <p className="text-sm text-text-secondary">
+                        <span className="text-text-muted">Xe:</span>{" "}
                         {selectedAppointment.vehicle.make}{" "}
                         {selectedAppointment.vehicle.model}
                       </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">Biển số:</span>{" "}
+                      <p className="text-sm text-text-secondary">
+                        <span className="text-text-muted">Biển số:</span>{" "}
                         {selectedAppointment.vehicle.licensePlate}
                       </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">Thời gian:</span>{" "}
+                      <p className="text-sm text-text-secondary">
+                        <span className="text-text-muted">Thời gian:</span>{" "}
                         {formatVietnameseDateTime(
                           selectedAppointment.scheduledDate,
                           selectedAppointment.scheduledTime
@@ -1273,10 +1273,10 @@ const CustomerProfilePage: React.FC = () => {
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">Trạng thái:</span>
+                      <p className="text-sm text-text-secondary">
+                        <span className="text-text-muted">Trạng thái:</span>
                         <span
-                          className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getStatusColor(
+                          className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs text-text-muted ${getStatusColor(
                             selectedAppointment.status
                           )}`}
                         >
@@ -1287,12 +1287,12 @@ const CustomerProfilePage: React.FC = () => {
                           }
                         </span>
                       </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">Trung tâm:</span>{" "}
+                      <p className="text-sm text-text-secondary">
+                        <span className="text-text-muted">Trung tâm:</span>{" "}
                         {selectedAppointment.serviceCenter.name}
                       </p>
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">Địa chỉ:</span>{" "}
+                      <p className="text-sm text-text-secondary">
+                        <span className="text-text-muted">Địa chỉ:</span>{" "}
                         {selectedAppointment.serviceCenter.address}
                       </p>
                     </div>
@@ -1300,25 +1300,25 @@ const CustomerProfilePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <h4 className="text-md font-medium text-gray-900 mb-2">
+                  <h4 className="text-md text-text-muted text-white mb-2">
                     Dịch vụ
                   </h4>
                   <div className="space-y-2">
                     {selectedAppointment.services.map((service, index) => (
                       <div
                         key={index}
-                        className="flex justify-between items-center p-3 bg-white border border-gray-200 rounded"
+                        className="flex justify-between items-center p-3 bg-dark-300 border border-dark-200 rounded"
                       >
-                        <span className="text-sm text-gray-900">
+                        <span className="text-sm text-white">
                           {service.name}
                         </span>
-                        <span className="text-sm font-medium text-gray-900">
+                        <span className="text-sm text-text-muted text-white">
                           {formatVND(service.price)}
                         </span>
                       </div>
                     ))}
-                    <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded font-medium">
-                      <span className="text-sm text-gray-900">Tổng cộng</span>
+                    <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded text-text-muted">
+                      <span className="text-sm text-white">Tổng cộng</span>
                       <span className="text-sm text-green-600">
                         {formatVND(selectedAppointment.totalAmount)}
                       </span>
@@ -1328,10 +1328,10 @@ const CustomerProfilePage: React.FC = () => {
 
                 {selectedAppointment.technician && (
                   <div>
-                    <h4 className="text-md font-medium text-gray-900 mb-2">
+                    <h4 className="text-md text-text-muted text-white mb-2">
                       Kỹ thuật viên
                     </h4>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-text-secondary">
                       {selectedAppointment.technician.name}
                     </p>
                   </div>
@@ -1341,7 +1341,7 @@ const CustomerProfilePage: React.FC = () => {
               <div className="mt-6 flex justify-end space-x-3">
                 <button
                   onClick={() => setSelectedAppointment(null)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  className="px-4 py-2 border border-dark-300 rounded-md text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900"
                 >
                   Đóng
                 </button>
@@ -1355,7 +1355,7 @@ const CustomerProfilePage: React.FC = () => {
                       setSelectedAppointment(null);
                     }}
                     disabled={updating}
-                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-text-muted text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
                   >
                     <XCircleIcon className="h-4 w-4 mr-1 inline" />
                     Hủy lịch hẹn

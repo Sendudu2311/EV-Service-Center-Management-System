@@ -26,9 +26,9 @@ class TransactionService {
       const baseData = {
         transactionRef,
         transactionType: type,
-        userId: data.userId,
-        appointmentId: data.appointmentId,
-        invoiceId: data.invoiceId,
+        userId: data.userId ? new mongoose.Types.ObjectId(data.userId) : data.userId,
+        appointmentId: data.appointmentId ? new mongoose.Types.ObjectId(data.appointmentId) : data.appointmentId,
+        invoiceId: data.invoiceId ? new mongoose.Types.ObjectId(data.invoiceId) : data.invoiceId,
         amount: data.amount,
         paymentPurpose: data.paymentPurpose,
         status: data.status || "pending", // Use provided status or default to pending
@@ -185,9 +185,9 @@ class TransactionService {
       const refundTransaction = await this.createTransaction(
         originalTransaction.transactionType,
         {
-          userId: originalTransaction.userId,
-          appointmentId: originalTransaction.appointmentId,
-          invoiceId: originalTransaction.invoiceId,
+          userId: new mongoose.Types.ObjectId(originalTransaction.userId),
+          appointmentId: originalTransaction.appointmentId ? new mongoose.Types.ObjectId(originalTransaction.appointmentId) : undefined,
+          invoiceId: originalTransaction.invoiceId ? new mongoose.Types.ObjectId(originalTransaction.invoiceId) : undefined,
           amount: refundData.amount || originalTransaction.amount,
           paymentPurpose: "refund",
           billingInfo: originalTransaction.billingInfo,

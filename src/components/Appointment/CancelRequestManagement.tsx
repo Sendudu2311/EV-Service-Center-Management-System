@@ -140,7 +140,7 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
           </svg>
         </div>
         <div className="ml-3 flex-1">
-          <h3 className="text-sm font-medium text-yellow-800">
+          <h3 className="text-sm text-text-muted text-yellow-800">
             Yêu cầu hủy lịch hẹn
           </h3>
           <div className="mt-2 text-sm text-yellow-700">
@@ -164,8 +164,8 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
               </p>
             )}
             {refundMethod === "bank_transfer" && customerBankInfo && (
-              <div className="mt-2 p-3 bg-white rounded border">
-                <p className="font-medium text-gray-900 mb-2">
+              <div className="mt-2 p-3 bg-dark-300 rounded border">
+                <p className="text-text-muted text-white mb-2">
                   Thông tin tài khoản:
                 </p>
                 <p>
@@ -181,7 +181,7 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
                 </p>
                 {customerBankProofImage && (
                   <div className="mt-2">
-                    <p className="font-medium text-gray-900 mb-1">
+                    <p className="text-text-muted text-white mb-1">
                       Ảnh chứng minh:
                     </p>
                     <img
@@ -200,7 +200,7 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
               <button
                 onClick={() => setShowApproveModal(true)}
                 disabled={loading}
-                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 text-text-muted rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-green-500 disabled:opacity-50"
               >
                 {loading ? "Đang xử lý..." : "Duyệt yêu cầu hủy"}
               </button>
@@ -217,7 +217,7 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
                   <button
                     onClick={() => setShowRefundModal(true)}
                     disabled={loading}
-                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 text-text-muted rounded-md text-white bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400 disabled:opacity-50"
                   >
                     {loading ? "Đang xử lý..." : "Xác nhận hoàn tiền"}
                   </button>
@@ -245,7 +245,7 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
                       />
                     </svg>
                     <div className="ml-2">
-                      <p className="text-sm font-medium text-green-800">
+                      <p className="text-sm text-text-muted text-green-800">
                         Đã hoàn tiền thành công
                       </p>
                       <p className="text-xs text-green-600">
@@ -286,20 +286,20 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
 
       {/* Approve Cancellation Modal */}
       {showApproveModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-dark-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-dark-300">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <h3 className="text-lg text-text-muted text-white mb-4">
                 Duyệt yêu cầu hủy lịch hẹn
               </h3>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm text-text-muted text-text-secondary mb-2">
                   Ghi chú (tùy chọn)
                 </label>
                 <textarea
                   value={approveNotes}
                   onChange={(e) => setApproveNotes(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full px-3 py-2 border border-dark-200 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   rows={3}
                   placeholder="Nhập ghi chú cho việc duyệt yêu cầu hủy..."
                 />
@@ -310,7 +310,7 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
                     setShowApproveModal(false);
                     setApproveNotes("");
                   }}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                  className="px-4 py-2 bg-dark-300 text-text-secondary rounded-md hover:bg-dark-400"
                 >
                   Hủy
                 </button>
@@ -329,22 +329,22 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
 
       {/* Process Refund Modal */}
       {showRefundModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-dark-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-dark-300">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+              <h3 className="text-lg text-text-muted text-white mb-4">
                 Xác nhận hoàn tiền
               </h3>
 
               {/* Refund Method Display */}
               {refundMethod && (
-                <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm font-medium text-blue-900">
+                <div className="mb-4 p-3 bg-dark-900 rounded-lg">
+                  <p className="text-sm text-text-muted text-lime-900">
                     Phương thức hoàn tiền:{" "}
                     {refundMethod === "cash" ? "Tiền mặt" : "Chuyển khoản"}
                   </p>
                   {refundMethod === "bank_transfer" && customerBankInfo && (
-                    <div className="mt-2 text-sm text-blue-800">
+                    <div className="mt-2 text-sm text-lime-800">
                       <p>
                         <strong>Ngân hàng:</strong> {customerBankInfo.bankName}
                       </p>
@@ -363,13 +363,13 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
 
               {/* Notes */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm text-text-muted text-text-secondary mb-2">
                   Ghi chú (tùy chọn)
                 </label>
                 <textarea
                   value={refundNotes}
                   onChange={(e) => setRefundNotes(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-lime-400"
                   rows={3}
                   placeholder="Nhập ghi chú cho việc hoàn tiền..."
                 />
@@ -377,8 +377,8 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
 
               {/* Proof Image Upload */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Ảnh chứng từ hoàn tiền <span className="text-red-500">*</span>
+                <label className="block text-sm text-text-muted text-text-secondary mb-2">
+                  Ảnh chứng từ hoàn tiền <span className="text-red-600">*</span>
                 </label>
 
                 {refundProofImage ? (
@@ -398,17 +398,17 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
                         <XMarkIcon className="h-4 w-4" />
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-text-muted">
                       Ảnh đã upload thành công
                     </p>
                   </div>
                 ) : (
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
+                  <div className="border-2 border-dashed border-dark-300 rounded-lg p-6 text-center">
+                    <PhotoIcon className="mx-auto h-12 w-12 text-text-muted" />
                     <div className="mt-4">
                       <label
                         htmlFor="refundProofImage"
-                        className={`cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 ${
+                        className={`cursor-pointer inline-flex items-center px-4 py-2 border border-dark-200 rounded-md shadow-sm text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900 ${
                           loading ? "opacity-50 cursor-not-allowed" : ""
                         }`}
                       >
@@ -425,7 +425,7 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
                         disabled={loading || uploadingImage}
                       />
                     </div>
-                    <p className="mt-2 text-xs text-gray-500">
+                    <p className="mt-2 text-xs text-text-muted">
                       PNG, JPG tối đa 5MB
                     </p>
                   </div>
@@ -439,14 +439,14 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
                     setRefundNotes("");
                     setRefundProofImage("");
                   }}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                  className="px-4 py-2 bg-dark-300 text-text-secondary rounded-md hover:bg-dark-400"
                 >
                   Hủy
                 </button>
                 <button
                   onClick={handleProcessRefund}
                   disabled={loading || !refundProofImage}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  className="px-4 py-2 bg-lime-600 text-white rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
                 >
                   {loading ? "Đang xử lý..." : "Xác nhận hoàn tiền"}
                 </button>

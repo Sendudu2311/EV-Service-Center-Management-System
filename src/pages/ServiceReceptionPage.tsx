@@ -262,7 +262,7 @@ const ServiceReceptionPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-dark-900">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -270,15 +270,15 @@ const ServiceReceptionPage: React.FC = () => {
 
   if (!appointment) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-dark-900">
         <div className="text-center">
-          <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">Không tìm thấy lịch hẹn</h3>
-          <p className="mt-1 text-sm text-gray-500">Lịch hẹn không tồn tại hoặc đã bị xóa.</p>
+          <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-600" />
+          <h3 className="mt-2 text-sm font-semibold text-white">Không tìm thấy lịch hẹn</h3>
+          <p className="mt-1 text-sm text-text-muted">Lịch hẹn không tồn tại hoặc đã bị xóa.</p>
           <div className="mt-6">
             <button
               onClick={() => navigate('/appointments')}
-              className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+              className="inline-flex items-center rounded-md bg-lime-200 px text-dark-900 shadow-sm hover:bg-lime-100"
             >
               Quay lại danh sách lịch hẹn
             </button>
@@ -293,22 +293,22 @@ const ServiceReceptionPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-dark-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="md:flex md:items-center md:justify-between mb-8">
           <div className="min-w-0 flex-1">
-            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+            <h2 className="text-2xl font-bold leading-7 text-white sm:truncate sm:text-3xl sm:tracking-tight">
               Phiếu tiếp nhận dịch vụ
             </h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-text-muted">
               Lịch hẹn #{appointment.appointmentNumber} - {appointment.customerId.firstName} {appointment.customerId.lastName}
             </p>
           </div>
           <div className="mt-4 flex md:ml-4 md:mt-0 space-x-3">
             <button
               onClick={() => navigate('/appointments')}
-              className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+              className="inline-flex items-center rounded-md bg-dark-300 px-3 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-dark-900"
             >
               <XMarkIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
               Hủy
@@ -316,7 +316,7 @@ const ServiceReceptionPage: React.FC = () => {
             <button
               onClick={handleSubmit(onSubmit)}
               disabled={saving}
-              className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 disabled:opacity-50"
+              className="inline-flex items-center rounded-md bg-lime-200 px text-dark-900 shadow-sm hover:bg-lime-100 disabled:opacity-50"
             >
               {saving ? (
                 <>
@@ -334,32 +334,32 @@ const ServiceReceptionPage: React.FC = () => {
         </div>
 
         {/* Appointment Summary */}
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200 mb-6">
+        <div className="bg-dark-300 shadow-sm rounded-lg border border-dark-200 mb-6">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Thông tin lịch hẹn</h3>
+            <h3 className="text-lg text-text-muted text-white mb-4">Thông tin lịch hẹn</h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div>
-                <p className="text-sm font-medium text-gray-500">Khách hàng</p>
-                <p className="text-sm text-gray-900">{appointment.customerId.firstName} {appointment.customerId.lastName}</p>
-                <p className="text-sm text-gray-500">{appointment.customerId.phone}</p>
-                <p className="text-sm text-gray-500">{appointment.customerId.email}</p>
+                <p className="text-sm text-text-muted text-text-muted">Khách hàng</p>
+                <p className="text-sm text-white">{appointment.customerId.firstName} {appointment.customerId.lastName}</p>
+                <p className="text-sm text-text-muted">{appointment.customerId.phone}</p>
+                <p className="text-sm text-text-muted">{appointment.customerId.email}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Xe</p>
-                <p className="text-sm text-gray-900">
+                <p className="text-sm text-text-muted text-text-muted">Xe</p>
+                <p className="text-sm text-white">
                   {appointment.vehicleId.make} {appointment.vehicleId.model} {appointment.vehicleId.year}
                 </p>
-                <p className="text-sm text-gray-500">Biển số: {appointment.vehicleId.licensePlate}</p>
-                <p className="text-sm text-gray-500">VIN: {appointment.vehicleId.vin}</p>
+                <p className="text-sm text-text-muted">Biển số: {appointment.vehicleId.licensePlate}</p>
+                <p className="text-sm text-text-muted">VIN: {appointment.vehicleId.vin}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Lịch hẹn</p>
-                <p className="text-sm text-gray-900">
+                <p className="text-sm text-text-muted text-text-muted">Lịch hẹn</p>
+                <p className="text-sm text-white">
                   {appointment?.scheduledDate && appointment?.scheduledTime
                     ? formatVietnameseDateTime(combineDateTime(appointment.scheduledDate, appointment.scheduledTime))
                     : 'Chưa có thời gian'}
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-text-muted">
                   Chi phí ước tính: {formatVND(appointment.totalAmount)}
                 </p>
               </div>
@@ -368,8 +368,8 @@ const ServiceReceptionPage: React.FC = () => {
         </div>
 
         {/* Tabs */}
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
-          <div className="border-b border-gray-200">
+        <div className="bg-dark-300 shadow-sm rounded-lg border border-dark-200">
+          <div className="border-b border-dark-200">
             <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
@@ -377,10 +377,10 @@ const ServiceReceptionPage: React.FC = () => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium flex items-center space-x-2 ${
+                    className={`whitespace-nowrap border-b-2 py-4 px-1 text-sm text-text-muted flex items-center space-x-2 ${
                       activeTab === tab.id
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                        ? 'border-blue-500 text-lime-600'
+                        : 'border-transparent text-text-muted hover:border-dark-200 hover:text-text-secondary'
                     }`}
                   >
                     <Icon className="h-5 w-5" />
