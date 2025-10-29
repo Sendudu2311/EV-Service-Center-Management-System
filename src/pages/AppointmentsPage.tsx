@@ -539,29 +539,29 @@ const AppointmentsPage: React.FC = () => {
    */
   const getStatusBadge = useCallback((status: DetailedAppointmentStatus) => {
     const statusColors = {
-      pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      confirmed: "bg-blue-100 text-blue-800 border-blue-200",
-      customer_arrived: "bg-indigo-100 text-indigo-800 border-indigo-200",
-      reception_created: "bg-purple-100 text-purple-800 border-purple-200",
-      reception_approved: "bg-cyan-100 text-cyan-800 border-cyan-200",
-      parts_insufficient: "bg-orange-100 text-orange-800 border-orange-200",
-      waiting_for_parts: "bg-amber-100 text-amber-800 border-amber-200",
-      rescheduled: "bg-gray-100 text-gray-800 border-gray-200",
-      in_progress: "bg-green-100 text-green-800 border-green-200",
-      parts_requested: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      completed: "bg-emerald-100 text-emerald-800 border-emerald-200",
-      invoiced: "bg-teal-100 text-teal-800 border-teal-200",
-      cancelled: "bg-red-100 text-red-800 border-red-200",
-      cancel_requested: "bg-orange-100 text-orange-800 border-orange-200",
-      cancel_approved: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      cancel_refunded: "bg-green-100 text-green-800 border-green-200",
-      no_show: "bg-gray-100 text-gray-800 border-gray-200",
+      pending: "bg-orange-600 text-white border-orange-700",
+      confirmed: "bg-lime-200 text-dark-900 border-lime-300",
+      customer_arrived: "bg-dark-600 text-white border-blue-700",
+      reception_created: "bg-purple-600 text-white border-purple-700",
+      reception_approved: "bg-lime-200 text-dark-900 border-lime-300",
+      parts_insufficient: "bg-red-600 text-white border-red-700",
+      waiting_for_parts: "bg-orange-600 text-white border-orange-700",
+      rescheduled: "bg-text-muted text-white border-dark-200",
+      in_progress: "bg-dark-600 text-white border-blue-700",
+      parts_requested: "bg-orange-600 text-white border-orange-700",
+      completed: "bg-green-600 text-white border-green-700",
+      invoiced: "bg-green-600 text-white border-green-700",
+      cancelled: "bg-red-600 text-white border-red-700",
+      cancel_requested: "bg-orange-600 text-white border-orange-700",
+      cancel_approved: "bg-orange-600 text-white border-orange-700",
+      cancel_refunded: "bg-green-600 text-white border-green-700",
+      no_show: "bg-text-muted text-white border-dark-200",
     };
 
     return (
       <span
         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-          statusColors[status] || "bg-gray-100 text-gray-800 border-gray-200"
+          statusColors[status] || "bg-text-muted text-white border-dark-200"
         }`}
         title={appointmentStatusTranslations[status] || status}
         role="status"
@@ -579,10 +579,10 @@ const AppointmentsPage: React.FC = () => {
    */
   const getPriorityBadge = useCallback((priority: AppointmentPriority) => {
     const priorityColors = {
-      low: "bg-gray-100 text-gray-800 border-gray-200",
-      normal: "bg-blue-100 text-blue-800 border-blue-200",
-      high: "bg-orange-100 text-orange-800 border-orange-200",
-      urgent: "bg-red-100 text-red-800 border-red-200",
+      low: "bg-text-muted text-white border-dark-200",
+      normal: "bg-dark-600 text-white border-blue-700",
+      high: "bg-orange-600 text-white border-orange-700",
+      urgent: "bg-red-600 text-white border-red-700",
     };
 
     const priorityIcon =
@@ -594,7 +594,7 @@ const AppointmentsPage: React.FC = () => {
       <span
         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
           priorityColors[priority] ||
-          "bg-gray-100 text-gray-800 border-gray-200"
+          "bg-dark-100 text-gray-800 border-dark-200"
         }`}
         title={priorityTranslations[priority] || priority}
         role="status"
@@ -662,7 +662,7 @@ const AppointmentsPage: React.FC = () => {
               <button
                 onClick={() => showCancelConfirmation(appointment)}
                 disabled={state.updatingStatus === appointment._id}
-                className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-dark-900"
                 aria-label="Yêu cầu hủy lịch hẹn"
               >
                 {state.updatingStatus === appointment._id ? (
@@ -688,7 +688,7 @@ const AppointmentsPage: React.FC = () => {
           >
             <button
               disabled
-              className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-gray-500 cursor-not-allowed"
+              className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-dark-9000 cursor-not-allowed"
               aria-label="Đã hủy"
             >
               Đã hủy
@@ -768,7 +768,7 @@ const AppointmentsPage: React.FC = () => {
             <button
               onClick={() => showCancelConfirmation(appointment)}
               disabled={state.updatingStatus === appointment._id}
-              className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+              className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-dark-900"
               aria-label="Yêu cầu hủy lịch hẹn"
             >
               {state.updatingStatus === appointment._id ? (
@@ -802,7 +802,7 @@ const AppointmentsPage: React.FC = () => {
                 setShowInvoiceDisplayModal(true);
               }}
               disabled={state.updatingStatus === appointment._id}
-              className="inline-flex items-center px-2 py-1 border border-gray-300 text-xs rounded text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex items-center px-2 py-1 border border-dark-200 text-xs rounded text-text-secondary bg-dark-300 hover:bg-dark-900 disabled:opacity-50"
             >
               Xem hóa đơn chi tiết
             </button>
@@ -843,7 +843,7 @@ const AppointmentsPage: React.FC = () => {
                 setShowInvoiceDisplayModal(true);
               }}
               disabled={state.updatingStatus === appointment._id}
-              className="inline-flex items-center px-2 py-1 border border-gray-300 text-xs rounded text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+              className="inline-flex items-center px-2 py-1 border border-dark-200 text-xs rounded text-text-secondary bg-dark-300 hover:bg-dark-900 disabled:opacity-50"
             >
               Xem hóa đơn chi tiết
             </button>
@@ -866,7 +866,7 @@ const AppointmentsPage: React.FC = () => {
               key={status}
               onClick={() => handleStatusUpdate(appointment._id, status)}
               disabled={state.updatingStatus === appointment._id}
-              className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-dark-900 bg-lime-200 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-lime-400 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-offset-dark-900"
               aria-label={`Cập nhật trạng thái: ${appointmentStatusTranslations[status]}`}
             >
               {state.updatingStatus === appointment._id ? (
@@ -910,7 +910,7 @@ const AppointmentsPage: React.FC = () => {
         label: "Hoàn thành",
         value: state.appointments.filter((a) => a.status === "completed")
           .length,
-        color: "emerald",
+        color: "green",
         icon: CheckCircleIcon,
       },
     ],
@@ -924,14 +924,14 @@ const AppointmentsPage: React.FC = () => {
     if (pagination.totalPages <= 1) return null;
 
     return (
-      <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 sm:px-6">
+      <div className="flex items-center justify-between px-4 py-3 bg-dark-300 border-t border-dark-200 sm:px-6">
         <div className="flex justify-between flex-1 sm:hidden">
           <button
             onClick={() =>
               handleFilterChange("page", Math.max(1, filters.page - 1))
             }
             disabled={filters.page <= 1}
-            className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+            className="relative inline-flex items-center px-4 py-2 text-sm text-text-muted text-text-secondary bg-dark-300 border border-dark-200 rounded-md hover:bg-dark-900 disabled:opacity-50"
           >
             Trước
           </button>
@@ -943,24 +943,24 @@ const AppointmentsPage: React.FC = () => {
               )
             }
             disabled={filters.page >= pagination.totalPages}
-            className="relative ml-3 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+            className="relative ml-3 inline-flex items-center px-4 py-2 text-sm text-text-muted text-text-secondary bg-dark-300 border border-dark-200 rounded-md hover:bg-dark-900 disabled:opacity-50"
           >
             Sau
           </button>
         </div>
         <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm text-gray-700">
+            <p className="text-sm text-text-secondary">
               Hiển thị{" "}
-              <span className="font-medium">
+              <span className="text-text-muted">
                 {(filters.page - 1) * filters.limit + 1}
               </span>{" "}
               đến{" "}
-              <span className="font-medium">
+              <span className="text-text-muted">
                 {Math.min(filters.page * filters.limit, pagination.total)}
               </span>{" "}
               trong tổng số{" "}
-              <span className="font-medium">{pagination.total}</span> kết quả
+              <span className="text-text-muted">{pagination.total}</span> kết quả
             </p>
           </div>
           <div>
@@ -977,10 +977,10 @@ const AppointmentsPage: React.FC = () => {
                     <button
                       key={page}
                       onClick={() => handleFilterChange("page", page)}
-                      className={`relative inline-flex items-center px-4 py-2 text-sm font-medium ${
+                      className={`relative inline-flex items-center px-4 py-2 text-sm text-text-muted ${
                         page === filters.page
-                          ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                          ? "z-10 bg-dark-50 border-blue-500 text-lime-600"
+                          : "bg-dark-300 border-dark-200 text-text-muted hover:bg-dark-900"
                       } border ${index === 0 ? "rounded-l-md" : ""} ${
                         index === Math.min(4, pagination.totalPages - 1)
                           ? "rounded-r-md"
@@ -1002,13 +1002,13 @@ const AppointmentsPage: React.FC = () => {
   // Loading state
   if (state.loading && state.appointments.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-dark-900">
         <div className="text-center">
-          <ArrowPathIcon className="mx-auto h-12 w-12 text-blue-600 animate-spin" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">
+          <ArrowPathIcon className="mx-auto h-12 w-12 text-lime-600 animate-spin" />
+          <h3 className="mt-2 text-sm text-text-muted text-white">
             Đang tải lịch hẹn...
           </h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-text-muted">
             Vui lòng đợi trong giây lát
           </p>
         </div>
@@ -1017,23 +1017,23 @@ const AppointmentsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-dark-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="md:flex md:items-center md:justify-between mb-8">
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+            <h1 className="text-2xl font-bold leading-7 text-white sm:truncate sm:text-3xl sm:tracking-tight">
               Quản lý lịch hẹn
             </h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-text-secondary">
               Quản lý và theo dõi lịch hẹn bảo dưỡng xe điện
             </p>
             {state.error && (
-              <div className="mt-2 flex items-center text-sm text-red-600">
+              <div className="mt-2 flex items-center text-sm text-red-400">
                 <ExclamationTriangleIcon className="w-4 h-4 mr-1" />
                 {state.error}
                 {retryCount > 0 && (
-                  <span className="ml-2 text-xs text-gray-500">
+                  <span className="ml-2 text-xs text-text-muted">
                     (Đang thử lại lần {retryCount}/3)
                   </span>
                 )}
@@ -1044,7 +1044,7 @@ const AppointmentsPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setShowFilters(!showFilters)}
-              className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 mr-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="inline-flex items-center rounded-md bg-dark-300 px-3 py-2 text-sm font-semibold text-lime-600 shadow-sm ring-1 ring-inset ring-dark-200 hover:bg-dark-200 mr-3 focus:outline-none focus:ring-2 focus:ring-lime-600"
               aria-label="Bật/tắt bộ lọc"
             >
               <FunnelIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
@@ -1054,7 +1054,7 @@ const AppointmentsPage: React.FC = () => {
               <div className="mt-6">
                 <button
                   onClick={() => fetchAppointments(true)}
-                  className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+                  className="inline-flex items-center rounded-md bg-lime-200 px-3 py-2 text-sm font-semibold text-dark-900 shadow-sm hover:bg-lime-100"
                 >
                   <ArrowPathIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
                   Thử lại
@@ -1070,7 +1070,7 @@ const AppointmentsPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowForm(true)}
-                      className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+                      className="inline-flex items-center rounded-md bg-lime-200 px-3 py-2 text-sm font-semibold text-dark-900 shadow-sm hover:bg-lime-100"
                     >
                       <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
                       Tạo lịch hẹn mới
@@ -1084,12 +1084,12 @@ const AppointmentsPage: React.FC = () => {
 
         {/* Filters */}
         {showFilters && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="bg-dark-300 rounded-lg shadow-sm border border-dark-200 p-4 mb-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div>
                 <label
                   htmlFor="status-filter"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm text-text-muted text-white mb-1"
                 >
                   Trạng thái
                 </label>
@@ -1102,7 +1102,7 @@ const AppointmentsPage: React.FC = () => {
                       e.target.value as DetailedAppointmentStatus | ""
                     )
                   }
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className="block w-full rounded-md border-dark-200 shadow-sm focus:border-lime-400 focus:ring-lime-500 sm:text-sm"
                 >
                   <option value="">Tất cả trạng thái</option>
                   {Object.entries(appointmentStatusTranslations).map(
@@ -1117,7 +1117,7 @@ const AppointmentsPage: React.FC = () => {
               <div>
                 <label
                   htmlFor="priority-filter"
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm text-text-muted text-text-secondary mb-1"
                 >
                   Độ ưu tiên
                 </label>
@@ -1130,7 +1130,7 @@ const AppointmentsPage: React.FC = () => {
                       e.target.value as AppointmentPriority | ""
                     )
                   }
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className="block w-full rounded-md border-dark-200 shadow-sm focus:border-lime-400 focus:ring-lime-500 sm:text-sm"
                 >
                   <option value="">Tất cả độ ưu tiên</option>
                   {Object.entries(priorityTranslations).map(([key, value]) => (
@@ -1143,14 +1143,14 @@ const AppointmentsPage: React.FC = () => {
               <div className="flex items-end">
                 <button
                   onClick={clearFilters}
-                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  className="w-full bg-dark-200 hover:bg-dark-100 text-text-secondary px-4 py-2 rounded-md text-sm text-text-muted transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:ring-offset-dark-900"
                   aria-label="Xóa tất cả bộ lọc"
                 >
                   Xóa bộ lọc
                 </button>
               </div>
             </div>
-            <div className="mt-2 text-xs text-gray-500">
+            <div className="mt-2 text-xs text-text-muted">
               📋 Danh sách đã được sắp xếp theo thứ tự ưu tiên trạng thái
             </div>
           </div>
@@ -1163,7 +1163,7 @@ const AppointmentsPage: React.FC = () => {
             return (
               <div
                 key={stat.label}
-                className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200"
+                className="bg-dark-300 overflow-hidden shadow-sm rounded-lg border border-dark-200"
               >
                 <div className="p-5">
                   <div className="flex items-center">
@@ -1173,7 +1173,7 @@ const AppointmentsPage: React.FC = () => {
                       />
                     </div>
                     <div className="ml-3 flex-1">
-                      <p className="text-sm font-medium text-gray-500 truncate">
+                      <p className="text-sm text-text-muted text-text-muted truncate">
                         {stat.label}
                       </p>
                       <p
@@ -1190,15 +1190,15 @@ const AppointmentsPage: React.FC = () => {
         </div>
 
         {/* Appointments List */}
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+        <div className="bg-dark-300 shadow-sm rounded-lg border border-dark-200">
           <div className="px-4 py-5 sm:p-6">
             {state.appointments.length === 0 && !state.loading ? (
               <div className="text-center py-12">
-                <CalendarIcon className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-semibold text-gray-900">
+                <CalendarIcon className="mx-auto h-12 w-12 text-text-muted" />
+                <h3 className="mt-2 text-sm font-semibold text-white">
                   {state.error ? "Lỗi khi tải dữ liệu" : "Không có lịch hẹn"}
                 </h3>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-text-muted">
                   {state.error
                     ? "Vui lòng thử lại sau hoặc liên hệ bộ phận hỗ trợ"
                     : "Bắt đầu bằng cách tạo một lịch hẹn mới."}
@@ -1207,7 +1207,7 @@ const AppointmentsPage: React.FC = () => {
                   <div className="mt-6">
                     <button
                       onClick={() => fetchAppointments(true)}
-                      className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+                      className="inline-flex items-center rounded-md bg-lime-200 px text-dark-900 shadow-sm hover:bg-lime-100"
                     >
                       <ArrowPathIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
                       Thử lại
@@ -1217,12 +1217,12 @@ const AppointmentsPage: React.FC = () => {
                   user?.role !== "technician" && (
                     <div className="mt-6">
                       {user?.role === "customer" && !hasVehicles ? (
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-text-muted">
                           Bạn cần thêm ít nhất một xe vào hệ thống để tạo lịch
                           hẹn.{" "}
                           <a
                             href="/vehicles"
-                            className="text-blue-600 hover:underline"
+                            className="text-lime-600 hover:underline"
                           >
                             Thêm xe ngay
                           </a>
@@ -1231,7 +1231,7 @@ const AppointmentsPage: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setShowForm(true)}
-                          className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+                          className="inline-flex items-center rounded-md bg-lime-200 px text-dark-900 shadow-sm hover:bg-lime-100"
                         >
                           <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
                           Tạo lịch hẹn mới
@@ -1246,12 +1246,12 @@ const AppointmentsPage: React.FC = () => {
                 {state.appointments.map((appointment) => (
                   <article
                     key={appointment._id}
-                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors focus-within:ring-2 focus-within:ring-blue-500"
+                    className="border border-dark-200 rounded-lg p-4 hover:bg-dark-900 transition-colors focus-within:ring-2 focus-within:ring-blue-500"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <header className="flex items-center space-x-4 mb-2">
-                          <h2 className="text-lg font-semibold text-gray-900">
+                          <h2 className="text-lg font-semibold text-white">
                             #{appointment.appointmentNumber}
                           </h2>
                           {getStatusBadge(appointment.status)}
@@ -1260,40 +1260,40 @@ const AppointmentsPage: React.FC = () => {
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-3">
                           <div>
-                            <h3 className="text-sm font-medium text-gray-500">
+                            <h3 className="text-sm text-text-muted text-text-muted">
                               Khách hàng
                             </h3>
-                            <p className="text-sm text-gray-900">
+                            <p className="text-sm text-white">
                               {appointment.customerId.firstName}{" "}
                               {appointment.customerId.lastName}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-text-muted">
                               <a
                                 href={`tel:${appointment.customerId.phone}`}
-                                className="hover:text-blue-600"
+                                className="hover:text-lime-600"
                               >
                                 {appointment.customerId.phone}
                               </a>
                             </p>
                           </div>
                           <div>
-                            <h3 className="text-sm font-medium text-gray-500">
+                            <h3 className="text-sm text-text-muted text-text-muted">
                               Xe
                             </h3>
-                            <p className="text-sm text-gray-900">
+                            <p className="text-sm text-white">
                               {appointment.vehicleId.make}{" "}
                               {appointment.vehicleId.model}{" "}
                               {appointment.vehicleId.year}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-text-muted">
                               {appointment.vehicleId.licensePlate}
                             </p>
                           </div>
                           <div>
-                            <h3 className="text-sm font-medium text-gray-500">
+                            <h3 className="text-sm text-text-muted text-text-muted">
                               Lịch hẹn
                             </h3>
-                            <p className="text-sm text-gray-900">
+                            <p className="text-sm text-white">
                               <time
                                 dateTime={combineDateTime(
                                   appointment.scheduledDate,
@@ -1308,7 +1308,7 @@ const AppointmentsPage: React.FC = () => {
                                 )}
                               </time>
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-text-muted">
                               Chi phí ước tính:{" "}
                               {formatVND(appointment.totalAmount || 0)}
                             </p>
@@ -1317,10 +1317,10 @@ const AppointmentsPage: React.FC = () => {
 
                         {appointment.assignedTechnician && (
                           <div className="mb-3">
-                            <h3 className="text-sm font-medium text-gray-500">
+                            <h3 className="text-sm text-text-muted text-text-muted">
                               Kỹ thuật viên
                             </h3>
-                            <p className="text-sm text-gray-900">
+                            <p className="text-sm text-white">
                               {appointment.assignedTechnician.firstName}{" "}
                               {appointment.assignedTechnician.lastName}
                             </p>
@@ -1333,7 +1333,7 @@ const AppointmentsPage: React.FC = () => {
                       <div className="flex items-center space-x-2 ml-4">
                         <button
                           onClick={() => handleViewDetails(appointment)}
-                          className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                          className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-dark-900 bg-lime-200 hover:bg-lime-100 transition-all duration-200 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-offset-dark-900"
                           aria-label={`Xem chi tiết lịch hẹn #${appointment.appointmentNumber}`}
                         >
                           <EyeIcon className="h-4 w-4" />

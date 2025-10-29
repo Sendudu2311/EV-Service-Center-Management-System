@@ -659,20 +659,20 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        <div className="fixed inset-0 bg-dark-9000 bg-opacity-75 transition-opacity" />
 
-        <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+        <div className="relative transform overflow-hidden rounded-lg bg-dark-300 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
           <form onSubmit={handleSubmit}>
-            <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+            <div className="bg-dark-300 px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
               <div className="flex items-start justify-between mb-6">
                 <div>
-                  <h3 className="text-lg font-semibold leading-6 text-gray-900">
+                  <h3 className="text-lg font-semibold leading-6 text-white">
                     {paymentVerified
                       ? "Appointment Details"
                       : "Book New Appointment"}
                   </h3>
                   {paymentVerified && (
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm text-text-secondary mt-1">
                       Payment completed - reviewing your booking details
                     </p>
                   )}
@@ -680,7 +680,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                 <button
                   type="button"
                   onClick={onCancel}
-                  className="rounded-md bg-white text-gray-400 hover:text-gray-500"
+                  className="rounded-md bg-dark-300 text-text-muted hover:text-text-muted"
                 >
                   <XMarkIcon className="h-6 w-6" />
                 </button>
@@ -756,14 +756,14 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 
                   {/* Booking Summary for Payment Verified */}
                   {paymentVerified && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                      <h4 className="text-sm font-medium text-blue-900 mb-3">
+                    <div className="bg-dark-900 border border-blue-200 rounded-lg p-4 mb-6">
+                      <h4 className="text-sm text-text-muted text-lime-900 mb-3">
                         Booking Summary
                       </h4>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Vehicle:</span>
-                          <span className="font-medium">
+                          <span className="text-text-secondary">Vehicle:</span>
+                          <span className="text-text-muted">
                             {(() => {
                               const vehicle = vehicles.find(
                                 (v) => v._id === formData.vehicleId
@@ -775,22 +775,22 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Date & Time:</span>
-                          <span className="font-medium">
+                          <span className="text-text-secondary">Date & Time:</span>
+                          <span className="text-text-muted">
                             {formData.scheduledDate} at {formData.scheduledTime}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Services:</span>
-                          <span className="font-medium">
+                          <span className="text-text-secondary">Services:</span>
+                          <span className="text-text-muted">
                             {formData.services.length} service
                             {formData.services.length !== 1 ? "s" : ""} selected
                           </span>
                         </div>
                         {formData.technicianId && (
                           <div className="flex justify-between">
-                            <span className="text-gray-600">Technician:</span>
-                            <span className="font-medium">
+                            <span className="text-text-secondary">Technician:</span>
+                            <span className="text-text-muted">
                               {(() => {
                                 const technician = technicians.find(
                                   (t) => t._id === formData.technicianId
@@ -803,12 +803,12 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                           </div>
                         )}
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Priority:</span>
-                          <span className="font-medium capitalize">
+                          <span className="text-text-secondary">Priority:</span>
+                          <span className="text-text-muted capitalize">
                             {formData.priority}
                           </span>
                         </div>
-                        <div className="flex justify-between text-blue-600 font-semibold">
+                        <div className="flex justify-between text-lime-600 font-semibold">
                           <span>Total Amount:</span>
                           <span>
                             {new Intl.NumberFormat("vi-VN", {
@@ -826,9 +826,9 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                     <div>
                       <label
                         htmlFor="vehicleId"
-                        className="block text-sm font-medium text-gray-700"
+                        className="block text-sm text-text-muted text-text-secondary"
                       >
-                        Select Vehicle <span className="text-red-500">*</span>
+                        Select Vehicle <span className="text-red-600">*</span>
                       </label>
                       <select
                         id="vehicleId"
@@ -837,9 +837,9 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                         value={formData.vehicleId}
                         onChange={handleChange}
                         disabled={paymentVerified}
-                        className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                        className={`mt-1 block w-full rounded-md border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 ${
                           paymentVerified
-                            ? "bg-gray-100 cursor-not-allowed opacity-60"
+                            ? "bg-dark-100 cursor-not-allowed opacity-60"
                             : ""
                         }`}
                       >
@@ -860,9 +860,9 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                       <div>
                         <label
                           htmlFor="scheduledDate"
-                          className="block text-sm font-medium text-gray-700"
+                          className="block text-sm text-text-muted text-text-secondary"
                         >
-                          Date <span className="text-red-500">*</span>
+                          Date <span className="text-red-600">*</span>
                         </label>
                         <input
                           type="date"
@@ -873,9 +873,9 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                           value={formData.scheduledDate}
                           onChange={handleChange}
                           disabled={paymentVerified}
-                          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                          className={`mt-1 block w-full rounded-md border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 ${
                             paymentVerified
-                              ? "bg-gray-100 cursor-not-allowed opacity-60"
+                              ? "bg-dark-100 cursor-not-allowed opacity-60"
                               : ""
                           }`}
                         />
@@ -883,9 +883,9 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                       <div>
                         <label
                           htmlFor="scheduledTime"
-                          className="block text-sm font-medium text-gray-700"
+                          className="block text-sm text-text-muted text-text-secondary"
                         >
-                          Time <span className="text-red-500">*</span>
+                          Time <span className="text-red-600">*</span>
                         </label>
                         <select
                           id="scheduledTime"
@@ -894,9 +894,9 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                           value={formData.scheduledTime}
                           onChange={(e) => handleTimeChange(e.target.value)}
                           disabled={paymentVerified}
-                          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                          className={`mt-1 block w-full rounded-md border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 ${
                             paymentVerified
-                              ? "bg-gray-100 cursor-not-allowed opacity-60"
+                              ? "bg-dark-100 cursor-not-allowed opacity-60"
                               : ""
                           }`}
                         >
@@ -915,7 +915,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                       formData.scheduledTime &&
                       slots.length > 0 && (
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-3">
+                          <label className="block text-sm text-text-muted text-text-secondary mb-3">
                             Available Time Slots
                           </label>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -943,16 +943,16 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                                   }
                                   className={`border rounded-lg p-3 cursor-pointer transition-all ${
                                     isSelected
-                                      ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
+                                      ? "border-blue-500 bg-dark-900 ring-2 ring-blue-200"
                                       : isAvailable
-                                        ? "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
-                                        : "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
+                                        ? "border-dark-200 hover:border-blue-300 hover:bg-dark-900"
+                                        : "border-dark-200 bg-dark-900 cursor-not-allowed opacity-60"
                                   } ${
                                     paymentVerified ? "cursor-not-allowed" : ""
                                   }`}
                                 >
                                   <div className="flex items-center justify-between mb-2">
-                                    <div className="text-sm font-medium text-gray-900">
+                                    <div className="text-sm text-text-muted text-white">
                                       {(() => {
                                         const startTime =
                                           utcToVietnameseDateTime(
@@ -980,16 +980,16 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                                           : "Full"}
                                     </div>
                                   </div>
-                                  <div className="text-xs text-gray-600 mb-1">
+                                  <div className="text-xs text-text-secondary mb-1">
                                     Capacity:{" "}
                                     {slot.capacity - (slot.bookedCount || 0)}/
                                     {slot.capacity} spots
                                   </div>
-                                  <div className="text-xs text-gray-500">
+                                  <div className="text-xs text-text-muted">
                                     Technicians: {technicianNames}
                                   </div>
                                   {isSelected && (
-                                    <div className="mt-2 text-xs text-blue-600 font-medium">
+                                    <div className="mt-2 text-xs text-lime-600 text-text-muted">
                                       ✓ Selected
                                     </div>
                                   )}
@@ -998,8 +998,8 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                             })}
                           </div>
                           {selectedSlotId && (
-                            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                              <div className="text-sm text-blue-800">
+                            <div className="mt-3 p-3 bg-dark-900 border border-blue-200 rounded-lg">
+                              <div className="text-sm text-lime-800">
                                 <strong>Selected Time Slot:</strong>{" "}
                                 {(() => {
                                   const slot = slots.find(
@@ -1047,13 +1047,13 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                     {/* Services */}
                     {services.length > 0 && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                        <label className="block text-sm text-text-muted text-text-secondary mb-3">
                           Select Services{" "}
-                          <span className="text-red-500">*</span>
+                          <span className="text-red-600">*</span>
                         </label>
                         <div
-                          className={`space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3 ${
-                            paymentVerified ? "bg-gray-50" : ""
+                          className={`space-y-2 max-h-48 overflow-y-auto border border-dark-200 rounded-md p-3 ${
+                            paymentVerified ? "bg-dark-900" : ""
                           }`}
                         >
                           {services.map((service) => (
@@ -1067,7 +1067,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                                 )}
                                 onChange={handleChange}
                                 disabled={paymentVerified}
-                                className={`mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded ${
+                                className={`mt-1 h-4 w-4 text-lime-600 focus:ring-lime-400 border-dark-300 rounded ${
                                   paymentVerified
                                     ? "cursor-not-allowed opacity-60"
                                     : ""
@@ -1077,13 +1077,13 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                                 htmlFor={service._id}
                                 className="ml-3 flex-1"
                               >
-                                <div className="text-sm font-medium text-gray-900">
+                                <div className="text-sm text-text-muted text-white">
                                   {service.name}
                                 </div>
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-text-muted">
                                   {service.description}
                                 </div>
-                                <div className="text-xs text-gray-600">
+                                <div className="text-xs text-text-secondary">
                                   {new Intl.NumberFormat("vi-VN", {
                                     style: "currency",
                                     currency: "VND",
@@ -1138,11 +1138,11 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                     {/* Info message when technician selection is not available yet */}
                     {formData.services.length > 0 &&
                       (!formData.scheduledDate || !formData.scheduledTime) && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="bg-dark-900 border border-blue-200 rounded-lg p-4">
                           <div className="flex items-center">
                             <div className="flex-shrink-0">
                               <svg
-                                className="h-5 w-5 text-blue-400"
+                                className="h-5 w-5 text-lime-400"
                                 viewBox="0 0 20 20"
                                 fill="currentColor"
                               >
@@ -1154,7 +1154,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                               </svg>
                             </div>
                             <div className="ml-3">
-                              <p className="text-sm text-blue-700">
+                              <p className="text-sm text-lime-700">
                                 Please select a date and time to view available
                                 technicians for your chosen services.
                               </p>
@@ -1167,7 +1167,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                     <div>
                       <label
                         htmlFor="priority"
-                        className="block text-sm font-medium text-gray-700"
+                        className="block text-sm text-text-muted text-text-secondary"
                       >
                         Priority
                       </label>
@@ -1177,9 +1177,9 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                         value={formData.priority}
                         onChange={handleChange}
                         disabled={paymentVerified}
-                        className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                        className={`mt-1 block w-full rounded-md border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 ${
                           paymentVerified
-                            ? "bg-gray-100 cursor-not-allowed opacity-60"
+                            ? "bg-dark-100 cursor-not-allowed opacity-60"
                             : ""
                         }`}
                       >
@@ -1194,7 +1194,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                     <div>
                       <label
                         htmlFor="customerNotes"
-                        className="block text-sm font-medium text-gray-700"
+                        className="block text-sm text-text-muted text-text-secondary"
                       >
                         Notes
                       </label>
@@ -1206,9 +1206,9 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                         onChange={handleChange}
                         disabled={paymentVerified}
                         placeholder="Please describe any specific issues or requests..."
-                        className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                        className={`mt-1 block w-full rounded-md border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 ${
                           paymentVerified
-                            ? "bg-gray-100 cursor-not-allowed opacity-60"
+                            ? "bg-dark-100 cursor-not-allowed opacity-60"
                             : ""
                         }`}
                       />
@@ -1216,18 +1216,18 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
 
                     {/* Payment Selection */}
                     {showPayment && (
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <h4 className="text-sm font-medium text-blue-900 mb-3">
+                      <div className="bg-dark-900 border border-blue-200 rounded-lg p-4">
+                        <h4 className="text-sm text-text-muted text-lime-900 mb-3">
                           Payment Method
                         </h4>
 
                         {/* Total Amount */}
-                        <div className="mb-4 p-3 bg-white rounded-md">
+                        <div className="mb-4 p-3 bg-dark-300 rounded-md">
                           <div className="flex justify-between items-center">
-                            <span className="text-sm text-gray-600">
+                            <span className="text-sm text-text-secondary">
                               Total Amount:
                             </span>
-                            <span className="text-lg font-semibold text-blue-600">
+                            <span className="text-lg font-semibold text-lime-600">
                               {new Intl.NumberFormat("vi-VN", {
                                 style: "currency",
                                 currency: "VND",
@@ -1240,7 +1240,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                         <div className="mb-4">
                           <label
                             htmlFor="bankCode"
-                            className="block text-sm font-medium text-gray-700 mb-2"
+                            className="block text-sm text-text-muted text-text-secondary mb-2"
                           >
                             Select Bank (Optional)
                           </label>
@@ -1248,7 +1248,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                             id="bankCode"
                             value={selectedBank}
                             onChange={(e) => setSelectedBank(e.target.value)}
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                            className="mt-1 block w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400"
                           >
                             <option value="">Auto-select bank</option>
                             <option value="VNPAYQR">VNPay QR Code</option>
@@ -1262,7 +1262,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                         </div>
 
                         {/* Payment Info */}
-                        <div className="text-xs text-gray-600 mb-4">
+                        <div className="text-xs text-text-secondary mb-4">
                           <p>
                             • You will be redirected to VNPay secure payment
                             page
@@ -1284,12 +1284,12 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
               )}
             </div>
 
-            <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+            <div className="bg-dark-900 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
               {!showPayment ? (
                 <button
                   type="submit"
                   disabled={loading || !formData.scheduledTime}
-                  className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:ml-3 sm:w-auto disabled:opacity-50"
+                  className="inline-flex w-full justify-center rounded-md bg-lime-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-dark-9000 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400 sm:ml-3 sm:w-auto disabled:opacity-50"
                 >
                   {loading
                     ? "Processing..."
@@ -1316,7 +1316,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                     type="button"
                     onClick={() => setShowPayment(false)}
                     disabled={loading}
-                    className="mt-3 inline-flex w-full justify-center rounded-md bg-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-400 sm:mt-0 sm:w-auto"
+                    className="mt-3 inline-flex w-full justify-center rounded-md bg-dark-300 px-3 py-2 text-sm font-semibold text-text-secondary shadow-sm hover:bg-dark-400 sm:mt-0 sm:w-auto"
                   >
                     Back
                   </button>
@@ -1326,7 +1326,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                 type="button"
                 onClick={onCancel}
                 disabled={loading}
-                className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+                className="mt-3 inline-flex w-full justify-center rounded-md bg-dark-300 px-3 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-dark-200 hover:bg-dark-900 sm:mt-0 sm:w-auto"
               >
                 Cancel
               </button>

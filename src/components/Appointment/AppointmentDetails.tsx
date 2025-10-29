@@ -19,20 +19,20 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   const { user } = useAuth();
   const getStatusBadge = (status: string) => {
     const colors = {
-      pending: "bg-yellow-100 text-yellow-800",
-      confirmed: "bg-blue-100 text-blue-800",
-      customer_arrived: "bg-green-100 text-green-800",
-      reception_created: "bg-purple-100 text-purple-800",
-      reception_approved: "bg-indigo-100 text-indigo-800",
-      in_progress: "bg-orange-100 text-orange-800",
-      completed: "bg-green-100 text-green-800",
-      invoiced: "bg-gray-100 text-gray-800",
-      cancelled: "bg-red-100 text-red-800",
-      cancel_requested: "bg-orange-100 text-orange-800",
-      cancel_approved: "bg-yellow-100 text-yellow-800",
-      cancel_refunded: "bg-green-100 text-green-800",
+      pending: "bg-orange-600 text-white",
+      confirmed: "bg-lime-200 text-dark-900",
+      customer_arrived: "bg-dark-600 text-white",
+      reception_created: "bg-purple-600 text-white",
+      reception_approved: "bg-lime-200 text-dark-900",
+      in_progress: "bg-orange-600 text-white",
+      completed: "bg-green-600 text-white",
+      invoiced: "bg-text-muted text-white",
+      cancelled: "bg-red-600 text-white",
+      cancel_requested: "bg-orange-600 text-white",
+      cancel_approved: "bg-orange-600 text-white",
+      cancel_refunded: "bg-green-600 text-white",
     };
-    return colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800";
+    return colors[status as keyof typeof colors] || "bg-text-muted text-white";
   };
 
   const formatVietnameseDateTime = (date: string, time?: string) => {
@@ -51,24 +51,24 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        <div className="fixed inset-0 bg-dark-9000 bg-opacity-75 transition-opacity" />
 
-        <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl">
-          <div className="bg-white px-6 pb-4 pt-6">
+        <div className="relative transform overflow-hidden rounded-lg bg-dark-300 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl">
+          <div className="bg-dark-300 px-6 pb-4 pt-6">
             {/* Header */}
             <div className="flex items-start justify-between mb-6">
               <div>
-                <h3 className="text-xl font-semibold leading-6 text-gray-900">
+                <h3 className="text-xl font-semibold leading-6 text-white">
                   Chi tiết lịch hẹn
                 </h3>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-text-muted">
                   Mã lịch hẹn: {appointment.appointmentNumber}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="rounded-md bg-dark-300 text-text-muted hover:text-text-muted focus:outline-none focus:ring-2 focus:ring-lime-400"
               >
                 <XMarkIcon className="h-6 w-6" />
               </button>
@@ -77,7 +77,7 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
             {/* Status Badge */}
             <div className="mb-6">
               <span
-                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusBadge(
+                className={`inline-flex items-center px-3 py-1 rounded-full text-sm text-text-muted ${getStatusBadge(
                   appointment.status
                 )}`}
               >
@@ -117,16 +117,16 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
               {/* Left Column - Appointment Info */}
               <div className="space-y-6">
                 {/* Basic Info */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">
+                <div className="bg-dark-900 rounded-lg p-4">
+                  <h4 className="text-lg text-text-muted text-white mb-4">
                     Thông tin cơ bản
                   </h4>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
+                      <span className="text-sm text-text-muted text-text-muted">
                         Ngày hẹn:
                       </span>
-                      <span className="text-sm text-gray-900">
+                      <span className="text-sm text-white">
                         {formatVietnameseDateTime(
                           appointment.scheduledDate,
                           appointment.scheduledTime
@@ -134,11 +134,11 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
+                      <span className="text-sm text-text-muted text-text-muted">
                         Độ ưu tiên:
                       </span>
                       <span
-                        className={`text-sm font-medium ${
+                        className={`text-sm text-text-muted ${
                           appointment.priority === "high"
                             ? "text-red-600"
                             : appointment.priority === "medium"
@@ -153,10 +153,10 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                     </div>
                     {appointment.estimatedCompletion && (
                       <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-500">
+                        <span className="text-sm text-text-muted text-text-muted">
                           Dự kiến hoàn thành:
                         </span>
-                        <span className="text-sm text-gray-900">
+                        <span className="text-sm text-white">
                           {formatVietnameseDateTime(
                             appointment.estimatedCompletion
                           )}
@@ -167,16 +167,16 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                 </div>
 
                 {/* Vehicle Info */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">
+                <div className="bg-dark-900 rounded-lg p-4">
+                  <h4 className="text-lg text-text-muted text-white mb-4">
                     Thông tin xe
                   </h4>
                   <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
+                      <span className="text-sm text-text-muted text-text-muted">
                         Xe:
                       </span>
-                      <span className="text-sm text-gray-900">
+                      <span className="text-sm text-white">
                         {appointment.vehicleId.make}{" "}
                         {appointment.vehicleId.model} (
                         {appointment.vehicleId.year})
@@ -184,10 +184,10 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                     </div>
                     {appointment.vehicleId.licensePlate && (
                       <div className="flex justify-between">
-                        <span className="text-sm font-medium text-gray-500">
+                        <span className="text-sm text-text-muted text-text-muted">
                           Biển số:
                         </span>
-                        <span className="text-sm text-gray-900">
+                        <span className="text-sm text-white">
                           {appointment.vehicleId.licensePlate}
                         </span>
                       </div>
@@ -196,25 +196,25 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                 </div>
 
                 {/* Service Center */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">
+                <div className="bg-dark-900 rounded-lg p-4">
+                  <h4 className="text-lg text-text-muted text-white mb-4">
                     Trung tâm dịch vụ
                   </h4>
                   <div className="space-y-3">
                     {/* Service Center Information removed - single center architecture */}
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
+                      <span className="text-sm text-text-muted text-text-muted">
                         Tên:
                       </span>
-                      <span className="text-sm text-gray-900">
+                      <span className="text-sm text-white">
                         EV Service Center
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm font-medium text-gray-500">
+                      <span className="text-sm text-text-muted text-text-muted">
                         Địa chỉ:
                       </span>
-                      <span className="text-sm text-gray-900">
+                      <span className="text-sm text-white">
                         123 Main Street, Ho Chi Minh City
                       </span>
                     </div>
@@ -225,44 +225,44 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
               {/* Right Column - Services & Timeline */}
               <div className="space-y-6">
                 {/* Services */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">
+                <div className="bg-dark-900 rounded-lg p-4">
+                  <h4 className="text-lg text-text-muted text-white mb-4">
                     Dịch vụ đã đặt
                   </h4>
                   <div className="space-y-3">
                     {appointment.services.map((service, index) => (
                       <div
                         key={index}
-                        className="border-b border-gray-200 pb-3 last:border-0"
+                        className="border-b border-dark-200 pb-3 last:border-0"
                       >
                         <div className="flex justify-between items-start">
                           <div>
-                            <p className="text-sm font-medium text-gray-900">
+                            <p className="text-sm text-text-muted text-white">
                               {service.serviceId?.name ||
                                 "Dịch vụ không xác định"}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-text-muted">
                               Thời gian dự kiến: {service.estimatedDuration}{" "}
                               phút
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-medium text-gray-900">
+                            <p className="text-sm text-text-muted text-white">
                               {formatVND(service.price)}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-text-muted">
                               SL: {service.quantity}
                             </p>
                           </div>
                         </div>
                       </div>
                     ))}
-                    <div className="pt-3 border-t border-gray-300">
+                    <div className="pt-3 border-t border-dark-300">
                       <div className="flex justify-between items-center">
-                        <span className="text-base font-semibold text-gray-900">
+                        <span className="text-base font-semibold text-white">
                           Tổng cộng:
                         </span>
-                        <span className="text-base font-semibold text-gray-900">
+                        <span className="text-base font-semibold text-white">
                           {formatVND(appointment.totalAmount)}
                         </span>
                       </div>
@@ -273,8 +273,8 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                 {/* Workflow Timeline */}
                 {appointment.workflowHistory &&
                   appointment.workflowHistory.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <h4 className="text-lg font-medium text-gray-900 mb-4">
+                    <div className="bg-dark-900 rounded-lg p-4">
+                      <h4 className="text-lg text-text-muted text-white mb-4">
                         Lịch sử xử lý
                       </h4>
                       <div className="space-y-4">
@@ -291,10 +291,10 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                               className="flex items-start space-x-3"
                             >
                               <div className="flex-shrink-0">
-                                <div className="w-3 h-3 bg-blue-500 rounded-full mt-1 shadow-sm"></div>
+                                <div className="w-3 h-3 bg-dark-9000 rounded-full mt-1 shadow-sm"></div>
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-gray-900">
+                                <p className="text-sm text-text-muted text-white">
                                   {history.status === "reception_created" &&
                                     "Tạo phiếu tiếp nhận"}
                                   {history.status === "reception_approved" &&
@@ -308,11 +308,11 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                                   {history.status === "customer_arrived" &&
                                     "Khách hàng đến"}
                                 </p>
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-xs text-text-muted mt-1">
                                   {formatVietnameseDateTime(history.changedAt)}
                                 </p>
                                 {history.notes && history.notes.trim() && (
-                                  <p className="text-xs text-gray-600 mt-1 italic">
+                                  <p className="text-xs text-text-secondary mt-1 italic">
                                     "{history.notes}"
                                   </p>
                                 )}
@@ -325,11 +325,11 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
 
                 {/* Customer Notes */}
                 {appointment.customerNotes && (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="text-lg font-medium text-gray-900 mb-4">
+                  <div className="bg-dark-900 rounded-lg p-4">
+                    <h4 className="text-lg text-text-muted text-white mb-4">
                       Ghi chú khách hàng
                     </h4>
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-text-secondary">
                       {appointment.customerNotes}
                     </p>
                   </div>
@@ -339,7 +339,7 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
           </div>
 
           {/* Footer */}
-          <div className="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse">
+          <div className="bg-dark-900 px-6 py-4 sm:flex sm:flex-row-reverse">
             <div className="flex space-x-3">
               {/* Cancel Request Button for Customers */}
               {user?.role === "customer" &&
@@ -357,7 +357,7 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex w-full justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:ml-3 sm:w-auto"
+                className="inline-flex w-full justify-center rounded-md bg-lime-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-dark-9000 focus:outline-none focus:ring-2 focus:ring-lime-400 sm:ml-3 sm:w-auto"
               >
                 Đóng
               </button>

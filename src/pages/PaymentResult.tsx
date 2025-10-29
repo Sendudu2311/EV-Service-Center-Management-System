@@ -441,13 +441,13 @@ const PaymentResult: React.FC = () => {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-dark-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          <h2 className="text-xl font-semibold text-white mb-2">
             Processing Payment...
           </h2>
-          <p className="text-gray-600">
+          <p className="text-text-secondary">
             Please wait while we verify your payment.
           </p>
         </div>
@@ -456,8 +456,8 @@ const PaymentResult: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
+    <div className="min-h-screen flex items-center justify-center bg-dark-900">
+      <div className="max-w-md w-full bg-dark-300 rounded-lg shadow-lg p-6">
         <div className="text-center">
           {status === "success" ? (
             <>
@@ -476,50 +476,50 @@ const PaymentResult: React.FC = () => {
                   ></path>
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-2xl font-bold text-white mb-2">
                 Payment Successful!
               </h2>
-              <p className="text-gray-600 mb-4">
+              <p className="text-text-secondary mb-4">
                 {appointmentCreated
                   ? "Your appointment has been created successfully!"
                   : "Your payment has been processed successfully. Creating your appointment..."}
               </p>
               {paymentInfo && (
-                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <div className="bg-dark-900 rounded-lg p-4 mb-4">
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Amount:</span>
-                      <span className="font-medium">
+                      <span className="text-text-secondary">Amount:</span>
+                      <span className="text-text-muted">
                         {paymentInfo.amount
                           ? formatCurrency(parseFloat(paymentInfo.amount))
                           : "N/A"}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Transaction:</span>
-                      <span className="font-medium text-sm">
+                      <span className="text-text-secondary">Transaction:</span>
+                      <span className="text-text-muted text-sm">
                         {paymentInfo.transactionRef}
                       </span>
                     </div>
                     {paymentInfo.vnpayTransaction && (
                       <>
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Bank:</span>
-                          <span className="font-medium text-sm">
+                          <span className="text-text-secondary">Bank:</span>
+                          <span className="text-text-muted text-sm">
                             {paymentInfo.vnpayTransaction.bankCode}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Card Type:</span>
-                          <span className="font-medium text-sm">
+                          <span className="text-text-secondary">Card Type:</span>
+                          <span className="text-text-muted text-sm">
                             {paymentInfo.vnpayTransaction.cardType}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-600">
+                          <span className="text-text-secondary">
                             VNPay Transaction:
                           </span>
-                          <span className="font-medium text-sm">
+                          <span className="text-text-muted text-sm">
                             {paymentInfo.vnpayTransaction.transactionNo}
                           </span>
                         </div>
@@ -532,22 +532,22 @@ const PaymentResult: React.FC = () => {
                 <div className="bg-green-50 rounded-lg p-4 mb-4">
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Appointment Number:</span>
-                      <span className="font-medium text-sm">
+                      <span className="text-text-secondary">Appointment Number:</span>
+                      <span className="text-text-muted text-sm">
                         {appointmentData.appointmentNumber}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Scheduled Date:</span>
-                      <span className="font-medium text-sm">
+                      <span className="text-text-secondary">Scheduled Date:</span>
+                      <span className="text-text-muted text-sm">
                         {new Date(
                           appointmentData.scheduledDate
                         ).toLocaleDateString("vi-VN")}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Scheduled Time:</span>
-                      <span className="font-medium text-sm">
+                      <span className="text-text-secondary">Scheduled Time:</span>
+                      <span className="text-text-muted text-sm">
                         {appointmentData.scheduledTime}
                       </span>
                     </div>
@@ -558,13 +558,13 @@ const PaymentResult: React.FC = () => {
               <div className="space-y-2">
                 <button
                   onClick={() => navigate("/appointments")}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+                  className="w-full bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-white hover:text-dark-900 px-6 py-2 rounded-lg text-text-muted transition-colors duration-200"
                 >
                   View My Appointments
                 </button>
                 <button
                   onClick={() => navigate("/")}
-                  className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+                  className="w-full bg-dark-200 hover:bg-dark-300 text-gray-800 px-6 py-2 rounded-lg text-text-muted transition-colors duration-200"
                 >
                   Back to Home
                 </button>
@@ -587,22 +587,22 @@ const PaymentResult: React.FC = () => {
                   ></path>
                 </svg>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-2xl font-bold text-white mb-2">
                 Payment Failed
               </h2>
-              <p className="text-gray-600 mb-4">
+              <p className="text-text-secondary mb-4">
                 {paymentInfo?.error || "Your payment could not be processed."}
               </p>
               <div className="space-y-2">
                 <button
                   onClick={() => navigate("/appointments")}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+                  className="w-full bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-white hover:text-dark-900 px-6 py-2 rounded-lg text-text-muted transition-colors duration-200"
                 >
                   Back to Appointments
                 </button>
                 <button
                   onClick={() => navigate(-1)}
-                  className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+                  className="w-full bg-dark-200 hover:bg-dark-300 text-gray-800 px-6 py-2 rounded-lg text-text-muted transition-colors duration-200"
                 >
                   Try Again
                 </button>

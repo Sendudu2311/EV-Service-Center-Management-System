@@ -136,11 +136,11 @@ const ProfilePage: React.FC = () => {
       case "admin":
         return "bg-red-100 text-red-800";
       case "staff":
-        return "bg-blue-100 text-blue-800";
+        return "bg-lime-100 text-lime-800";
       case "technician":
         return "bg-green-100 text-green-800";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-dark-100 text-gray-800";
     }
   };
 
@@ -156,12 +156,12 @@ const ProfilePage: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-xl font-semibold text-white">
             Failed to load profile
           </h2>
           <button
             onClick={fetchProfile}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-lime-200 text-dark-900 rounded-lg hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
           >
             Retry
           </button>
@@ -171,12 +171,12 @@ const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-dark-900 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Profile Settings</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-white">Profile Settings</h1>
+          <p className="text-text-secondary mt-2">
             Manage your account information and preferences
           </p>
         </div>
@@ -184,16 +184,16 @@ const ProfilePage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Profile Info Card */}
           <div className="lg:col-span-2">
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-6 py-5 border-b border-gray-200">
+            <div className="bg-dark-300 shadow rounded-lg">
+              <div className="px-6 py-5 border-b border-dark-200">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-lg font-semibold text-white">
                     Personal Information
                   </h2>
                   {!editing ? (
                     <button
                       onClick={() => setEditing(true)}
-                      className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="inline-flex items-center px-3 py-2 border border-dark-300 shadow-sm text-sm leading-4 text-text-muted rounded-md text-text-secondary bg-dark-300 hover:bg-dark-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400 focus:ring-offset-dark-900"
                     >
                       <PencilIcon className="h-4 w-4 mr-2" />
                       Edit
@@ -209,14 +209,14 @@ const ProfilePage: React.FC = () => {
                             phone: profile.phone,
                           });
                         }}
-                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                        className="inline-flex items-center px-3 py-2 border border-dark-300 shadow-sm text-sm leading-4 text-text-muted rounded-md text-text-secondary bg-dark-300 hover:bg-dark-900"
                       >
                         <XMarkIcon className="h-4 w-4" />
                       </button>
                       <button
                         onClick={handleEditSubmit}
                         disabled={loading}
-                        className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                        className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 text-white bg-lime-600 hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400 focus:ring-offset-dark-900 disabled:opacity-50"
                       >
                         <CheckIcon className="h-4 w-4" />
                       </button>
@@ -231,7 +231,7 @@ const ProfilePage: React.FC = () => {
                       <div>
                         <label
                           htmlFor="firstName"
-                          className="block text-sm font-medium text-gray-700"
+                          className="block text-sm text-text-muted text-text-secondary"
                         >
                           First Name
                         </label>
@@ -246,13 +246,13 @@ const ProfilePage: React.FC = () => {
                               firstName: e.target.value,
                             })
                           }
-                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="mt-1 block w-full border-dark-300 rounded-md shadow-sm focus:ring-lime-400 focus:ring-offset-dark-900 focus:border-lime-400 sm:text-sm"
                         />
                       </div>
                       <div>
                         <label
                           htmlFor="lastName"
-                          className="block text-sm font-medium text-gray-700"
+                          className="block text-sm text-text-muted text-text-secondary"
                         >
                           Last Name
                         </label>
@@ -267,14 +267,14 @@ const ProfilePage: React.FC = () => {
                               lastName: e.target.value,
                             })
                           }
-                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="mt-1 block w-full border-dark-300 rounded-md shadow-sm focus:ring-lime-400 focus:ring-offset-dark-900 focus:border-lime-400 sm:text-sm"
                         />
                       </div>
                     </div>
                     <div>
                       <label
                         htmlFor="phone"
-                        className="block text-sm font-medium text-gray-700"
+                        className="block text-sm text-text-muted text-text-secondary"
                       >
                         Phone Number
                       </label>
@@ -286,14 +286,14 @@ const ProfilePage: React.FC = () => {
                         onChange={(e) =>
                           setEditData({ ...editData, phone: e.target.value })
                         }
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="mt-1 block w-full border-dark-300 rounded-md shadow-sm focus:ring-lime-400 focus:ring-offset-dark-900 focus:border-lime-400 sm:text-sm"
                       />
                     </div>
                   </form>
                 ) : (
                   <div className="space-y-4">
                     <div className="flex items-center space-x-4">
-                      <div className="w-16 h-16 bg-gray-300 rounded-full flex items-center justify-center">
+                      <div className="w-16 h-16 bg-dark-300 rounded-full flex items-center justify-center">
                         {profile.avatar ? (
                           <img
                             src={profile.avatar}
@@ -301,15 +301,15 @@ const ProfilePage: React.FC = () => {
                             className="w-16 h-16 rounded-full object-cover"
                           />
                         ) : (
-                          <UserIcon className="w-8 h-8 text-gray-500" />
+                          <UserIcon className="w-8 h-8 text-text-muted" />
                         )}
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-white">
                           {profile.firstName} {profile.lastName}
                         </h3>
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-text-muted ${getRoleBadgeColor(
                             profile.role
                           )}`}
                         >
@@ -321,35 +321,35 @@ const ProfilePage: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <dt className="text-sm font-medium text-gray-500">
+                        <dt className="text-sm text-text-muted text-text-muted">
                           Email Address
                         </dt>
-                        <dd className="mt-1 text-sm text-gray-900">
+                        <dd className="mt-1 text-sm text-white">
                           {profile.email}
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-sm font-medium text-gray-500">
+                        <dt className="text-sm text-text-muted text-text-muted">
                           Phone Number
                         </dt>
-                        <dd className="mt-1 text-sm text-gray-900">
+                        <dd className="mt-1 text-sm text-white">
                           {profile.phone}
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-sm font-medium text-gray-500">
+                        <dt className="text-sm text-text-muted text-text-muted">
                           Account Created
                         </dt>
-                        <dd className="mt-1 text-sm text-gray-900">
+                        <dd className="mt-1 text-sm text-white">
                           {formatDate(profile.createdAt)}
                         </dd>
                       </div>
                       {profile.lastLogin && (
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">
+                          <dt className="text-sm text-text-muted text-text-muted">
                             Last Login
                           </dt>
-                          <dd className="mt-1 text-sm text-gray-900">
+                          <dd className="mt-1 text-sm text-white">
                             {formatDate(profile.lastLogin)}
                           </dd>
                         </div>
@@ -361,7 +361,7 @@ const ProfilePage: React.FC = () => {
                     {profile.specializations &&
                       profile.specializations.length > 0 && (
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">
+                          <dt className="text-sm text-text-muted text-text-muted">
                             Specializations
                           </dt>
                           <dd className="mt-1">
@@ -369,7 +369,7 @@ const ProfilePage: React.FC = () => {
                               {profile.specializations.map((spec, index) => (
                                 <span
                                   key={index}
-                                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-dark-300 text-lime-600"
                                 >
                                   {spec}
                                 </span>
@@ -387,9 +387,9 @@ const ProfilePage: React.FC = () => {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Password Change */}
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-6 py-5 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">
+            <div className="bg-dark-300 shadow rounded-lg">
+              <div className="px-6 py-5 border-b border-dark-200">
+                <h3 className="text-lg font-semibold text-white">
                   Security
                 </h3>
               </div>
@@ -397,7 +397,7 @@ const ProfilePage: React.FC = () => {
                 {!changingPassword ? (
                   <button
                     onClick={() => setChangingPassword(true)}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="inline-flex items-center px-4 py-2 border border-dark-300 shadow-sm text-sm text-text-muted rounded-md text-text-secondary bg-dark-300 hover:bg-dark-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400 focus:ring-offset-dark-900"
                   >
                     <KeyIcon className="h-4 w-4 mr-2" />
                     Change Password
@@ -407,7 +407,7 @@ const ProfilePage: React.FC = () => {
                     <div>
                       <label
                         htmlFor="currentPassword"
-                        className="block text-sm font-medium text-gray-700"
+                        className="block text-sm text-text-muted text-text-secondary"
                       >
                         Current Password
                       </label>
@@ -422,13 +422,13 @@ const ProfilePage: React.FC = () => {
                             currentPassword: e.target.value,
                           })
                         }
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="mt-1 block w-full border-dark-300 rounded-md shadow-sm focus:ring-lime-400 focus:ring-offset-dark-900 focus:border-lime-400 sm:text-sm"
                       />
                     </div>
                     <div>
                       <label
                         htmlFor="newPassword"
-                        className="block text-sm font-medium text-gray-700"
+                        className="block text-sm text-text-muted text-text-secondary"
                       >
                         New Password
                       </label>
@@ -444,13 +444,13 @@ const ProfilePage: React.FC = () => {
                             newPassword: e.target.value,
                           })
                         }
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="mt-1 block w-full border-dark-300 rounded-md shadow-sm focus:ring-lime-400 focus:ring-offset-dark-900 focus:border-lime-400 sm:text-sm"
                       />
                     </div>
                     <div>
                       <label
                         htmlFor="confirmPassword"
-                        className="block text-sm font-medium text-gray-700"
+                        className="block text-sm text-text-muted text-text-secondary"
                       >
                         Confirm New Password
                       </label>
@@ -465,14 +465,14 @@ const ProfilePage: React.FC = () => {
                             confirmPassword: e.target.value,
                           })
                         }
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="mt-1 block w-full border-dark-300 rounded-md shadow-sm focus:ring-lime-400 focus:ring-offset-dark-900 focus:border-lime-400 sm:text-sm"
                       />
                     </div>
                     <div className="flex space-x-3">
                       <button
                         type="submit"
                         disabled={loading}
-                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm text-white bg-lime-600 hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400 focus:ring-offset-dark-900 disabled:opacity-50"
                       >
                         {loading ? "Updating..." : "Update Password"}
                       </button>
@@ -486,7 +486,7 @@ const ProfilePage: React.FC = () => {
                             confirmPassword: "",
                           });
                         }}
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                        className="inline-flex items-center px-4 py-2 border border-dark-300 shadow-sm text-sm text-text-muted rounded-md text-text-secondary bg-dark-300 hover:bg-dark-900"
                       >
                         Cancel
                       </button>
@@ -498,9 +498,9 @@ const ProfilePage: React.FC = () => {
 
             {/* Certifications */}
             {profile.certifications && profile.certifications.length > 0 && (
-              <div className="bg-white shadow rounded-lg">
-                <div className="px-6 py-5 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900">
+              <div className="bg-dark-300 shadow rounded-lg">
+                <div className="px-6 py-5 border-b border-dark-200">
+                  <h3 className="text-lg font-semibold text-white">
                     Certifications
                   </h3>
                 </div>
@@ -509,15 +509,15 @@ const ProfilePage: React.FC = () => {
                     {profile.certifications.map((cert, index) => (
                       <div
                         key={index}
-                        className="border border-gray-200 rounded-lg p-3"
+                        className="border border-dark-200 rounded-lg p-3"
                       >
-                        <h4 className="font-medium text-gray-900">
+                        <h4 className="text-text-muted text-white">
                           {cert.name}
                         </h4>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-text-secondary">
                           Issued by {cert.issuer}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-text-muted">
                           Valid until {formatDate(cert.validUntil)}
                         </p>
                       </div>

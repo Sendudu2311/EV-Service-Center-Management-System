@@ -129,14 +129,14 @@ const EVChatbot: React.FC<EVChatbotProps> = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
       onClick={onClose}>
-      <div className="card-metal w-full max-w-2xl h-[600px] flex flex-col shadow-metal-xl"
+      <div className="bg-dark-300 border-2 border-lime-600 w-full max-w-2xl h-[600px] flex flex-col shadow-lg"
         onClick={(e) => e.stopPropagation()}>
 
         {/* Header */}
-        <div className="panel-metal border-b-2 border-copper-600 p-4 flex items-center justify-between">
+        <div className="bg-dark-300 border-b-2 border-lime-600 p-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             {/* Meowl Avatar - Position and Size Adjustments */}
-            <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden shadow-metal border-2 border-copper-400 flex items-center justify-center">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden shadow-lg border-2 border-lime-600 flex items-center justify-center">
               <img 
                 src="/meowl.png"
                 alt="EV Assistant Meowl"
@@ -144,20 +144,20 @@ const EVChatbot: React.FC<EVChatbotProps> = ({ isOpen, onClose }) => {
               />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-industrial-100 text-metal">EV Assistant</h3>
-              <p className="text-xs text-industrial-400">Powered by Gemini AI</p>
+              <h3 className="text-lg font-bold text-white">EV Assistant</h3>
+              <p className="text-xs text-text-muted">Powered by Gemini AI</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-industrial-300 hover:text-copper-400 hover:bg-industrial-800 border border-transparent hover:border-steel-700 transition-all duration-200"
+            className="p-2 rounded-lg text-text-muted hover:text-lime-600 hover:bg-dark-200 border border-transparent hover:border-lime-600 transition-all duration-200"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-metal bg-industrial-900/50">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-dark-900">
           {messages.map((message) => (
             <div
               key={message.id}
@@ -165,7 +165,7 @@ const EVChatbot: React.FC<EVChatbotProps> = ({ isOpen, onClose }) => {
             >
               <div className={`flex items-start space-x-2 max-w-[80%] ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
                 {message.role === 'assistant' && (
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden shadow-metal border-2 border-copper-400 flex items-center justify-center"
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full overflow-hidden shadow-lg border-2 border-lime-600 flex items-center justify-center"
                     style={{
                       transform: 'translateY(8px)'
                     }}
@@ -177,9 +177,9 @@ const EVChatbot: React.FC<EVChatbotProps> = ({ isOpen, onClose }) => {
                     />
                   </div>
                 )}
-                <div className={`rounded-lg p-3 shadow-metal ${message.role === 'user'
-                    ? 'bg-gradient-to-br from-steel-600 to-steel-700 text-white border-2 border-steel-500'
-                    : 'panel-metal text-industrial-100 border-2 border-steel-700'
+                <div className={`rounded-lg p-3 shadow-lg ${message.role === 'user'
+                    ? 'bg-lime-600 text-dark-900 border-2 border-lime-600'
+                    : 'bg-dark-300 text-white border-2 border-dark-200'
                   }`}>
                   <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                   <p className="text-xs mt-1 opacity-60">
@@ -201,12 +201,12 @@ const EVChatbot: React.FC<EVChatbotProps> = ({ isOpen, onClose }) => {
                   <img
                     src="/meowl.png"
                     alt="Assistant Loading"
-                    className="w-8 h-8 rounded-full object-cover shadow-metal border-2 border-copper-400 opacity-75"
+                    className="w-8 h-8 rounded-full object-cover shadow-lg border-2 border-lime-600 opacity-75"
                   />
                 </div>
-                <div className="panel-metal rounded-lg p-3 border-2 border-steel-700">
-                  <div className="flex items-center space-x-2 text-industrial-300">
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                <div className="bg-dark-300 rounded-lg p-3 border-2 border-dark-200">
+                  <div className="flex items-center space-x-2 text-text-muted">
+                    <Loader2 className="w-4 h-4 animate-spin text-lime-600" />
                     <span className="text-sm">Generating response...</span>
                   </div>
                 </div>
@@ -218,7 +218,7 @@ const EVChatbot: React.FC<EVChatbotProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Input */}
-        <div className="panel-metal border-t-2 border-copper-600 p-4">
+        <div className="bg-dark-300 border-t-2 border-lime-600 p-4">
           <div className="flex items-center space-x-2">
             <input
               ref={inputRef}
@@ -228,18 +228,18 @@ const EVChatbot: React.FC<EVChatbotProps> = ({ isOpen, onClose }) => {
               onKeyPress={handleKeyPress}
               placeholder={PLACEHOLDERS[language]}
               disabled={isLoading}
-              className="input-metal flex-1 px-4 py-3"
+              className="flex-1 px-4 py-3 bg-dark-900 text-white rounded-lg border-2 border-dark-200 focus:border-lime-600 focus:outline-none placeholder-text-muted transition-colors duration-200 disabled:opacity-50"
               maxLength={1000}
             />
             <button
               onClick={sendMessage}
               disabled={!inputValue.trim() || isLoading}
-              className="btn-copper px-4 py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-3 rounded-lg bg-lime-600 text-dark-900 font-semibold hover:bg-lime-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               <Send className="w-5 h-5" />
             </button>
           </div>
-          <p className="text-xs text-industrial-400 mt-2">
+          <p className="text-xs text-text-muted mt-2">
             Ask about appointments, services, parts, or vehicle maintenance
           </p>
         </div>

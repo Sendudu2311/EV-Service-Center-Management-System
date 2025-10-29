@@ -222,14 +222,14 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-4 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white mb-8">
+    <div className="fixed inset-0 bg-dark-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-4 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-dark-300 mb-8">
         <div className="flex items-center justify-between mb-6 pb-4 border-b">
-          <h2 className="text-xl font-bold text-gray-900">Hóa đơn dịch vụ</h2>
+          <h2 className="text-xl font-bold text-white">Hóa đơn dịch vụ</h2>
           <div className="flex items-center space-x-2">
             <button
               onClick={handleDownloadPDF}
-              className="p-2 text-gray-400 hover:text-gray-600"
+              className="p-2 text-text-muted hover:text-text-secondary"
               title="In hóa đơn PDF"
               disabled={!invoice}
             >
@@ -237,21 +237,21 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
             </button>
             <button
               onClick={handlePrint}
-              className="p-2 text-gray-400 hover:text-gray-600"
+              className="p-2 text-text-muted hover:text-text-secondary"
               title="In hóa đơn"
             >
               <PrinterIcon className="w-5 h-5" />
             </button>
             <button
               onClick={handleShare}
-              className="p-2 text-gray-400 hover:text-gray-600"
+              className="p-2 text-text-muted hover:text-text-secondary"
               title="Chia sẻ"
             >
               <ShareIcon className="w-5 h-5" />
             </button>
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600"
+              className="p-2 text-text-muted hover:text-text-secondary"
             >
               <XMarkIcon className="w-6 h-6" />
             </button>
@@ -261,50 +261,50 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
         {loading ? (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-2 text-gray-600">Đang tải hóa đơn...</span>
+            <span className="ml-2 text-text-secondary">Đang tải hóa đơn...</span>
           </div>
         ) : invoice ? (
           <div className="space-y-6">
             {/* Header */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-white mb-2">
                   Thông tin khách hàng
                 </h3>
                 <div className="space-y-1 text-sm">
                   <p>
-                    <span className="font-medium">Tên:</span>{" "}
+                    <span className="text-text-muted">Tên:</span>{" "}
                     {invoice.customerInfo?.name}
                   </p>
                   <p>
-                    <span className="font-medium">Email:</span>{" "}
+                    <span className="text-text-muted">Email:</span>{" "}
                     {invoice.customerInfo?.email}
                   </p>
                   <p>
-                    <span className="font-medium">SĐT:</span>{" "}
+                    <span className="text-text-muted">SĐT:</span>{" "}
                     {invoice.customerInfo?.phone}
                   </p>
                 </div>
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-white mb-2">
                   Thông tin xe
                 </h3>
                 <div className="space-y-1 text-sm">
                   <p>
-                    <span className="font-medium">Xe:</span>{" "}
+                    <span className="text-text-muted">Xe:</span>{" "}
                     {invoice.vehicleInfo?.make} {invoice.vehicleInfo?.model}
                   </p>
                   <p>
-                    <span className="font-medium">Năm:</span>{" "}
+                    <span className="text-text-muted">Năm:</span>{" "}
                     {invoice.vehicleInfo?.year}
                   </p>
                   <p>
-                    <span className="font-medium">Biển số:</span>{" "}
+                    <span className="text-text-muted">Biển số:</span>{" "}
                     {invoice.vehicleInfo?.licensePlate}
                   </p>
                   <p>
-                    <span className="font-medium">VIN:</span>{" "}
+                    <span className="text-text-muted">VIN:</span>{" "}
                     {invoice.vehicleInfo?.vin}
                   </p>
                 </div>
@@ -315,17 +315,17 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
             <div className="border-t pt-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
-                  <p className="text-sm text-gray-600">Số hóa đơn</p>
+                  <p className="text-sm text-text-secondary">Số hóa đơn</p>
                   <p className="font-semibold">{invoice.invoiceNumber}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Ngày tạo</p>
+                  <p className="text-sm text-text-secondary">Ngày tạo</p>
                   <p className="font-semibold">
                     {formatDate(invoice.createdAt)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Trạng thái</p>
+                  <p className="text-sm text-text-secondary">Trạng thái</p>
                   <span
                     className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       invoice.status === "paid"
@@ -343,40 +343,40 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
 
             {/* Services */}
             <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <h3 className="text-lg font-semibold text-white mb-4">
                 Dịch vụ đã thực hiện
               </h3>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-dark-900">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
                         Dịch vụ
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
                         Số lượng
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
                         Đơn giá
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
                         Thành tiền
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-dark-300 divide-y divide-gray-200">
                     {invoice.serviceItems?.map((item: any, index: number) => (
                       <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                           {item.serviceName}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                           {item.quantity}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                           {formatCurrency(item.unitPrice)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted text-white">
                           {formatCurrency(item.totalPrice)}
                         </td>
                       </tr>
@@ -403,7 +403,7 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
                   <div className="border-t pt-2">
                     <div className="flex justify-between text-lg font-semibold">
                       <span>Tổng cộng:</span>
-                      <span className="text-blue-600">
+                      <span className="text-lime-600">
                         {formatCurrency(invoice.totals?.totalAmount || 0)}
                       </span>
                     </div>
@@ -415,12 +415,12 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
             {/* Payment Info */}
             {invoice.paymentInfo && (
               <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <h3 className="text-lg font-semibold text-white mb-4">
                   Thông tin thanh toán
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-text-secondary">
                       Phương thức thanh toán
                     </p>
                     <p className="font-semibold">
@@ -432,7 +432,7 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Ngày thanh toán</p>
+                    <p className="text-sm text-text-secondary">Ngày thanh toán</p>
                     <p className="font-semibold">
                       {invoice.paymentInfo.paymentDate
                         ? formatDate(invoice.paymentInfo.paymentDate)
@@ -441,7 +441,7 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
                   </div>
                   {invoice.paymentInfo.transactionRef && (
                     <div>
-                      <p className="text-sm text-gray-600">Mã giao dịch</p>
+                      <p className="text-sm text-text-secondary">Mã giao dịch</p>
                       <p className="font-semibold">
                         {invoice.paymentInfo.transactionRef}
                       </p>
@@ -454,16 +454,16 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
             {/* Transactions */}
             {invoice.transactions && invoice.transactions.length > 0 && (
               <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <h3 className="text-lg font-semibold text-white mb-4">
                   Lịch sử giao dịch
                 </h3>
                 <div className="space-y-3">
                   {invoice.transactions.map(
                     (transaction: any, index: number) => (
-                      <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                      <div key={index} className="bg-dark-900 p-4 rounded-lg">
                         <div className="flex justify-between items-start">
                           <div>
-                            <p className="font-medium">
+                            <p className="text-text-muted">
                               {transaction.transactionType === "bank_transfer"
                                 ? "Chuyển khoản ngân hàng"
                                 : transaction.transactionType === "cash"
@@ -472,7 +472,7 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
                                 ? "Đặt cọc"
                                 : transaction.transactionType || "Giao dịch"}
                             </p>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-text-secondary">
                               {transaction.transactionRef} -{" "}
                               {formatDate(
                                 transaction.processedAt ||
@@ -485,7 +485,7 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
                             <p className="font-semibold text-green-600">
                               {formatCurrency(transaction.amount)}
                             </p>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-text-secondary">
                               {transaction.status === "completed"
                                 ? "Hoàn thành"
                                 : transaction.status}
@@ -501,7 +501,7 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-gray-500">Không tìm thấy hóa đơn</p>
+            <p className="text-text-muted">Không tìm thấy hóa đơn</p>
           </div>
         )}
 
@@ -509,7 +509,7 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
         <div className="flex justify-end space-x-3 mt-6 pt-4 border-t">
           <button
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            className="px-4 py-2 border border-dark-200 rounded-md text-text-secondary hover:bg-dark-900"
           >
             Đóng
           </button>

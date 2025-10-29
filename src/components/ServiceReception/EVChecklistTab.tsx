@@ -115,16 +115,16 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
       case 'warning':
         return <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />;
       case 'critical':
-        return <XCircleIcon className="h-5 w-5 text-red-500" />;
+        return <XCircleIcon className="h-5 w-5 text-red-600" />;
       default:
-        return <CheckCircleIcon className="h-5 w-5 text-gray-300" />;
+        return <CheckCircleIcon className="h-5 w-5 text-text-secondary" />;
     }
   };
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'battery':
-        return <Battery100Icon className="h-5 w-5 text-blue-600" />;
+        return <Battery100Icon className="h-5 w-5 text-lime-600" />;
       case 'charging':
         return <BoltIcon className="h-5 w-5 text-yellow-600" />;
       case 'motor':
@@ -132,7 +132,7 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
       case 'safety':
         return <ShieldCheckIcon className="h-5 w-5 text-red-600" />;
       default:
-        return <CheckCircleIcon className="h-5 w-5 text-gray-600" />;
+        return <CheckCircleIcon className="h-5 w-5 text-text-secondary" />;
     }
   };
 
@@ -160,16 +160,16 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
   return (
     <div className="space-y-6">
       {/* Progress Bar */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-dark-900 border border-blue-200 rounded-lg p-4">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-medium text-blue-900">Tiến độ kiểm tra</h3>
-          <span className="text-sm font-semibold text-blue-900">
+          <h3 className="text-sm text-text-muted text-lime-900">Tiến độ kiểm tra</h3>
+          <span className="text-sm font-semibold text-lime-900">
             {progress.checked}/{progress.total} ({progress.percentage}%)
           </span>
         </div>
-        <div className="w-full bg-blue-200 rounded-full h-2.5">
+        <div className="w-full bg-lime-200 rounded-full h-2.5">
           <div
-            className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+            className="bg-lime-600 h-2.5 rounded-full transition-all duration-300"
             style={{ width: `${progress.percentage}%` }}
           />
         </div>
@@ -184,17 +184,17 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
         };
 
         return (
-          <div key={category} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div key={category} className="bg-dark-300 border border-dark-200 rounded-lg overflow-hidden">
             {/* Category Header */}
-            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+            <div className="bg-dark-900 px-4 py-3 border-b border-dark-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   {getCategoryIcon(category)}
-                  <h4 className="text-sm font-semibold text-gray-900">
+                  <h4 className="text-sm font-semibold text-white">
                     {getCategoryLabel(category)}
                   </h4>
                 </div>
-                <span className="text-xs text-gray-600">
+                <span className="text-xs text-text-secondary">
                   {categoryProgress.checked}/{categoryProgress.total}
                 </span>
               </div>
@@ -203,7 +203,7 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
             {/* Category Items */}
             <div className="divide-y divide-gray-100">
               {categoryItems.map(item => (
-                <div key={item.id} className="px-4 py-3 hover:bg-gray-50 transition-colors">
+                <div key={item.id} className="px-4 py-3 hover:bg-dark-900 transition-colors">
                   <div className="flex items-start space-x-3">
                     {/* Checkbox */}
                     <input
@@ -211,13 +211,13 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
                       checked={item.checked}
                       onChange={(e) => handleCheckChange(item.id, e.target.checked)}
                       disabled={readOnly}
-                      className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
+                      className="mt-1 h-4 w-4 text-lime-600 focus:ring-lime-400 border-dark-300 rounded disabled:opacity-50"
                     />
 
                     {/* Item Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-gray-900">
+                        <label className="text-sm text-text-muted text-white">
                           {item.label}
                         </label>
                         {getStatusIcon(item.status)}
@@ -232,8 +232,8 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
                             disabled={readOnly}
                             className={`px-2 py-1 text-xs rounded-md transition-colors ${
                               item.status === 'good'
-                                ? 'bg-green-100 text-green-800 font-medium'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ? 'bg-dark-300 text-green-600 text-text-muted'
+                                : 'bg-dark-100 text-text-secondary hover:bg-dark-200'
                             } disabled:opacity-50`}
                           >
                             Tốt
@@ -244,8 +244,8 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
                             disabled={readOnly}
                             className={`px-2 py-1 text-xs rounded-md transition-colors ${
                               item.status === 'warning'
-                                ? 'bg-yellow-100 text-yellow-800 font-medium'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ? 'bg-dark-300 text-yellow-600 text-text-muted'
+                                : 'bg-dark-100 text-text-secondary hover:bg-dark-200'
                             } disabled:opacity-50`}
                           >
                             Cảnh báo
@@ -256,8 +256,8 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
                             disabled={readOnly}
                             className={`px-2 py-1 text-xs rounded-md transition-colors ${
                               item.status === 'critical'
-                                ? 'bg-red-100 text-red-800 font-medium'
-                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                ? 'bg-dark-300 text-red-600 text-text-muted'
+                                : 'bg-dark-100 text-text-secondary hover:bg-dark-200'
                             } disabled:opacity-50`}
                           >
                             Nghiêm trọng
@@ -265,7 +265,7 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
                           <button
                             type="button"
                             onClick={() => setExpandedNotes(expandedNotes === item.id ? null : item.id)}
-                            className="text-xs text-blue-600 hover:text-blue-800"
+                            className="text-xs text-lime-600 hover:text-lime-800"
                           >
                             {expandedNotes === item.id ? 'Ẩn ghi chú' : 'Thêm ghi chú'}
                           </button>
@@ -281,14 +281,14 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
                             disabled={readOnly}
                             placeholder="Ghi chú chi tiết..."
                             rows={2}
-                            className="w-full text-xs border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 disabled:bg-gray-50 disabled:opacity-50"
+                            className="w-full text-xs bg-dark-300 text-white border-dark-200 rounded-md shadow-sm focus:border-lime-400 focus:ring-lime-400 disabled:bg-dark-900 disabled:opacity-50"
                           />
                         </div>
                       )}
 
                       {/* Display notes if exists and not editing */}
                       {item.notes && expandedNotes !== item.id && (
-                        <p className="mt-1 text-xs text-gray-600 italic">
+                        <p className="mt-1 text-xs text-text-secondary italic">
                           {item.notes}
                         </p>
                       )}
@@ -302,26 +302,26 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
       })}
 
       {/* Summary */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <h4 className="text-sm font-semibold text-gray-900 mb-3">Tóm tắt</h4>
+      <div className="bg-dark-900 border border-dark-200 rounded-lg p-4">
+        <h4 className="text-sm font-semibold text-white mb-3">Tóm tắt</h4>
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <div className="text-2xl font-bold text-green-600">
               {items.filter(i => i.status === 'good').length}
             </div>
-            <div className="text-xs text-gray-600 mt-1">Tốt</div>
+            <div className="text-xs text-text-secondary mt-1">Tốt</div>
           </div>
           <div>
             <div className="text-2xl font-bold text-yellow-600">
               {items.filter(i => i.status === 'warning').length}
             </div>
-            <div className="text-xs text-gray-600 mt-1">Cảnh báo</div>
+            <div className="text-xs text-text-secondary mt-1">Cảnh báo</div>
           </div>
           <div>
             <div className="text-2xl font-bold text-red-600">
               {items.filter(i => i.status === 'critical').length}
             </div>
-            <div className="text-xs text-gray-600 mt-1">Nghiêm trọng</div>
+            <div className="text-xs text-text-secondary mt-1">Nghiêm trọng</div>
           </div>
         </div>
       </div>

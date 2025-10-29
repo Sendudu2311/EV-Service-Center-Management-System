@@ -273,10 +273,10 @@ function App() {
                     <ProtectedRoute roles={["admin"]}>
                       <div className="min-h-screen flex items-center justify-center">
                         <div className="text-center">
-                          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+                          <h1 className="text-2xl font-bold text-white mb-4">
                             Admin Panel
                           </h1>
-                          <p className="text-gray-600">
+                          <p className="text-text-secondary">
                             Admin features coming soon...
                           </p>
                         </div>
@@ -301,10 +301,10 @@ function App() {
                     <ProtectedRoute>
                       <div className="min-h-screen flex items-center justify-center">
                         <div className="text-center">
-                          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+                          <h1 className="text-2xl font-bold text-white mb-4">
                             Settings
                           </h1>
-                          <p className="text-gray-600">
+                          <p className="text-text-secondary">
                             Settings page coming soon...
                           </p>
                         </div>
@@ -326,17 +326,17 @@ function App() {
                 <Route
                   path="*"
                   element={
-                    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                    <div className="min-h-screen flex items-center justify-center bg-dark-900">
                       <div className="text-center">
-                        <h1 className="text-6xl font-bold text-gray-900 mb-4">
+                        <h1 className="text-6xl font-bold text-white mb-4">
                           404
                         </h1>
-                        <p className="text-xl text-gray-600 mb-8">
+                        <p className="text-xl text-text-secondary mb-8">
                           Page not found
                         </p>
                         <a
                           href="/"
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200"
+                          className="bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-white hover:text-dark-900 px-6 py-3 rounded-lg text-text-muted transition-colors duration-200"
                         >
                           Go Home
                         </a>

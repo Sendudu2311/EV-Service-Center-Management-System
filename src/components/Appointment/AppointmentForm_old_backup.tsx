@@ -427,17 +427,17 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-dark-9000 bg-opacity-75 flex items-center justify-center p-4 z-50">
+      <div className="bg-dark-300 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-dark-200">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium text-gray-900">
+            <h3 className="text-lg text-text-muted text-white">
               {currentStep === 'input' ? 'Đặt lịch hẹn mới' : 'Xác nhận thông tin đặt lịch'}
             </h3>
             <button
               onClick={onCancel}
-              className="text-gray-400 hover:text-gray-500"
+              className="text-text-muted hover:text-text-muted"
               aria-label="Đóng"
             >
               <XMarkIcon className="h-6 w-6" />
@@ -448,20 +448,20 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
           <div className="mt-4 flex items-center justify-center space-x-4">
             <div className="flex items-center">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentStep === 'input' ? 'bg-blue-600 text-white' : 'bg-green-600 text-white'
+                currentStep === 'input' ? 'bg-lime-600 text-white' : 'bg-green-600 text-white'
               }`}>
                 {currentStep === 'input' ? '1' : <CheckIcon className="w-5 h-5" />}
               </div>
-              <span className="ml-2 text-sm font-medium text-gray-900">Nhập thông tin</span>
+              <span className="ml-2 text-sm text-text-muted text-white">Nhập thông tin</span>
             </div>
-            <div className="w-16 h-0.5 bg-gray-300"></div>
+            <div className="w-16 h-0.5 bg-dark-300"></div>
             <div className="flex items-center">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentStep === 'confirmation' ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-600'
+                currentStep === 'confirmation' ? 'bg-lime-600 text-white' : 'bg-dark-300 text-text-secondary'
               }`}>
                 2
               </div>
-              <span className="ml-2 text-sm font-medium text-gray-900">Xác nhận & Thanh toán</span>
+              <span className="ml-2 text-sm text-text-muted text-white">Xác nhận & Thanh toán</span>
             </div>
           </div>
         </div>
@@ -474,9 +474,9 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
                     <div>
                       <label
                         htmlFor="vehicleId"
-                        className="block text-sm font-medium text-gray-700"
+                        className="block text-sm text-text-muted text-text-secondary"
                       >
-                        Select Vehicle <span className="text-red-500">*</span>
+                        Select Vehicle <span className="text-red-600">*</span>
                       </label>
                       <select
                         id="vehicleId"
@@ -485,9 +485,9 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
                         value={formData.vehicleId}
                         onChange={handleChange}
                         disabled={paymentVerified}
-                        className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                        className={`mt-1 block w-full rounded-md border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 ${
                           paymentVerified
-                            ? "bg-gray-100 cursor-not-allowed opacity-60"
+                            ? "bg-dark-100 cursor-not-allowed opacity-60"
                             : ""
                         }`}
                       >
@@ -505,9 +505,9 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
                       <div>
                         <label
                           htmlFor="scheduledDate"
-                          className="block text-sm font-medium text-gray-700"
+                          className="block text-sm text-text-muted text-text-secondary"
                         >
-                          Date <span className="text-red-500">*</span>
+                          Date <span className="text-red-600">*</span>
                         </label>
                         <input
                           type="date"
@@ -518,9 +518,9 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
                           value={formData.scheduledDate}
                           onChange={handleChange}
                           disabled={paymentVerified}
-                          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                          className={`mt-1 block w-full rounded-md border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 ${
                             paymentVerified
-                              ? "bg-gray-100 cursor-not-allowed opacity-60"
+                              ? "bg-dark-100 cursor-not-allowed opacity-60"
                               : ""
                           }`}
                         />
@@ -529,9 +529,9 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
 
                     {formData.scheduledDate && slots.length > 0 && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                        <label className="block text-sm text-text-muted text-text-secondary mb-3">
                           Available Time Slots{" "}
-                          <span className="text-red-500">*</span>
+                          <span className="text-red-600">*</span>
                         </label>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                           {slots.map((slot) => {
@@ -558,16 +558,16 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
                                 onClick={() => handleSlotSelect(slot._id)}
                                 className={`border rounded-lg p-3 cursor-pointer transition-all ${
                                   isSelected
-                                    ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
+                                    ? "border-blue-500 bg-dark-900 ring-2 ring-blue-200"
                                     : isAvailable
-                                    ? "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
-                                    : "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
+                                    ? "border-dark-200 hover:border-blue-300 hover:bg-dark-900"
+                                    : "border-dark-200 bg-dark-900 cursor-not-allowed opacity-60"
                                 } ${
                                   paymentVerified ? "cursor-not-allowed" : ""
                                 }`}
                               >
                                 <div className="flex items-center justify-between mb-2">
-                                  <div className="text-sm font-medium text-gray-900">
+                                  <div className="text-sm text-text-muted text-white">
                                     {(() => {
                                       const startTime = utcToVietnameseDateTime(
                                         new Date(slot.start)
@@ -594,16 +594,16 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
                                       : "Full"}
                                   </div>
                                 </div>
-                                <div className="text-xs text-gray-600 mb-1">
+                                <div className="text-xs text-text-secondary mb-1">
                                   Capacity:{" "}
                                   {slot.capacity - (slot.bookedCount || 0)}/
                                   {slot.capacity} spots
                                 </div>
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-text-muted">
                                   Technicians: {technicianNames}
                                 </div>
                                 {isSelected && (
-                                  <div className="mt-2 text-xs text-blue-600 font-medium">
+                                  <div className="mt-2 text-xs text-lime-600 text-text-muted">
                                     ✓ Selected
                                   </div>
                                 )}
@@ -635,13 +635,13 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
 
                     {/* Auto-selected Basic Maintenance Service */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-3">
                         Dịch vụ bảo dưỡng
                       </label>
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="bg-dark-900 border border-blue-200 rounded-lg p-4">
                         <div className="flex items-start">
                           <div className="flex-shrink-0">
-                            <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                            <div className="w-4 h-4 bg-dark-9000 rounded-full flex items-center justify-center">
                               <svg
                                 className="w-2 h-2 text-white"
                                 fill="currentColor"
@@ -656,14 +656,14 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
                             </div>
                           </div>
                           <div className="ml-3 flex-1">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm text-text-muted text-white">
                               Basic Maintenance Service
                             </div>
-                            <div className="text-xs text-gray-600 mt-1">
+                            <div className="text-xs text-text-secondary mt-1">
                               Dịch vụ bảo dưỡng cơ bản cho xe điện - kiểm tra
                               tổng quát và bảo dưỡng định kỳ
                             </div>
-                            <div className="text-sm font-semibold text-blue-600 mt-2">
+                            <div className="text-sm font-semibold text-lime-600 mt-2">
                               {new Intl.NumberFormat("vi-VN", {
                                 style: "currency",
                                 currency: "VND",
@@ -693,11 +693,11 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
 
                     {(!formData.scheduledDate || !formData.scheduledTime) &&
                       slots.length > 0 && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="bg-dark-900 border border-blue-200 rounded-lg p-4">
                           <div className="flex items-center">
                             <div className="flex-shrink-0">
                               <svg
-                                className="h-5 w-5 text-blue-400"
+                                className="h-5 w-5 text-lime-400"
                                 viewBox="0 0 20 20"
                                 fill="currentColor"
                               >
@@ -709,7 +709,7 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
                               </svg>
                             </div>
                             <div className="ml-3">
-                              <p className="text-sm text-blue-700">
+                              <p className="text-sm text-lime-700">
                                 Vui lòng chọn ngày và giờ để xem kỹ thuật viên
                                 có sẵn.
                               </p>
@@ -721,7 +721,7 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
                     <div>
                       <label
                         htmlFor="customerNotes"
-                        className="block text-sm font-medium text-gray-700"
+                        className="block text-sm text-text-muted text-text-secondary"
                       >
                         Notes
                       </label>
@@ -733,9 +733,9 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
                         onChange={handleChange}
                         disabled={paymentVerified}
                         placeholder="Please describe any specific issues or requests..."
-                        className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                        className={`mt-1 block w-full rounded-md border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 ${
                           paymentVerified
-                            ? "bg-gray-100 cursor-not-allowed opacity-60"
+                            ? "bg-dark-100 cursor-not-allowed opacity-60"
                             : ""
                         }`}
                       />
@@ -745,12 +745,12 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
               )}
             </div>
 
-            <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+            <div className="bg-dark-900 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
               {!showPayment ? (
                 <button
                   type="submit"
                   disabled={loading || !formData.scheduledTime}
-                  className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:ml-3 sm:w-auto disabled:opacity-50"
+                  className="inline-flex w-full justify-center rounded-md bg-lime-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-dark-9000 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400 sm:ml-3 sm:w-auto disabled:opacity-50"
                 >
                   {loading
                     ? "Processing..."
@@ -777,7 +777,7 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
                     type="button"
                     onClick={() => setShowPayment(false)}
                     disabled={loading}
-                    className="mt-3 inline-flex w-full justify-center rounded-md bg-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-400 sm:mt-0 sm:w-auto"
+                    className="mt-3 inline-flex w-full justify-center rounded-md bg-dark-300 px-3 py-2 text-sm font-semibold text-text-secondary shadow-sm hover:bg-dark-400 sm:mt-0 sm:w-auto"
                   >
                     Back
                   </button>
@@ -787,7 +787,7 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
                 type="button"
                 onClick={onCancel}
                 disabled={loading}
-                className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+                className="mt-3 inline-flex w-full justify-center rounded-md bg-dark-300 px-3 py-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-dark-200 hover:bg-dark-900 sm:mt-0 sm:w-auto"
               >
                 Cancel
               </button>

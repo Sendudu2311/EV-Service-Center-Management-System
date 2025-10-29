@@ -147,33 +147,33 @@ const ServiceDetailsModal: React.FC<ServiceDetailsModalProps> = ({ service, isOp
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
-      'safety': 'text-red-600 bg-red-50',
-      'preparation': 'text-blue-600 bg-blue-50',
-      'execution': 'text-green-600 bg-green-50',
-      'verification': 'text-yellow-600 bg-yellow-50',
-      'cleanup': 'text-purple-600 bg-purple-50'
+      'safety': 'text-red-600 bg-dark-300',
+      'preparation': 'text-lime-600 bg-dark-300',
+      'execution': 'text-green-600 bg-dark-300',
+      'verification': 'text-yellow-600 bg-dark-300',
+      'cleanup': 'text-purple-600 bg-dark-300'
     };
-    return colors[category] || 'text-gray-600 bg-gray-50';
+    return colors[category] || 'text-text-secondary bg-dark-900';
   };
 
   if (!isOpen || !service) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-dark-300 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-start justify-between">
+        <div className="sticky top-0 bg-dark-300 border-b border-dark-200 p-6 flex items-start justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">{service.name}</h2>
+            <h2 className="text-2xl font-bold text-white">{service.name}</h2>
             <div className="flex items-center space-x-2 mt-2">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-text-muted bg-dark-200 text-lime-600">
                 {service.code}
               </span>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-text-muted bg-dark-200 text-green-600">
                 {service.category}
               </span>
               {service.subcategory && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-text-muted bg-purple-100 text-purple-800">
                   {service.subcategory}
                 </span>
               )}
@@ -181,7 +181,7 @@ const ServiceDetailsModal: React.FC<ServiceDetailsModalProps> = ({ service, isOp
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-text-muted hover:text-text-secondary transition-colors"
           >
             <XMarkIcon className="h-6 w-6" />
           </button>
@@ -191,32 +191,32 @@ const ServiceDetailsModal: React.FC<ServiceDetailsModalProps> = ({ service, isOp
         <div className="p-6 space-y-6">
           {/* Description */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-            <p className="text-gray-600">{service.description}</p>
+            <h3 className="text-lg font-semibold text-white mb-2">Description</h3>
+            <p className="text-text-secondary">{service.description}</p>
           </div>
 
           {/* Key Details Grid */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="bg-dark-300 p-4 rounded-lg">
               <div className="flex items-center space-x-2 mb-1">
-                <ClockIcon className="h-5 w-5 text-blue-600" />
-                <span className="text-sm text-gray-600">Duration</span>
+                <ClockIcon className="h-5 w-5 text-lime-600" />
+                <span className="text-sm text-text-secondary">Duration</span>
               </div>
-              <p className="text-2xl font-bold text-blue-900">{formatDuration(service.estimatedDuration)}</p>
+              <p className="text-2xl font-bold text-lime-600">{formatDuration(service.estimatedDuration)}</p>
             </div>
 
-            <div className="bg-green-50 p-4 rounded-lg">
+            <div className="bg-dark-300 p-4 rounded-lg">
               <div className="flex items-center space-x-2 mb-1">
                 <WrenchIcon className="h-5 w-5 text-green-600" />
-                <span className="text-sm text-gray-600">Skill Level</span>
+                <span className="text-sm text-text-secondary">Skill Level</span>
               </div>
-              <p className="text-2xl font-bold text-green-900 capitalize">{service.skillLevel}</p>
+              <p className="text-2xl font-bold text-green-600 capitalize">{service.skillLevel}</p>
             </div>
 
             <div className="bg-purple-50 p-4 rounded-lg">
               <div className="flex items-center space-x-2 mb-1">
                 <ShieldCheckIcon className="h-5 w-5 text-purple-600" />
-                <span className="text-sm text-gray-600">Base Price</span>
+                <span className="text-sm text-text-secondary">Base Price</span>
               </div>
               <p className="text-2xl font-bold text-purple-900">{formatPrice(service.basePrice)}</p>
             </div>
@@ -224,7 +224,7 @@ const ServiceDetailsModal: React.FC<ServiceDetailsModalProps> = ({ service, isOp
             <div className="bg-orange-50 p-4 rounded-lg">
               <div className="flex items-center space-x-2 mb-1">
                 <UserGroupIcon className="h-5 w-5 text-orange-600" />
-                <span className="text-sm text-gray-600">Status</span>
+                <span className="text-sm text-text-secondary">Status</span>
               </div>
               <p className={`text-2xl font-bold ${service.isActive ? 'text-green-900' : 'text-red-900'}`}>
                 {service.isActive ? 'Active' : 'Inactive'}
@@ -235,12 +235,12 @@ const ServiceDetailsModal: React.FC<ServiceDetailsModalProps> = ({ service, isOp
           {/* Required Certifications */}
           {service?.requiredCertifications && service.requiredCertifications.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Required Certifications</h3>
+              <h3 className="text-lg font-semibold text-white mb-3">Required Certifications</h3>
               <div className="space-y-2">
                 {service.requiredCertifications.map((cert, idx) => (
-                  <div key={idx} className="flex items-center space-x-3 p-3 bg-blue-50 rounded">
-                    <div className="h-2 w-2 bg-blue-600 rounded-full"></div>
-                    <span className="text-gray-700">{cert}</span>
+                  <div key={idx} className="flex items-center space-x-3 p-3 bg-dark-900 rounded">
+                    <div className="h-2 w-2 bg-lime-600 rounded-full"></div>
+                    <span className="text-text-secondary">{cert}</span>
                   </div>
                 ))}
               </div>
@@ -250,9 +250,9 @@ const ServiceDetailsModal: React.FC<ServiceDetailsModalProps> = ({ service, isOp
           {/* Warranty */}
           {service.warranty && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Warranty</h3>
+              <h3 className="text-lg font-semibold text-white mb-3">Warranty</h3>
               <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-600">
-                <p className="text-gray-700">
+                <p className="text-text-secondary">
                   <span className="font-semibold">{service.warranty.duration} days:</span> {service.warranty.description}
                 </p>
               </div>
@@ -261,7 +261,7 @@ const ServiceDetailsModal: React.FC<ServiceDetailsModalProps> = ({ service, isOp
 
           {/* Service Checklist */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Service Checklist</h3>
+            <h3 className="text-lg font-semibold text-white mb-3">Service Checklist</h3>
             <div className="space-y-2">
               {service?.checklist && service.checklist.length > 0 ? (
                 service.checklist.map((item, idx) => (
@@ -276,8 +276,8 @@ const ServiceDetailsModal: React.FC<ServiceDetailsModalProps> = ({ service, isOp
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <p className="font-medium">{item.step}</p>
-                        <span className="text-xs font-medium uppercase opacity-75">
+                        <p className="text-text-muted">{item.step}</p>
+                        <span className="text-xs text-text-muted uppercase opacity-75">
                           {formatDuration(item.estimatedTime)}
                         </span>
                       </div>
@@ -288,7 +288,7 @@ const ServiceDetailsModal: React.FC<ServiceDetailsModalProps> = ({ service, isOp
                   </div>
                 ))
               ) : (
-                <div className="text-center py-4 text-gray-500">No checklist items</div>
+                <div className="text-center py-4 text-text-muted">No checklist items</div>
               )}
             </div>
           </div>
@@ -296,7 +296,7 @@ const ServiceDetailsModal: React.FC<ServiceDetailsModalProps> = ({ service, isOp
           {/* Common Parts */}
           {service.commonParts && service.commonParts.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Common Parts Required</h3>
+              <h3 className="text-lg font-semibold text-white mb-3">Common Parts Required</h3>
               {loadingParts ? (
                 <div className="flex justify-center py-4">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
@@ -305,15 +305,15 @@ const ServiceDetailsModal: React.FC<ServiceDetailsModalProps> = ({ service, isOp
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {partsDetails && partsDetails.length > 0 ? (
                     partsDetails.map((part, idx) => (
-                      <div key={idx} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                      <div key={idx} className="bg-dark-900 p-4 rounded-lg border border-dark-200">
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <p className="font-semibold text-gray-900">{part.name}</p>
-                            <p className="text-sm text-gray-500">{part.code}</p>
+                            <p className="font-semibold text-white">{part.name}</p>
+                            <p className="text-sm text-text-muted">{part.code}</p>
                           </div>
                           <div className="text-right">
-                            <p className="font-semibold text-gray-900">Qty: {service?.commonParts?.[idx]?.quantity || 0}</p>
-                            <p className="text-sm text-gray-500">
+                            <p className="font-semibold text-white">Qty: {service?.commonParts?.[idx]?.quantity || 0}</p>
+                            <p className="text-sm text-text-muted">
                               {formatPrice((part.price || 0) * (service?.commonParts?.[idx]?.quantity || 0))}
                             </p>
                           </div>
@@ -326,7 +326,7 @@ const ServiceDetailsModal: React.FC<ServiceDetailsModalProps> = ({ service, isOp
                       </div>
                     ))
                   ) : (
-                    <div className="text-center py-4 text-gray-500">
+                    <div className="text-center py-4 text-text-muted">
                       No parts data available
                     </div>
                   )}
@@ -338,12 +338,12 @@ const ServiceDetailsModal: React.FC<ServiceDetailsModalProps> = ({ service, isOp
           {/* Tags */}
           {service?.tags && service.tags.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Tags</h3>
+              <h3 className="text-lg font-semibold text-white mb-3">Tags</h3>
               <div className="flex flex-wrap gap-2">
                 {service.tags.map((tag, idx) => (
                   <span
                     key={idx}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700"
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm text-text-muted bg-dark-100 text-text-secondary"
                   >
                     #{tag}
                   </span>
@@ -354,10 +354,10 @@ const ServiceDetailsModal: React.FC<ServiceDetailsModalProps> = ({ service, isOp
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-6 bg-gray-50">
+        <div className="border-t border-dark-200 p-6 bg-dark-900">
           <button
             onClick={onClose}
-            className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            className="w-full bg-lime-600 text-white px-4 py-2 rounded-lg text-text-muted hover:bg-dark-9000 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 transition-colors"
           >
             Close
           </button>

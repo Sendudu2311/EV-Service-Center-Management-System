@@ -229,7 +229,7 @@ const EnhancedCustomerDashboard: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const colors = {
       'pending': 'bg-yellow-100 text-yellow-800',
-      'confirmed': 'bg-blue-100 text-blue-800',
+      'confirmed': 'bg-lime-100 text-lime-800',
       'customer_arrived': 'bg-indigo-100 text-indigo-800',
       'in_progress': 'bg-purple-100 text-purple-800',
       'completed': 'bg-green-100 text-green-800',
@@ -237,8 +237,8 @@ const EnhancedCustomerDashboard: React.FC = () => {
     };
 
     return (
-      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-        colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'
+      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs text-text-muted ${
+        colors[status as keyof typeof colors] || 'bg-dark-100 text-gray-800'
       }`}>
         {appointmentStatusTranslations[status] || status}
       </span>
@@ -247,8 +247,8 @@ const EnhancedCustomerDashboard: React.FC = () => {
 
   const getBatteryIcon = (healthStatus: string, currentCharge: number) => {
     const getColor = () => {
-      if (healthStatus === 'poor') return 'text-red-500';
-      if (currentCharge <= 20) return 'text-red-500';
+      if (healthStatus === 'poor') return 'text-red-600';
+      if (currentCharge <= 20) return 'text-red-600';
       if (currentCharge <= 50) return 'text-yellow-500';
       return 'text-green-500';
     };
@@ -266,10 +266,10 @@ const EnhancedCustomerDashboard: React.FC = () => {
   const getBatteryHealthColor = (health: string) => {
     switch (health) {
       case 'excellent': return 'text-green-600 bg-green-100';
-      case 'good': return 'text-blue-600 bg-blue-100';
+      case 'good': return 'text-lime-600 bg-lime-100';
       case 'fair': return 'text-yellow-600 bg-yellow-100';
       case 'poor': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+      default: return 'text-text-secondary bg-dark-100';
     }
   };
 
@@ -282,7 +282,7 @@ const EnhancedCustomerDashboard: React.FC = () => {
     return {
       text: isOverdue ? 'Quá hạn bảo dưỡng' : 'Sắp đến hạn bảo dưỡng',
       color: isOverdue ? 'text-red-600' : 'text-yellow-600',
-      icon: <ExclamationTriangleIcon className={`h-4 w-4 ${isOverdue ? 'text-red-500' : 'text-yellow-500'}`} />
+      icon: <ExclamationTriangleIcon className={`h-4 w-4 ${isOverdue ? 'text-red-600' : 'text-yellow-500'}`} />
     };
   };
 
@@ -293,44 +293,44 @@ const EnhancedCustomerDashboard: React.FC = () => {
       case 'service_completed':
         return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
       case 'invoice_ready':
-        return <CreditCardIcon className="h-5 w-5 text-blue-500" />;
+        return <CreditCardIcon className="h-5 w-5 text-lime-500" />;
       default:
-        return <BellIcon className="h-5 w-5 text-gray-500" />;
+        return <BellIcon className="h-5 w-5 text-text-muted" />;
     }
   };
 
   // Loading state with skeleton
   if ((loadingState.isLoading || fetchLoading()) && !stats) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-dark-900 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-300 rounded w-1/3 mb-2"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/4 mb-8"></div>
+            <div className="h-8 bg-dark-300 rounded w-1/3 mb-2"></div>
+            <div className="h-4 bg-dark-200 rounded w-1/4 mb-8"></div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white p-6 rounded-lg shadow-sm border">
-                  <div className="h-6 bg-gray-200 rounded w-2/3 mb-2"></div>
-                  <div className="h-8 bg-gray-300 rounded w-1/3"></div>
+                <div key={i} className="bg-dark-300 p-6 rounded-lg shadow-sm border">
+                  <div className="h-6 bg-dark-200 rounded w-2/3 mb-2"></div>
+                  <div className="h-8 bg-dark-300 rounded w-1/3"></div>
                 </div>
               ))}
             </div>
 
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-              <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border p-6">
-                <div className="h-6 bg-gray-200 rounded w-1/4 mb-4"></div>
+              <div className="lg:col-span-2 bg-dark-300 rounded-lg shadow-sm border p-6">
+                <div className="h-6 bg-dark-200 rounded w-1/4 mb-4"></div>
                 <div className="space-y-4">
                   {[...Array(3)].map((_, i) => (
-                    <div key={i} className="h-20 bg-gray-100 rounded"></div>
+                    <div key={i} className="h-20 bg-dark-100 rounded"></div>
                   ))}
                 </div>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border p-6">
-                <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+              <div className="bg-dark-300 rounded-lg shadow-sm border p-6">
+                <div className="h-6 bg-dark-200 rounded w-1/3 mb-4"></div>
                 <div className="space-y-3">
                   {[...Array(5)].map((_, i) => (
-                    <div key={i} className="h-12 bg-gray-100 rounded"></div>
+                    <div key={i} className="h-12 bg-dark-100 rounded"></div>
                   ))}
                 </div>
               </div>
@@ -344,14 +344,14 @@ const EnhancedCustomerDashboard: React.FC = () => {
   // Error state with retry option
   if (loadingState.error && !stats) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-dark-900 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
-            <ExclamationCircleIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <div className="bg-dark-300 rounded-lg shadow-sm border p-8 text-center">
+            <ExclamationCircleIcon className="h-16 w-16 text-red-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-white mb-2">
               Không thể tải dữ liệu dashboard
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-text-secondary mb-6">
               {loadingState.error.message}
             </p>
 
@@ -360,7 +360,7 @@ const EnhancedCustomerDashboard: React.FC = () => {
                 <button
                   onClick={handleRetry}
                   disabled={loadingState.isLoading || fetchLoading()}
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm text-white bg-lime-600 hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loadingState.isLoading ? (
                     <>
@@ -375,7 +375,7 @@ const EnhancedCustomerDashboard: React.FC = () => {
                   )}
                 </button>
 
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-text-muted">
                   {loadingState.lastFetch && (
                     <>Lần cuối cập nhật: {formatVietnameseDateTime(loadingState.lastFetch.toISOString())}</>
                   )}
@@ -389,16 +389,16 @@ const EnhancedCustomerDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-dark-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <div className="md:flex md:items-center md:justify-between">
             <div className="min-w-0 flex-1">
-              <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+              <h2 className="text-2xl font-bold leading-7 text-white sm:truncate sm:text-3xl sm:tracking-tight">
                 Chào mừng, {user?.firstName} {user?.lastName}
               </h2>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-text-muted">
                 Tổng quan về xe và dịch vụ của bạn
               </p>
               <div className="flex items-center justify-between mt-2">
@@ -410,14 +410,14 @@ const EnhancedCustomerDashboard: React.FC = () => {
                 </div>
 
                 {loadingState.lastFetch && (
-                  <div className="flex items-center space-x-3 text-xs text-gray-500">
+                  <div className="flex items-center space-x-3 text-xs text-text-muted">
                     <span>
                       Cập nhật: {formatVietnameseDateTime(loadingState.lastFetch.toISOString()).split(' ')[1]}
                     </span>
                     <button
                       onClick={handleRetry}
                       disabled={loadingState.isLoading || fetchLoading()}
-                      className="text-blue-600 hover:text-blue-500 disabled:opacity-50"
+                      className="text-lime-600 hover:text-lime-500 disabled:opacity-50"
                     >
                       {(loadingState.isLoading || fetchLoading()) ? (
                         <ArrowPathIcon className="h-4 w-4 animate-spin" />
@@ -432,7 +432,7 @@ const EnhancedCustomerDashboard: React.FC = () => {
             <div className="mt-4 flex md:ml-4 md:mt-0">
               <Link
                 to="/appointments"
-                className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+                className="inline-flex items-center rounded-md bg-lime-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-dark-9000"
               >
                 <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
                 Đặt lịch hẹn mới
@@ -462,7 +462,7 @@ const EnhancedCustomerDashboard: React.FC = () => {
               name: 'Dịch vụ hoàn thành',
               value: stats.completedServices,
               icon: CheckCircleIcon,
-              color: 'emerald',
+              color: 'green',
               href: '/appointments'
             },
             {
@@ -478,13 +478,13 @@ const EnhancedCustomerDashboard: React.FC = () => {
               <Link
                 key={stat.name}
                 to={stat.href}
-                className="relative bg-white pt-5 px-4 pb-12 sm:pt-6 sm:px-6 shadow-sm rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+                className="relative bg-dark-300 pt-5 px-4 pb-12 sm:pt-6 sm:px-6 shadow-sm rounded-lg overflow-hidden hover:shadow-md transition-shadow"
               >
                 <div>
                   <div className={`absolute rounded-md p-3 bg-${stat.color}-500`}>
                     <Icon className="h-6 w-6 text-white" />
                   </div>
-                  <p className="ml-16 text-sm font-medium text-gray-500 truncate">{stat.name}</p>
+                  <p className="ml-16 text-sm text-text-muted text-text-muted truncate">{stat.name}</p>
                 </div>
                 <div className="ml-16 pb-6 flex items-baseline">
                   <p className={`text-2xl font-semibold text-${stat.color}-600`}>
@@ -499,9 +499,9 @@ const EnhancedCustomerDashboard: React.FC = () => {
         {/* Vehicle Management Section */}
         {vehicles.length > 0 && (
           <div className="mb-8">
-            <div className="bg-white shadow-sm rounded-lg">
+            <div className="bg-dark-300 shadow-sm rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4 flex items-center">
+                <h3 className="text-lg leading-6 text-text-muted text-white mb-4 flex items-center">
                   <TruckIcon className="h-5 w-5 mr-2" />
                   Xe điện của bạn
                 </h3>
@@ -511,15 +511,15 @@ const EnhancedCustomerDashboard: React.FC = () => {
                     return (
                       <div
                         key={vehicle._id}
-                        className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                        className="border border-dark-200 rounded-lg p-4 hover:bg-dark-900 transition-colors"
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
-                            <h4 className="text-sm font-semibold text-gray-900">
+                            <h4 className="text-sm font-semibold text-white">
                               {vehicle.year} {vehicle.make} {vehicle.model}
                             </h4>
                             {vehicle.licensePlate && (
-                              <p className="text-sm text-gray-600">{vehicle.licensePlate}</p>
+                              <p className="text-sm text-text-secondary">{vehicle.licensePlate}</p>
                             )}
                           </div>
                           {maintenanceStatus && (
@@ -532,16 +532,16 @@ const EnhancedCustomerDashboard: React.FC = () => {
                         {/* Battery Info */}
                         <div className="space-y-2 mb-3">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Pin:</span>
+                            <span className="text-sm text-text-secondary">Pin:</span>
                             <div className="flex items-center space-x-2">
                               {getBatteryIcon(vehicle.batteryHealth || 'good', vehicle.currentCharge || 80)}
-                              <span className="text-sm font-medium">{vehicle.currentCharge || 80}%</span>
+                              <span className="text-sm text-text-muted">{vehicle.currentCharge || 80}%</span>
                             </div>
                           </div>
 
                           {vehicle.batteryHealth && (
                             <div className="flex items-center justify-between">
-                              <span className="text-sm text-gray-600">Sức khỏe pin:</span>
+                              <span className="text-sm text-text-secondary">Sức khỏe pin:</span>
                               <span className={`text-xs px-2 py-1 rounded-full ${getBatteryHealthColor(vehicle.batteryHealth)}`}>
                                 {vehicle.batteryHealth === 'excellent' ? 'Tuyệt vời' :
                                  vehicle.batteryHealth === 'good' ? 'Tốt' :
@@ -551,13 +551,13 @@ const EnhancedCustomerDashboard: React.FC = () => {
                           )}
 
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Dung lượng:</span>
-                            <span className="text-sm font-medium">{vehicle.batteryCapacity} kWh</span>
+                            <span className="text-sm text-text-secondary">Dung lượng:</span>
+                            <span className="text-sm text-text-muted">{vehicle.batteryCapacity} kWh</span>
                           </div>
 
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Tầm di chuyển:</span>
-                            <span className="text-sm font-medium">{vehicle.range} km</span>
+                            <span className="text-sm text-text-secondary">Tầm di chuyển:</span>
+                            <span className="text-sm text-text-muted">{vehicle.range} km</span>
                           </div>
                         </div>
 
@@ -577,14 +577,14 @@ const EnhancedCustomerDashboard: React.FC = () => {
                         <div className="flex space-x-2">
                           <Link
                             to={`/vehicles/${vehicle._id}`}
-                            className="flex-1 text-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                            className="flex-1 text-center px-3 py-2 border border-dark-300 text-sm text-text-muted rounded-md text-text-secondary bg-dark-300 hover:bg-dark-900"
                           >
                             Chi tiết
                           </Link>
                           {vehicle.isMaintenanceDue && (
                             <Link
                               to="/appointments"
-                              className="flex-1 text-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                              className="flex-1 text-center px-3 py-2 border border-transparent text-sm text-text-muted rounded-md text-white bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                             >
                               Đặt lịch
                             </Link>
@@ -602,22 +602,22 @@ const EnhancedCustomerDashboard: React.FC = () => {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* Recent Appointments */}
           <div className="lg:col-span-2">
-            <div className="bg-white shadow-sm rounded-lg">
+            <div className="bg-dark-300 shadow-sm rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                <h3 className="text-lg leading-6 text-text-muted text-white mb-4">
                   Lịch hẹn gần đây
                 </h3>
                 {!Array.isArray(recentAppointments) || recentAppointments.length === 0 ? (
                   <div className="text-center py-6">
-                    <CalendarDaysIcon className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-semibold text-gray-900">Không có lịch hẹn</h3>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <CalendarDaysIcon className="mx-auto h-12 w-12 text-text-muted" />
+                    <h3 className="mt-2 text-sm font-semibold text-white">Không có lịch hẹn</h3>
+                    <p className="mt-1 text-sm text-text-muted">
                       Bạn chưa có lịch hẹn nào gần đây.
                     </p>
                     <div className="mt-6">
                       <Link
                         to="/appointments"
-                        className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+                        className="inline-flex items-center rounded-md bg-lime-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-dark-9000"
                       >
                         <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
                         Đặt lịch hẹn mới
@@ -629,44 +629,44 @@ const EnhancedCustomerDashboard: React.FC = () => {
                     {(recentAppointments || []).map((appointment) => (
                       <div
                         key={appointment._id}
-                        className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                        className="border border-dark-200 rounded-lg p-4 hover:bg-dark-900 transition-colors"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-2">
-                              <h4 className="text-sm font-semibold text-gray-900">
+                              <h4 className="text-sm font-semibold text-white">
                                 #{appointment.appointmentNumber}
                               </h4>
                               {getStatusBadge(appointment.status)}
                             </div>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-text-secondary">
                               {appointment.vehicle || 'N/A'}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-text-muted">
                               {formatVietnameseDateTime(combineDateTime(appointment.scheduledDate, appointment.scheduledTime))}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-text-muted">
                               {appointment.serviceCenter || 'N/A'}
                             </p>
                             <div className="flex items-center justify-between mt-2">
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className="text-sm text-text-muted text-white">
                                 Chi phí: {formatVND(appointment.totalPrice)}
                               </p>
                               <div className="flex flex-wrap gap-1">
                                 {appointment.services.slice(0, 2).map((service, idx) => (
-                                  <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                  <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-dark-300 text-lime-600">
                                     {service}
                                   </span>
                                 ))}
                                 {appointment.services.length > 2 && (
-                                  <span className="text-xs text-gray-500">+{appointment.services.length - 2} dịch vụ</span>
+                                  <span className="text-xs text-text-muted">+{appointment.services.length - 2} dịch vụ</span>
                                 )}
                               </div>
                             </div>
                           </div>
                           <Link
                             to={`/appointments`}
-                            className="inline-flex items-center text-blue-600 hover:text-blue-500"
+                            className="inline-flex items-center text-lime-600 hover:text-lime-500"
                           >
                             <ArrowRightIcon className="h-4 w-4" />
                           </Link>
@@ -676,7 +676,7 @@ const EnhancedCustomerDashboard: React.FC = () => {
                     <div className="text-center pt-4">
                       <Link
                         to="/appointments"
-                        className="text-blue-600 hover:text-blue-500 text-sm font-medium"
+                        className="text-lime-600 hover:text-lime-500 text-sm text-text-muted"
                       >
                         Xem tất cả lịch hẹn →
                       </Link>
@@ -690,15 +690,15 @@ const EnhancedCustomerDashboard: React.FC = () => {
           {/* Notifications and Vehicle Status */}
           <div className="space-y-6">
             {/* Notifications */}
-            <div className="bg-white shadow-sm rounded-lg">
+            <div className="bg-dark-300 shadow-sm rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                <h3 className="text-lg leading-6 text-text-muted text-white mb-4">
                   Thông báo
                 </h3>
                 {!Array.isArray(notifications) || notifications.length === 0 ? (
                   <div className="text-center py-6">
-                    <BellIcon className="mx-auto h-8 w-8 text-gray-400" />
-                    <p className="mt-2 text-sm text-gray-500">
+                    <BellIcon className="mx-auto h-8 w-8 text-text-muted" />
+                    <p className="mt-2 text-sm text-text-muted">
                       Không có thông báo mới
                     </p>
                   </div>
@@ -709,38 +709,38 @@ const EnhancedCustomerDashboard: React.FC = () => {
                         key={notification._id}
                         className={`p-3 rounded-lg border transition-colors ${
                           notification.isRead
-                            ? 'bg-gray-50 border-gray-200'
+                            ? 'bg-dark-900 border-dark-200'
                             : notification.priority === 'high'
                             ? 'bg-red-50 border-red-200'
                             : notification.priority === 'medium'
-                            ? 'bg-blue-50 border-blue-200'
-                            : 'bg-blue-50 border-blue-100'
+                            ? 'bg-dark-900 border-blue-200'
+                            : 'bg-dark-900 border-blue-100'
                         }`}
                       >
                         <div className="flex items-start space-x-3">
                           {getNotificationIcon(notification.type)}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className="text-sm text-text-muted text-white">
                                 {notification.title}
                               </p>
                               {notification.priority === 'high' && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-dark-300 text-red-600">
                                   Quan trọng
                                 </span>
                               )}
                             </div>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-sm text-text-muted mt-1">
                               {notification.message}
                             </p>
                             <div className="flex items-center justify-between mt-2">
-                              <p className="text-xs text-gray-400">
+                              <p className="text-xs text-text-muted">
                                 {formatVietnameseDateTime(notification.createdAt)}
                               </p>
                               {notification.actionUrl && (
                                 <Link
                                   to={notification.actionUrl}
-                                  className="text-xs text-blue-600 hover:text-blue-500 font-medium"
+                                  className="text-xs text-lime-600 hover:text-lime-500 text-text-muted"
                                 >
                                   Xem chi tiết →
                                 </Link>
@@ -762,32 +762,32 @@ const EnhancedCustomerDashboard: React.FC = () => {
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-white shadow-sm rounded-lg">
+            <div className="bg-dark-300 shadow-sm rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                <h3 className="text-lg leading-6 text-text-muted text-white mb-4">
                   Thao tác nhanh
                 </h3>
                 <div className="space-y-3">
                   <Link
                     to="/appointments"
-                    className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center p-3 rounded-lg hover:bg-dark-900 transition-colors"
                   >
-                    <CalendarDaysIcon className="h-5 w-5 text-blue-500 mr-3" />
-                    <span className="text-sm font-medium text-gray-900">Đặt lịch hẹn</span>
+                    <CalendarDaysIcon className="h-5 w-5 text-lime-500 mr-3" />
+                    <span className="text-sm text-text-muted text-white">Đặt lịch hẹn</span>
                   </Link>
                   <Link
                     to="/vehicles"
-                    className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center p-3 rounded-lg hover:bg-dark-900 transition-colors"
                   >
                     <TruckIcon className="h-5 w-5 text-green-500 mr-3" />
-                    <span className="text-sm font-medium text-gray-900">Quản lý xe</span>
+                    <span className="text-sm text-text-muted text-white">Quản lý xe</span>
                   </Link>
                   <Link
                     to="/invoices"
-                    className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="flex items-center p-3 rounded-lg hover:bg-dark-900 transition-colors"
                   >
                     <CreditCardIcon className="h-5 w-5 text-purple-500 mr-3" />
-                    <span className="text-sm font-medium text-gray-900">Xem hóa đơn</span>
+                    <span className="text-sm text-text-muted text-white">Xem hóa đơn</span>
                   </Link>
                 </div>
               </div>

@@ -84,25 +84,25 @@ const NotificationCenter: React.FC<Props> = ({
 
         // Show toast notification
         toast.custom((t) => (
-          <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}>
+          <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-dark-300 shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}>
             <div className="flex-1 w-0 p-4">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
                   {getNotificationIcon(notification.type, notification.priority)}
                 </div>
                 <div className="ml-3 flex-1">
-                  <p className="text-sm font-medium text-gray-900">{notification.title}</p>
-                  <p className="mt-1 text-sm text-gray-500">{notification.message}</p>
+                  <p className="text-sm text-text-muted text-white">{notification.title}</p>
+                  <p className="mt-1 text-sm text-text-muted">{notification.message}</p>
                 </div>
               </div>
             </div>
-            <div className="flex border-l border-gray-200">
+            <div className="flex border-l border-dark-200">
               <button
                 onClick={() => {
                   toast.dismiss(t.id);
                   setIsOpen(true);
                 }}
-                className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-blue-600 hover:text-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm text-text-muted text-lime-600 hover:text-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-400"
               >
                 Xem
               </button>
@@ -143,10 +143,10 @@ const NotificationCenter: React.FC<Props> = ({
 
   const getNotificationIcon = (type: string, priority: string) => {
     const iconClass = `h-5 w-5 ${
-      priority === 'urgent' ? 'text-red-500' :
+      priority === 'urgent' ? 'text-red-600' :
       priority === 'high' ? 'text-orange-500' :
-      priority === 'normal' ? 'text-blue-500' :
-      'text-gray-500'
+      priority === 'normal' ? 'text-lime-500' :
+      'text-text-muted'
     }`;
 
     switch (type) {
@@ -174,8 +174,8 @@ const NotificationCenter: React.FC<Props> = ({
     switch (priority) {
       case 'urgent': return 'border-l-red-500 bg-red-50';
       case 'high': return 'border-l-orange-500 bg-orange-50';
-      case 'normal': return 'border-l-blue-500 bg-blue-50';
-      default: return 'border-l-gray-500 bg-gray-50';
+      case 'normal': return 'border-l-blue-500 bg-dark-900';
+      default: return 'border-l-gray-500 bg-dark-900';
     }
   };
 
@@ -224,7 +224,7 @@ const NotificationCenter: React.FC<Props> = ({
       {/* Notification Bell */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg"
+        className="relative p-2 text-text-muted hover:text-text-muted focus:outline-none focus:ring-2 focus:ring-lime-400 rounded-lg"
       >
         <BellIcon className="h-6 w-6" />
         {unreadCount > 0 && (
@@ -239,13 +239,13 @@ const NotificationCenter: React.FC<Props> = ({
 
       {/* Notification Panel */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+        <div className="absolute right-0 mt-2 w-96 bg-dark-300 rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-50">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">
+          <div className="flex items-center justify-between p-4 border-b border-dark-200">
+            <h3 className="text-lg font-semibold text-white">
               Thông báo
               {unreadCount > 0 && (
-                <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-dark-300 text-red-600">
                   {unreadCount} mới
                 </span>
               )}
@@ -258,7 +258,7 @@ const NotificationCenter: React.FC<Props> = ({
               )}
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1 text-gray-400 hover:text-gray-500 rounded"
+                className="p-1 text-text-muted hover:text-text-muted rounded"
               >
                 <XMarkIcon className="h-5 w-5" />
               </button>
@@ -266,7 +266,7 @@ const NotificationCenter: React.FC<Props> = ({
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex space-x-1 p-2 bg-gray-50">
+          <div className="flex space-x-1 p-2 bg-dark-900">
             {[
               { key: 'all', label: 'Tất cả' },
               { key: 'unread', label: 'Chưa đọc' },
@@ -275,10 +275,10 @@ const NotificationCenter: React.FC<Props> = ({
               <button
                 key={tab.key}
                 onClick={() => setFilter(tab.key as any)}
-                className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                className={`px-3 py-1 rounded text-sm text-text-muted transition-colors ${
                   filter === tab.key
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:text-gray-800'
+                    ? 'bg-lime-100 text-lime-700'
+                    : 'text-text-secondary hover:text-gray-800'
                 }`}
               >
                 {tab.label}
@@ -288,10 +288,10 @@ const NotificationCenter: React.FC<Props> = ({
 
           {/* Actions */}
           {unreadCount > 0 && (
-            <div className="px-4 py-2 border-b border-gray-200">
+            <div className="px-4 py-2 border-b border-dark-200">
               <button
                 onClick={markAllAsRead}
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="text-sm text-lime-600 hover:text-lime-700 text-text-muted"
               >
                 Đánh dấu tất cả đã đọc
               </button>
@@ -301,8 +301,8 @@ const NotificationCenter: React.FC<Props> = ({
           {/* Notification List */}
           <div className="max-h-96 overflow-y-auto">
             {filteredNotifications.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                <BellIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+              <div className="p-8 text-center text-text-muted">
+                <BellIcon className="h-8 w-8 mx-auto mb-2 text-text-muted" />
                 <p className="text-sm">
                   {filter === 'unread' ? 'Không có thông báo chưa đọc' :
                    filter === 'high_priority' ? 'Không có thông báo ưu tiên cao' :
@@ -314,8 +314,8 @@ const NotificationCenter: React.FC<Props> = ({
                 {filteredNotifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`border-l-4 p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                      notification.isRead ? 'bg-white' : getPriorityColor(notification.priority)
+                    className={`border-l-4 p-4 hover:bg-dark-900 cursor-pointer transition-colors ${
+                      notification.isRead ? 'bg-dark-300' : getPriorityColor(notification.priority)
                     }`}
                     onClick={() => !notification.isRead && markAsRead(notification.id)}
                   >
@@ -324,18 +324,18 @@ const NotificationCenter: React.FC<Props> = ({
                         {getNotificationIcon(notification.type, notification.priority)}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-2">
-                            <p className={`text-sm font-medium text-gray-900 ${!notification.isRead ? 'font-semibold' : ''}`}>
+                            <p className={`text-sm text-text-muted text-white ${!notification.isRead ? 'font-semibold' : ''}`}>
                               {notification.title}
                             </p>
                             {!notification.isRead && (
-                              <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                              <div className="w-2 h-2 bg-dark-9000 rounded-full" />
                             )}
                           </div>
-                          <p className="text-sm text-gray-700 mt-1">
+                          <p className="text-sm text-text-secondary mt-1">
                             {notification.message}
                           </p>
                           <div className="flex items-center justify-between mt-2">
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-text-muted">
                               {formatVietnameseDateTime(notification.createdAt)}
                             </p>
                             <div className="flex items-center space-x-2">
@@ -346,10 +346,10 @@ const NotificationCenter: React.FC<Props> = ({
                                     e.stopPropagation();
                                     onActionClick?.(action.action, notification);
                                   }}
-                                  className={`text-xs px-2 py-1 rounded font-medium ${
+                                  className={`text-xs px-2 py-1 rounded text-text-muted ${
                                     action.variant === 'primary'
-                                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                      ? 'bg-lime-600 text-white hover:bg-lime-100 transition-all duration-200 transform hover:scale-105'
+                                      : 'bg-dark-200 text-text-secondary hover:bg-dark-300'
                                   }`}
                                 >
                                   {action.label}
@@ -365,7 +365,7 @@ const NotificationCenter: React.FC<Props> = ({
                             e.stopPropagation();
                             markAsRead(notification.id);
                           }}
-                          className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                          className="p-1 text-text-muted hover:text-text-secondary rounded"
                           title={notification.isRead ? 'Đánh dấu chưa đọc' : 'Đánh dấu đã đọc'}
                         >
                           {notification.isRead ? <EyeSlashIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
@@ -375,7 +375,7 @@ const NotificationCenter: React.FC<Props> = ({
                             e.stopPropagation();
                             deleteNotification(notification.id);
                           }}
-                          className="p-1 text-gray-400 hover:text-red-600 rounded"
+                          className="p-1 text-text-muted hover:text-red-600 rounded"
                           title="Xóa thông báo"
                         >
                           <XMarkIcon className="h-4 w-4" />
@@ -398,8 +398,8 @@ const NotificationCenter: React.FC<Props> = ({
 
           {/* Footer */}
           {filteredNotifications.length > 0 && (
-            <div className="p-3 border-t border-gray-200 bg-gray-50">
-              <p className="text-xs text-gray-500 text-center">
+            <div className="p-3 border-t border-dark-200 bg-dark-900">
+              <p className="text-xs text-text-muted text-center">
                 Hiển thị {filteredNotifications.length} / {notifications.length} thông báo
               </p>
             </div>

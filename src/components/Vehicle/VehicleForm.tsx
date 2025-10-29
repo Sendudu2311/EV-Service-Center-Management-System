@@ -193,19 +193,19 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onCancel} />
+        <div className="fixed inset-0 bg-dark-9000 bg-opacity-75 transition-opacity" onClick={onCancel} />
         
-        <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+        <div className="relative transform overflow-hidden rounded-lg bg-dark-300 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
           <form onSubmit={handleSubmit}>
-            <div className="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+            <div className="bg-dark-300 px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
               <div className="flex items-start justify-between">
-                <h3 className="text-lg font-semibold leading-6 text-gray-900">
+                <h3 className="text-lg font-semibold leading-6 text-white">
                   {mode === 'create' ? 'Register New Vehicle' : 'Edit Vehicle'}
                 </h3>
                 <button
                   type="button"
                   onClick={onCancel}
-                  className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="rounded-md bg-dark-300 text-text-muted hover:text-text-muted focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   <XMarkIcon className="h-6 w-6" />
                 </button>
@@ -214,8 +214,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
               <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
                 {/* VIN */}
                 <div className="sm:col-span-6">
-                  <label htmlFor="vin" className="block text-sm font-medium leading-6 text-gray-900">
-                    VIN (Vehicle Identification Number) <span className="text-red-500">*</span>
+                  <label htmlFor="vin" className="block text-sm text-text-muted leading-6 text-white">
+                    VIN (Vehicle Identification Number) <span className="text-red-600">*</span>
                   </label>
                   <input
                     type="text"
@@ -226,15 +226,15 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     placeholder="Enter 17-character VIN"
                     value={formData.vin}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6 uppercase"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6 uppercase"
                   />
-                  <p className="mt-1 text-xs text-gray-500">Must be exactly 17 characters</p>
+                  <p className="mt-1 text-xs text-text-muted">Must be exactly 17 characters</p>
                 </div>
 
                 {/* Make and Model */}
                 <div className="sm:col-span-3">
-                  <label htmlFor="make" className="block text-sm font-medium leading-6 text-gray-900">
-                    Make <span className="text-red-500">*</span>
+                  <label htmlFor="make" className="block text-sm text-text-muted leading-6 text-white">
+                    Make <span className="text-red-600">*</span>
                   </label>
                   <select
                     name="make"
@@ -242,7 +242,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     required
                     value={formData.make}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   >
                     <option value="">Select Make</option>
                     {popularMakes.map(make => (
@@ -252,8 +252,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                 </div>
 
                 <div className="sm:col-span-3">
-                  <label htmlFor="model" className="block text-sm font-medium leading-6 text-gray-900">
-                    Model <span className="text-red-500">*</span>
+                  <label htmlFor="model" className="block text-sm text-text-muted leading-6 text-white">
+                    Model <span className="text-red-600">*</span>
                   </label>
                   <input
                     type="text"
@@ -263,14 +263,14 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     placeholder="e.g., Model 3, IONIQ 5, ID.4"
                     value={formData.model}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
                 {/* Year and Color */}
                 <div className="sm:col-span-3">
-                  <label htmlFor="year" className="block text-sm font-medium leading-6 text-gray-900">
-                    Year <span className="text-red-500">*</span>
+                  <label htmlFor="year" className="block text-sm text-text-muted leading-6 text-white">
+                    Year <span className="text-red-600">*</span>
                   </label>
                   <input
                     type="number"
@@ -281,13 +281,13 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     max={new Date().getFullYear() + 1}
                     value={formData.year}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
                 <div className="sm:col-span-3">
-                  <label htmlFor="color" className="block text-sm font-medium leading-6 text-gray-900">
-                    Color <span className="text-red-500">*</span>
+                  <label htmlFor="color" className="block text-sm text-text-muted leading-6 text-white">
+                    Color <span className="text-red-600">*</span>
                   </label>
                   <input
                     type="text"
@@ -297,14 +297,14 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     placeholder="e.g., Pearl White, Ocean Blue"
                     value={formData.color}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
                 {/* Battery Information */}
                 <div className="sm:col-span-3">
-                  <label htmlFor="batteryType" className="block text-sm font-medium leading-6 text-gray-900">
-                    Battery Type <span className="text-red-500">*</span>
+                  <label htmlFor="batteryType" className="block text-sm text-text-muted leading-6 text-white">
+                    Battery Type <span className="text-red-600">*</span>
                   </label>
                   <select
                     name="batteryType"
@@ -312,7 +312,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     required
                     value={formData.batteryType}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   >
                     {batteryTypes.map(type => (
                       <option key={type.value} value={type.value}>{type.label}</option>
@@ -321,8 +321,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                 </div>
 
                 <div className="sm:col-span-3">
-                  <label htmlFor="batteryCapacity" className="block text-sm font-medium leading-6 text-gray-900">
-                    Battery Capacity (kWh) <span className="text-red-500">*</span>
+                  <label htmlFor="batteryCapacity" className="block text-sm text-text-muted leading-6 text-white">
+                    Battery Capacity (kWh) <span className="text-red-600">*</span>
                   </label>
                   <input
                     type="number"
@@ -335,14 +335,14 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     placeholder="50"
                     value={formData.batteryCapacity}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
                 {/* Performance */}
                 <div className="sm:col-span-3">
-                  <label htmlFor="maxChargingPower" className="block text-sm font-medium leading-6 text-gray-900">
-                    Max Charging Power (kW) <span className="text-red-500">*</span>
+                  <label htmlFor="maxChargingPower" className="block text-sm text-text-muted leading-6 text-white">
+                    Max Charging Power (kW) <span className="text-red-600">*</span>
                   </label>
                   <input
                     type="number"
@@ -354,13 +354,13 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     placeholder="50"
                     value={formData.maxChargingPower}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
                 <div className="sm:col-span-3">
-                  <label htmlFor="range" className="block text-sm font-medium leading-6 text-gray-900">
-                    Range (km) <span className="text-red-500">*</span>
+                  <label htmlFor="range" className="block text-sm text-text-muted leading-6 text-white">
+                    Range (km) <span className="text-red-600">*</span>
                   </label>
                   <input
                     type="number"
@@ -372,14 +372,14 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     placeholder="300"
                     value={formData.range}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
                 {/* Dates and Mileage */}
                 <div className="sm:col-span-3">
-                  <label htmlFor="purchaseDate" className="block text-sm font-medium leading-6 text-gray-900">
-                    Purchase Date <span className="text-red-500">*</span>
+                  <label htmlFor="purchaseDate" className="block text-sm text-text-muted leading-6 text-white">
+                    Purchase Date <span className="text-red-600">*</span>
                   </label>
                   <input
                     type="date"
@@ -388,12 +388,12 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     required
                     value={formData.purchaseDate}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
                 <div className="sm:col-span-3">
-                  <label htmlFor="warrantyExpiry" className="block text-sm font-medium leading-6 text-gray-900">
+                  <label htmlFor="warrantyExpiry" className="block text-sm text-text-muted leading-6 text-white">
                     Warranty Expiry
                   </label>
                   <input
@@ -402,12 +402,12 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     id="warrantyExpiry"
                     value={formData.warrantyExpiry}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label htmlFor="mileage" className="block text-sm font-medium leading-6 text-gray-900">
+                  <label htmlFor="mileage" className="block text-sm text-text-muted leading-6 text-white">
                     Current Mileage (km)
                   </label>
                   <input
@@ -417,12 +417,12 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     min="0"
                     value={formData.mileage}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label htmlFor="maintenanceInterval" className="block text-sm font-medium leading-6 text-gray-900">
+                  <label htmlFor="maintenanceInterval" className="block text-sm text-text-muted leading-6 text-white">
                     Maintenance Interval (km)
                   </label>
                   <input
@@ -434,12 +434,12 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     step="1000"
                     value={formData.maintenanceInterval}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label htmlFor="timeBasedInterval" className="block text-sm font-medium leading-6 text-gray-900">
+                  <label htmlFor="timeBasedInterval" className="block text-sm text-text-muted leading-6 text-white">
                     Time-based Interval (months)
                   </label>
                   <input
@@ -450,13 +450,13 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     max="24"
                     value={formData.timeBasedInterval}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
                 {/* Vehicle Images */}
                 <div className="sm:col-span-6">
-                  <label className="block text-sm font-medium leading-6 text-gray-900 mb-2">
+                  <label className="block text-sm text-text-muted leading-6 text-white mb-2">
                     Vehicle Images
                   </label>
                   
@@ -474,7 +474,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="mb-4 inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="mb-4 inline-flex items-center px-4 py-2 border border-dark-200 bg-dark-300 text-white rounded-md shadow-sm text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400"
                   >
                     <PhotoIcon className="h-5 w-5 mr-2" />
                     Add Images
@@ -488,7 +488,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                           <img
                             src={url}
                             alt={`Preview ${index + 1}`}
-                            className="w-full h-24 object-cover rounded-lg border border-gray-300"
+                            className="w-full h-24 object-cover rounded-lg border border-dark-300"
                           />
                           <button
                             type="button"
@@ -497,7 +497,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                           >
                             <TrashIcon className="h-4 w-4" />
                           </button>
-                          <div className="mt-1 text-xs text-gray-500 truncate">
+                          <div className="mt-1 text-xs text-text-muted truncate">
                             {selectedImages[index]?.name}
                           </div>
                         </div>
@@ -505,18 +505,18 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     </div>
                   )}
                   
-                  <p className="mt-2 text-sm text-gray-500">
+                  <p className="mt-2 text-sm text-text-muted">
                     Upload images of your vehicle. Supported formats: JPG, PNG, GIF. Max file size: 5MB each.
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+            <div className="bg-dark-900 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:ml-3 sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex w-full justify-center rounded-md bg-lime-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-dark-9000 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400 sm:ml-3 sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <div className="flex items-center">
@@ -531,7 +531,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                 type="button"
                 onClick={onCancel}
                 disabled={loading}
-                className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto disabled:opacity-50"
+                className="mt-3 inline-flex w-full justify-center rounded-md bg-dark-300 px-3 py-2 text-sm font-semibold text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 hover:bg-dark-900 sm:mt-0 sm:w-auto disabled:opacity-50"
               >
                 Cancel
               </button>

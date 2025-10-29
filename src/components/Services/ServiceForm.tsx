@@ -261,14 +261,14 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ service, isOpen, onClose }) =
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-dark-300 p-6 text-left align-middle shadow-xl transition-all">
                 <div className="flex items-center justify-between mb-6">
-                  <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+                  <Dialog.Title as="h3" className="text-lg text-text-muted leading-6 text-white">
                     {service?._id ? 'Edit Service' : 'Add New Service'}
                   </Dialog.Title>
                   <button
                     onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-text-muted hover:text-text-secondary"
                   >
                     <XMarkIcon className="h-6 w-6" />
                   </button>
@@ -278,7 +278,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ service, isOpen, onClose }) =
                   {/* Basic Information */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-2">
                         Service Name *
                       </label>
                       <input
@@ -286,12 +286,12 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ service, isOpen, onClose }) =
                         required
                         value={formData.name}
                         onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:ring-lime-400 focus:border-lime-400"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-2">
                         Service Code *
                       </label>
                       <input
@@ -299,20 +299,20 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ service, isOpen, onClose }) =
                         required
                         value={formData.code}
                         onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:ring-lime-400 focus:border-lime-400"
                         placeholder="e.g., SV001"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-2">
                         Category *
                       </label>
                       <select
                         required
                         value={formData.category}
                         onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value as any }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:ring-lime-400 focus:border-lime-400"
                       >
                         {serviceCategories.map(cat => (
                           <option key={cat} value={cat}>
@@ -323,19 +323,19 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ service, isOpen, onClose }) =
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-2">
                         Subcategory
                       </label>
                       <input
                         type="text"
                         value={formData.subcategory}
                         onChange={(e) => setFormData(prev => ({ ...prev, subcategory: e.target.value }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:ring-lime-400 focus:border-lime-400"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-2">
                         Base Price (VND) *
                       </label>
                       <input
@@ -344,12 +344,12 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ service, isOpen, onClose }) =
                         min="0"
                         value={formData.basePrice}
                         onChange={(e) => setFormData(prev => ({ ...prev, basePrice: parseFloat(e.target.value) || 0 }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:ring-lime-400 focus:border-lime-400"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-2">
                         Estimated Duration (minutes) *
                       </label>
                       <input
@@ -358,19 +358,19 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ service, isOpen, onClose }) =
                         min="15"
                         value={formData.estimatedDuration}
                         onChange={(e) => setFormData(prev => ({ ...prev, estimatedDuration: parseInt(e.target.value) || 60 }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:ring-lime-400 focus:border-lime-400"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-2">
                         Skill Level *
                       </label>
                       <select
                         required
                         value={formData.skillLevel}
                         onChange={(e) => setFormData(prev => ({ ...prev, skillLevel: e.target.value as any }))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:ring-lime-400 focus:border-lime-400"
                       >
                         {skillLevels.map(level => (
                           <option key={level} value={level}>
@@ -386,39 +386,39 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ service, isOpen, onClose }) =
                           type="checkbox"
                           checked={formData.isActive}
                           onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                          className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                          className="rounded border-dark-300 text-lime-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-lime-200 focus:ring-opacity-50"
                         />
-                        <span className="ml-2 text-sm font-medium text-gray-700">Active Service</span>
+                        <span className="ml-2 text-sm text-text-muted text-text-secondary">Active Service</span>
                       </label>
                     </div>
                   </div>
 
                   {/* Description */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm text-text-muted text-text-secondary mb-2">
                       Description
                     </label>
                     <textarea
                       rows={4}
                       value={formData.description}
                       onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:ring-lime-400 focus:border-lime-400"
                     />
                   </div>
 
                   {/* Parts Required */}
                   <div className="border-t pt-6">
-                    <h4 className="text-lg font-medium text-gray-900 mb-4">Parts Required</h4>
+                    <h4 className="text-lg text-text-muted text-white mb-4">Parts Required</h4>
                     
                     {/* Add Parts */}
                     <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm text-text-muted text-text-secondary mb-2">
                         Add Parts
                       </label>
                       <select
                         onChange={(e) => e.target.value && addPartToService(e.target.value)}
                         value=""
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:ring-lime-400 focus:border-lime-400"
                       >
                         <option value="">Select a part to add</option>
                         {parts
@@ -437,10 +437,10 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ service, isOpen, onClose }) =
                         {selectedParts.map((selectedPart) => {
                           const part = getPartById(selectedPart.partId);
                           return (
-                            <div key={selectedPart.partId} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-md">
+                            <div key={selectedPart.partId} className="flex items-center space-x-4 p-3 bg-dark-900 rounded-md">
                               <div className="flex-1">
-                                <p className="font-medium">{part?.name || 'Unknown Part'}</p>
-                                <p className="text-sm text-gray-500">{part?.partNumber}</p>
+                                <p className="text-text-muted">{part?.name || 'Unknown Part'}</p>
+                                <p className="text-sm text-text-muted">{part?.partNumber}</p>
                               </div>
                               
                               <div className="flex items-center space-x-2">
@@ -450,7 +450,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ service, isOpen, onClose }) =
                                   min="1"
                                   value={selectedPart.quantity}
                                   onChange={(e) => updatePartQuantity(selectedPart.partId, parseInt(e.target.value) || 1)}
-                                  className="w-16 px-2 py-1 border border-gray-300 rounded"
+                                  className="w-16 px-2 py-1 border border-dark-300 rounded"
                                 />
                               </div>
 
@@ -459,7 +459,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ service, isOpen, onClose }) =
                                   type="checkbox"
                                   checked={selectedPart.isOptional}
                                   onChange={(e) => updatePartOptional(selectedPart.partId, e.target.checked)}
-                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                  className="rounded bg-dark-300 text-white border-dark-300 text-lime-600 focus:ring-lime-400"
                                 />
                                 <span className="ml-2 text-sm">Optional</span>
                               </label>
@@ -480,16 +480,16 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ service, isOpen, onClose }) =
 
                   {/* Status Flags */}
                   <div className="border-t pt-6">
-                    <h4 className="text-lg font-medium text-gray-900 mb-4">Status</h4>
+                    <h4 className="text-lg text-text-muted text-white mb-4">Status</h4>
                     <div className="space-y-4">
                       <label className="flex items-center">
                         <input
                           type="checkbox"
                           checked={formData.isActive}
                           onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded bg-dark-300 text-white border-dark-300 text-lime-600 focus:ring-lime-400"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Active</span>
+                        <span className="ml-2 text-sm text-text-secondary">Active</span>
                       </label>
                     </div>
                   </div>
@@ -499,14 +499,14 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ service, isOpen, onClose }) =
                     <button
                       type="button"
                       onClick={onClose}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                      className="px-4 py-2 text-sm text-text-muted text-text-secondary bg-dark-300 border border-dark-200 rounded-md hover:bg-dark-900"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={loading}
-                      className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50"
+                      className="px-4 py-2 text-sm text-text-muted text-white bg-lime-600 border border-transparent rounded-md hover:bg-dark-9000 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
                     >
                       {loading ? 'Saving...' : (service?._id ? 'Update Service' : 'Create Service')}
                     </button>

@@ -164,14 +164,14 @@ const PartsPage: React.FC = () => {
     const colors = {
       'pending': 'bg-yellow-100 text-yellow-800',
       'approved': 'bg-green-100 text-green-800',
-      'partially_approved': 'bg-blue-100 text-blue-800',
+      'partially_approved': 'bg-dark-100 text-blue-800',
       'rejected': 'bg-red-100 text-red-800',
       'fulfilled': 'bg-emerald-100 text-emerald-800',
     };
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800'
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-text-muted ${
+        colors[status as keyof typeof colors] || 'bg-dark-100 text-gray-800'
       }`}>
         {partRequestStatusTranslations[status] || status}
       </span>
@@ -180,16 +180,16 @@ const PartsPage: React.FC = () => {
 
   const getUrgencyBadge = (urgency: string) => {
     const colors = {
-      'low': 'bg-gray-100 text-gray-800',
-      'normal': 'bg-blue-100 text-blue-800',
+      'low': 'bg-dark-100 text-gray-800',
+      'normal': 'bg-dark-100 text-blue-800',
       'high': 'bg-orange-100 text-orange-800',
       'urgent': 'bg-red-100 text-red-800',
       'critical': 'bg-red-200 text-red-900',
     };
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        colors[urgency as keyof typeof colors] || 'bg-gray-100 text-gray-800'
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-text-muted ${
+        colors[urgency as keyof typeof colors] || 'bg-dark-100 text-gray-800'
       }`}>
         {urgencyTranslations[urgency] || urgency}
       </span>
@@ -197,24 +197,24 @@ const PartsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-dark-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Parts Management</h1>
-          <p className="text-gray-600 mt-2">Manage EV parts inventory and requests</p>
+          <h1 className="text-3xl font-bold text-white">Parts Management</h1>
+          <p className="text-text-secondary mt-2">Manage EV parts inventory and requests</p>
         </div>
 
         {/* Tabs */}
         <div className="mb-8">
-          <div className="border-b border-gray-200">
+          <div className="border-b border-dark-200">
             <nav className="-mb-px flex space-x-8">
               <button
                 onClick={() => setActiveTab('management')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                className={`py-2 px-1 border-b-2 text-text-muted text-sm ${
                   activeTab === 'management'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-blue-500 text-lime-200'
+                    : 'border-transparent text-text-muted hover:text-text-secondary hover:border-dark-300'
                 }`}
               >
                 <div className="flex items-center space-x-2">
@@ -225,10 +225,10 @@ const PartsPage: React.FC = () => {
               
               <button
                 onClick={() => setActiveTab('requests')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                className={`py-2 px-1 border-b-2 text-text-muted text-sm ${
                   activeTab === 'requests'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-blue-500 text-lime-200'
+                    : 'border-transparent text-text-muted hover:text-text-secondary hover:border-dark-300'
                 }`}
               >
                 <div className="flex items-center space-x-2">
@@ -239,10 +239,10 @@ const PartsPage: React.FC = () => {
 
               <button
                 onClick={() => setActiveTab('analytics')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                className={`py-2 px-1 border-b-2 text-text-muted text-sm ${
                   activeTab === 'analytics'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-blue-500 text-lime-200'
+                    : 'border-transparent text-text-muted hover:text-text-secondary hover:border-dark-300'
                 }`}
               >
                 <div className="flex items-center space-x-2">
@@ -258,8 +258,8 @@ const PartsPage: React.FC = () => {
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">{getTabTitle()}</h2>
-              <p className="text-gray-600 mt-1">{getTabDescription()}</p>
+              <h2 className="text-2xl font-bold text-white">{getTabTitle()}</h2>
+              <p className="text-text-secondary mt-1">{getTabDescription()}</p>
             </div>
             
             {/* Action Buttons - Only show for management tab and if user can manage */}
@@ -267,14 +267,14 @@ const PartsPage: React.FC = () => {
               <div className="mt-4 sm:mt-0 flex space-x-3">
                 <button
                   onClick={() => setShowBulkImport(true)}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-4 py-2 border border-dark-300 rounded-md shadow-sm text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400"
                 >
                   <DocumentArrowUpIcon className="h-4 w-4 mr-2" />
                   Import Excel
                 </button>
                 <button
                   onClick={() => setShowPartForm(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-dark-900 bg-lime-500 hover:bg-lime-400 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
                   Add Part
@@ -378,16 +378,16 @@ const PartRequestsTab: React.FC<{
   getUrgencyBadge
 }) => {
   return (
-    <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+    <div className="bg-dark-300 shadow-sm rounded-lg border border-dark-200">
       {/* Filters */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-dark-200">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <label className="block text-sm text-text-muted text-text-secondary mb-1">Status</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="block w-full bg-dark-300 text-white border border-dark-300 rounded-md shadow-sm focus:border-lime-400 focus:ring-lime-400 focus:ring-2 sm:text-sm"
             >
               <option value="">All statuses</option>
               {Object.entries(partRequestStatusTranslations).map(([key, value]) => (
@@ -396,11 +396,11 @@ const PartRequestsTab: React.FC<{
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+            <label className="block text-sm text-text-muted text-text-secondary mb-1">Priority</label>
             <select
               value={urgencyFilter}
               onChange={(e) => setUrgencyFilter(e.target.value)}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="block w-full bg-dark-300 text-white border border-dark-300 rounded-md shadow-sm focus:border-lime-400 focus:ring-lime-400 focus:ring-2 sm:text-sm"
             >
               <option value="">All priorities</option>
               {Object.entries(urgencyTranslations).map(([key, value]) => (
@@ -414,7 +414,7 @@ const PartRequestsTab: React.FC<{
                 setStatusFilter('');
                 setUrgencyFilter('');
               }}
-              className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium"
+              className="w-full bg-dark-200 hover:bg-dark-300 text-text-secondary px-4 py-2 rounded-md text-sm"
             >
               Clear filters
             </button>
@@ -429,9 +429,9 @@ const PartRequestsTab: React.FC<{
           </div>
         ) : requests.length === 0 ? (
           <div className="text-center py-12">
-            <ClockIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-semibold text-gray-900">No part requests</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <ClockIcon className="mx-auto h-12 w-12 text-text-muted" />
+            <h3 className="mt-2 text-sm font-semibold text-white">No part requests</h3>
+            <p className="mt-1 text-sm text-text-muted">
               No part requests found.
             </p>
           </div>
@@ -440,15 +440,15 @@ const PartRequestsTab: React.FC<{
             {requests.map((request) => (
               <div
                 key={request._id}
-                className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                className="border border-dark-200 rounded-lg p-4 hover:bg-dark-900 transition-colors"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
-                    <h4 className="text-lg font-semibold text-gray-900">#{request.requestNumber}</h4>
-                    <p className="text-sm text-gray-500">
+                    <h4 className="text-lg font-semibold text-white">#{request.requestNumber}</h4>
+                    <p className="text-sm text-text-muted">
                       Requested by: {request.requestedBy.firstName} {request.requestedBy.lastName}
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-text-muted">
                       Estimated cost: {formatVND(request.estimatedCost)}
                     </p>
                   </div>
@@ -459,18 +459,18 @@ const PartRequestsTab: React.FC<{
                 </div>
 
                 <div className="mb-4">
-                  <h5 className="text-sm font-medium text-gray-900 mb-2">Requested parts:</h5>
+                  <h5 className="text-sm text-text-muted text-white mb-2">Requested parts:</h5>
                   <div className="space-y-2">
                     {request.requestedParts.map((part, index) => (
-                      <div key={index} className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                      <div key={index} className="flex justify-between items-center bg-dark-900 p-2 rounded">
                         <div>
-                          <span className="font-medium">{part.partInfo.name}</span>
-                          <span className="text-gray-500 ml-2">({part.partInfo.partNumber})</span>
+                          <span className="text-text-muted">{part.partInfo.name}</span>
+                          <span className="text-text-muted ml-2">({part.partInfo.partNumber})</span>
                         </div>
                         <div className="text-right">
                           <div className="text-sm">Quantity: {part.quantity}</div>
                           {part.shortfall > 0 && (
-                            <div className="text-xs text-red-600">Short: {part.shortfall}</div>
+                            <div className="text-xs text-white bg-red-600 px-2 py-0.5 rounded">Short: {part.shortfall}</div>
                           )}
                         </div>
                       </div>
@@ -482,20 +482,20 @@ const PartRequestsTab: React.FC<{
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => onApprove(request._id, 'approve_all')}
-                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
+                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm text-text-muted rounded-md text-white bg-green-600 hover:bg-green-700"
                     >
                       <CheckCircleIcon className="h-4 w-4 mr-1" />
                       Approve All
                     </button>
                     <button
                       onClick={() => onApprove(request._id, 'approve_partial')}
-                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm text-text-muted rounded-md text-dark-900 bg-lime-200bg-lime-200 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                     >
                       Partial Approve
                     </button>
                     <button
                       onClick={() => onApprove(request._id, 'reject_insufficient_stock')}
-                      className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                      className="inline-flex items-center px-3 py-2 border border-dark-300 text-sm text-text-muted rounded-md text-text-secondary bg-dark-300 hover:bg-dark-900"
                     >
                       Reject
                     </button>
@@ -522,7 +522,7 @@ const AnalyticsTab: React.FC<{
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
           <div className="flex items-center">
             <ExclamationTriangleIcon className="h-5 w-5 text-amber-600 mr-2" />
-            <h3 className="text-sm font-medium text-amber-800">
+            <h3 className="text-sm text-text-muted text-amber-800">
               Low Stock Alert
             </h3>
           </div>
@@ -541,12 +541,12 @@ const AnalyticsTab: React.FC<{
       </div>
 
       {/* Future: Analytics Charts and Statistics */}
-      <div className="bg-white shadow-sm rounded-lg border border-gray-200">
+      <div className="bg-dark-300 shadow-sm rounded-lg border border-dark-200">
         <div className="px-4 py-5 sm:p-6">
           <div className="text-center py-12">
-            <ChartBarIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-semibold text-gray-900">Detailed Statistics</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <ChartBarIcon className="mx-auto h-12 w-12 text-text-muted" />
+            <h3 className="mt-2 text-sm font-semibold text-white">Detailed Statistics</h3>
+            <p className="mt-1 text-sm text-text-muted">
               Statistical charts and detailed reports will be implemented in the next version.
             </p>
           </div>

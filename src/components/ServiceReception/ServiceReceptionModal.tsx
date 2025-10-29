@@ -357,7 +357,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
       case 1:
         return (
           <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-900">EV Checklist</h3>
+            <h3 className="text-lg text-text-muted text-white">EV Checklist</h3>
             <EVChecklistTab
               value={formData.evChecklistItems}
               onChange={(items) =>
@@ -370,31 +370,31 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
       case 2:
         return (
           <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-900">
+            <h3 className="text-lg text-text-muted text-white">
               Đồ đạc khách hàng
             </h3>
 
             <div>
               <div className="flex items-center justify-between mb-4">
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-text-secondary">
                   Ghi nhận các đồ đạc cá nhân của khách hàng để trong xe
                 </p>
                 <button
                   onClick={addCustomerItem}
-                  className="text-sm text-blue-600 hover:text-blue-700"
+                  className="text-sm text-lime-600 hover:text-lime-700"
                 >
                   + Thêm đồ đạc
                 </button>
               </div>
 
               {formData.customerItems.length === 0 ? (
-                <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
-                  <p className="text-gray-500">
+                <div className="text-center py-8 border-2 border-dashed border-dark-300 rounded-lg">
+                  <p className="text-text-muted">
                     Chưa có đồ đạc nào được ghi nhận
                   </p>
                   <button
                     onClick={addCustomerItem}
-                    className="mt-2 text-blue-600 hover:text-blue-700"
+                    className="mt-2 text-lime-600 hover:text-lime-700"
                   >
                     Thêm đồ đạc đầu tiên
                   </button>
@@ -404,7 +404,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                   {formData.customerItems.map((item, index) => (
                     <div
                       key={index}
-                      className="border rounded-lg p-4 bg-gray-50"
+                      className="border rounded-lg p-4 bg-dark-900"
                     >
                       <div className="grid grid-cols-2 gap-4 mb-3">
                         <input
@@ -419,7 +419,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                               customerItems: newItems,
                             }));
                           }}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                          className="block w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 text-sm"
                         />
                         <input
                           type="text"
@@ -436,7 +436,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                               customerItems: newItems,
                             }));
                           }}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                          className="block w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 text-sm"
                         />
                       </div>
 
@@ -456,7 +456,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                               customerItems: newItems,
                             }));
                           }}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                          className="block w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 text-sm"
                         />
                         <div></div>
                         <button
@@ -479,7 +479,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                           }));
                         }}
                         rows={2}
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                        className="block w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 text-sm"
                       />
                     </div>
                   ))}
@@ -492,13 +492,13 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
       case 3:
         return (
           <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-900">
+            <h3 className="text-lg text-text-muted text-white">
               Dịch vụ đề xuất sau kiểm tra
             </h3>
 
             {/* Service Summary */}
-            <div className="bg-blue-50 rounded-lg p-4">
-              <h4 className="text-md font-medium text-gray-900 mb-3">
+            <div className="bg-dark-900 rounded-lg p-4">
+              <h4 className="text-md text-text-muted text-white mb-3">
                 Dịch vụ đã đặt
               </h4>
               <div className="space-y-2">
@@ -520,12 +520,12 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                         {service.quantity > 1 ? `(${service.quantity})` : ""}
                       </span>
                       <div className="text-right">
-                        <div className="text-gray-600">
+                        <div className="text-text-secondary">
                           {service.serviceId.estimatedDuration *
                             service.quantity}{" "}
                           phút
                         </div>
-                        <div className="text-blue-600 font-medium">
+                        <div className="text-lime-600 text-text-muted">
                           {totalServicePrice.toLocaleString("vi-VN")} VNĐ
                         </div>
                       </div>
@@ -535,7 +535,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
               </div>
               <div className="mt-3 pt-3 border-t text-sm">
                 <div className="flex justify-between">
-                  <span className="font-medium">
+                  <span className="text-text-muted">
                     Tổng thời gian dịch vụ đã đặt:
                   </span>
                   <span>
@@ -549,10 +549,10 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                   </span>
                 </div>
                 <div className="flex justify-between mt-1">
-                  <span className="font-medium">
+                  <span className="text-text-muted">
                     Tổng chi phí dịch vụ đã đặt:
                   </span>
-                  <span className="text-blue-600 font-semibold">
+                  <span className="text-lime-600 font-semibold">
                     {appointment.services
                       .reduce((total, service) => {
                         const price =
@@ -573,7 +573,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
             {/* Additional Services */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-md font-medium text-gray-900">
+                <h4 className="text-md text-text-muted text-white">
                   Dịch vụ đề xuất cần thực hiện
                 </h4>
                 <button
@@ -595,15 +595,15 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                     }))
                   }
                   disabled={loadingServices}
-                  className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-sm text-lime-600 hover:text-lime-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loadingServices ? "Đang tải..." : "+ Thêm dịch vụ"}
                 </button>
               </div>
 
               {formData.recommendedServices.length === 0 ? (
-                <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
-                  <p className="text-gray-500">Chưa có dịch vụ bổ sung nào</p>
+                <div className="text-center py-8 border-2 border-dashed border-dark-300 rounded-lg">
+                  <p className="text-text-muted">Chưa có dịch vụ bổ sung nào</p>
                   <button
                     onClick={() =>
                       setFormData((prev) => ({
@@ -623,7 +623,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                       }))
                     }
                     disabled={loadingServices}
-                    className="mt-2 text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="mt-2 text-lime-600 hover:text-lime-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loadingServices
                       ? "Đang tải dịch vụ..."
@@ -635,7 +635,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                   {formData.recommendedServices.map((service, index) => (
                     <div
                       key={index}
-                      className="border rounded-lg p-4 bg-gray-50"
+                      className="border rounded-lg p-4 bg-dark-900"
                     >
                       <div className="grid grid-cols-3 gap-4 mb-3">
                         <select
@@ -661,7 +661,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                               recommendedServices: newServices,
                             }));
                           }}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                          className="block w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 text-sm"
                           disabled={loadingServices}
                         >
                           <option value="">Chọn dịch vụ...</option>
@@ -696,7 +696,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                               recommendedServices: newServices,
                             }));
                           }}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                          className="block w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 text-sm"
                         />
                         <button
                           onClick={() => {
@@ -733,20 +733,20 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                             }));
                           }}
                           rows={2}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                          className="block w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 text-sm"
                         />
                       </div>
 
                       {(service.estimatedCost || 0) > 0 && (
-                        <div className="text-sm text-gray-600 bg-blue-50 p-2 rounded">
-                          <span className="font-medium">Giá dịch vụ: </span>
-                          <span className="text-blue-700 font-semibold">
+                        <div className="text-sm text-text-secondary bg-dark-300 p-2 rounded">
+                          <span className="text-text-muted">Giá dịch vụ: </span>
+                          <span className="text-lime-600 font-semibold">
                             {(service.estimatedCost || 0).toLocaleString(
                               "vi-VN"
                             )}{" "}
                             VNĐ
                           </span>
-                          <span className="text-gray-500 ml-2">
+                          <span className="text-text-muted ml-2">
                             (Tổng:{" "}
                             {(
                               (service.estimatedCost || 0) * service.quantity
@@ -764,16 +764,16 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
             {/* Service Time & Priority */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm text-text-muted text-text-secondary mb-2">
                   Thời gian dự kiến (phút) - Tự động tính
                 </label>
                 <input
                   type="number"
                   value={totalTime}
                   readOnly
-                  className="block w-full rounded-md border-gray-300 shadow-sm bg-gray-50 text-gray-700 cursor-not-allowed"
+                  className="block w-full rounded-md border-dark-300 shadow-sm bg-dark-900 text-text-secondary cursor-not-allowed"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-text-muted mt-1">
                   Bao gồm thời gian của tất cả dịch vụ đã đặt và bổ sung
                 </p>
               </div>
@@ -781,7 +781,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
 
             {/* Special Instructions */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm text-text-muted text-text-secondary mb-2">
                 Yêu cầu từ khách hàng
               </label>
               <textarea
@@ -796,7 +796,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                   }))
                 }
                 rows={3}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                className="block w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400"
                 placeholder="Ghi chú các yêu cầu đặc biệt từ khách hàng..."
               />
             </div>
@@ -806,14 +806,14 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
       case 4:
         return (
           <div className="space-y-6">
-            <h3 className="text-lg font-medium text-gray-900">
+            <h3 className="text-lg text-text-muted text-white">
               Yêu cầu phụ tùng
             </h3>
 
             {/* Part Request Management */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-md font-medium text-gray-900">
+                <h4 className="text-md text-text-muted text-white">
                   Phụ tùng cần thiết
                 </h4>
                 <button
@@ -836,15 +836,15 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                     }))
                   }
                   disabled={loadingParts}
-                  className="text-sm text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-sm text-lime-600 hover:text-lime-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loadingParts ? "Đang tải..." : "+ Thêm phụ tùng"}
                 </button>
               </div>
 
               {formData.requestedParts.length === 0 ? (
-                <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
-                  <p className="text-gray-500">Chưa có yêu cầu phụ tùng nào</p>
+                <div className="text-center py-8 border-2 border-dashed border-dark-300 rounded-lg">
+                  <p className="text-text-muted">Chưa có yêu cầu phụ tùng nào</p>
                   <button
                     onClick={() =>
                       setFormData((prev) => ({
@@ -865,7 +865,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                       }))
                     }
                     disabled={loadingParts}
-                    className="mt-2 text-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="mt-2 text-lime-600 hover:text-lime-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loadingParts
                       ? "Đang tải phụ tùng..."
@@ -877,7 +877,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                   {formData.requestedParts.map((part, index) => (
                     <div
                       key={index}
-                      className="border rounded-lg p-4 bg-gray-50"
+                      className="border rounded-lg p-4 bg-dark-900"
                     >
                       <div className="grid grid-cols-3 gap-4 mb-3">
                         <div className="col-span-2">
@@ -906,7 +906,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                                 requestedParts: newParts,
                               }));
                             }}
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                            className="block w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 text-sm"
                             disabled={loadingParts}
                           >
                             <option value="">Chọn phụ tùng...</option>
@@ -962,18 +962,18 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                               requestedParts: newParts,
                             }));
                           }}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                          className="block w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 text-sm"
                         />
                       </div>
 
                       {part.partId && (part.estimatedCost || 0) > 0 && (
-                        <div className="mb-3 text-sm bg-blue-50 p-3 rounded">
+                        <div className="mb-3 text-sm bg-dark-300 p-3 rounded">
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <span className="font-medium text-gray-700">
+                              <span className="text-text-muted text-text-secondary">
                                 Giá:{" "}
                               </span>
-                              <span className="text-blue-700 font-semibold">
+                              <span className="text-lime-600 font-semibold">
                                 {(part.estimatedCost || 0).toLocaleString(
                                   "vi-VN"
                                 )}{" "}
@@ -981,7 +981,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                               </span>
                             </div>
                             <div>
-                              <span className="font-medium text-gray-700">
+                              <span className="text-text-muted text-text-secondary">
                                 Tồn kho:{" "}
                               </span>
                               <span
@@ -996,7 +996,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                             </div>
                           </div>
                           <div className="mt-2">
-                            <span className="font-medium text-gray-700">
+                            <span className="text-text-muted text-text-secondary">
                               Tổng giá:{" "}
                             </span>
                             <span className="text-green-600 font-semibold">
@@ -1037,7 +1037,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                             }));
                           }}
                           rows={2}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                          className="block w-full rounded-md bg-dark-300 text-white border-dark-300 shadow-sm focus:border-lime-400 focus:ring-lime-400 text-sm"
                         />
                       </div>
                     </div>
@@ -1047,14 +1047,14 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
             </div>
 
             {/* Summary */}
-            <div className="bg-green-50 rounded-lg p-4">
-              <h4 className="text-md font-medium text-gray-900 mb-2">
+            <div className="bg-dark-300 rounded-lg p-4 border border-dark-200">
+              <h4 className="text-md text-text-muted text-white mb-2">
                 Tóm tắt
               </h4>
-              <div className="text-sm text-gray-700 space-y-1">
+              <div className="text-sm text-text-secondary space-y-1">
                 <p>
                   • Dịch vụ đã đặt: {appointment.services.length} dịch vụ
-                  <span className="ml-2 text-blue-600 font-medium">
+                  <span className="ml-2 text-lime-600 text-text-muted">
                     (
                     {appointment.services
                       .reduce((total, service) => {
@@ -1074,7 +1074,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                   • Dịch vụ đề xuất: {formData.recommendedServices.length} dịch
                   vụ
                   {formData.recommendedServices.length > 0 && (
-                    <span className="ml-2 text-blue-600 font-medium">
+                    <span className="ml-2 text-lime-600 text-text-muted">
                       (
                       {formData.recommendedServices
                         .reduce(
@@ -1091,7 +1091,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                 <p>
                   • Phụ tùng yêu cầu: {formData.requestedParts.length} phụ tùng
                   {formData.requestedParts.length > 0 && (
-                    <span className="ml-2 text-blue-600 font-medium">
+                    <span className="ml-2 text-lime-600 text-text-muted">
                       (
                       {formData.requestedParts
                         .reduce(
@@ -1104,7 +1104,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                     </span>
                   )}
                 </p>
-                <p>• Tổng thời gian dự kiến: {totalTime} phút</p>
+                <p className="text-white">• Tổng thời gian dự kiến: {totalTime} phút</p>
                 {(formData.recommendedServices.length > 0 ||
                   formData.requestedParts.length > 0) && (
                   <div className="pt-2 mt-2 border-t border-green-200">
@@ -1125,20 +1125,20 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-4 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white mb-8">
+    <div className="fixed inset-0 bg-dark-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-4 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-dark-300 mb-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6 pb-4 border-b">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className="text-xl font-bold text-white">
               Tạo Phiếu Tiếp Nhận Dịch Vụ
             </h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-text-secondary mt-1">
               Lịch hẹn #{appointment.appointmentNumber} -{" "}
               {appointment.customerId.firstName}{" "}
               {appointment.customerId.lastName}
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-text-secondary">
               Xe: {appointment.vehicleId.year} {appointment.vehicleId.make}{" "}
               {appointment.vehicleId.model} (
               {appointment.vehicleId.licensePlate})
@@ -1146,7 +1146,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-text-muted hover:text-text-secondary"
           >
             <XMarkIcon className="w-6 h-6" />
           </button>
@@ -1158,10 +1158,10 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
             {[1, 2, 3, 4].map((step) => (
               <div key={step} className="flex items-center">
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm text-text-muted ${
                     step <= currentStep
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 text-gray-600"
+                      ? "bg-lime-600 text-white"
+                      : "bg-dark-200 text-text-secondary"
                   }`}
                 >
                   {step}
@@ -1169,14 +1169,14 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                 {step < 4 && (
                   <div
                     className={`h-1 w-24 ${
-                      step < currentStep ? "bg-blue-600" : "bg-gray-200"
+                      step < currentStep ? "bg-lime-600" : "bg-dark-200"
                     }`}
                   />
                 )}
               </div>
             ))}
           </div>
-          <div className="flex justify-between mt-2 text-xs text-gray-600">
+          <div className="flex justify-between mt-2 text-xs text-text-secondary">
             <span>EV Checklist</span>
             <span>Đồ đạc</span>
             <span>Dịch vụ đề xuất</span>
@@ -1192,7 +1192,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
           <button
             onClick={handlePrevious}
             disabled={currentStep === 1}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm text-text-muted text-text-secondary bg-dark-300 border border-dark-200 rounded-md hover:bg-dark-900 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Quay lại
           </button>
@@ -1201,7 +1201,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
             {currentStep < totalSteps ? (
               <button
                 onClick={handleNext}
-                className="px-6 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                className="px-6 py-2 text-sm text-text-muted text-white bg-lime-600 rounded-md hover:bg-dark-9000 hover:text-dark-900 transition-all duration-200 transform hover:scale-105"
               >
                 Tiếp theo
               </button>
@@ -1209,7 +1209,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
               <button
                 onClick={handleSubmit}
                 disabled={isLoading}
-                className="px-6 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                className="px-6 py-2 text-sm text-text-muted text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
                 {isLoading ? (
                   <>
