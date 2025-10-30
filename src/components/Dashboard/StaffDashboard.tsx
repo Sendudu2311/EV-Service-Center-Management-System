@@ -442,10 +442,10 @@ const StaffDashboard: React.FC = () => {
                                       <button
                                         onClick={() => handleAutoAssign(appointment._id)}
                                         disabled={actionLoading === appointment._id}
-                                        className="inline-flex items-center px-2 py-1 border border-transparent text-xs text-text-muted rounded text-white bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
+                                        className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-dark-900 bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
                                       >
                                         {actionLoading === appointment._id ? (
-                                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-dark-900"></div>
                                         ) : (
                                           <>
                                             <Zap className="h-3 w-3 mr-1" />

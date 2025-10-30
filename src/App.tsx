@@ -336,7 +336,7 @@ function App() {
                         </p>
                         <a
                           href="/"
-                          className="bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-white hover:text-dark-900 px-6 py-3 rounded-lg text-text-muted transition-colors duration-200"
+                          className="bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-dark-900 px-6 py-3 rounded-lg transition-colors duration-200"
                         >
                           Go Home
                         </a>

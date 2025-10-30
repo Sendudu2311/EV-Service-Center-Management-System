@@ -84,7 +84,7 @@ const AboutPage: React.FC = () => {
           <div className="space-x-4">
             <Link
               to="/register"
-              className="bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-white hover:text-dark-900 px-8 py-3 rounded-lg text-text-muted transition-colors duration-200"
+              className="bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-black font-semibold px-8 py-3 rounded-lg transition-colors duration-200"
             >
               Get Started
             </Link>

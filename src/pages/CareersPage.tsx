@@ -148,7 +148,7 @@ const CareersPage: React.FC = () => {
                 onClick={() => setSelectedDepartment(dept.id)}
                 className={`px-4 py-2 rounded-lg text-text-muted transition-colors duration-200 ${
                   selectedDepartment === dept.id
-                    ? 'bg-lime-600 text-white'
+                    ? 'bg-lime-600 text-dark-900'
                     : 'bg-dark-100 text-text-secondary hover:bg-dark-200'
                 }`}
               >
@@ -196,7 +196,7 @@ const CareersPage: React.FC = () => {
                       </span>
                     </div>
                   </div>
-                  <button className="mt-4 lg:mt-0 bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-white hover:text-dark-900 px-6 py-2 rounded-lg text-text-muted transition-colors duration-200">
+                  <button className="mt-4 lg:mt-0 bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-black font-semibold px-6 py-2 rounded-lg transition-colors duration-200">
                     Apply Now
                   </button>
                 </div>

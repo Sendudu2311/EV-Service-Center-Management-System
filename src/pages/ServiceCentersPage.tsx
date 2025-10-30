@@ -262,7 +262,7 @@ const ServiceCentersPage: React.FC = () => {
                 setEditingCenter(null);
                 setShowModal(true);
               }}
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm text-white bg-lime-600 hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400"
+              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm text-dark-900 bg-lime-600 hover:bg-lime-500 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400"
             >
               <PlusIcon className="h-4 w-4 mr-2" />
               Add Service Center
@@ -510,7 +510,7 @@ const ServiceCentersPage: React.FC = () => {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-white bg-lime-600 hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400 disabled:opacity-50"
+                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-dark-900 bg-lime-600 hover:bg-lime-500 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400 disabled:opacity-50"
                     >
                       {loading ? 'Saving...' : editingCenter ? 'Update' : 'Create'}
                     </button>

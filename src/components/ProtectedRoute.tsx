@@ -39,7 +39,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, roles }) => {
           </p>
           <button
             onClick={() => navigate(-1)}
-            className="bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-white hover:text-dark-900 px-4 py-2 rounded-md text-sm text-text-muted transition-colors duration-200"
+            className="bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-black font-semibold px-4 py-2 rounded-md text-sm transition-colors duration-200"
           >
             Go Back
           </button>

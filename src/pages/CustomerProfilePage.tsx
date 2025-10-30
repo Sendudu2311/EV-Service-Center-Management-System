@@ -647,7 +647,7 @@ const CustomerProfilePage: React.FC = () => {
                 </h3>
                 <button
                   onClick={() => setShowAddVehicle(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-white bg-lime-600 hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105"
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-dark-900 bg-lime-600 hover:bg-lime-500 transition-all duration-200 transform hover:scale-105"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
                   Thêm xe
@@ -674,7 +674,7 @@ const CustomerProfilePage: React.FC = () => {
                             make: e.target.value,
                           })
                         }
-                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-3 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
                         placeholder="VinFast, Tesla, ..."
                       />
                     </div>
@@ -691,7 +691,7 @@ const CustomerProfilePage: React.FC = () => {
                             model: e.target.value,
                           })
                         }
-                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-3 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
                         placeholder="VF8, Model 3, ..."
                       />
                     </div>
@@ -708,7 +708,7 @@ const CustomerProfilePage: React.FC = () => {
                             year: Number(e.target.value),
                           })
                         }
-                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-3 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
                         min="2000"
                         max={new Date().getFullYear() + 1}
                       />
@@ -726,7 +726,7 @@ const CustomerProfilePage: React.FC = () => {
                             licensePlate: e.target.value.toUpperCase(),
                           })
                         }
-                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-3 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
                         placeholder="30A-12345"
                       />
                     </div>
@@ -742,7 +742,7 @@ const CustomerProfilePage: React.FC = () => {
                             batteryType: e.target.value,
                           })
                         }
-                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-3 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
                       >
                         <option value="">Chọn loại pin</option>
                         <option value="LiFePO4">LiFePO4</option>
@@ -764,7 +764,7 @@ const CustomerProfilePage: React.FC = () => {
                             batteryCapacity: Number(e.target.value),
                           })
                         }
-                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-3 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
                         min="0"
                         step="0.1"
                       />
@@ -781,7 +781,7 @@ const CustomerProfilePage: React.FC = () => {
                             chargingPort: e.target.value,
                           })
                         }
-                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-3 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
                       >
                         <option value="">Chọn cổng sạc</option>
                         <option value="CCS2">CCS2</option>
@@ -803,7 +803,7 @@ const CustomerProfilePage: React.FC = () => {
                             maxChargingPower: Number(e.target.value),
                           })
                         }
-                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-3 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
                         min="0"
                       />
                     </div>
@@ -820,7 +820,7 @@ const CustomerProfilePage: React.FC = () => {
                             color: e.target.value,
                           })
                         }
-                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-3 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
                         placeholder="Đen, Trắng, Xanh, ..."
                       />
                     </div>
@@ -845,7 +845,7 @@ const CustomerProfilePage: React.FC = () => {
                     <button
                       onClick={editingVehicle ? updateVehicle : addVehicle}
                       disabled={updating}
-                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-white bg-lime-600 hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
+                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-dark-900 bg-lime-600 hover:bg-lime-500 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
                     >
                       {updating
                         ? "Đang lưu..."
@@ -996,7 +996,7 @@ const CustomerProfilePage: React.FC = () => {
                         status: e.target.value,
                       })
                     }
-                    className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
+                    className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-3 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
                   >
                     <option value="">Tất cả trạng thái</option>
                     <option value="pending">Chờ xác nhận</option>
@@ -1018,7 +1018,7 @@ const CustomerProfilePage: React.FC = () => {
                         vehicleId: e.target.value,
                       })
                     }
-                    className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
+                    className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-3 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
                   >
                     <option value="">Tất cả xe</option>
                     {vehicles.map((vehicle) => (
@@ -1041,7 +1041,7 @@ const CustomerProfilePage: React.FC = () => {
                         dateFrom: e.target.value,
                       })
                     }
-                    className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
+                    className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-3 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
                   />
                 </div>
                 <div>
@@ -1057,7 +1057,7 @@ const CustomerProfilePage: React.FC = () => {
                         dateTo: e.target.value,
                       })
                     }
-                    className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
+                    className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-3 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
                   />
                 </div>
               </div>

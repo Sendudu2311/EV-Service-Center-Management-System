@@ -201,7 +201,7 @@ const ContactPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 disabled:bg-lime-400 text-white hover:text-dark-900 px-6 py-3 rounded-lg text-text-muted transition-colors duration-200 disabled:cursor-not-allowed"
+                className="w-full bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 disabled:bg-lime-400 text-black font-semibold px-6 py-3 rounded-lg transition-colors duration-200 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center">

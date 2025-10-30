@@ -339,7 +339,7 @@ const PartsSelection: React.FC<PartsSelectionProps> = ({
             <button
               onClick={handleReserveParts}
               disabled={submitting || disabled || isWorkflowDisabled}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm text-text-muted rounded-md text-white bg-lime-600 hover:bg-dark-9000 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-600 disabled:opacity-50"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm rounded-md text-dark-900 bg-lime-600 hover:bg-dark-9000 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-600 disabled:opacity-50"
             >
               <CubeIcon className="w-4 h-4 mr-2" />
               {submitting ? 'Reserving...' : `Reserve ${selectedParts.length} Part${selectedParts.length !== 1 ? 's' : ''}`}
@@ -384,9 +384,9 @@ const PartsSelection: React.FC<PartsSelectionProps> = ({
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
-                className={`px-3 py-1 rounded-md text-sm text-text-muted transition-colors ${
+                className={`px-3 py-1 rounded-md text-sm transition-colors ${
                   activeCategory === category
-                    ? 'bg-lime-600 text-white'
+                    ? 'bg-lime-600 text-dark-900'
                     : 'bg-dark-100 text-text-secondary hover:bg-dark-200'
                 }`}
               >

@@ -194,7 +194,7 @@ const VehicleDetails: React.FC<VehicleDetailsProps> = ({
                 <button
                   type="button"
                   onClick={() => onEdit(vehicle)}
-                  className="inline-flex items-center gap-x-1.5 rounded-md bg-lime-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-dark-9000"
+                  className="inline-flex items-center gap-x-1.5 rounded-md bg-lime-600 px-3 py-2 text-sm font-semibold text-dark-900 shadow-sm hover:bg-dark-9000"
                 >
                   <PencilIcon className="h-4 w-4" />
                   Edit
@@ -376,7 +376,7 @@ const VehicleDetails: React.FC<VehicleDetailsProps> = ({
                           <button
                             onClick={handleUpdateMileage}
                             disabled={updatingMileage}
-                            className="flex-1 bg-lime-600 text-white px-2 py-1 rounded text-xs hover:bg-dark-9000 disabled:opacity-50"
+                            className="flex-1 bg-lime-600 text-dark-900 px-2 py-1 rounded text-xs hover:bg-dark-9000 disabled:opacity-50"
                           >
                             {updatingMileage ? 'Updating...' : 'Update'}
                           </button>

@@ -841,7 +841,7 @@ const EVChecklistComponent: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={addDiagnosticCode}
-                  className="px-4 py-2 bg-lime-600 text-white rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
+                  className="px-4 py-2 bg-lime-600 text-dark-900 rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                 >
                   Thêm mã lỗi
                 </button>
@@ -949,7 +949,7 @@ const EVChecklistComponent: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={addPhoto}
-                  className="px-4 py-2 bg-lime-600 text-white rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
+                  className="px-4 py-2 bg-lime-600 text-dark-900 rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                 >
                   Thêm ảnh
                 </button>
@@ -1109,7 +1109,7 @@ const EVChecklistComponent: React.FC<Props> = ({
                 <button
                   type="button"
                   onClick={addAction}
-                  className="text-sm px-3 py-1 bg-lime-600 text-white rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
+                  className="text-sm px-3 py-1 bg-lime-600 text-dark-900 rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                 >
                   Thêm
                 </button>
@@ -1158,7 +1158,7 @@ const EVChecklistComponent: React.FC<Props> = ({
             <button
               type="submit"
               disabled={loading || !isValid}
-              className="px-6 py-2 bg-lime-600 text-white rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 disabled:bg-dark-400 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-lime-600 text-dark-900 rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 disabled:bg-dark-400 disabled:cursor-not-allowed"
             >
               {loading ? 'Đang lưu...' : 'Lưu Checklist'}
             </button>

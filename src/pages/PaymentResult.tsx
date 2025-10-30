@@ -558,7 +558,7 @@ const PaymentResult: React.FC = () => {
               <div className="space-y-2">
                 <button
                   onClick={() => navigate("/appointments")}
-                  className="w-full bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-white hover:text-dark-900 px-6 py-2 rounded-lg text-text-muted transition-colors duration-200"
+                  className="w-full bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-black font-semibold px-6 py-2 rounded-lg transition-colors duration-200"
                 >
                   View My Appointments
                 </button>
@@ -596,7 +596,7 @@ const PaymentResult: React.FC = () => {
               <div className="space-y-2">
                 <button
                   onClick={() => navigate("/appointments")}
-                  className="w-full bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-white hover:text-dark-900 px-6 py-2 rounded-lg text-text-muted transition-colors duration-200"
+                  className="w-full bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-black font-semibold px-6 py-2 rounded-lg transition-colors duration-200"
                 >
                   Back to Appointments
                 </button>

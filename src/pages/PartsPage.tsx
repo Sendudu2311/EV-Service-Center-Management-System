@@ -489,7 +489,7 @@ const PartRequestsTab: React.FC<{
                     </button>
                     <button
                       onClick={() => onApprove(request._id, 'approve_partial')}
-                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm text-text-muted rounded-md text-dark-900 bg-lime-200bg-lime-200 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
+                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-semibold rounded-md text-black bg-lime-200 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                     >
                       Partial Approve
                     </button>

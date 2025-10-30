@@ -348,7 +348,7 @@ const TechnicianProfilePage: React.FC = () => {
                   disabled={updating || profile.availability.status === status}
                   className={`px-3 py-1 rounded text-sm text-text-muted transition-colors ${
                     profile.availability.status === status
-                      ? 'bg-lime-600 text-white'
+                      ? 'bg-lime-600 text-dark-900'
                       : 'bg-dark-200 text-text-secondary hover:bg-dark-300'
                   } disabled:opacity-50`}
                 >
@@ -460,7 +460,7 @@ const TechnicianProfilePage: React.FC = () => {
                       <button
                         onClick={updateWorkingHours}
                         disabled={updating}
-                        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-white bg-lime-600 hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
+                        className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-dark-900 bg-lime-600 hover:bg-lime-500 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
                       >
                         {updating ? 'Đang lưu...' : 'Lưu'}
                       </button>
@@ -474,7 +474,7 @@ const TechnicianProfilePage: React.FC = () => {
                   ) : (
                     <button
                       onClick={() => setEditingHours(true)}
-                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-white bg-lime-600 hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105"
+                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-dark-900 bg-lime-600 hover:bg-lime-500 transition-all duration-200 transform hover:scale-105"
                     >
                       Chỉnh sửa
                     </button>
@@ -567,7 +567,7 @@ const TechnicianProfilePage: React.FC = () => {
                 <h3 className="text-lg text-text-muted text-white">Kỹ năng chuyên môn</h3>
                 <button
                   onClick={() => setShowAddSkill(true)}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-text-muted text-white bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-black font-semibold bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
                   Thêm kỹ năng
@@ -586,7 +586,7 @@ const TechnicianProfilePage: React.FC = () => {
                       <select
                         value={newSkill.serviceCategory}
                         onChange={(e) => setNewSkill({ ...newSkill, serviceCategory: e.target.value })}
-                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-3 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
                       >
                         <option value="">Chọn danh mục</option>
                         {SKILL_CATEGORIES.map((category) => (
@@ -601,7 +601,7 @@ const TechnicianProfilePage: React.FC = () => {
                       <select
                         value={newSkill.proficiencyLevel}
                         onChange={(e) => setNewSkill({ ...newSkill, proficiencyLevel: Number(e.target.value) })}
-                        className="w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
+                        className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-3 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
                       >
                         {[1, 2, 3, 4, 5].map((level) => (
                           <option key={level} value={level}>

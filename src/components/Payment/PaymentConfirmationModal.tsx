@@ -496,7 +496,7 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-lime-600 text-white rounded-md hover:bg-dark-9000 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-lime-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="px-4 py-2 bg-lime-600 text-dark-900 rounded-md hover:bg-dark-9000 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-lime-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
               {loading ? (
                 <>

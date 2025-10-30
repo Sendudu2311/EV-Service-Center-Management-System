@@ -448,7 +448,7 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
           <div className="mt-4 flex items-center justify-center space-x-4">
             <div className="flex items-center">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentStep === 'input' ? 'bg-lime-600 text-white' : 'bg-green-600 text-white'
+                currentStep === 'input' ? 'bg-lime-600 text-dark-900' : 'bg-green-600 text-white'
               }`}>
                 {currentStep === 'input' ? '1' : <CheckIcon className="w-5 h-5" />}
               </div>
@@ -457,7 +457,7 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
             <div className="w-16 h-0.5 bg-dark-300"></div>
             <div className="flex items-center">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                currentStep === 'confirmation' ? 'bg-lime-600 text-white' : 'bg-dark-300 text-text-secondary'
+                currentStep === 'confirmation' ? 'bg-lime-600 text-dark-900' : 'bg-dark-300 text-text-secondary'
               }`}>
                 2
               </div>
@@ -750,7 +750,7 @@ const AppointmentFormClean: React.FC<AppointmentFormCleanProps> = ({
                 <button
                   type="submit"
                   disabled={loading || !formData.scheduledTime}
-                  className="inline-flex w-full justify-center rounded-md bg-lime-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-dark-9000 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400 sm:ml-3 sm:w-auto disabled:opacity-50"
+                  className="inline-flex w-full justify-center rounded-md bg-lime-600 px-3 py-2 text-sm font-semibold text-dark-900 shadow-sm hover:bg-dark-9000 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400 sm:ml-3 sm:w-auto disabled:opacity-50"
                 >
                   {loading
                     ? "Processing..."

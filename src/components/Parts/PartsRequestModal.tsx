@@ -442,7 +442,7 @@ const PartsRequestModal: React.FC<Props> = ({
               <button
                 type="submit"
                 disabled={loading || !isValid || (watchedQuantity > available && requestType === 'initial_service')}
-                className="px-6 py-2 bg-lime-600 text-white rounded-md hover:bg-dark-9000 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 disabled:bg-dark-400 disabled:cursor-not-allowed transition-colors"
+                className="px-6 py-2 bg-lime-600 text-dark-900 rounded-md hover:bg-dark-9000 transition-all duration-200 transform hover:scale-105 disabled:bg-dark-400 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? 'Đang gửi...' : 'Gửi yêu cầu'}
               </button>

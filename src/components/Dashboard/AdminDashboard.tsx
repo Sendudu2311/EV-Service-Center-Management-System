@@ -115,9 +115,9 @@ const AdminDashboard: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-white">Failed to load dashboard</h2>
-          <button 
+          <button
             onClick={fetchDashboardData}
-            className="mt-4 px-4 py-2 bg-lime-600 text-white rounded-lg hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
+            className="mt-4 px-4 py-2 bg-lime-600 text-dark-900 rounded-lg hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
           >
             Retry
           </button>

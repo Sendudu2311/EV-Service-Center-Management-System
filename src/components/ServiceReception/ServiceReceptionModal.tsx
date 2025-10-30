@@ -1160,7 +1160,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm text-text-muted ${
                     step <= currentStep
-                      ? "bg-lime-600 text-white"
+                      ? "bg-lime-600 text-dark-900"
                       : "bg-dark-200 text-text-secondary"
                   }`}
                 >
@@ -1201,7 +1201,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
             {currentStep < totalSteps ? (
               <button
                 onClick={handleNext}
-                className="px-6 py-2 text-sm text-text-muted text-white bg-lime-600 rounded-md hover:bg-dark-9000 hover:text-dark-900 transition-all duration-200 transform hover:scale-105"
+                className="px-6 py-2 text-sm text-dark-900 bg-lime-600 rounded-md hover:bg-dark-9000 hover:text-dark-900 transition-all duration-200 transform hover:scale-105"
               >
                 Tiếp theo
               </button>

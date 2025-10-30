@@ -629,7 +629,7 @@ const PartForm: React.FC<PartFormProps> = ({ part, isOpen, onClose }) => {
                     <button
                       type="submit"
                       disabled={loading}
-                      className="px-4 py-2 text-sm text-text-muted text-white bg-lime-600 border border-transparent rounded-md hover:bg-dark-9000 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
+                      className="px-4 py-2 text-sm text-dark-900 bg-lime-600 border border-transparent rounded-md hover:bg-dark-9000 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
                     >
                       {loading ? 'Saving...' : (part?._id ? 'Update Part' : 'Create Part')}
                     </button>
