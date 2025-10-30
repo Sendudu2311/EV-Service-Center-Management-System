@@ -219,7 +219,7 @@ const Navbar: React.FC = () => {
                 </Link>
                 <Link
                   to="/register"
-                  className="bg-lime-200 hover:bg-lime-100 text-dark-900 px-4 py-2 rounded-md text-sm text-text-muted transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
+                  className="bg-lime-200 hover:bg-lime-100 text-black font-semibold px-4 py-2 rounded-md text-sm transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
                 >
                   Get started
                 </Link>
@@ -268,7 +268,7 @@ const Navbar: React.FC = () => {
                 </Link>
                 <Link
                   to="/register"
-                  className="bg-lime-200 hover:bg-lime-100 text-dark-900 block px-3 py-2 rounded-md text-base text-text-muted transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
+                  className="bg-lime-200 hover:bg-lime-100 text-black font-semibold block px-3 py-2 rounded-md text-base transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Get started

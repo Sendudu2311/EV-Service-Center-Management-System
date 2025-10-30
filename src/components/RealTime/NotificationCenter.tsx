@@ -348,7 +348,7 @@ const NotificationCenter: React.FC<Props> = ({
                                   }}
                                   className={`text-xs px-2 py-1 rounded text-text-muted ${
                                     action.variant === 'primary'
-                                      ? 'bg-lime-600 text-white hover:bg-lime-100 transition-all duration-200 transform hover:scale-105'
+                                      ? 'bg-lime-600 text-dark-900 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105'
                                       : 'bg-dark-200 text-text-secondary hover:bg-dark-300'
                                   }`}
                                 >

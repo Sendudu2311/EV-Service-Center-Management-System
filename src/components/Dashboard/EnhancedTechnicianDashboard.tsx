@@ -385,7 +385,7 @@ const EnhancedTechnicianDashboard: React.FC = () => {
             <div className="mt-4 flex md:ml-4 md:mt-0 space-x-3">
               <Link
                 to="/work-queue"
-                className="inline-flex items-center rounded-md bg-lime-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-dark-9000"
+                className="inline-flex items-center rounded-md bg-lime-600 px-3 py-2 text-sm font-semibold text-dark-900 shadow-sm hover:bg-dark-9000"
               >
                 <ClipboardDocumentListIcon className="-ml-0.5 mr-1.5 h-5 w-5" />
                 Hàng đợi công việc
@@ -497,7 +497,7 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                       {currentTask.status === 'in_progress' && (
                         <button
                           onClick={() => handleCompleteWork(currentTask._id)}
-                          className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm text-text-muted rounded-md text-white bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
+                          className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm rounded-md text-dark-900 bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                         >
                           <CheckCircleIcon className="h-4 w-4 mr-1" />
                           Hoàn thành
@@ -581,7 +581,7 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                             {item.status === 'customer_arrived' && (
                               <Link
                                 to={`/service-reception/${item._id}`}
-                                className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
+                                className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-dark-900 bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                               >
                                 Tạo phiếu
                               </Link>
@@ -645,7 +645,7 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                                 onClick={() => setCurrentPage(page)}
                                 className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
                                   currentPage === page
-                                    ? 'z-10 bg-lime-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400'
+                                    ? 'z-10 bg-lime-600 text-dark-900 focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400'
                                     : 'text-white ring-1 ring-inset ring-dark-200 hover:bg-dark-900 focus:z-20 focus:outline-offset-0'
                                 }`}
                               >
@@ -957,7 +957,7 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                   {selectedReception.submissionStatus?.staffReviewStatus === 'rejected' && (
                     <button
                       onClick={() => handleResubmitReception(selectedReception._id)}
-                      className="px-4 py-2 bg-lime-600 text-white rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
+                      className="px-4 py-2 bg-lime-600 text-dark-900 rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                     >
                       Gửi lại để duyệt
                     </button>

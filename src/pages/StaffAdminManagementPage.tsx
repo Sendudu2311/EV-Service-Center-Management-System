@@ -419,7 +419,7 @@ const StaffAdminManagementPage: React.FC = () => {
                       <div className="flex space-x-2 ml-4">
                         <button
                           onClick={() => setSelectedAppointment(appointment)}
-                          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-white bg-lime-600 hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105"
+                          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-dark-900 bg-lime-600 hover:bg-lime-500 transition-all duration-200 transform hover:scale-105"
                         >
                           Phân công KTV
                         </button>
@@ -567,7 +567,7 @@ const StaffAdminManagementPage: React.FC = () => {
                       <div className="flex space-x-2 ml-4">
                         <button
                           onClick={() => setSelectedPartRequest(request)}
-                          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-text-muted text-white bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
+                          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-black font-semibold bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                         >
                           Xem chi tiết
                         </button>
@@ -664,7 +664,7 @@ const StaffAdminManagementPage: React.FC = () => {
                     <button
                       onClick={() => assignTechnician(selectedAppointment._id, technician._id)}
                       disabled={assigningTechnician}
-                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-text-muted text-white bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
+                      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-black font-semibold bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
                     >
                       {assigningTechnician ? 'Đang phân công...' : 'Phân công'}
                     </button>

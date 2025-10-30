@@ -272,7 +272,7 @@ const ContactManagementPage: React.FC = () => {
                     </select>
                     <button
                       onClick={() => setShowNoteModal(true)}
-                      className="px-3 py-1 text-sm bg-lime-600 text-white rounded hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
+                      className="px-3 py-1 text-sm bg-lime-600 text-dark-900 rounded hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                     >
                       Add Note
                     </button>
@@ -361,7 +361,7 @@ const ContactManagementPage: React.FC = () => {
                 </button>
                 <button
                   onClick={handleAddNote}
-                  className="px-4 py-2 bg-lime-600 text-white rounded hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
+                  className="px-4 py-2 bg-lime-600 text-dark-900 rounded hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                 >
                   Add Note
                 </button>

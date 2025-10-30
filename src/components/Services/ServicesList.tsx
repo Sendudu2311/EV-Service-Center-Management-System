@@ -283,7 +283,7 @@ const ServicesList: React.FC<ServicesListProps> = ({ onEditService }) => {
                 <div className="flex space-x-2">
                   <button
                     onClick={() => onEditService?.(service)}
-                    className="flex-1 bg-lime-600 text-white px-3 py-2 rounded-md text-sm hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 transition-colors"
+                    className="flex-1 bg-lime-600 text-dark-900 px-3 py-2 rounded-md text-sm hover:bg-lime-500 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 transition-colors"
                   >
                     Edit
                   </button>

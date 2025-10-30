@@ -217,7 +217,7 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
                   <button
                     onClick={() => setShowRefundModal(true)}
                     disabled={loading}
-                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 text-text-muted rounded-md text-white bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400 disabled:opacity-50"
+                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-semibold rounded-md text-black bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400 disabled:opacity-50"
                   >
                     {loading ? "Đang xử lý..." : "Xác nhận hoàn tiền"}
                   </button>
@@ -446,7 +446,7 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
                 <button
                   onClick={handleProcessRefund}
                   disabled={loading || !refundProofImage}
-                  className="px-4 py-2 bg-lime-600 text-white rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
+                  className="px-4 py-2 bg-lime-600 text-dark-900 rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
                 >
                   {loading ? "Đang xử lý..." : "Xác nhận hoàn tiền"}
                 </button>

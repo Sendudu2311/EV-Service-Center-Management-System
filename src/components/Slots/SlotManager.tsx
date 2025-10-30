@@ -372,7 +372,7 @@ const getTechName = (slot: any) => {
                                 setEditing({date: d, start, slot, selectedTechIds: currentTechIds, capacity: slot?.capacity || 1});
                               }} 
                               disabled={isPast}
-                              className={`px-2 py-1 rounded text-xs ${isPast ? 'bg-dark-300 text-text-muted cursor-not-allowed' : 'bg-lime-600 text-white hover:bg-lime-100 transition-all duration-200 transform hover:scale-105'}`}
+                              className={`px-2 py-1 rounded text-xs ${isPast ? 'bg-dark-300 text-text-muted cursor-not-allowed' : 'bg-lime-600 text-dark-900 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105'}`}
                             >
                               Edit
                             </button>
@@ -389,7 +389,7 @@ const getTechName = (slot: any) => {
                                 setEditing({date: d, start, slot, selectedTechIds: [], capacity: slot?.capacity || 1});
                               }} 
                               disabled={isPast}
-                              className={`px-2 py-1 rounded text-xs ${isPast ? 'bg-dark-300 text-text-muted cursor-not-allowed' : 'bg-lime-600 text-white hover:bg-lime-100 transition-all duration-200 transform hover:scale-105'}`}
+                              className={`px-2 py-1 rounded text-xs ${isPast ? 'bg-dark-300 text-text-muted cursor-not-allowed' : 'bg-lime-600 text-dark-900 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105'}`}
                             >
                               Edit
                             </button>
@@ -492,7 +492,7 @@ const getTechName = (slot: any) => {
                 console.log('Save button clicked with selectedTechIds and capacity:', editing.selectedTechIds, editing.capacity);
                 await handleAssign(editing.date, editing.start, editing.selectedTechIds, editing.capacity);
               }}
-              className="px-4 py-2 bg-lime-600 text-white rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
+              className="px-4 py-2 bg-lime-600 text-dark-900 rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
             >
               Save
             </button>

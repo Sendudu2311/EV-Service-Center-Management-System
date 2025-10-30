@@ -273,7 +273,7 @@ const PartsInventoryCard: React.FC<Props> = ({
           {available >= requestedQuantity && onRequestPart && (
             <button
               onClick={() => onRequestPart(part._id, requestedQuantity)}
-              className="inline-flex items-center px-4 py-2 bg-lime-600 text-white text-sm text-text-muted rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-lime-600 text-dark-900 text-sm rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 transition-colors"
             >
               <CubeIcon className="h-4 w-4 mr-2" />
               Yêu cầu {requestedQuantity} cái

@@ -86,7 +86,7 @@ const VehicleImageGallery: React.FC<VehicleImageGalleryProps> = ({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="mt-3 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 text-text-muted rounded-md text-white bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400 disabled:opacity-50"
+              className="mt-3 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 rounded-md text-dark-900 bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400 disabled:opacity-50"
             >
               <PlusIcon className="h-4 w-4 mr-1" />
               {uploading ? 'Uploading...' : 'Add Image'}

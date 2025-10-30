@@ -735,7 +735,7 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
                     <button
                       onClick={handleImport}
                       disabled={!showPreview || validationErrors.length > 0 || isProcessing}
-                      className="px-4 py-2 text-sm text-text-muted text-white bg-lime-600 border border-transparent rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
+                      className="px-4 py-2 text-sm text-dark-900 bg-lime-600 border border-transparent rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
                     >
                       {isProcessing ? 'Importing...' : `Import ${importData.length} Parts`}
                     </button>

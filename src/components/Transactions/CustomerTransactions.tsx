@@ -234,7 +234,7 @@ const CustomerTransactions: React.FC = () => {
               onClick={() => setFilter("all")}
               className={`px-4 py-2 rounded-full text-sm text-text-muted transition-colors ${
                 filter === "all"
-                  ? "bg-lime-600 text-white"
+                  ? "bg-lime-600 text-dark-900"
                   : "bg-dark-100 text-text-secondary hover:bg-dark-200"
               }`}
             >

@@ -407,7 +407,7 @@ const getButtonClasses = (variant: StatusAction['variant'], disabled: boolean = 
 
   switch (variant) {
     case 'primary':
-      return `${baseClasses} bg-lime-600 text-white hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 focus:ring-2 focus:ring-lime-500 focus:ring-offset-2 focus:ring-offset-dark-900`;
+      return `${baseClasses} bg-lime-600 text-dark-900 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 focus:ring-2 focus:ring-lime-500 focus:ring-offset-2 focus:ring-offset-dark-900`;
     case 'secondary':
       return `${baseClasses} bg-dark-200 text-text-secondary hover:bg-dark-300 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-dark-900`;
     case 'success':

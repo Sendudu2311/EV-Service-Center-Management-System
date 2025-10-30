@@ -193,7 +193,7 @@ const CustomerPartsPage: React.FC = () => {
                 placeholder="Tên, mã phụ tùng, nhà sản xuất..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full border border-dark-200 rounded-md px-4 py-2 text-sm"
+                className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-4 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
               />
             </div>
 
@@ -206,7 +206,7 @@ const CustomerPartsPage: React.FC = () => {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full border border-dark-200 rounded-md px-4 py-2 text-sm"
+                className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-4 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
               >
                 {categories.map((cat) => (
                   <option key={cat.value} value={cat.value}>

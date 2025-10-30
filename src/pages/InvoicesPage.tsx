@@ -264,7 +264,7 @@ const InvoicesPage: React.FC = () => {
               <div className="flex items-center space-x-3 pt-4">
                 <button
                   type="submit"
-                  className="flex-1 bg-lime-200 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-dark-900 text-text-muted py-2 px-4 rounded-md"
+                  className="flex-1 bg-lime-200 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-black font-semibold py-2 px-4 rounded-md"
                 >
                   Ghi nhận
                 </button>

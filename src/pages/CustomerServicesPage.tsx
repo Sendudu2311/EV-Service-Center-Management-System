@@ -144,7 +144,7 @@ const CustomerServicesPage: React.FC = () => {
                 placeholder="Tên, mô tả, mã dịch vụ..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full border border-dark-300 rounded-md px-4 py-2 text-sm"
+                className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-4 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
               />
             </div>
 
@@ -157,7 +157,7 @@ const CustomerServicesPage: React.FC = () => {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full border border-dark-300 rounded-md px-4 py-2 text-sm"
+                className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-4 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
               >
                 {categories.map((cat) => (
                   <option key={cat.value} value={cat.value}>
@@ -175,7 +175,7 @@ const CustomerServicesPage: React.FC = () => {
               <select
                 value={selectedSubcategory}
                 onChange={(e) => setSelectedSubcategory(e.target.value)}
-                className="w-full border border-dark-300 rounded-md px-4 py-2 text-sm"
+                className="w-full bg-dark-300 text-white border border-dark-200 rounded-md px-4 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 focus:ring-opacity-50 transition-all"
               >
                 <option value="all">Tất cả</option>
                 <option value="diagnostic">Chẩn đoán</option>

@@ -357,7 +357,7 @@ const ServiceDetailsModal: React.FC<ServiceDetailsModalProps> = ({ service, isOp
         <div className="border-t border-dark-200 p-6 bg-dark-900">
           <button
             onClick={onClose}
-            className="w-full bg-lime-600 text-white px-4 py-2 rounded-lg text-text-muted hover:bg-dark-9000 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 transition-colors"
+            className="w-full bg-lime-600 text-black font-semibold px-4 py-2 rounded-lg hover:bg-dark-9000 hover:text-dark-900 transition-all duration-200 transform hover:scale-105 transition-colors"
           >
             Close
           </button>

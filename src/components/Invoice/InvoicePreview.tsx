@@ -532,7 +532,7 @@ const InvoicePreview: React.FC<Props> = ({
             {onShare && (
               <button
                 onClick={onShare}
-                className="px-4 py-2 bg-lime-600 text-white hover:text-dark-900 rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-text-muted transition-colors"
+                className="px-4 py-2 bg-lime-600 text-dark-900 rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 transition-colors"
               >
                 Chia sẻ
               </button>
