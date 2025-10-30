@@ -14,6 +14,12 @@ import {
   verifyEmail,
   resendOTP,
   googleAuth,
+  // Mobile OAuth web-flow handlers
+  createMobileSession,
+  googleAuthMobileStart,
+  googleAuthMobileCallback,
+  exchangeMobileAuthCode,
+  getMobileAuthStatus,
 } from "../controllers/authController.js";
 import { protect } from "../middleware/auth.js";
 
@@ -27,6 +33,13 @@ router.post("/verify-email", verifyEmail);
 router.post("/resend-otp", resendOTP);
 router.post("/forgot-password", forgotPassword);
 router.put("/reset-password/:resettoken", resetPassword);
+
+// Mobile OAuth web-flow routes
+router.post("/mobile/session", createMobileSession);
+router.get("/google/mobile", googleAuthMobileStart);
+router.get("/mobile/callback", googleAuthMobileCallback);
+router.post("/mobile/exchange", exchangeMobileAuthCode);
+router.get("/mobile/status", getMobileAuthStatus);
 
 // Protected routes
 router.get("/me", protect, getMe);

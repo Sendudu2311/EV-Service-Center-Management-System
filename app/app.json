@@ -4,6 +4,7 @@
     "slug": "ev-service-center",
     "version": "1.0.0",
     "orientation": "portrait",
+    "owner": "khoatq201",
     "scheme": "evservicecenter",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

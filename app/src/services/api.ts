@@ -125,6 +125,25 @@ export const authAPI = {
       }>
     >("/api/auth/google-auth", { credential }),
 
+  // Mobile web-flow APIs
+  startMobileSession: (redirectUri?: string) =>
+    api.post<ApiResponse<{ sessionId: string; state: string }>>(
+      "/api/auth/mobile/session",
+      redirectUri ? { redirectUri } : {}
+    ),
+
+  exchangeMobileAuthCode: (code: string) =>
+    api.post<ApiResponse<{ user: any; token: string }>>(
+      "/api/auth/mobile/exchange",
+      { code }
+    ),
+
+  getMobileAuthStatus: (sessionId: string) =>
+    api.get<ApiResponse<{ status: "pending" | "success" | "expired" }>>(
+      "/api/auth/mobile/status",
+      { params: { sessionId } }
+    ),
+
   getProfile: () => api.get<ApiResponse<{ user: any }>>("/api/auth/me"),
 
   updateProfile: (userData: any) =>

@@ -12,6 +12,7 @@ import {
   AppState,
   Linking,
 } from "react-native";
+import * as WebBrowser from "expo-web-browser";
 import { Picker } from "@react-native-picker/picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
@@ -247,6 +248,20 @@ const AppointmentBookingScreen: React.FC<AppointmentFormProps> = ({
         // Check if backend already created appointment
         const appointmentId = verifyData?.appointmentId;
 
+        // Trigger backend post-payment workflow (emails/notifications)
+        try {
+          const txRefForVerify = transactionRef as string;
+          if (txRefForVerify) {
+            console.log("📣 Calling verifyAppointmentPayment for emails...");
+            await vnpayAPI.verifyAppointmentPayment(txRefForVerify);
+          }
+        } catch (notifyErr) {
+          console.warn(
+            "⚠️ verifyAppointmentPayment failed (continuing):",
+            notifyErr
+          );
+        }
+
         if (appointmentId) {
           console.log(
             "✅ Appointment already created by backend:",
@@ -310,9 +325,9 @@ const AppointmentBookingScreen: React.FC<AppointmentFormProps> = ({
             bookingType: "deposit_booking",
             status: "confirmed",
             paymentStatus: "partial",
+            // Ensure backend assigns the slot and decrements capacity
             ...(pendingData.selectedSlotId && {
               slotId: pendingData.selectedSlotId,
-              skipSlotReservation: true,
             }),
           };
 
@@ -325,18 +340,7 @@ const AppointmentBookingScreen: React.FC<AppointmentFormProps> = ({
           if (createResponse.data?.success) {
             console.log("✅ Appointment created successfully!");
 
-            // Release reserved slot since appointment is created (slot will be reassigned to appointment)
-            if (slotIdToRelease) {
-              try {
-                console.log("🔓 Appointment created - releasing reserved slot");
-                await releaseReservedSlot(slotIdToRelease);
-              } catch (releaseError) {
-                console.error(
-                  "Error releasing slot after appointment creation:",
-                  releaseError
-                );
-              }
-            }
+            // Do NOT release reserved slot here; backend assigns slot to appointment
 
             // Clean up
             await AsyncStorage.removeItem("pendingAppointment");
@@ -745,6 +749,7 @@ const AppointmentBookingScreen: React.FC<AppointmentFormProps> = ({
         await AsyncStorage.setItem("reservedSlotId", reservedSlotIdValue);
 
         // Create VNPay payment
+        const returnUrl = "evservicecenter://payment/vnpay-return";
         const paymentData = {
           amount: depositAmount,
           language: "vn",
@@ -753,6 +758,7 @@ const AppointmentBookingScreen: React.FC<AppointmentFormProps> = ({
           paymentType: "appointment",
           depositAmount: depositAmount,
           isMobileApp: true, // Explicit flag for mobile app
+          returnUrl, // Deep link for Auth Session to auto-close browser
         };
 
         const response = await vnpayAPI.createPayment(paymentData);
@@ -771,21 +777,30 @@ const AppointmentBookingScreen: React.FC<AppointmentFormProps> = ({
             (response.data as any)?.transactionRef;
           await AsyncStorage.setItem("currentTransactionRef", transactionRef);
 
-          console.log("Opening browser for payment...", transactionRef);
-
-          // Open in EXTERNAL browser (Chrome/Safari) instead of in-app browser
-          // This allows user to easily switch back to app using app switcher or home button
-          await Linking.openURL(paymentUrl);
-
-          // Show instruction to user
-          Alert.alert(
-            "Đang chuyển đến thanh toán",
-            "Sau khi thanh toán xong, vui lòng MỞ LẠI ỨNG DỤNG (từ màn hình chính hoặc app switcher) để hoàn tất đặt lịch.",
-            [{ text: "OK" }]
+          console.log("Opening Auth Session for payment...", transactionRef);
+          // Use Auth Session: browser will close automatically when VNPay redirects to returnUrl
+          const result = await WebBrowser.openAuthSessionAsync(
+            paymentUrl,
+            returnUrl
           );
 
-          // Browser opened - loading will stop when user returns and payment is checked
-          setLoading(false);
+          // If the browser navigated to our returnUrl, result.type will be 'success'
+          if ((result as any)?.type === "success" && (result as any)?.url) {
+            try {
+              const parsed = new URL((result as any).url as string);
+              const success = parsed.searchParams.get("success") === "true";
+              const txRef = parsed.searchParams.get("transactionRef");
+              if (txRef) {
+                await AsyncStorage.setItem("currentTransactionRef", txRef);
+              }
+              // Proactively verify without waiting for AppState
+              await checkPendingPayment();
+            } catch (e) {
+              console.warn("Could not parse returnUrl from Auth Session", e);
+            }
+          }
+
+          setLoading(false); // AppState listener will also verify on return
         } else {
           throw new Error("Failed to create payment URL");
         }

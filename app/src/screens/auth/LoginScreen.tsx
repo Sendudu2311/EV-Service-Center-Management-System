@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -10,14 +10,14 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '../../contexts/AuthContext';
-import GoogleLoginButton from '../../components/Auth/GoogleLoginButton';
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { useAuth } from "../../contexts/AuthContext";
+import GoogleLoginButton from "../../components/Auth/GoogleLoginButton";
 
 const LoginScreen: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -26,16 +26,16 @@ const LoginScreen: React.FC = () => {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Lỗi', 'Vui lòng nhập email và mật khẩu');
+      Alert.alert("Lỗi", "Vui lòng nhập email và mật khẩu");
       return;
     }
 
     setIsLoading(true);
     try {
       await login(email, password);
-      Alert.alert('Thành công', 'Đăng nhập thành công!');
+      Alert.alert("Thành công", "Đăng nhập thành công!");
     } catch (error: any) {
-      Alert.alert('Lỗi', error.message || 'Đăng nhập thất bại');
+      Alert.alert("Lỗi", error.message || "Đăng nhập thất bại");
     } finally {
       setIsLoading(false);
     }
@@ -44,7 +44,7 @@ const LoginScreen: React.FC = () => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -95,7 +95,7 @@ const LoginScreen: React.FC = () => {
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeButton}
               >
-                <Text style={styles.eyeIcon}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
+                <Text style={styles.eyeIcon}>{showPassword ? "👁️" : "👁️‍🗨️"}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -107,7 +107,10 @@ const LoginScreen: React.FC = () => {
 
           {/* Login Button */}
           <TouchableOpacity
-            style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+            style={[
+              styles.loginButton,
+              isLoading && styles.loginButtonDisabled,
+            ]}
             onPress={handleLogin}
             disabled={isLoading}
           >
@@ -132,7 +135,7 @@ const LoginScreen: React.FC = () => {
           <View style={styles.registerContainer}>
             <Text style={styles.registerText}>Chưa có tài khoản? </Text>
             <TouchableOpacity
-              onPress={() => navigation.navigate('Register' as never)}
+              onPress={() => navigation.navigate("Register" as never)}
               disabled={isLoading}
             >
               <Text style={styles.registerLink}>Đăng ký ngay</Text>
@@ -147,79 +150,79 @@ const LoginScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: "#f9fafb",
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 24,
   },
   logoContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 32,
   },
   logo: {
     width: 64,
     height: 64,
-    backgroundColor: '#3b82f6',
+    backgroundColor: "#3b82f6",
     borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   logoText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#111827',
-    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#111827",
+    textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#6b7280',
-    textAlign: 'center',
+    color: "#6b7280",
+    textAlign: "center",
     marginBottom: 32,
   },
   form: {
-    width: '100%',
+    width: "100%",
   },
   inputContainer: {
     marginBottom: 20,
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
+    fontWeight: "500",
+    color: "#374151",
     marginBottom: 8,
   },
   input: {
     height: 48,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: "#d1d5db",
     borderRadius: 8,
     paddingHorizontal: 16,
     fontSize: 16,
-    backgroundColor: '#fff',
-    color: '#111827',
+    backgroundColor: "#fff",
+    color: "#111827",
   },
   passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: "#d1d5db",
     borderRadius: 8,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   passwordInput: {
     flex: 1,
     height: 48,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: '#111827',
+    color: "#111827",
   },
   eyeButton: {
     paddingHorizontal: 12,
@@ -228,58 +231,58 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   forgotPassword: {
-    alignSelf: 'flex-end',
+    alignSelf: "flex-end",
     marginBottom: 24,
   },
   forgotPasswordText: {
-    color: '#3b82f6',
+    color: "#3b82f6",
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   loginButton: {
     height: 48,
-    backgroundColor: '#3b82f6',
+    backgroundColor: "#3b82f6",
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 16,
   },
   loginButtonDisabled: {
-    backgroundColor: '#93c5fd',
+    backgroundColor: "#93c5fd",
   },
   loginButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginVertical: 24,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: "#e5e7eb",
   },
   dividerText: {
     marginHorizontal: 16,
     fontSize: 14,
-    color: '#6b7280',
+    color: "#6b7280",
   },
   registerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: 24,
   },
   registerText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: "#6b7280",
   },
   registerLink: {
     fontSize: 14,
-    color: '#3b82f6',
-    fontWeight: '600',
+    color: "#3b82f6",
+    fontWeight: "600",
   },
 });
 
