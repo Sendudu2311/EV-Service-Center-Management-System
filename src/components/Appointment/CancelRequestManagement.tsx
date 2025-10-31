@@ -258,6 +258,12 @@ const CancelRequestManagement: React.FC<CancelRequestManagementProps> = ({
                           appointment.cancelRequest.refundProcessedAt
                         ).toLocaleString("vi-VN")}
                       </p>
+                      {appointment.cancelRequest.refundNotes && (
+                        <p className="text-xs text-green-700 mt-1">
+                          <strong>Ghi chú từ staff:</strong>{" "}
+                          {appointment.cancelRequest.refundNotes}
+                        </p>
+                      )}
                       {appointment.cancelRequest.refundProofImage && (
                         <div className="mt-2">
                           <p className="text-xs text-green-600 mb-1">

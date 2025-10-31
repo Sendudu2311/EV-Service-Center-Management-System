@@ -281,9 +281,21 @@ export const googleAuth = asyncHandler(async (req, res) => {
     );
 
     // Verify the credential
+    // Accept tokens issued to any of our platform client IDs (web, android, ios)
+    const audiences = [
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_ANDROID_CLIENT_ID,
+      process.env.GOOGLE_IOS_CLIENT_ID,
+    ].filter(Boolean);
+
+    console.log(
+      "🔐 Allowed Google audiences:",
+      audiences.map((a) => a?.substring(0, 20) + "...").join(", ")
+    );
+
     const ticket = await client.verifyIdToken({
       idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: audiences.length > 0 ? audiences : process.env.GOOGLE_CLIENT_ID,
     });
 
     console.log("✅ Google credential verified successfully");
@@ -410,6 +422,260 @@ export const googleAuth = asyncHandler(async (req, res) => {
       "Invalid Google credential or authentication failed"
     );
   }
+});
+
+// =====================
+// Mobile OAuth Web Flow
+// =====================
+
+// In-memory store for dev. For production, replace with Redis with TTL
+const mobileSessions = new Map();
+
+const MOBILE_SESSION_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const AUTH_CODE_TTL_MS = 60 * 1000; // 60 seconds
+
+function now() {
+  return Date.now();
+}
+
+function generateId(len = 32) {
+  return [...crypto.randomUUID().replace(/-/g, "")].slice(0, len).join("");
+}
+
+function setSession(sessionId, value) {
+  mobileSessions.set(sessionId, value);
+}
+
+function getSession(sessionId) {
+  const s = mobileSessions.get(sessionId);
+  if (!s) return null;
+  if (s.expiresAt && s.expiresAt < now()) {
+    mobileSessions.delete(sessionId);
+    return null;
+  }
+  return s;
+}
+
+function cleanupSessions() {
+  const t = now();
+  for (const [k, v] of mobileSessions.entries()) {
+    if (v.expiresAt && v.expiresAt < t) mobileSessions.delete(k);
+  }
+}
+
+// @route POST /api/auth/mobile/session
+export const createMobileSession = asyncHandler(async (req, res) => {
+  cleanupSessions();
+  const sessionId = generateId(24);
+  const state = generateId(24);
+  const { redirectUri } = req.body || {};
+
+  setSession(sessionId, {
+    status: "pending",
+    createdAt: now(),
+    expiresAt: now() + MOBILE_SESSION_TTL_MS,
+    state,
+    redirectUri,
+  });
+
+  return sendSuccess(res, 201, "Mobile session created", {
+    sessionId,
+    state,
+  });
+});
+
+// @route GET /api/auth/google/mobile
+export const googleAuthMobileStart = asyncHandler(async (req, res) => {
+  const { sessionId, redirectUri } = req.query;
+  const s = getSession(sessionId);
+  if (!s) return sendValidationError(res, "Invalid or expired sessionId");
+
+  // Optional: update redirectUri if passed here
+  if (redirectUri && typeof redirectUri === "string") {
+    // whitelist basic scheme
+    if (!/^evservicecenter:\/\//.test(redirectUri)) {
+      return sendValidationError(res, "Invalid redirectUri");
+    }
+    s.redirectUri = redirectUri;
+  }
+
+  const publicBase = process.env.PUBLIC_BASE_URL; // e.g., https://your-ngrok-id.ngrok.io
+  const baseUrl =
+    publicBase && /^https?:\/\//.test(publicBase)
+      ? publicBase.replace(/\/$/, "")
+      : `${req.protocol}://${req.get("host")}`;
+  const callbackUrl = `${baseUrl}/api/auth/mobile/callback`;
+
+  const { OAuth2Client } = await import("google-auth-library");
+  const client = new OAuth2Client(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    callbackUrl
+  );
+
+  let url = client.generateAuthUrl({
+    access_type: "offline",
+    scope: ["openid", "email", "profile"],
+    prompt: "consent",
+    state: JSON.stringify({ sessionId, state: s.state }),
+  });
+
+  // Force Vietnamese UI on Google consent screen
+  try {
+    const u = new URL(url);
+    u.searchParams.set("hl", "vi");
+    url = u.toString();
+  } catch {}
+
+  return res.redirect(url);
+});
+
+// @route GET /api/auth/mobile/callback
+export const googleAuthMobileCallback = asyncHandler(async (req, res) => {
+  const { code, state } = req.query;
+  if (!code || !state) return sendValidationError(res, "Missing code/state");
+
+  const { sessionId, state: expectedState } = JSON.parse(state);
+  const s = getSession(sessionId);
+  if (!s || s.state !== expectedState) {
+    return sendValidationError(res, "Invalid session or state");
+  }
+
+  const publicBase = process.env.PUBLIC_BASE_URL; // e.g., https://your-ngrok-id.ngrok.io
+  const baseUrl =
+    publicBase && /^https?:\/\//.test(publicBase)
+      ? publicBase.replace(/\/$/, "")
+      : `${req.protocol}://${req.get("host")}`;
+  const callbackUrl = `${baseUrl}/api/auth/mobile/callback`;
+
+  const { OAuth2Client } = await import("google-auth-library");
+  const client = new OAuth2Client(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    callbackUrl
+  );
+
+  const { tokens } = await client.getToken(code);
+  const idToken = tokens.id_token;
+  if (!idToken) return sendError(res, 400, "Missing id_token from Google");
+
+  // Reuse existing flow to create/find user and issue app JWT
+  const ticket = await client.verifyIdToken({
+    idToken,
+    audience: [
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_ANDROID_CLIENT_ID,
+      process.env.GOOGLE_IOS_CLIENT_ID,
+    ].filter(Boolean),
+  });
+
+  const payload = ticket.getPayload();
+  const {
+    sub: googleId,
+    email,
+    given_name: firstName,
+    family_name: lastName,
+    picture: avatar,
+  } = payload;
+
+  let user = await User.findOne({ googleId });
+  if (!user) {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      if (existingUser.authProvider === "local") {
+        existingUser.googleId = googleId;
+        existingUser.authProvider = "google";
+        if (avatar && !existingUser.avatar) existingUser.avatar = avatar;
+        existingUser.lastLogin = new Date();
+        await existingUser.save();
+        user = existingUser;
+      } else {
+        return sendConflictError(
+          res,
+          "An account with this email already exists with Google authentication."
+        );
+      }
+    } else {
+      user = await User.create({
+        googleId,
+        email,
+        firstName,
+        lastName,
+        authProvider: "google",
+        role: "customer",
+        avatar: avatar || "",
+        isEmailVerified: true,
+        lastLogin: new Date(),
+      });
+    }
+  } else {
+    user.lastLogin = new Date();
+    if (avatar && !user.avatar) user.avatar = avatar;
+    await user.save();
+  }
+
+  const appToken = generateToken(user);
+  user.password = undefined;
+
+  // Create one-time auth code and mark session success
+  const authCode = generateId(30);
+  s.status = "success";
+  s.authCode = authCode;
+  s.expiresAt = now() + AUTH_CODE_TTL_MS; // shorten lifetime after success
+  s.user = user;
+  s.token = appToken;
+
+  const redirectTarget = s.redirectUri;
+  if (redirectTarget && /^evservicecenter:\/\//.test(redirectTarget)) {
+    const url = `${redirectTarget}?code=${authCode}`;
+    return res.redirect(url);
+  }
+
+  // Fallback HTML page
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  return res
+    .status(200)
+    .send(
+      "<html><body><h3>Google login successful</h3><p>You can return to the app.</p></body></html>"
+    );
+});
+
+// @route POST /api/auth/mobile/exchange
+export const exchangeMobileAuthCode = asyncHandler(async (req, res) => {
+  const { code } = req.body || {};
+  if (!code) return sendValidationError(res, "Missing code");
+
+  // find session with matching authCode
+  let sessionIdFound = null;
+  for (const [k, v] of mobileSessions.entries()) {
+    if (v.authCode === code) {
+      sessionIdFound = k;
+      break;
+    }
+  }
+  if (!sessionIdFound) return sendValidationError(res, "Invalid code");
+  const s = getSession(sessionIdFound);
+  if (!s || s.status !== "success")
+    return sendValidationError(res, "Code expired or not ready");
+
+  // one-time use
+  mobileSessions.delete(sessionIdFound);
+
+  return sendSuccess(res, 200, "Exchanged successfully", {
+    token: s.token,
+    user: s.user,
+  });
+});
+
+// @route GET /api/auth/mobile/status?sessionId=...
+export const getMobileAuthStatus = asyncHandler(async (req, res) => {
+  const { sessionId } = req.query;
+  const s = getSession(sessionId);
+  if (!s)
+    return sendSuccess(res, 200, "Session not found or expired", {
+      status: "expired",
+    });
+  return sendSuccess(res, 200, "OK", { status: s.status });
 });
 
 // @desc    Get current logged in user

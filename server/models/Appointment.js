@@ -343,6 +343,10 @@ const appointmentSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
+      refundNotes: {
+        type: String,
+        description: "Notes from staff when processing refund",
+      },
       refundTransactionId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Transaction",
@@ -448,6 +452,12 @@ appointmentSchema.methods.calculateTotal = function () {
   this.partsUsed.forEach((part) => {
     total += part.totalPrice;
   });
+
+  // Add deposit amount if deposit has been paid (for deposit_booking)
+  // This ensures totalAmount includes the 200,000 VND deposit
+  if (this.bookingType === "deposit_booking" && this.depositInfo?.paid) {
+    total += this.depositInfo.amount || 200000; // Default to 200,000 if not specified
+  }
 
   this.totalAmount = total;
   return total;
@@ -986,6 +996,7 @@ appointmentSchema.methods.processRefund = function (
   this.cancelRequest.refundProcessedBy = userId;
   this.cancelRequest.refundTransactionId = refundTransactionId;
   this.cancelRequest.refundProofImage = refundProofImage;
+  this.cancelRequest.refundNotes = notes || ""; // Store notes from staff when processing refund
 
   // After successful refund, change status to cancelled
   this.status = "cancelled";
