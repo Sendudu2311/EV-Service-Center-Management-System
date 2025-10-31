@@ -14,7 +14,8 @@ import toast from "react-hot-toast";
 
 interface PaymentConfirmationModalProps {
   appointment: any;
-  invoice: any | null; // Preview invoice data (optional, calculation done in modal)
+  invoice: any | null; // Invoice data (optional)
+  serviceReception: any | null; // Service reception data (most complete)
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
@@ -23,15 +24,58 @@ interface PaymentConfirmationModalProps {
 const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
   appointment,
   invoice,
+  serviceReception,
   isOpen,
   onClose,
   onSuccess,
 }) => {
-  // Calculate totals using the same logic as InvoiceGenerationModal
+  // Calculate totals from service reception (most complete data source)
   const calculateTotals = () => {
     const depositAmount = appointment.depositInfo?.paid
       ? appointment.depositInfo.amount
       : 0;
+
+    // Priority 1: Use invoice data if available (already calculated with tax)
+    if (invoice && invoice.totals) {
+      return {
+        depositAmount,
+        totalAmount: invoice.totals.totalAmount || 0,
+        remainingAmount: invoice.totals.remainingAmount || 0,
+      };
+    }
+
+    // Priority 2: Calculate from Service Reception (includes all parts + recommended services)
+    if (serviceReception) {
+      // Initial services from appointment
+      const servicesTotal = appointment.services.reduce(
+        (sum: number, s: any) => sum + (s.price || 0) * (s.quantity || 1),
+        0
+      );
+
+      // Recommended services discovered during inspection
+      const recommendedServicesTotal = (serviceReception.recommendedServices || [])
+        .reduce((sum: number, rs: any) => sum + (rs.estimatedCost || 0), 0);
+
+      // Parts (approved or available)
+      const partsTotal = (serviceReception.requestedParts || [])
+        .filter((part: any) => part.isAvailable)
+        .reduce((sum: number, part: any) => {
+          const unitPrice = part.partId?.pricing?.retail || part.estimatedCost || 0;
+          return sum + (unitPrice * part.quantity);
+        }, 0);
+
+      // Labor estimates
+      const laborTotal = serviceReception.estimatedLabor?.totalCost || 0;
+
+      const subtotal = servicesTotal + recommendedServicesTotal + partsTotal + laborTotal;
+      const taxAmount = subtotal * 0.1; // 10% VAT
+      const totalAmount = subtotal + taxAmount;
+      const remainingAmount = totalAmount - depositAmount;
+
+      return { depositAmount, totalAmount, remainingAmount };
+    }
+
+    // Priority 3: Fallback - Calculate from appointment only (least accurate)
     const servicesTotal = appointment.services.reduce(
       (sum: number, s: any) => sum + (s.price || 0) * (s.quantity || 1),
       0
@@ -40,6 +84,7 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
     const taxAmount = subtotal * 0.1;
     const totalAmount = subtotal + taxAmount;
     const remainingAmount = totalAmount - depositAmount;
+
     return { depositAmount, totalAmount, remainingAmount };
   };
 

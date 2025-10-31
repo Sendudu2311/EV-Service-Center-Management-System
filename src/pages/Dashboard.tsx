@@ -4,7 +4,7 @@ import { RoleGuard } from '../components/Common/RoleGuard';
 import EnhancedCustomerDashboard from '../components/Dashboard/EnhancedCustomerDashboard';
 import StaffDashboard from '../components/Dashboard/StaffDashboard';
 import EnhancedTechnicianDashboard from '../components/Dashboard/EnhancedTechnicianDashboard';
-import AdminDashboard from '../components/Dashboard/AdminDashboard';
+import EnhancedAdminDashboard from '../components/Dashboard/EnhancedAdminDashboard';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -52,7 +52,7 @@ const Dashboard: React.FC = () => {
         requireBootReady={true}
         fallback={null}
       >
-        <AdminDashboard />
+        <EnhancedAdminDashboard />
       </RoleGuard>
 
       {/* Loading state when no role matches or boot not ready */}

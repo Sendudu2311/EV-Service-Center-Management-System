@@ -659,19 +659,53 @@ export const adjustPartStock = async (req, res) => {
   }
 };
 
-// Get low stock parts
+// Get low stock parts with dynamic thresholds
 export const getLowStockParts = async (req, res) => {
   try {
-    const lowStockParts = await Part.find({
-      $expr: {
-        $lte: ['$inventory.currentStock', '$inventory.reorderPoint']
-      },
+    // Get all active parts with inventory and usage data
+    const allParts = await Part.find({
       isActive: true
-    }).select('name partNumber inventory category brand');
+    }).select('name partNumber inventory category brand usage pricing');
+
+    // Calculate dynamic thresholds and filter low stock parts
+    const lowStockParts = allParts
+      .map(part => {
+        const dynamicThreshold = part.calculateDynamicReorderPoint();
+        const usageCategory = part.getUsageCategory();
+        const daysUntilStockout = part.getDaysUntilStockout();
+        const needsUrgent = part.needsUrgentReorder();
+        const currentStock = part.inventory?.currentStock || 0;
+
+        return {
+          ...part.toObject(),
+          dynamicReorderPoint: dynamicThreshold,
+          usageCategory,
+          daysUntilStockout,
+          isUrgent: needsUrgent,
+          isLowStock: currentStock <= dynamicThreshold
+        };
+      })
+      .filter(part => part.isLowStock)
+      // Sort by urgency: high usage + low stock first
+      .sort((a, b) => {
+        // Urgent parts first
+        if (a.isUrgent && !b.isUrgent) return -1;
+        if (!a.isUrgent && b.isUrgent) return 1;
+
+        // Then by days until stockout (ascending)
+        if (a.daysUntilStockout !== b.daysUntilStockout) {
+          return a.daysUntilStockout - b.daysUntilStockout;
+        }
+
+        // Then by usage category priority
+        const usagePriority = { high: 3, medium: 2, low: 1, unused: 0 };
+        return (usagePriority[b.usageCategory] || 0) - (usagePriority[a.usageCategory] || 0);
+      });
 
     res.status(200).json({
       success: true,
       count: lowStockParts.length,
+      urgentCount: lowStockParts.filter(p => p.isUrgent).length,
       data: lowStockParts
     });
   } catch (error) {
@@ -679,6 +713,112 @@ export const getLowStockParts = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching low stock parts'
+    });
+  }
+};
+
+// Get parts analytics and statistics
+export const getPartsAnalytics = async (req, res) => {
+  try {
+    // Get all active parts
+    const allParts = await Part.find({ isActive: true })
+      .select('name partNumber inventory category brand usage pricing');
+
+    // Calculate statistics for each part
+    const partsWithStats = allParts.map(part => ({
+      ...part.toObject(),
+      dynamicReorderPoint: part.calculateDynamicReorderPoint(),
+      usageCategory: part.getUsageCategory(),
+      daysUntilStockout: part.getDaysUntilStockout(),
+      isUrgent: part.needsUrgentReorder(),
+      isLowStock: (part.inventory?.currentStock || 0) <= part.calculateDynamicReorderPoint()
+    }));
+
+    // Overall statistics
+    const totalParts = partsWithStats.length;
+    const lowStockCount = partsWithStats.filter(p => p.isLowStock).length;
+    const urgentCount = partsWithStats.filter(p => p.isUrgent).length;
+
+    // Usage category distribution
+    const usageDistribution = {
+      high: partsWithStats.filter(p => p.usageCategory === 'high').length,
+      medium: partsWithStats.filter(p => p.usageCategory === 'medium').length,
+      low: partsWithStats.filter(p => p.usageCategory === 'low').length,
+      unused: partsWithStats.filter(p => p.usageCategory === 'unused').length
+    };
+
+    // Top 10 most used parts
+    const topUsedParts = partsWithStats
+      .filter(p => (p.usage?.totalUsed || 0) > 0)
+      .sort((a, b) => (b.usage?.totalUsed || 0) - (a.usage?.totalUsed || 0))
+      .slice(0, 10)
+      .map(p => ({
+        _id: p._id,
+        name: p.name,
+        partNumber: p.partNumber,
+        category: p.category,
+        totalUsed: p.usage?.totalUsed || 0,
+        averageMonthlyUsage: p.usage?.averageMonthlyUsage || 0,
+        currentStock: p.inventory?.currentStock || 0,
+        usageCategory: p.usageCategory
+      }));
+
+    // High usage parts (for priority monitoring)
+    const highUsageParts = partsWithStats
+      .filter(p => p.usageCategory === 'high')
+      .map(p => ({
+        _id: p._id,
+        name: p.name,
+        partNumber: p.partNumber,
+        currentStock: p.inventory?.currentStock || 0,
+        dynamicReorderPoint: p.dynamicReorderPoint,
+        averageMonthlyUsage: p.usage?.averageMonthlyUsage || 0,
+        daysUntilStockout: p.daysUntilStockout,
+        isLowStock: p.isLowStock,
+        isUrgent: p.isUrgent
+      }))
+      .sort((a, b) => a.daysUntilStockout - b.daysUntilStockout);
+
+    // Category breakdown
+    const categoryStats = {};
+    partsWithStats.forEach(part => {
+      const cat = part.category || 'uncategorized';
+      if (!categoryStats[cat]) {
+        categoryStats[cat] = {
+          total: 0,
+          lowStock: 0,
+          highUsage: 0,
+          totalValue: 0
+        };
+      }
+      categoryStats[cat].total++;
+      if (part.isLowStock) categoryStats[cat].lowStock++;
+      if (part.usageCategory === 'high') categoryStats[cat].highUsage++;
+      categoryStats[cat].totalValue += (part.inventory?.currentStock || 0) * (part.pricing?.cost || 0);
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        overview: {
+          totalParts,
+          lowStockCount,
+          urgentCount,
+          activePartsValue: partsWithStats.reduce((sum, p) =>
+            sum + ((p.inventory?.currentStock || 0) * (p.pricing?.cost || 0)), 0
+          )
+        },
+        usageDistribution,
+        topUsedParts,
+        highUsageParts,
+        categoryStats
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching parts analytics:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching parts analytics'
     });
   }
 };

@@ -40,7 +40,6 @@ import TermsOfServicePage from "./pages/TermsOfServicePage";
 import SecurityPage from "./pages/SecurityPage";
 import CareersPage from "./pages/CareersPage";
 import ContactManagementPage from "./pages/ContactManagementPage";
-import ReportsPage from "./pages/ReportsPage";
 
 function App() {
   return (
@@ -243,16 +242,6 @@ function App() {
                   element={
                     <ProtectedRoute roles={["staff", "admin"]}>
                       <ContactManagementPage />
-                    </ProtectedRoute>
-                  }
-                />
-
-                {/* Admin Reports */}
-                <Route
-                  path="/admin/reports"
-                  element={
-                    <ProtectedRoute roles={["admin"]}>
-                      <ReportsPage />
                     </ProtectedRoute>
                   }
                 />

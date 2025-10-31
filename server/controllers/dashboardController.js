@@ -2,6 +2,8 @@ import Vehicle from "../models/Vehicle.js";
 import User from "../models/User.js";
 import Appointment from "../models/Appointment.js";
 import Service from "../models/Service.js";
+import Invoice from "../models/Invoice.js";
+import Part from "../models/Part.js";
 
 // @desc    Get customer dashboard data
 // @route   GET /api/dashboard/customer
@@ -26,6 +28,12 @@ export const getCustomerDashboard = async (req, res) => {
       .sort({ scheduledDate: -1 })
       .limit(10);
 
+    // Get invoices to calculate actual total spent (including parts and additional services)
+    const invoices = await Invoice.find({
+      customerId,
+      status: { $in: ["paid", "sent", "approved"] }, // Only count finalized invoices
+    });
+
     // Calculate stats
     const stats = {
       activeVehicles: vehicles.length,
@@ -34,17 +42,13 @@ export const getCustomerDashboard = async (req, res) => {
           ["pending", "confirmed"].includes(a.status) &&
           new Date(a.scheduledDate) > new Date()
       ).length,
-      completedServices: appointments.filter((a) => a.status === "completed")
-        .length,
-      totalSpent: appointments
-        .filter((a) => a.status === "completed")
-        .reduce((total, appointment) => {
-          const appointmentTotal = appointment.services.reduce(
-            (sum, service) => sum + (service.serviceId?.price || 0),
-            0
-          );
-          return total + appointmentTotal;
-        }, 0),
+      completedServices: appointments.filter((a) =>
+        ["completed", "invoiced"].includes(a.status)
+      ).length,
+      totalSpent: invoices.reduce((total, invoice) => {
+        // Use invoice totals which include services, parts, labor, and additional charges
+        return total + (invoice.totals?.totalAmount || 0);
+      }, 0),
     };
 
     // Get vehicles with maintenance info
@@ -75,10 +79,7 @@ export const getCustomerDashboard = async (req, res) => {
         .filter(Boolean),
       vehicle: `${appointment.vehicleId?.year} ${appointment.vehicleId?.make} ${appointment.vehicleId?.model}`,
       serviceCenter: "EV Service Center", // Single center architecture
-      totalPrice: appointment.services.reduce(
-        (sum, service) => sum + (service.serviceId?.price || 0),
-        0
-      ),
+      totalPrice: appointment.totalAmount || 0, // Use totalAmount which includes services + parts
     }));
 
     res.json({
@@ -201,6 +202,11 @@ export const getAdminDashboard = async (req, res) => {
       {
         _id: "single-center",
         name: "EV Service Center",
+        address: {
+          city: "Ho Chi Minh City",
+          state: "Vietnam"
+        },
+        isActive: true,
         manager: { firstName: "Admin", lastName: "Manager" },
       },
     ];
@@ -295,34 +301,24 @@ export const getAdminDashboard = async (req, res) => {
       })
     );
 
-    // Calculate total revenue
-    const totalRevenue = appointments
-      .filter((a) => a.status === "completed")
-      .reduce((total, appointment) => {
-        const appointmentTotal = appointment.services.reduce(
-          (sum, service) => sum + (service.serviceId?.price || 0),
-          0
-        );
-        return total + appointmentTotal;
-      }, 0);
+    // Calculate total revenue from invoices
+    const allInvoices = await Invoice.find({});
+    const totalRevenue = allInvoices.reduce((total, invoice) => {
+      return total + (invoice.totals?.totalAmount || 0);
+    }, 0);
 
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
-    const monthlyRevenue = appointments
-      .filter((a) => {
-        const apptDate = new Date(a.createdAt);
+    const monthlyRevenue = allInvoices
+      .filter((invoice) => {
+        const invoiceDate = new Date(invoice.createdAt);
         return (
-          apptDate.getMonth() === currentMonth &&
-          apptDate.getFullYear() === currentYear &&
-          a.status === "completed"
+          invoiceDate.getMonth() === currentMonth &&
+          invoiceDate.getFullYear() === currentYear
         );
       })
-      .reduce((total, appointment) => {
-        const appointmentTotal = appointment.services.reduce(
-          (sum, service) => sum + (service.serviceId?.price || 0),
-          0
-        );
-        return total + appointmentTotal;
+      .reduce((total, invoice) => {
+        return total + (invoice.totals?.totalAmount || 0);
       }, 0);
 
     // Service center performance
@@ -331,18 +327,13 @@ export const getAdminDashboard = async (req, res) => {
         (a) => true // Single center architecture - all appointments belong to same center
       );
 
-      const centerRevenue = centerAppointments
-        .filter((a) => a.status === "completed")
-        .reduce((total, appointment) => {
-          const appointmentTotal = appointment.services.reduce(
-            (sum, service) => sum + (service.serviceId?.price || 0),
-            0
-          );
-          return total + appointmentTotal;
-        }, 0);
+      // Calculate revenue from all invoices (single center)
+      const centerRevenue = allInvoices.reduce((total, invoice) => {
+        return total + (invoice.totals?.totalAmount || 0);
+      }, 0);
 
       const completedAppointments = centerAppointments.filter(
-        (a) => a.status === "completed"
+        (a) => a.coreStatus === "Closed"
       );
       const efficiency =
         centerAppointments.length > 0
@@ -382,6 +373,152 @@ export const getAdminDashboard = async (req, res) => {
       },
     };
 
+    // Calculate Top 10 data
+    // Top 10 Customers by revenue (using correct nested field path)
+    const topCustomers = await Invoice.aggregate([
+      { $match: { 'totals.totalAmount': { $gt: 0 } } }, // Match invoices with amount > 0
+      {
+        $group: {
+          _id: '$customerId',
+          totalSpent: { $sum: '$totals.totalAmount' }, // Correct path: totals.totalAmount
+          appointmentCount: { $sum: 1 }
+        }
+      },
+      { $sort: { totalSpent: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'customer'
+        }
+      },
+      { $unwind: '$customer' },
+      {
+        $project: {
+          _id: 1,
+          name: { $concat: ['$customer.firstName', ' ', '$customer.lastName'] },
+          email: '$customer.email',
+          totalSpent: 1,
+          appointmentCount: 1
+        }
+      }
+    ]).catch(() => []); // Return empty array on error
+
+    // Top 10 Services by booking count (include all statuses except cancelled)
+    const topServices = await Appointment.aggregate([
+      { $match: { coreStatus: { $in: ['Scheduled', 'CheckedIn', 'InService', 'ReadyForPickup', 'Closed'] } } },
+      { $unwind: '$services' },
+      {
+        $group: {
+          _id: '$services.serviceId',
+          bookingCount: { $sum: 1 },
+          revenue: { $sum: '$services.price' }
+        }
+      },
+      { $sort: { bookingCount: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: 'services',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'service'
+        }
+      },
+      { $unwind: '$service' },
+      {
+        $project: {
+          _id: 1,
+          name: '$service.name',
+          category: '$service.category',
+          bookingCount: 1,
+          revenue: 1
+        }
+      }
+    ]).catch(() => []); // Return empty array on error
+
+    // Top 10 Parts by usage (totalUsed from inventory)
+    let topParts = [];
+    try {
+      const parts = await Part.find({ isActive: true })
+        .select('partNumber name category pricing inventory')
+        .sort({ 'inventory.usedStock': -1 })
+        .limit(10)
+        .lean();
+      
+      topParts = parts.map((part) => ({
+        _id: part._id,
+        partNumber: part.partNumber,
+        name: part.name,
+        category: part.category,
+        usedStock: part.inventory?.usedStock || 0,
+        currentStock: part.inventory?.currentStock || 0,
+        retailPrice: part.pricing?.retail || 0
+      }));
+    } catch (error) {
+      console.error('Error fetching top parts:', error);
+      topParts = [];
+    }
+
+    // Top 10 Vehicles by service count (include all statuses)
+    const topVehicles = await Appointment.aggregate([
+      { $match: { coreStatus: { $in: ['Scheduled', 'CheckedIn', 'InService', 'ReadyForPickup', 'Closed'] } } },
+      {
+        $group: {
+          _id: '$vehicleId',
+          serviceCount: { $sum: 1 },
+          lastService: { $max: '$scheduledDate' }
+        }
+      },
+      { $sort: { serviceCount: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: 'vehicles',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'vehicle'
+        }
+      },
+      { $unwind: '$vehicle' },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'vehicle.customerId',
+          foreignField: '_id',
+          as: 'owner'
+        }
+      },
+      { $unwind: '$owner' },
+      {
+        $project: {
+          _id: 1,
+          vehicleInfo: {
+            $concat: [
+              '$vehicle.make',
+              ' ',
+              '$vehicle.model',
+              ' (',
+              { $toString: '$vehicle.year' },
+              ')'
+            ]
+          },
+          owner: { $concat: ['$owner.firstName', ' ', '$owner.lastName'] },
+          serviceCount: 1,
+          lastService: 1
+        }
+      }
+    ]).catch(() => []); // Return empty array on error
+
+    const top10 = {
+      customers: topCustomers,
+      services: topServices,
+      vehicles: topVehicles,
+      parts: topParts
+    };
+
     res.json({
       success: true,
       data: {
@@ -389,6 +526,7 @@ export const getAdminDashboard = async (req, res) => {
         revenueData,
         serviceDistribution: serviceDistributionArray,
         serviceCenterPerformance,
+        top10,
         recentActivity: appointments
           .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
           .slice(0, 10)
@@ -498,6 +636,167 @@ export const getTechnicianDashboard = async (req, res) => {
     });
   }
 };
+
+// @desc    Get detail data for dashboard modals
+// @route   GET /api/dashboard/details/:type
+// @access  Private (Admin only)
+export const getDashboardDetails = async (req, res) => {
+  try {
+    const { type } = req.params;
+    let data;
+
+    switch (type) {
+      case 'users':
+        data = await User.find()
+          .select('firstName lastName email role createdAt')
+          .sort({ createdAt: -1 })
+          .limit(100);
+        break;
+
+      case 'customers':
+        // Only customers, not all users
+        data = await User.find({ role: 'customer' })
+          .select('firstName lastName email role createdAt')
+          .sort({ createdAt: -1 })
+          .limit(100);
+        break;
+
+      case 'revenue':
+        // Get COMPLETED and INVOICED appointments (both generate revenue)
+        data = await Appointment.find({ status: { $in: ['completed', 'invoiced'] } })
+          .populate('customerId', 'firstName lastName')
+          .select('appointmentNumber customerId totalAmount status createdAt')
+          .sort({ createdAt: -1 })
+          .limit(100)
+          .lean();
+
+        // Transform to match expected format
+        data = data.map(apt => ({
+          _id: apt._id,
+          appointmentNumber: apt.appointmentNumber,
+          customer: {
+            firstName: apt.customerId?.firstName || 'N/A',
+            lastName: apt.customerId?.lastName || ''
+          },
+          totalAmount: apt.totalAmount || 0,
+          status: apt.status,
+          createdAt: apt.createdAt
+        }));
+        break;
+
+      case 'invoices':
+        // Get all invoices with their totals
+        data = await Invoice.find()
+          .populate('customerId', 'firstName lastName')
+          .populate('appointmentId', 'appointmentNumber')
+          .select('invoiceNumber appointmentId customerId totals status createdAt')
+          .sort({ createdAt: -1 })
+          .limit(100)
+          .lean();
+
+        // Transform to match expected format
+        data = data.map(invoice => ({
+          _id: invoice._id,
+          invoiceNumber: invoice.invoiceNumber,
+          appointmentNumber: invoice.appointmentId?.appointmentNumber || 'N/A',
+          customer: {
+            firstName: invoice.customerId?.firstName || 'N/A',
+            lastName: invoice.customerId?.lastName || ''
+          },
+          totalAmount: invoice.totals?.totalAmount || 0,
+          status: invoice.status,
+          createdAt: invoice.createdAt
+        }));
+        break;
+
+      case 'vehicles':
+        data = await Vehicle.find({ isActive: true })
+          .populate('customerId', 'firstName lastName')
+          .select('make model licensePlate customerId createdAt')
+          .sort({ createdAt: -1 })
+          .limit(100)
+          .lean();
+
+        // Transform to match expected format
+        data = data.map(vehicle => ({
+          _id: vehicle._id,
+          make: vehicle.make,
+          model: vehicle.model,
+          licensePlate: vehicle.licensePlate,
+          owner: {
+            firstName: vehicle.customerId?.firstName || 'N/A',
+            lastName: vehicle.customerId?.lastName || ''
+          },
+          createdAt: vehicle.createdAt
+        }));
+        break;
+
+      case 'appointments':
+        data = await Appointment.find()
+          .populate('customerId', 'firstName lastName')
+          .populate('vehicleId', 'make model')
+          .select('appointmentNumber customerId vehicleId coreStatus scheduledDate')
+          .sort({ scheduledDate: -1 })
+          .limit(100)
+          .lean();
+
+        // Transform to match expected format
+        data = data.map(apt => ({
+          _id: apt._id,
+          appointmentNumber: apt.appointmentNumber,
+          customer: {
+            firstName: apt.customerId?.firstName || 'N/A',
+            lastName: apt.customerId?.lastName || ''
+          },
+          vehicle: {
+            make: apt.vehicleId?.make || 'N/A',
+            model: apt.vehicleId?.model || ''
+          },
+          status: apt.coreStatus,
+          scheduledDate: apt.scheduledDate
+        }));
+        break;
+
+      case 'parts':
+        // Get all parts ordered by inventory
+        data = await Part.find({ isActive: true })
+          .select('partNumber name category inventory pricing createdAt')
+          .sort({ 'inventory.currentStock': -1 })
+          .limit(100)
+          .lean();
+
+        // Transform to match expected format
+        data = data.map(part => ({
+          _id: part._id,
+          partNumber: part.partNumber,
+          name: part.name,
+          category: part.category,
+          currentStock: part.inventory?.currentStock || 0,
+          usedStock: part.inventory?.usedStock || 0,
+          retailPrice: part.pricing?.retail || 0,
+          createdAt: part.createdAt
+        }));
+        break;
+
+      default:
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid detail type'
+        });
+    }
+
+    res.status(200).json({
+      success: true,
+      data
+    });
+  } catch (error) {
+    console.error('Error fetching dashboard details:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching dashboard details'
+    });
+  }
+};;
 
 // Helper function to generate random colors for charts
 function getRandomColor() {

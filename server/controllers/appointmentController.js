@@ -212,8 +212,9 @@ export const getAppointments = async (req, res) => {
       .populate("vehicleId", "make model year vin")
       .populate(
         "services.serviceId",
-        "name category basePrice estimatedDuration"
+        "name category basePrice estimatedDuration warranty"
       )
+      .populate("partsUsed.partId", "name partNumber pricing warranty")
       .populate("assignedTechnician", "firstName lastName specializations")
       .skip(skip)
       .limit(parseInt(limit));
@@ -263,8 +264,9 @@ export const getAppointment = async (req, res) => {
       )
       .populate(
         "services.serviceId",
-        "name category description basePrice estimatedDuration"
+        "name category description basePrice estimatedDuration warranty"
       )
+      .populate("partsUsed.partId", "name partNumber pricing warranty")
       .populate(
         "assignedTechnician",
         "firstName lastName specializations phone"
@@ -3935,7 +3937,59 @@ export const reviewServiceReception = async (req, res) => {
 
     // Handle parts availability check for approved receptions
     if (decision === "approved" || decision === "partially_approved") {
-      await checkPartsAvailability(serviceReception, appointment, req.user._id);
+      // Step 1: Check parts availability FIRST
+      const { allPartsAvailable, insufficientParts } = await checkPartsAvailability(
+        serviceReception,
+        appointment,
+        req.user._id
+      );
+
+      // Step 2: ONLY add services and parts to appointment if ALL parts are available
+      if (allPartsAvailable) {
+        // Import models to get actual prices
+        const { Service, Part } = await import("../models/index.js");
+
+        // 2a. Add recommended services to appointment
+        if (serviceReception.recommendedServices && serviceReception.recommendedServices.length > 0) {
+          for (const recService of serviceReception.recommendedServices) {
+            // Fetch actual service to get current basePrice
+            const serviceData = await Service.findById(recService.serviceId);
+            if (serviceData) {
+              appointment.services.push({
+                serviceId: recService.serviceId,
+                quantity: recService.quantity || 1,
+                price: serviceData.basePrice || recService.estimatedCost || 0,
+                estimatedDuration: recService.estimatedDuration || serviceData.estimatedDuration || 60
+              });
+            }
+          }
+        }
+
+        // 2b. Add requested parts to appointment
+        if (serviceReception.requestedParts && serviceReception.requestedParts.length > 0) {
+          for (const reqPart of serviceReception.requestedParts) {
+            // Fetch actual part to get current retail price
+            const partData = await Part.findById(reqPart.partId);
+            if (partData) {
+              const unitPrice = partData.pricing?.retail || reqPart.actualCost || reqPart.estimatedCost || 0;
+              appointment.partsUsed.push({
+                partId: reqPart.partId,
+                quantity: reqPart.quantity,
+                unitPrice: unitPrice,
+                totalPrice: unitPrice * reqPart.quantity
+              });
+            }
+          }
+        }
+
+        // 2c. Recalculate total amount
+        appointment.calculateTotal();
+        await appointment.save();
+
+        console.log(`✅ [reviewServiceReception] Updated appointment ${appointment._id} with ${serviceReception.recommendedServices?.length || 0} services and ${serviceReception.requestedParts?.length || 0} parts. New totalAmount: ${appointment.totalAmount}`);
+      } else {
+        console.log(`⚠️ [reviewServiceReception] Parts insufficient for appointment ${appointment._id}. Services and parts NOT added. Missing: ${insufficientParts.map(p => p.partName).join(', ')}`);
+      }
     }
 
     res.status(200).json({
@@ -4835,14 +4889,39 @@ async function reducePartsForCompletedAppointment(appointmentId) {
     }
 
     // ====== METHOD 3: Update Appointment.partsUsed array ======
+    // IMPORTANT: DO NOT overwrite existing parts - preserve prices!
+    // Only verify that parts exist in appointment (they should already be added during staff approval)
     if (partsToReduce.length > 0) {
-      appointment.partsUsed = partsToReduce.map((p) => ({
-        partId: p.partId,
-        quantity: p.quantity,
-        unitPrice: 0, // Can be populated from invoice data later
-        totalPrice: 0,
-      }));
+      // Check if parts are already in appointment.partsUsed (added during staff approval)
+      for (const reducedPart of partsToReduce) {
+        const existingPart = appointment.partsUsed.find(
+          (p) => p.partId.toString() === reducedPart.partId.toString()
+        );
+
+        if (!existingPart) {
+          // Part not in appointment yet - this shouldn't happen after our fix
+          // But add it with price from Part model as fallback
+          console.warn(`⚠️ Part ${reducedPart.partNumber} not found in appointment.partsUsed - adding with price lookup`);
+
+          const { Part } = await import("../models/index.js");
+          const partData = await Part.findById(reducedPart.partId);
+          const unitPrice = partData?.pricing?.retail || 0;
+
+          appointment.partsUsed.push({
+            partId: reducedPart.partId,
+            quantity: reducedPart.quantity,
+            unitPrice: unitPrice,
+            totalPrice: unitPrice * reducedPart.quantity,
+          });
+        }
+        // If part exists, don't modify it - preserve the price set during staff approval
+      }
+
+      // IMPORTANT: Recalculate total after adding parts
+      appointment.calculateTotal();
       await appointment.save();
+
+      console.log(`✅ [reducePartsForCompletedAppointment] Recalculated totalAmount: ${appointment.totalAmount}`);
     }
 
     return {

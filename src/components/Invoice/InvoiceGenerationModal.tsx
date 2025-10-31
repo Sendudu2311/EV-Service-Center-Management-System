@@ -6,6 +6,7 @@ import InvoicePreview from "./InvoicePreview";
 
 interface InvoiceGenerationModalProps {
   appointment: any;
+  serviceReception?: any; // Service reception data for accurate parts calculation
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (appointmentId: string) => Promise<void>;
@@ -13,6 +14,7 @@ interface InvoiceGenerationModalProps {
 
 const InvoiceGenerationModal: React.FC<InvoiceGenerationModalProps> = ({
   appointment,
+  serviceReception,
   isOpen,
   onClose,
   onConfirm,
@@ -31,12 +33,37 @@ const InvoiceGenerationModal: React.FC<InvoiceGenerationModalProps> = ({
     const depositAmount = appointment.depositInfo?.paid
       ? appointment.depositInfo.amount
       : 0;
+
+    // Calculate services total (initial services from appointment)
     const servicesTotal = appointment.services.reduce(
       (sum: number, s: any) => sum + s.price * s.quantity,
       0
     );
-    const subtotal = servicesTotal;
-    const taxAmount = subtotal * 0.1;
+
+    // Calculate parts total from Service Reception (if available)
+    let partsTotal = 0;
+    let recommendedServicesTotal = 0;
+    let laborTotal = 0;
+
+    if (serviceReception) {
+      // Parts from service reception
+      partsTotal = (serviceReception.requestedParts || [])
+        .filter((part: any) => part.isAvailable)
+        .reduce((sum: number, part: any) => {
+          const unitPrice = part.partId?.pricing?.retail || part.estimatedCost || 0;
+          return sum + (unitPrice * part.quantity);
+        }, 0);
+
+      // Recommended services discovered during inspection
+      recommendedServicesTotal = (serviceReception.recommendedServices || [])
+        .reduce((sum: number, rs: any) => sum + (rs.estimatedCost || 0), 0);
+
+      // Labor estimates
+      laborTotal = serviceReception.estimatedLabor?.totalCost || 0;
+    }
+
+    const subtotal = servicesTotal + partsTotal + recommendedServicesTotal + laborTotal;
+    const taxAmount = subtotal * 0.1; // 10% VAT
     const totalAmount = subtotal + taxAmount;
     const remainingAmount = totalAmount - depositAmount;
 

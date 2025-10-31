@@ -213,6 +213,70 @@ partSchema.methods.needsReorder = function() {
   return this.inventory.currentStock <= this.inventory.reorderPoint;
 };
 
+// Calculate dynamic reorder point based on usage frequency
+partSchema.methods.calculateDynamicReorderPoint = function() {
+  if (!this.inventory || !this.usage) return this.inventory?.minStockLevel || 5;
+
+  const minStock = this.inventory.minStockLevel || 5;
+  const avgMonthlyUsage = this.usage.averageMonthlyUsage || 0;
+
+  // No usage - use minimum stock level
+  if (avgMonthlyUsage === 0) return minStock;
+
+  // Low usage (< 2/month): minStock only
+  if (avgMonthlyUsage < 2) return minStock;
+
+  // Medium usage (2-10/month): minStock + (usage * 1)
+  if (avgMonthlyUsage < 10) {
+    return Math.ceil(minStock + (avgMonthlyUsage * 1));
+  }
+
+  // High usage (>= 10/month): minStock + (usage * 1.5)
+  return Math.ceil(minStock + (avgMonthlyUsage * 1.5));
+};
+
+// Get usage category for analytics
+partSchema.methods.getUsageCategory = function() {
+  if (!this.usage) return 'unused';
+
+  const totalUsed = this.usage.totalUsed || 0;
+  const avgMonthlyUsage = this.usage.averageMonthlyUsage || 0;
+
+  if (totalUsed === 0) return 'unused';
+  if (avgMonthlyUsage >= 10) return 'high';
+  if (avgMonthlyUsage >= 2) return 'medium';
+  return 'low';
+};
+
+// Calculate days until stockout based on current usage rate
+partSchema.methods.getDaysUntilStockout = function() {
+  if (!this.inventory || !this.usage) return Infinity;
+
+  const currentStock = this.inventory.currentStock || 0;
+  const avgMonthlyUsage = this.usage.averageMonthlyUsage || 0;
+
+  // No usage - stock won't run out
+  if (avgMonthlyUsage === 0) return Infinity;
+
+  // Calculate daily usage rate
+  const dailyUsage = avgMonthlyUsage / 30;
+
+  // Calculate days until stockout
+  return Math.floor(currentStock / dailyUsage);
+};
+
+// Check if needs urgent reorder (high usage + low stock)
+partSchema.methods.needsUrgentReorder = function() {
+  if (!this.inventory || !this.usage) return false;
+
+  const usageCategory = this.getUsageCategory();
+  const dynamicThreshold = this.calculateDynamicReorderPoint();
+  const currentStock = this.inventory.currentStock || 0;
+
+  // Urgent if high usage and below dynamic threshold
+  return usageCategory === 'high' && currentStock <= dynamicThreshold;
+};
+
 // Get active reservations for an appointment
 partSchema.methods.getAppointmentReservation = function(appointmentId) {
   if (!this.inventory || !this.inventory.reservations) return null;

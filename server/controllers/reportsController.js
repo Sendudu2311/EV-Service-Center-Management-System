@@ -84,25 +84,41 @@ export const getAnalytics = asyncHandler(async (req, res) => {
   const pendingAppointments = appointments.filter(
     (a) => a.status === "pending" || a.status === "confirmed"
   );
+  
+  // Appointments that generate revenue (completed OR invoiced)
+  const revenueGeneratingAppointments = appointments.filter(
+    (a) => a.status === "completed" || a.status === "invoiced"
+  );
 
   // 2. Calculate revenue using totalAmount field
-  const totalRevenue = completedAppointments.reduce((sum, appt) => {
+  const totalRevenue = revenueGeneratingAppointments.reduce((sum, appt) => {
     return sum + (appt.totalAmount || 0);
   }, 0);
 
   const averageRevenue =
-    completedAppointments.length > 0
-      ? totalRevenue / completedAppointments.length
+    revenueGeneratingAppointments.length > 0
+      ? totalRevenue / revenueGeneratingAppointments.length
       : 0;
+
+  // Count total appointments
+  const totalAppointmentsCount = await Appointment.countDocuments({
+    createdAt: { $gte: startDate, $lte: endDate },
+  });
+
+  // Count completed + invoiced appointments
+  const completedAndInvoicedCount = await Appointment.countDocuments({
+    createdAt: { $gte: startDate, $lte: endDate },
+    status: { $in: ['completed', 'invoiced'] },
+  });
 
   // 3. Get invoices for payment data
   const invoices = await Invoice.find({
     createdAt: { $gte: startDate, $lte: endDate },
   });
 
-  const paidInvoices = invoices.filter((inv) => inv.paymentStatus === "paid");
+  const paidInvoices = invoices.filter((inv) => inv.paymentInfo?.status === "paid");
   const pendingInvoices = invoices.filter(
-    (inv) => inv.paymentStatus === "pending"
+    (inv) => inv.paymentInfo?.status === "pending" || inv.paymentInfo?.status === "unpaid"
   );
 
   // 4. Monthly trends (appointments)
@@ -144,8 +160,12 @@ export const getAnalytics = asyncHandler(async (req, res) => {
 
     if (appt.status === "completed") {
       monthlyAppointmentsTrend[monthKey].completed += 1;
+    } else if (appt.status === "cancelled") {
+      monthlyAppointmentsTrend[monthKey].cancelled += 1;
+    }
 
-      // Revenue trend using totalAmount field
+    // Revenue trend - include both completed AND invoiced
+    if (appt.status === "completed" || appt.status === "invoiced") {
       if (!monthlyRevenueTrend[monthKey]) {
         monthlyRevenueTrend[monthKey] = {
           month: monthLabel,
@@ -156,8 +176,6 @@ export const getAnalytics = asyncHandler(async (req, res) => {
 
       monthlyRevenueTrend[monthKey].revenue += appt.totalAmount || 0;
       monthlyRevenueTrend[monthKey].transactions += 1;
-    } else if (appt.status === "cancelled") {
-      monthlyAppointmentsTrend[monthKey].cancelled += 1;
     }
   });
 
@@ -250,6 +268,9 @@ export const getAnalytics = asyncHandler(async (req, res) => {
       invoices.length > 0
         ? Math.round((paidInvoices.length / invoices.length) * 100)
         : 0,
+    // Add counts for appointment display (completed+invoiced / total)
+    totalAppointmentsCount,
+    completedAndInvoicedCount,
   };
 
   // 9. Customer insights
@@ -358,7 +379,7 @@ export const getKPI = asyncHandler(async (req, res) => {
 
   const appointments = await Appointment.find({
     createdAt: { $gte: startDate, $lte: endDate },
-    status: "completed",
+    status: { $in: ['completed', 'invoiced'] }, // Both completed and invoiced generate revenue
   }).populate("services.serviceId", "price");
 
   const invoices = await Invoice.find({
@@ -366,6 +387,7 @@ export const getKPI = asyncHandler(async (req, res) => {
   });
 
   const users = await User.countDocuments({ isActive: true });
+  const customers = await User.countDocuments({ role: 'customer', isActive: true });
   const vehicles = await Vehicle.countDocuments({ isActive: true });
 
   // Calculate KPIs using totalAmount field
@@ -383,7 +405,7 @@ export const getKPI = asyncHandler(async (req, res) => {
       unit: "count",
     },
     customerKPI: {
-      value: users,
+      value: customers,
       unit: "count",
     },
     vehicleKPI: {
@@ -391,10 +413,10 @@ export const getKPI = asyncHandler(async (req, res) => {
       unit: "count",
     },
     invoiceCollectionRate: {
-      value: invoices.filter((i) => i.paymentStatus === "paid").length,
+      value: invoices.filter((i) => i.paymentInfo?.status === "paid").length,
       total: invoices.length,
       percentage: invoices.length > 0
-        ? Math.round((invoices.filter((i) => i.paymentStatus === "paid").length / invoices.length) * 100)
+        ? Math.round((invoices.filter((i) => i.paymentInfo?.status === "paid").length / invoices.length) * 100)
         : 0,
       unit: "%",
     },
