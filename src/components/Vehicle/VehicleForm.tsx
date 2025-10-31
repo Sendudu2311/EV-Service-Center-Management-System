@@ -132,15 +132,14 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
 
     try {
       let vehicleId: string;
+      let hasImageError = false;
       
       if (mode === 'create') {
         const response = await api.post('/api/vehicles', formData);
         vehicleId = response.data.data._id;
-        toast.success('Vehicle registered successfully');
       } else {
         await api.put(`/api/vehicles/${vehicle?._id}`, formData);
         vehicleId = vehicle!._id!;
-        toast.success('Vehicle updated successfully');
       }
 
       // Upload images if any selected
@@ -159,12 +158,20 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
           } catch (imageError) {
             console.error('Error uploading image:', imageError);
             toast.error(`Failed to upload image ${index + 1}`);
+            hasImageError = true;
           }
         }
-        
+      }
+
+      // Show success toast only if all operations completed successfully
+      if (!hasImageError) {
         if (selectedImages.length > 0) {
-          toast.success(`${selectedImages.length} image(s) uploaded successfully`);
+          toast.success(`${mode === 'create' ? 'Vehicle registered' : 'Vehicle updated'} and ${selectedImages.length} image(s) uploaded successfully`);
+        } else {
+          toast.success(mode === 'create' ? 'Vehicle registered successfully' : 'Vehicle updated successfully');
         }
+      } else {
+        toast.error('Some images failed to upload, but vehicle was saved');
       }
 
       onSuccess();
@@ -226,7 +233,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     placeholder="Enter 17-character VIN"
                     value={formData.vin}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6 uppercase"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 bg-dark-300 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6 uppercase"
                   />
                   <p className="mt-1 text-xs text-text-muted">Must be exactly 17 characters</p>
                 </div>
@@ -242,7 +249,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     required
                     value={formData.make}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 bg-dark-300 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   >
                     <option value="">Select Make</option>
                     {popularMakes.map(make => (
@@ -263,7 +270,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     placeholder="e.g., Model 3, IONIQ 5, ID.4"
                     value={formData.model}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 bg-dark-300 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
@@ -281,7 +288,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     max={new Date().getFullYear() + 1}
                     value={formData.year}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 bg-dark-300 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
@@ -297,7 +304,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     placeholder="e.g., Pearl White, Ocean Blue"
                     value={formData.color}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 bg-dark-300 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
@@ -312,7 +319,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     required
                     value={formData.batteryType}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 bg-dark-300 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   >
                     {batteryTypes.map(type => (
                       <option key={type.value} value={type.value}>{type.label}</option>
@@ -335,7 +342,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     placeholder="50"
                     value={formData.batteryCapacity}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 bg-dark-300 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
@@ -354,7 +361,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     placeholder="50"
                     value={formData.maxChargingPower}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 bg-dark-300 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
@@ -372,7 +379,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     placeholder="300"
                     value={formData.range}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 bg-dark-300 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
@@ -388,7 +395,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     required
                     value={formData.purchaseDate}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 bg-dark-300 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
@@ -402,7 +409,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     id="warrantyExpiry"
                     value={formData.warrantyExpiry}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 bg-dark-300 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
@@ -417,7 +424,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     min="0"
                     value={formData.mileage}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 bg-dark-300 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
@@ -434,7 +441,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     step="1000"
                     value={formData.maintenanceInterval}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 bg-dark-300 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 
@@ -450,7 +457,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
                     max="24"
                     value={formData.timeBasedInterval}
                     onChange={handleChange}
-                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
+                    className="mt-2 block w-full rounded-md border-0 px-3 py-1.5 bg-dark-300 text-white shadow-sm border border-dark-200 ring-0 ring-dark-200 placeholder:text-text-muted focus:ring-2 focus:ring-inset focus:ring-lime-400 sm:text-sm sm:leading-6"
                   />
                 </div>
 

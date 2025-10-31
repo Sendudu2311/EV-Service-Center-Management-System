@@ -876,7 +876,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                     loading ||
                     checkingVehicle
                   }
-                  className="px-8 py-3 border-2 border-transparent rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-lime-200 to-lime-300 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                  className="px-8 py-3 border-2 border-transparent rounded-lg text-sm font-semibold text-dark-900 bg-lime-200 hover:bg-lime-300 disabled:bg-gray-300 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
                 >
                   {loading || checkingVehicle ? (
                     <span className="flex items-center">
@@ -1308,12 +1308,12 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                       type="button"
                       onClick={handleCreatePayment}
                       disabled={loading}
-                      className="px-8 py-3 border-2 border-transparent rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-lime-200 to-lime-300 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+                      className="px-8 py-3 border-2 border-transparent rounded-lg text-sm font-semibold text-dark-900 bg-gradient-to-r from-lime-400 to-lime-500 hover:from-lime-500 hover:to-lime-600 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
                     >
                       {loading ? (
                         <span className="flex items-center">
                           <svg
-                            className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                            className="animate-spin -ml-1 mr-2 h-4 w-4 text-dark-900"
                             fill="none"
                             viewBox="0 0 24 24"
                           >

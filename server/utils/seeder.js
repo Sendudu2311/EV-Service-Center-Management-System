@@ -3410,13 +3410,14 @@ const createAppointments = async (
         ],
         scheduledDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // Yesterday
         scheduledTime: "15:00",
-        status: "parts_insufficient", // OnHold core status
+        status: "completed", // Changed from parts_insufficient
         priority: "normal",
         customerNotes: "Need brake pad replacement",
         assignedTechnician: technicians[0]._id,
+        actualCompletion: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 90 * 60 * 1000),
         serviceNotes: [
           {
-            note: "Brake pads out of stock, waiting for customer decision",
+            note: "Brake pads replaced successfully",
             addedBy: technicians[0]._id,
             addedAt: new Date(),
           },
@@ -3486,13 +3487,14 @@ const createAppointments = async (
         ],
         scheduledDate: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
         scheduledTime: "15:00",
-        status: "waiting_for_parts", // OnHold core status
+        status: "completed", // Changed from waiting_for_parts
         priority: "high",
         customerNotes: "Charging cable needs replacement",
         assignedTechnician: technicians[0]._id,
+        actualCompletion: new Date(Date.now() - 4 * 60 * 60 * 1000 + 120 * 60 * 1000),
         serviceNotes: [
           {
-            note: "Customer agreed to wait for new charging cable, ETA 2 days",
+            note: "Charging cable replaced successfully",
             addedBy: technicians[0]._id,
             addedAt: new Date(),
           },
@@ -3555,13 +3557,13 @@ const createAppointments = async (
         ],
         scheduledDate: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour from now
         scheduledTime: "10:30",
-        status: "parts_requested", // OnHold core status
+        status: "in_progress", // Changed from parts_requested
         priority: "high",
-        customerNotes: "Additional parts requested during service",
+        customerNotes: "Service in progress",
         assignedTechnician: technicians[1]._id,
         serviceNotes: [
           {
-            note: "Found additional issue, waiting for extra part approval",
+            note: "Service work in progress",
             addedBy: technicians[1]._id,
             addedAt: new Date(),
           },

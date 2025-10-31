@@ -529,7 +529,7 @@ const PaymentResult: React.FC = () => {
                 </div>
               )}
               {appointmentCreated && appointmentData && (
-                <div className="bg-green-50 rounded-lg p-4 mb-4">
+                <div className="bg-dark-300 rounded-lg p-4 mb-4">
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-text-secondary">Appointment Number:</span>
@@ -557,16 +557,9 @@ const PaymentResult: React.FC = () => {
 
               <div className="space-y-2">
                 <button
-                  onClick={() => navigate("/appointments")}
                   className="w-full bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-black font-semibold px-6 py-2 rounded-lg transition-colors duration-200"
                 >
-                  View My Appointments
-                </button>
-                <button
-                  onClick={() => navigate("/")}
-                  className="w-full bg-dark-200 hover:bg-dark-300 text-gray-800 px-6 py-2 rounded-lg text-text-muted transition-colors duration-200"
-                >
-                  Back to Home
+                  Xin chờ xử lý yêu cầu đặt lịch...
                 </button>
               </div>
             </>
@@ -595,16 +588,15 @@ const PaymentResult: React.FC = () => {
               </p>
               <div className="space-y-2">
                 <button
-                  onClick={() => navigate("/appointments")}
                   className="w-full bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-black font-semibold px-6 py-2 rounded-lg transition-colors duration-200"
                 >
-                  Back to Appointments
+                  Xin chờ xử lý yêu cầu đặt lịch...
                 </button>
                 <button
                   onClick={() => navigate(-1)}
                   className="w-full bg-dark-200 hover:bg-dark-300 text-gray-800 px-6 py-2 rounded-lg text-text-muted transition-colors duration-200"
                 >
-                  Try Again
+                  Thử lại
                 </button>
               </div>
             </>
