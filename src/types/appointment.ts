@@ -6,11 +6,7 @@ export type DetailedAppointmentStatus =
   | "customer_arrived"
   | "reception_created"
   | "reception_approved"
-  | "parts_insufficient"
-  | "waiting_for_parts"
-  | "rescheduled"
   | "in_progress"
-  | "parts_requested"
   | "completed"
   | "invoiced"
   | "cancelled"
@@ -291,14 +287,9 @@ export const statusTransitions: StatusTransition[] = [
   {
     from: "confirmed",
     to: "cancelled",
-    allowedRoles: ["staff", "admin"], // Only staff/admin can directly cancel
+    allowedRoles: ["staff", "admin"],
   },
   { from: "confirmed", to: "no_show", allowedRoles: ["staff", "admin"] },
-  {
-    from: "confirmed",
-    to: "rescheduled",
-    allowedRoles: ["staff", "admin"], // Only staff/admin can directly reschedule
-  },
   {
     from: "customer_arrived",
     to: "reception_created",
@@ -315,37 +306,11 @@ export const statusTransitions: StatusTransition[] = [
     allowedRoles: ["technician", "staff", "admin"],
   },
   {
-    from: "reception_approved",
-    to: "parts_insufficient",
-    allowedRoles: ["technician", "staff", "admin"],
-  },
-  {
-    from: "in_progress",
-    to: "parts_requested",
-    allowedRoles: ["technician", "staff", "admin"],
-  },
-  {
     from: "in_progress",
     to: "completed",
     allowedRoles: ["technician", "staff", "admin"],
   },
-  {
-    from: "parts_insufficient",
-    to: "waiting_for_parts",
-    allowedRoles: ["staff", "admin"],
-  },
-  {
-    from: "parts_requested",
-    to: "in_progress",
-    allowedRoles: ["technician", "staff", "admin"],
-  },
-  {
-    from: "waiting_for_parts",
-    to: "in_progress",
-    allowedRoles: ["technician", "staff", "admin"],
-  },
   { from: "completed", to: "invoiced", allowedRoles: ["staff", "admin"] },
-  { from: "rescheduled", to: "confirmed", allowedRoles: ["staff", "admin"] },
 ];
 
 // Core status mapping from detailed status
@@ -355,14 +320,10 @@ export const getCorStatus = (
   const statusMap: Record<DetailedAppointmentStatus, CoreAppointmentStatus> = {
     pending: "Scheduled",
     confirmed: "Scheduled",
-    rescheduled: "Scheduled",
     customer_arrived: "CheckedIn",
     reception_created: "CheckedIn",
     reception_approved: "InService",
     in_progress: "InService",
-    parts_requested: "InService",
-    parts_insufficient: "OnHold",
-    waiting_for_parts: "OnHold",
     completed: "ReadyForPickup",
     invoiced: "ReadyForPickup",
     cancelled: "Closed",
@@ -409,11 +370,7 @@ export const appointmentStatusTranslations: Record<
   customer_arrived: "Khách hàng đã đến",
   reception_created: "Đã tạo phiếu tiếp nhận",
   reception_approved: "Đã duyệt phiếu tiếp nhận",
-  parts_insufficient: "Thiếu phụ tùng",
-  waiting_for_parts: "Đang chờ phụ tùng",
-  rescheduled: "Đã đổi lịch",
   in_progress: "Đang thực hiện",
-  parts_requested: "Đã yêu cầu phụ tùng",
   completed: "Hoàn thành",
   invoiced: "Đã xuất hóa đơn",
   cancelled: "Đã hủy",

@@ -225,7 +225,7 @@ const PartsPage: React.FC = () => {
               
               <button
                 onClick={() => setActiveTab('requests')}
-                className={`py-2 px-1 border-b-2 text-text-muted text-sm ${
+                className={`py-2 px-1 border-b-2 text-text-muted text-sm hidden ${
                   activeTab === 'requests'
                     ? 'border-blue-500 text-lime-200'
                     : 'border-transparent text-text-muted hover:text-text-secondary hover:border-dark-300'
@@ -239,7 +239,7 @@ const PartsPage: React.FC = () => {
 
               <button
                 onClick={() => setActiveTab('analytics')}
-                className={`py-2 px-1 border-b-2 text-text-muted text-sm ${
+                className={`py-2 px-1 border-b-2 text-text-muted text-sm hidden ${
                   activeTab === 'analytics'
                     ? 'border-blue-500 text-lime-200'
                     : 'border-transparent text-text-muted hover:text-text-secondary hover:border-dark-300'

@@ -5,7 +5,6 @@ import {
   EyeIcon,
   ArrowPathIcon,
   FunnelIcon,
-  ExclamationTriangleIcon,
   CheckCircleIcon,
   ClockIcon,
 } from "@heroicons/react/24/outline";
@@ -28,9 +27,7 @@ import InvoiceDisplayModal from "../components/Invoice/InvoiceDisplayModal";
 import {
   Appointment,
   DetailedAppointmentStatus,
-  AppointmentPriority,
   appointmentStatusTranslations,
-  priorityTranslations,
   canTransitionStatus,
   getNextStatuses,
 } from "../types/appointment";
@@ -68,8 +65,7 @@ interface AppointmentState {
  */
 interface FiltersState {
   statusFilter: DetailedAppointmentStatus | "";
-  priorityFilter: AppointmentPriority | "";
-  sortBy: "date" | "status" | "priority";
+  sortBy: "date" | "status";
   page: number;
   limit: number;
 }
@@ -121,8 +117,7 @@ const AppointmentsPage: React.FC = () => {
   // Filters state
   const [filters, setFilters] = useState<FiltersState>({
     statusFilter: "",
-    priorityFilter: "",
-    sortBy: "status", // Backend sorts by status priority automatically
+    sortBy: "date", // Sort by newest date first
     page: 1,
     limit: 10,
   });
@@ -150,18 +145,22 @@ const AppointmentsPage: React.FC = () => {
         };
 
         if (filters.statusFilter) params.status = filters.statusFilter;
-        if (filters.priorityFilter) params.priority = filters.priorityFilter;
 
         const response = await appointmentsAPI.getAll(params);
         const data = response.data as unknown as AppointmentResponse;
 
         const appointmentsList = data.data || [];
 
-        // Backend already handles sorting by status priority, no client-side sorting needed
+        // Sort appointments by newest date first (client-side for immediate UI update)
+        const sortedAppointments = appointmentsList.sort((a, b) => {
+          const dateA = new Date(a.scheduledDate).getTime();
+          const dateB = new Date(b.scheduledDate).getTime();
+          return dateB - dateA; // Descending order (newest first)
+        });
 
         setState((prev) => ({
           ...prev,
-          appointments: appointmentsList,
+          appointments: sortedAppointments,
           loading: false,
           error: null,
         }));
@@ -527,8 +526,7 @@ const AppointmentsPage: React.FC = () => {
   const clearFilters = useCallback(() => {
     setFilters({
       statusFilter: "",
-      priorityFilter: "",
-      sortBy: "status", // Keep status priority sorting
+      sortBy: "date", // Sort by newest date first
       page: 1,
       limit: 10,
     });
@@ -570,38 +568,6 @@ const AppointmentsPage: React.FC = () => {
         }`}
       >
         {appointmentStatusTranslations[status] || status}
-      </span>
-    );
-  }, []);
-
-  /**
-   * Get priority badge with proper styling
-   */
-  const getPriorityBadge = useCallback((priority: AppointmentPriority) => {
-    const priorityColors = {
-      low: "bg-text-muted text-white border-dark-200",
-      normal: "bg-dark-600 text-white border-blue-700",
-      high: "bg-orange-600 text-white border-orange-700",
-      urgent: "bg-red-600 text-white border-red-700",
-    };
-
-    const priorityIcon =
-      priority === "urgent" ? (
-        <ExclamationTriangleIcon className="w-3 h-3 mr-1" />
-      ) : null;
-
-    return (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-          priorityColors[priority] ||
-          "bg-dark-100 text-gray-800 border-dark-200"
-        }`}
-        title={priorityTranslations[priority] || priority}
-        role="status"
-        aria-label={`Độ ưu tiên: ${priorityTranslations[priority] || priority}`}
-      >
-        {priorityIcon}
-        {priorityTranslations[priority] || priority}
       </span>
     );
   }, []);
@@ -1029,8 +995,7 @@ const AppointmentsPage: React.FC = () => {
               Quản lý và theo dõi lịch hẹn bảo dưỡng xe điện
             </p>
             {state.error && (
-              <div className="mt-2 flex items-center text-sm text-red-400">
-                <ExclamationTriangleIcon className="w-4 h-4 mr-1" />
+              <div className="mt-2 text-sm text-red-400">
                 {state.error}
                 {retryCount > 0 && (
                   <span className="ml-2 text-xs text-text-muted">
@@ -1061,12 +1026,12 @@ const AppointmentsPage: React.FC = () => {
                 </button>
               </div>
             ) : (
-              user?.role !== "technician" && (
+              user?.role === "customer" && (
                 <div className="mt-1">
-                  {user?.role === "customer" && !hasVehicles ? (
+                  {!hasVehicles ? (
                     <div></div>
                   ) : (
-                    // Show create button for non-customers or customers with vehicles
+                    // Show create button only for customers with vehicles
                     <button
                       type="button"
                       onClick={() => setShowForm(true)}
@@ -1085,7 +1050,7 @@ const AppointmentsPage: React.FC = () => {
         {/* Filters */}
         {showFilters && (
           <div className="bg-dark-300 rounded-lg shadow-sm border border-dark-200 p-4 mb-6">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label
                   htmlFor="status-filter"
@@ -1102,7 +1067,7 @@ const AppointmentsPage: React.FC = () => {
                       e.target.value as DetailedAppointmentStatus | ""
                     )
                   }
-                  className="block w-full rounded-md border-dark-200 shadow-sm focus:border-lime-400 focus:ring-lime-500 sm:text-sm"
+                  className="block w-full rounded-md bg-dark-300 text-white border border-dark-300 focus:border-lime-400 focus:ring-2 focus:ring-lime-400 shadow-sm sm:text-sm"
                 >
                   <option value="">Tất cả trạng thái</option>
                   {Object.entries(appointmentStatusTranslations).map(
@@ -1112,32 +1077,6 @@ const AppointmentsPage: React.FC = () => {
                       </option>
                     )
                   )}
-                </select>
-              </div>
-              <div>
-                <label
-                  htmlFor="priority-filter"
-                  className="block text-sm text-text-muted text-text-secondary mb-1"
-                >
-                  Độ ưu tiên
-                </label>
-                <select
-                  id="priority-filter"
-                  value={filters.priorityFilter}
-                  onChange={(e) =>
-                    handleFilterChange(
-                      "priorityFilter",
-                      e.target.value as AppointmentPriority | ""
-                    )
-                  }
-                  className="block w-full rounded-md border-dark-200 shadow-sm focus:border-lime-400 focus:ring-lime-500 sm:text-sm"
-                >
-                  <option value="">Tất cả độ ưu tiên</option>
-                  {Object.entries(priorityTranslations).map(([key, value]) => (
-                    <option key={key} value={key}>
-                      {value}
-                    </option>
-                  ))}
                 </select>
               </div>
               <div className="flex items-end">
@@ -1151,7 +1090,7 @@ const AppointmentsPage: React.FC = () => {
               </div>
             </div>
             <div className="mt-2 text-xs text-text-muted">
-              📋 Danh sách đã được sắp xếp theo thứ tự ưu tiên trạng thái
+              📋 Danh sách sắp xếp theo ngày mới nhất
             </div>
           </div>
         )}
@@ -1214,9 +1153,9 @@ const AppointmentsPage: React.FC = () => {
                     </button>
                   </div>
                 ) : (
-                  user?.role !== "technician" && (
+                  user?.role === "customer" && (
                     <div className="mt-6">
-                      {user?.role === "customer" && !hasVehicles ? (
+                      {!hasVehicles ? (
                         <div className="text-sm text-text-muted">
                           Bạn cần thêm ít nhất một xe vào hệ thống để tạo lịch
                           hẹn.{" "}
@@ -1255,7 +1194,6 @@ const AppointmentsPage: React.FC = () => {
                             #{appointment.appointmentNumber}
                           </h2>
                           {getStatusBadge(appointment.status)}
-                          {getPriorityBadge(appointment.priority)}
                         </header>
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-3">

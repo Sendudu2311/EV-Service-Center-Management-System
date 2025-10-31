@@ -444,7 +444,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ service, isOpen, onClose }) =
                               </div>
                               
                               <div className="flex items-center space-x-2">
-                                <label className="text-sm">Qty:</label>
+                                <label className="text-sm text-text-muted">Qty:</label>
                                 <input
                                   type="number"
                                   min="1"
@@ -461,7 +461,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ service, isOpen, onClose }) =
                                   onChange={(e) => updatePartOptional(selectedPart.partId, e.target.checked)}
                                   className="rounded bg-dark-300 text-white border-dark-300 text-lime-600 focus:ring-lime-400"
                                 />
-                                <span className="ml-2 text-sm">Optional</span>
+                                <span className="ml-2 text-sm text-text-muted">Optional</span>
                               </label>
 
                               <button

@@ -73,11 +73,7 @@ const appointmentSchema = new mongoose.Schema(
         "customer_arrived", // Khách đã mang xe đến
         "reception_created", // Technician đã tạo phiếu tiếp nhận
         "reception_approved", // Staff đã duyệt phiếu + parts
-        "parts_insufficient", // Thiếu parts, chờ quyết định
-        "waiting_for_parts", // Đồng ý chờ order parts
-        "rescheduled", // Đã dời lịch do thiếu parts
         "in_progress", // Đang thực hiện service
-        "parts_requested", // Yêu cầu thêm parts trong lúc làm
         "completed", // Hoàn thành tất cả
         "invoiced", // Đã xuất hóa đơn
         "cancelled", // Hủy bỏ

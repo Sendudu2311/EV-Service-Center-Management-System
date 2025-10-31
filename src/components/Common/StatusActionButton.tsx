@@ -3,7 +3,6 @@ import {
   ClipboardDocumentListIcon,
   PlayIcon,
   CheckCircleIcon,
-  CubeIcon,
   DocumentPlusIcon,
   ExclamationTriangleIcon,
   ClockIcon,
@@ -172,14 +171,6 @@ const getStatusActions = (status: string): StatusAction[] => {
           roles: ['technician']
         },
         {
-          action: 'request_parts',
-          label: 'Yêu cầu phụ tùng',
-          icon: CubeIcon,
-          variant: 'secondary',
-          description: 'Yêu cầu thêm phụ tùng',
-          roles: ['technician']
-        },
-        {
           action: 'view_reception',
           label: 'Xem phiếu tiếp nhận',
           icon: ClipboardDocumentListIcon,
@@ -192,14 +183,6 @@ const getStatusActions = (status: string): StatusAction[] => {
 
     case 'in_progress':
       actions.push(
-        {
-          action: 'request_additional_parts',
-          label: 'Yêu cầu thêm phụ tùng',
-          icon: CubeIcon,
-          variant: 'warning',
-          description: 'Yêu cầu phụ tùng bổ sung',
-          roles: ['technician']
-        },
         {
           action: 'complete_work',
           label: 'Hoàn thành',
@@ -260,35 +243,6 @@ const getStatusActions = (status: string): StatusAction[] => {
           variant: 'secondary',
           description: 'Xem thông tin chi tiết',
           roles: ['customer']
-        }
-      );
-      break;
-
-    case 'parts_requested':
-      actions.push(
-        {
-          action: 'view_request_status',
-          label: 'Xem trạng thái yêu cầu',
-          icon: ClipboardDocumentListIcon,
-          variant: 'secondary',
-          description: 'Kiểm tra trạng thái phụ tùng',
-          roles: ['technician', 'staff', 'admin']
-        },
-        {
-          action: 'approve_parts_request',
-          label: 'Duyệt yêu cầu phụ tùng',
-          icon: CheckCircleIcon,
-          variant: 'primary',
-          description: 'Duyệt yêu cầu phụ tùng',
-          roles: ['staff', 'admin']
-        },
-        {
-          action: 'continue_work',
-          label: 'Tiếp tục công việc',
-          icon: PlayIcon,
-          variant: 'primary',
-          description: 'Tiếp tục các việc có thể làm',
-          roles: ['technician']
         }
       );
       break;

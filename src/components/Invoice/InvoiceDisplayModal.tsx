@@ -147,27 +147,27 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
       <body>
         <div class="header">
           <h1>HÓA ĐƠN DỊCH VỤ XE ĐIỆN</h1>
-          <p>Số hóa đơn: ${invoice.invoiceNumber}</p>
-          <p>Ngày tạo: ${formatDate(invoice.createdAt)}</p>
+          <p className="font-semibold text-white">Số hóa đơn: ${invoice.invoiceNumber}</p>
+          <p className="font-semibold text-white">Ngày tạo: ${formatDate(invoice.createdAt)}</p>
         </div>
 
         <div class="invoice-info">
           <h3>Thông tin khách hàng</h3>
-          <p><strong>Tên:</strong> ${invoice.customerInfo?.name || "N/A"}</p>
-          <p><strong>Email:</strong> ${invoice.customerInfo?.email || "N/A"}</p>
-          <p><strong>SĐT:</strong> ${invoice.customerInfo?.phone || "N/A"}</p>
+          <p className="font-semibold text-white"><strong>Tên:</strong> ${invoice.customerInfo?.name || "N/A"}</p>
+          <p className="font-semibold text-white"><strong>Email:</strong> ${invoice.customerInfo?.email || "N/A"}</p>
+          <p className="font-semibold text-white"><strong>SĐT:</strong> ${invoice.customerInfo?.phone || "N/A"}</p>
         </div>
 
         <div class="vehicle-info">
           <h3>Thông tin xe</h3>
-          <p><strong>Xe:</strong> ${invoice.vehicleInfo?.make || "N/A"} ${
+          <p className="font-semibold text-white"><strong>Xe:</strong> ${invoice.vehicleInfo?.make || "N/A"} ${
       invoice.vehicleInfo?.model || "N/A"
     }</p>
-          <p><strong>Năm:</strong> ${invoice.vehicleInfo?.year || "N/A"}</p>
-          <p><strong>Biển số:</strong> ${
+          <p className="font-semibold text-white"><strong>Năm:</strong> ${invoice.vehicleInfo?.year || "N/A"}</p>
+          <p className="font-semibold text-white"><strong>Biển số:</strong> ${
             invoice.vehicleInfo?.licensePlate || "N/A"
           }</p>
-          <p><strong>VIN:</strong> ${invoice.vehicleInfo?.vin || "N/A"}</p>
+          <p className="font-semibold text-white"><strong>VIN:</strong> ${invoice.vehicleInfo?.vin || "N/A"}</p>
         </div>
 
         <h3>Dịch vụ đã thực hiện</h3>
@@ -199,20 +199,20 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
         </table>
 
         <div class="totals">
-          <p><strong>Tạm tính:</strong> ${formatCurrency(
+          <p className="font-semibold text-white"><strong>Tạm tính:</strong> ${formatCurrency(
             invoice.totals?.subtotal || 0
           )}</p>
-          <p><strong>VAT (10%):</strong> ${formatCurrency(
+          <p className="font-semibold text-white"><strong>VAT (10%):</strong> ${formatCurrency(
             invoice.totals?.taxAmount || 0
           )}</p>
-          <p><strong>Tổng cộng:</strong> ${formatCurrency(
+          <p className="font-semibold text-white"><strong>Tổng cộng:</strong> ${formatCurrency(
             invoice.totals?.totalAmount || 0
           )}</p>
         </div>
 
         <div class="footer">
-          <p>Hóa đơn được tạo tự động bởi hệ thống EV Service Center</p>
-          <p>Ngày in: ${currentDate}</p>
+          <p className="font-semibold text-white">Hóa đơn được tạo tự động bởi hệ thống EV Service Center</p>
+          <p className="font-semibold text-white">Ngày in: ${currentDate}</p>
         </div>
       </body>
       </html>
@@ -272,15 +272,15 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
                   Thông tin khách hàng
                 </h3>
                 <div className="space-y-1 text-sm">
-                  <p>
+                  <p className="font-semibold text-white">
                     <span className="text-text-muted">Tên:</span>{" "}
                     {invoice.customerInfo?.name}
                   </p>
-                  <p>
+                  <p className="font-semibold text-white">
                     <span className="text-text-muted">Email:</span>{" "}
                     {invoice.customerInfo?.email}
                   </p>
-                  <p>
+                  <p className="font-semibold text-white">
                     <span className="text-text-muted">SĐT:</span>{" "}
                     {invoice.customerInfo?.phone}
                   </p>
@@ -291,19 +291,19 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
                   Thông tin xe
                 </h3>
                 <div className="space-y-1 text-sm">
-                  <p>
+                  <p className="font-semibold text-white">
                     <span className="text-text-muted">Xe:</span>{" "}
                     {invoice.vehicleInfo?.make} {invoice.vehicleInfo?.model}
                   </p>
-                  <p>
+                  <p className="font-semibold text-white">
                     <span className="text-text-muted">Năm:</span>{" "}
                     {invoice.vehicleInfo?.year}
                   </p>
-                  <p>
+                  <p className="font-semibold text-white">
                     <span className="text-text-muted">Biển số:</span>{" "}
                     {invoice.vehicleInfo?.licensePlate}
                   </p>
-                  <p>
+                  <p className="font-semibold text-white">
                     <span className="text-text-muted">VIN:</span>{" "}
                     {invoice.vehicleInfo?.vin}
                   </p>
@@ -316,11 +316,11 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
                   <p className="text-sm text-text-secondary">Số hóa đơn</p>
-                  <p className="font-semibold">{invoice.invoiceNumber}</p>
+                  <p className="font-semibold text-white">{invoice.invoiceNumber}</p>
                 </div>
                 <div>
                   <p className="text-sm text-text-secondary">Ngày tạo</p>
-                  <p className="font-semibold">
+                  <p className="font-semibold text-white">
                     {formatDate(invoice.createdAt)}
                   </p>
                 </div>
@@ -391,18 +391,18 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
               <div className="max-w-md ml-auto">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>Tạm tính:</span>
-                    <span>{formatCurrency(invoice.totals?.subtotal || 0)}</span>
+                    <span className="text-white">Tạm tính:</span>
+                    <span className="text-white">{formatCurrency(invoice.totals?.subtotal || 0)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>VAT (10%):</span>
-                    <span>
+                    <span className="text-white">VAT (10%):</span>
+                    <span className="text-white">
                       {formatCurrency(invoice.totals?.taxAmount || 0)}
                     </span>
                   </div>
                   <div className="border-t pt-2">
                     <div className="flex justify-between text-lg font-semibold">
-                      <span>Tổng cộng:</span>
+                      <span className="text-white">Tổng cộng:</span>
                       <span className="text-lime-600">
                         {formatCurrency(invoice.totals?.totalAmount || 0)}
                       </span>
@@ -423,7 +423,7 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
                     <p className="text-sm text-text-secondary">
                       Phương thức thanh toán
                     </p>
-                    <p className="font-semibold">
+                    <p className="font-semibold text-white">
                       {invoice.paymentInfo.method === "bank_transfer"
                         ? "Chuyển khoản ngân hàng"
                         : invoice.paymentInfo.method === "cash"
@@ -433,7 +433,7 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
                   </div>
                   <div>
                     <p className="text-sm text-text-secondary">Ngày thanh toán</p>
-                    <p className="font-semibold">
+                    <p className="font-semibold text-white">
                       {invoice.paymentInfo.paymentDate
                         ? formatDate(invoice.paymentInfo.paymentDate)
                         : "Chưa thanh toán"}
@@ -442,7 +442,7 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
                   {invoice.paymentInfo.transactionRef && (
                     <div>
                       <p className="text-sm text-text-secondary">Mã giao dịch</p>
-                      <p className="font-semibold">
+                      <p className="font-semibold text-white">
                         {invoice.paymentInfo.transactionRef}
                       </p>
                     </div>

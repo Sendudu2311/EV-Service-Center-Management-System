@@ -104,7 +104,6 @@ const StaffAdminManagementPage: React.FC = () => {
   // Filters and search
   const [appointmentFilters, setAppointmentFilters] = useState({
     search: '',
-    priority: '',
     status: 'pending'
   });
   const [partFilters, setPartFilters] = useState({
@@ -122,7 +121,16 @@ const StaffAdminManagementPage: React.FC = () => {
         ...appointmentFilters,
         limit: 50
       });
-      setPendingAppointments(response.data.data || []);
+      const appointments = response.data.data || [];
+      
+      // Sort appointments by newest date first
+      const sortedAppointments = appointments.sort((a, b) => {
+        const dateA = new Date(a.scheduledDate).getTime();
+        const dateB = new Date(b.scheduledDate).getTime();
+        return dateB - dateA; // Descending order (newest first)
+      });
+      
+      setPendingAppointments(sortedAppointments);
     } catch (error: unknown) {
       console.error('Error fetching pending appointments:', error);
       toast.error('Không thể tải danh sách lịch hẹn chờ xác nhận');
@@ -336,25 +344,14 @@ const StaffAdminManagementPage: React.FC = () => {
                       placeholder="Tìm kiếm theo tên khách hàng, số lịch hẹn..."
                       value={appointmentFilters.search}
                       onChange={(e) => setAppointmentFilters({ ...appointmentFilters, search: e.target.value })}
-                      className="pl-10 w-full border border-dark-300 rounded-md px-3 py-2 text-sm"
+                      className="pl-10 w-full bg-dark-300 text-white border border-dark-300 rounded-md px-3 py-2 text-sm focus:border-lime-400 focus:ring-2 focus:ring-lime-400 placeholder:text-text-muted"
                     />
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <select
-                    value={appointmentFilters.priority}
-                    onChange={(e) => setAppointmentFilters({ ...appointmentFilters, priority: e.target.value })}
-                    className="border border-dark-300 rounded-md px-3 py-2 text-sm"
-                  >
-                    <option value="">Tất cả độ ưu tiên</option>
-                    <option value="low">Thấp</option>
-                    <option value="normal">Bình thường</option>
-                    <option value="high">Cao</option>
-                    <option value="urgent">Khẩn cấp</option>
-                  </select>
                   <button
                     onClick={fetchPendingAppointments}
-                    className="px-4 py-2 border border-dark-300 rounded-md text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900"
+                    className="px-4 py-2 border border-dark-300 rounded-md text-sm text-text-secondary bg-dark-300 hover:bg-dark-900 transition-all duration-200"
                   >
                     <FunnelIcon className="h-4 w-4" />
                   </button>
