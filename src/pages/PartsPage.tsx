@@ -13,6 +13,7 @@ import { useSocket, useCustomEvent } from '../contexts/SocketContext';
 import PartsList from '../components/Parts/PartsList';
 import PartForm from '../components/Parts/PartForm';
 import PartBulkImport from '../components/Parts/PartBulkImport';
+import PartsAnalyticsDashboard from '../components/Parts/PartsAnalyticsDashboard';
 import { partRequestsAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import {
@@ -239,7 +240,7 @@ const PartsPage: React.FC = () => {
 
               <button
                 onClick={() => setActiveTab('analytics')}
-                className={`py-2 px-1 border-b-2 text-text-muted text-sm hidden ${
+                className={`py-2 px-1 border-b-2 text-text-muted text-sm ${
                   activeTab === 'analytics'
                     ? 'border-blue-500 text-lime-200'
                     : 'border-transparent text-text-muted hover:text-text-secondary hover:border-dark-300'
@@ -516,43 +517,7 @@ const AnalyticsTab: React.FC<{
   canManage: boolean;
 }> = ({ onEditPart, canManage }) => {
   return (
-    <div className="space-y-6">
-      {/* Low Stock Alert Section */}
-      <div>
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center">
-            <ExclamationTriangleIcon className="h-5 w-5 text-amber-600 mr-2" />
-            <h3 className="text-sm text-text-muted text-amber-800">
-              Low Stock Alert
-            </h3>
-          </div>
-          <p className="text-sm text-amber-700 mt-1">
-            These parts are running low on stock and may need to be reordered soon.
-          </p>
-        </div>
-        
-        <PartsList 
-          onEditPart={canManage ? onEditPart : undefined}
-          viewMode="low-stock"
-          showFilters={false}
-          showActions={canManage}
-          filterDefaults={{ stockStatus: 'low-stock' }}
-        />
-      </div>
-
-      {/* Future: Analytics Charts and Statistics */}
-      <div className="bg-dark-300 shadow-sm rounded-lg border border-dark-200">
-        <div className="px-4 py-5 sm:p-6">
-          <div className="text-center py-12">
-            <ChartBarIcon className="mx-auto h-12 w-12 text-text-muted" />
-            <h3 className="mt-2 text-sm font-semibold text-white">Detailed Statistics</h3>
-            <p className="mt-1 text-sm text-text-muted">
-              Statistical charts and detailed reports will be implemented in the next version.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+    <PartsAnalyticsDashboard onEditPart={canManage ? onEditPart : undefined} />
   );
 };
 

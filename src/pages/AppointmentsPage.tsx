@@ -15,6 +15,7 @@ import {
   vehiclesAPI,
   slotsAPI,
   invoicesAPI,
+  serviceReceptionAPI,
 } from "../services/api";
 import toast from "react-hot-toast";
 import AppointmentFormClean from "../components/Appointment/AppointmentForm";
@@ -99,6 +100,7 @@ const AppointmentsPage: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedAppointmentForInvoice, setSelectedAppointmentForInvoice] =
     useState<Appointment | null>(null);
+  const [invoiceModalServiceReception, setInvoiceModalServiceReception] = useState<any>(null);
   // const [generatingInvoice, setGeneratingInvoice] = useState(false);
 
   // Payment confirmation modal state
@@ -106,6 +108,8 @@ const AppointmentsPage: React.FC = () => {
     useState(false);
   const [selectedAppointmentForPayment, setSelectedAppointmentForPayment] =
     useState<Appointment | null>(null);
+  const [paymentModalInvoice, setPaymentModalInvoice] = useState<any>(null);
+  const [paymentModalServiceReception, setPaymentModalServiceReception] = useState<any>(null);
 
   // Invoice display modal state
   const [showInvoiceDisplayModal, setShowInvoiceDisplayModal] = useState(false);
@@ -773,8 +777,31 @@ const AppointmentsPage: React.FC = () => {
               Xem hóa đơn chi tiết
             </button>
             <button
-              onClick={() => {
+              onClick={async () => {
                 setSelectedAppointmentForPayment(appointment);
+
+                // Fetch service reception (most complete data source)
+                try {
+                  const srResponse = await serviceReceptionAPI.getByAppointment(appointment._id);
+                  if (srResponse.data.success) {
+                    setPaymentModalServiceReception(srResponse.data.data);
+                  }
+                } catch (error) {
+                  console.error('Error fetching service reception:', error);
+                  setPaymentModalServiceReception(null);
+                }
+
+                // Also fetch invoice if available (for pre-calculated totals)
+                try {
+                  const invoiceResponse = await invoicesAPI.getByAppointment(appointment._id);
+                  if (invoiceResponse.data.success) {
+                    setPaymentModalInvoice(invoiceResponse.data.data);
+                  }
+                } catch (error) {
+                  console.error('Error fetching invoice:', error);
+                  setPaymentModalInvoice(null);
+                }
+
                 setShowPaymentConfirmationModal(true);
               }}
               disabled={state.updatingStatus === appointment._id}
@@ -1319,10 +1346,12 @@ const AppointmentsPage: React.FC = () => {
       {showPaymentModal && selectedAppointmentForInvoice && (
         <InvoiceGenerationModal
           appointment={selectedAppointmentForInvoice}
+          serviceReception={invoiceModalServiceReception}
           isOpen={showPaymentModal}
           onClose={() => {
             setShowPaymentModal(false);
             setSelectedAppointmentForInvoice(null);
+            setInvoiceModalServiceReception(null);
           }}
           onConfirm={handleGenerateInvoice}
         />
@@ -1332,11 +1361,14 @@ const AppointmentsPage: React.FC = () => {
       {showPaymentConfirmationModal && selectedAppointmentForPayment && (
         <PaymentConfirmationModal
           appointment={selectedAppointmentForPayment}
-          invoice={null} // Not needed anymore, calculation is done in modal
+          invoice={paymentModalInvoice}
+          serviceReception={paymentModalServiceReception}
           isOpen={showPaymentConfirmationModal}
           onClose={() => {
             setShowPaymentConfirmationModal(false);
             setSelectedAppointmentForPayment(null);
+            setPaymentModalInvoice(null);
+            setPaymentModalServiceReception(null);
           }}
           onSuccess={() => {
             // Refresh appointments list

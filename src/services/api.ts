@@ -560,6 +560,13 @@ export const partsAPI = {
 
   useReservedParts: (parts: any[]) =>
     api.put<ApiResponse<any>>("/api/parts/use", { parts }),
+
+  // Analytics endpoints
+  getAnalytics: () =>
+    api.get<ApiResponse<any>>("/api/parts/analytics"),
+
+  getLowStock: () =>
+    api.get<ApiResponse<any[]>>("/api/parts/low-stock"),
 };
 
 // Part Requests API
@@ -803,6 +810,10 @@ export const dashboardAPI = {
   // Individual endpoints for granular updates (if needed)
   getStats: (role: string, filters?: any) =>
     api.get<ApiResponse<any>>(`/api/dashboard/${role}`, { params: filters }),
+
+  // Get detail data for modal (users, revenue, vehicles, appointments)
+  getDetails: (type: string) =>
+    api.get<ApiResponse<any>>(`/api/dashboard/details/${type}`),
 
   // Legacy method - now uses main dashboard endpoint
   getUpcomingAppointments: (params?: any) =>

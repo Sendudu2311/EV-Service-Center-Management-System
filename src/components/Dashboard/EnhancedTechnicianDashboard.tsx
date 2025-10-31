@@ -182,7 +182,7 @@ const EnhancedTechnicianDashboard: React.FC = () => {
         dateRange: 'all', // Get all appointments, not just today
         limit: 100 // Increase limit for client-side sorting
       });
-      const workQueueData = queueResponse.data.data?.appointments || queueResponse.data.data || [];
+      const workQueueData = queueResponse.data.data as WorkQueueItem[] || [];
 
       // Sort: active status first, then by priority and date
       const statusPriority: Record<string, number> = {
@@ -929,8 +929,8 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                   {selectedReception.requestedParts && selectedReception.requestedParts.length > 0 ? (
                     <div className="space-y-2">
                       {selectedReception.requestedParts.map((part, index) => (
-                        <div key={index} className="bg-purple-50 p-3 rounded">
-                          <p className="text-text-muted text-white">{part.partName}</p>
+                        <div key={index} className="bg-dark-900 p-3 rounded">
+                          <p className="text-white">{part.partName}</p>
                         </div>
                       ))}
                     </div>
@@ -964,7 +964,7 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                   )}
                   <button
                     onClick={() => setSelectedReception(null)}
-                    className="px-4 py-2 bg-dark-200 text-gray-800 rounded-md hover:bg-dark-300"
+                    className="px-4 py-2 bg-dark-200 text-white rounded-md hover:bg-dark-300"
                   >
                     Đóng
                   </button>

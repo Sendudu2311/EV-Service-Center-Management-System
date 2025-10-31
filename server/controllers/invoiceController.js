@@ -234,9 +234,13 @@ export const generateInvoice = async (req, res) => {
     }
 
     // Process requested parts
+    // Note: Only check isAvailable since appointment is already completed
+    // If parts were used during service, they should be included in invoice
     for (const requestedPart of serviceReception.requestedParts || []) {
-      if (requestedPart.isApproved && requestedPart.isAvailable) {
-        const unitPrice = requestedPart.partId.pricing?.retail || 0;
+      if (requestedPart.isAvailable) {
+        const unitPrice = requestedPart.partId.pricing?.retail ||
+                          requestedPart.estimatedCost ||
+                          0;
         const partTotal = unitPrice * requestedPart.quantity;
         invoiceItems.parts.push({
           partId: requestedPart.partId._id,
@@ -347,13 +351,24 @@ export const generateInvoice = async (req, res) => {
         taxId: "0123456789",
       },
 
-      // Invoice items and calculations
-      items: {
-        services: invoiceItems.services,
-        parts: invoiceItems.parts,
-        labor: invoiceItems.labor,
-        additionalCharges,
+      // Invoice items - using correct schema fields
+      serviceItems: invoiceItems.services,
+      partItems: invoiceItems.parts,
+      laborCharges: {
+        standardLabor: {
+          hours: invoiceItems.labor[0]?.hours || 0,
+          rate: invoiceItems.labor[0]?.hourlyRate || 0,
+          amount: invoiceItems.labor[0]?.totalPrice || 0,
+        },
+        overtimeLabor: {
+          hours: 0,
+          rate: 0,
+          amount: 0,
+        },
+        totalLaborHours: invoiceItems.labor[0]?.hours || 0,
+        totalLaborCost: subtotalLabor,
       },
+      additionalCharges,
 
       totals: {
         subtotalServices,

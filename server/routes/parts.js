@@ -12,7 +12,8 @@ import {
   deletePart,
   adjustPartStock,
   getLowStockParts,
-  searchCompatibleParts
+  searchCompatibleParts,
+  getPartsAnalytics
 } from '../controllers/partController.js';
 import { protect, authorize } from '../middleware/auth.js';
 import { uploadImage } from '../middleware/upload.js';
@@ -26,6 +27,11 @@ router.use(protect);
 // @desc    Get all parts with filtering
 // @access  Private (All authenticated users)
 router.get('/', getParts);
+
+// @route   GET /api/parts/analytics
+// @desc    Get parts analytics and statistics
+// @access  Private (Staff, Admin, Technician)
+router.get('/analytics', authorize('staff', 'admin', 'technician'), getPartsAnalytics);
 
 // @route   GET /api/parts/low-stock
 // @desc    Get parts with low stock

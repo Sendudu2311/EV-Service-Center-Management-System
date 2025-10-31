@@ -79,7 +79,6 @@ const Navbar: React.FC = () => {
           { name: "Vehicles", href: "/manage-vehicles" },
           { name: "Contacts", href: "/manage-contacts" },
           { name: "Transactions", href: "/manage-transactions" },
-          { name: "Reports", href: "/admin/reports" },
         ];
       default:
         return baseLinks;
