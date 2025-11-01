@@ -562,11 +562,9 @@ export const partsAPI = {
     api.put<ApiResponse<any>>("/api/parts/use", { parts }),
 
   // Analytics endpoints
-  getAnalytics: () =>
-    api.get<ApiResponse<any>>("/api/parts/analytics"),
+  getAnalytics: () => api.get<ApiResponse<any>>("/api/parts/analytics"),
 
-  getLowStock: () =>
-    api.get<ApiResponse<any[]>>("/api/parts/low-stock"),
+  getLowStock: () => api.get<ApiResponse<any[]>>("/api/parts/low-stock"),
 };
 
 // Part Requests API
@@ -622,6 +620,74 @@ export const partRequestsAPI = {
     api.get<ApiResponse<any[]>>("/api/part-requests/pending-approval", {
       params,
     }),
+};
+
+// Part Conflicts API
+export const partConflictsAPI = {
+  getConflicts: (params?: { status?: string; partId?: string }) =>
+    api.get<ApiResponse<any[]>>("/api/part-conflicts", { params }),
+
+  getConflict: (id: string) =>
+    api.get<ApiResponse<any>>(`/api/part-conflicts/${id}`),
+
+  getConflictStats: () =>
+    api.get<ApiResponse<any>>("/api/part-conflicts/stats"),
+
+  resolveConflict: (
+    id: string,
+    data: {
+      approvedRequestIds: string[];
+      rejectedRequestIds?: string[];
+      notes?: string;
+    }
+  ) => api.post<ApiResponse<any>>(`/api/part-conflicts/${id}/resolve`, data),
+
+  detectConflicts: (partId?: string) =>
+    api.post<ApiResponse<any>>("/api/part-conflicts/detect", { partId }),
+
+  checkReceptionConflicts: (receptionId: string) =>
+    api.get<ApiResponse<{ hasConflict: boolean; conflictCount: number; conflicts: any[] }>>(
+      `/api/part-conflicts/check-reception/${receptionId}`
+    ),
+
+  getSuggestedResolution: (conflictId: string) =>
+    api.get<ApiResponse<{
+      suggested: Array<{
+        requestId: string;
+        receptionNumber: string;
+        priority: string;
+        scheduledDate: string;
+        requestedQuantity: number;
+        reasoning: string;
+      }>;
+      availableStock: number;
+      totalRequested: number;
+    }>>(`/api/part-conflicts/${conflictId}/suggestion`),
+
+  approveRequest: (
+    conflictId: string,
+    data: {
+      requestId: string;
+      notes?: string;
+    }
+  ) => api.post<ApiResponse<{
+      requestId: string;
+      conflictStatus: string;
+      newAvailableStock: number;
+      receptionStatus: string;
+    }>>(`/api/part-conflicts/${conflictId}/approve-request`, data),
+
+  rejectRequest: (
+    conflictId: string,
+    data: {
+      requestId: string;
+      reason: string;
+    }
+  ) => api.post<ApiResponse<{
+      requestId: string;
+      conflictStatus: string;
+      receptionStatus: string;
+    }>>(`/api/part-conflicts/${conflictId}/reject-request`, data),
 };
 
 // Invoices API
