@@ -290,10 +290,21 @@ slotSchema.methods.getAvailableTechniciansOptimized = async function () {
 
   for (const technicianId of this.technicianIds) {
     // Count current appointments for this technician in this slot
+    // Include all active appointment statuses that should block technician availability
+    // Statuses: confirmed, customer_arrived, reception_created, reception_approved, in_progress
+    // These are all statuses where technician is still actively assigned to the appointment
     const appointmentCount = await Appointment.countDocuments({
       slotId: this._id,
       assignedTechnician: technicianId,
-      status: { $in: ["confirmed", "in_progress"] },
+      status: {
+        $in: [
+          "confirmed", // Appointment confirmed, technician assigned
+          "customer_arrived", // Customer arrived, technician still assigned
+          "reception_created", // Reception created, technician still assigned
+          "reception_approved", // Reception approved, technician still assigned
+          "in_progress", // Work in progress, technician actively working
+        ],
+      },
     });
 
     console.log(
@@ -351,10 +362,19 @@ slotSchema.methods.getAvailableTechniciansOptimized = async function () {
 // OPTIMIZED: Method to get technician workload in slot
 slotSchema.methods.getTechnicianWorkloadInSlot = async function (technicianId) {
   const Appointment = (await import("./Appointment.js")).default;
+  // Include all active appointment statuses that count towards technician workload
   const appointments = await Appointment.find({
     slotId: this._id,
     assignedTechnician: technicianId,
-    status: { $in: ["confirmed", "in_progress"] },
+    status: {
+      $in: [
+        "confirmed", // Appointment confirmed, technician assigned
+        "customer_arrived", // Customer arrived, technician still assigned
+        "reception_created", // Reception created, technician still assigned
+        "reception_approved", // Reception approved, technician still assigned
+        "in_progress", // Work in progress, technician actively working
+      ],
+    },
   }).select("_id status scheduledDate");
 
   // Calculate technician capacity in this slot (same logic as isTechnicianAvailableOptimized)

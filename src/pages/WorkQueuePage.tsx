@@ -4,8 +4,6 @@ import {
   WrenchScrewdriverIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  UserIcon,
-  CalendarIcon,
   ClipboardDocumentListIcon,
   CubeIcon,
 } from "@heroicons/react/24/outline";
@@ -80,9 +78,9 @@ const WorkQueuePage: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
-  const [activeTab, setActiveTab] = useState<"assigned" | "available">(
-    "assigned"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "create_reception" | "start_work" | "completed"
+  >("create_reception");
   const [detailsTab, setDetailsTab] = useState<
     "overview" | "checklist" | "parts"
   >("overview");
@@ -104,26 +102,35 @@ const WorkQueuePage: React.FC = () => {
       const statsResponse = await api.get("/api/dashboard/technician");
       setStats(statsResponse.data.data);
 
-      // Fetch appointments based on active tab - use same approach as Dashboard
-      if (activeTab === "assigned") {
-        const queueResponse = await api.get("/api/appointments/work-queue", {
-          params: {
-            technicianId: user?._id,
-            status:
-              "confirmed,customer_arrived,reception_created,reception_approved,in_progress",
-            dateRange: "all",
-            limit: 100,
-          },
-        });
-        setAppointments(
-          queueResponse.data.data?.appointments || queueResponse.data.data || []
-        );
-      } else {
-        const appointmentsResponse = await api.get(
-          "/api/appointments?status=pending&dateRange=all"
-        );
-        setAppointments(appointmentsResponse.data.data || []);
+      // Fetch appointments based on active tab - filter by status for each workflow stage
+      let statusFilter = "";
+
+      switch (activeTab) {
+        case "create_reception":
+          // Tab 1: Tạo phiếu tiếp nhận - appointments chờ technician tạo reception
+          statusFilter = "customer_arrived";
+          break;
+        case "start_work":
+          // Tab 2: Bắt đầu làm việc - appointments đã được duyệt, sẵn sàng bắt đầu
+          statusFilter = "reception_approved";
+          break;
+        case "completed":
+          // Tab 3: Hoàn thành - appointments đã hoàn thành
+          statusFilter = "completed";
+          break;
       }
+
+      const queueResponse = await api.get("/api/appointments/work-queue", {
+        params: {
+          technicianId: user?._id,
+          status: statusFilter,
+          dateRange: "all",
+          limit: 100,
+        },
+      });
+      setAppointments(
+        queueResponse.data.data?.appointments || queueResponse.data.data || []
+      );
     } catch (error) {
       console.error("Error fetching work queue data:", error);
       toast.error("Failed to load work queue data");
@@ -513,24 +520,37 @@ const WorkQueuePage: React.FC = () => {
                   </h2>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => setActiveTab("assigned")}
-                      className={`px-3 py-1 rounded-md text-sm text-text-muted ${
-                        activeTab === "assigned"
-                          ? "bg-lime-100 text-lime-700"
-                          : "text-text-muted hover:text-text-secondary"
+                      onClick={() => setActiveTab("create_reception")}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                        activeTab === "create_reception"
+                          ? "bg-lime-600 text-dark-900"
+                          : "bg-dark-200 text-text-secondary hover:bg-dark-100"
                       }`}
                     >
-                      My Assignments
+                      <ClipboardDocumentListIcon className="h-4 w-4" />
+                      <span>Tạo phiếu tiếp nhận</span>
                     </button>
                     <button
-                      onClick={() => setActiveTab("available")}
-                      className={`px-3 py-1 rounded-md text-sm text-text-muted ${
-                        activeTab === "available"
-                          ? "bg-lime-100 text-lime-700"
-                          : "text-text-muted hover:text-text-secondary"
+                      onClick={() => setActiveTab("start_work")}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                        activeTab === "start_work"
+                          ? "bg-lime-600 text-dark-900"
+                          : "bg-dark-200 text-text-secondary hover:bg-dark-100"
                       }`}
                     >
-                      Available
+                      <WrenchScrewdriverIcon className="h-4 w-4" />
+                      <span>Bắt đầu làm việc</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("completed")}
+                      className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                        activeTab === "completed"
+                          ? "bg-lime-600 text-dark-900"
+                          : "bg-dark-200 text-text-secondary hover:bg-dark-100"
+                      }`}
+                    >
+                      <CheckCircleIcon className="h-4 w-4" />
+                      <span>Hoàn thành</span>
                     </button>
                   </div>
                 </div>
@@ -544,9 +564,11 @@ const WorkQueuePage: React.FC = () => {
                       No appointments
                     </h3>
                     <p className="mt-1 text-sm text-text-muted">
-                      {activeTab === "assigned"
-                        ? "No appointments assigned to you"
-                        : "No available appointments"}
+                      {activeTab === "create_reception"
+                        ? "Không có lịch hẹn nào cần tạo phiếu tiếp nhận"
+                        : activeTab === "start_work"
+                        ? "Không có lịch hẹn nào sẵn sàng bắt đầu làm việc"
+                        : "Không có lịch hẹn nào đã hoàn thành"}
                     </p>
                   </div>
                 ) : (
@@ -1019,7 +1041,9 @@ const WorkQueuePage: React.FC = () => {
                       ) : (
                         <div className="text-center py-8 text-text-muted">
                           <ClipboardDocumentListIcon className="mx-auto h-12 w-12 text-text-secondary mb-4" />
-                          <p className="text-white">No checklist items for this appointment</p>
+                          <p className="text-white">
+                            No checklist items for this appointment
+                          </p>
                         </div>
                       )}
                     </div>

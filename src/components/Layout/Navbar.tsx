@@ -9,6 +9,7 @@ import {
   ArrowRightOnRectangleIcon,
   BellIcon,
   ChevronDownIcon,
+  Squares2X2Icon,
 } from "@heroicons/react/24/outline";
 import { Menu, Transition } from "@headlessui/react";
 
@@ -36,56 +37,79 @@ const Navbar: React.FC = () => {
   };
 
   const getNavLinks = () => {
-    if (!isAuthenticated) return [];
+    if (!isAuthenticated) return { main: [], grouped: null };
 
     const baseLinks = [{ name: "Dashboard", href: "/dashboard" }];
 
     switch (user?.role) {
       case "customer":
-        return [
-          ...baseLinks,
-          { name: "My Vehicles", href: "/vehicles" },
-          { name: "Appointments", href: "/appointments" },
-          { name: "Services", href: "/customer-services" },
-          { name: "Parts", href: "/customer-parts" },
-          { name: "Transactions", href: "/transactions" },
-          { name: "Service History", href: "/service-history" },
-        ];
+        return {
+          main: [
+            ...baseLinks,
+            { name: "My Vehicles", href: "/vehicles" },
+            { name: "Appointments", href: "/appointments" },
+            { name: "Services", href: "/customer-services" },
+            { name: "Parts", href: "/customer-parts" },
+          ],
+          grouped: {
+            name: "More",
+            items: [
+              { name: "Transactions", href: "/transactions" },
+              { name: "Service History", href: "/service-history" },
+            ],
+          },
+        };
       case "staff":
-        return [
-          ...baseLinks,
-          { name: "Users", href: "/users" },
-          { name: "Slots", href: "/slots" },
-          { name: "Services", href: "/services" },
-          { name: "Parts", href: "/parts" },
-          { name: "Vehicles", href: "/manage-vehicles" },
-          { name: "Appointments", href: "/appointments" },
-          { name: "Contacts", href: "/manage-contacts" },
-          { name: "Transactions", href: "/manage-transactions" },
-        ];
+        return {
+          main: [
+            ...baseLinks,
+            { name: "Appointments", href: "/appointments" },
+            { name: "Services", href: "/services" },
+            { name: "Parts", href: "/parts" },
+            { name: "Vehicles", href: "/manage-vehicles" },
+          ],
+          grouped: {
+            name: "Management",
+            items: [
+              { name: "Users", href: "/users" },
+              { name: "Slots", href: "/slots" },
+              { name: "Part Conflicts", href: "/part-conflicts" },
+              { name: "Contacts", href: "/manage-contacts" },
+              { name: "Transactions", href: "/manage-transactions" },
+            ],
+          },
+        };
       case "technician":
-        return [
-          ...baseLinks,
-          { name: 'My Slots', href: '/my-slots' },
-          { name: 'Work Queue', href: '/work-queue' },
-          { name: 'Vehicles', href: '/manage-vehicles' },
-          { name: 'Parts', href: '/parts' },
-        ];
+        return {
+          main: [
+            ...baseLinks,
+            { name: "Work Queue", href: "/work-queue" },
+            { name: "My Slots", href: "/my-slots" },
+            { name: "Vehicles", href: "/manage-vehicles" },
+            { name: "Parts", href: "/parts" },
+          ],
+          grouped: null,
+        };
       case "admin":
-        return [
-          ...baseLinks,
-          { name: "Slots", href: "/slots" },
-          { name: "Users", href: "/users" },
-          { name: "Vehicles", href: "/manage-vehicles" },
-          { name: "Contacts", href: "/manage-contacts" },
-          { name: "Transactions", href: "/manage-transactions" },
-        ];
+        return {
+          main: [...baseLinks, { name: "Vehicles", href: "/manage-vehicles" }],
+          grouped: {
+            name: "Management",
+            items: [
+              { name: "Users", href: "/users" },
+              { name: "Slots", href: "/slots" },
+              { name: "Part Conflicts", href: "/part-conflicts" },
+              { name: "Contacts", href: "/manage-contacts" },
+              { name: "Transactions", href: "/manage-transactions" },
+            ],
+          },
+        };
       default:
-        return baseLinks;
+        return { main: baseLinks, grouped: null };
     }
   };
 
-  const navLinks = getNavLinks();
+  const navData = getNavLinks();
 
   return (
     <nav className="bg-dark-300 shadow-lg border-b border-dark-200">
@@ -104,8 +128,9 @@ const Navbar: React.FC = () => {
           </div>
 
           {/* Desktop navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navLinks.map((link) => (
+          <div className="hidden md:flex items-center space-x-4">
+            {/* Main links */}
+            {navData.main.map((link) => (
               <Link
                 key={link.name}
                 to={link.href}
@@ -114,6 +139,43 @@ const Navbar: React.FC = () => {
                 {link.name}
               </Link>
             ))}
+
+            {/* Grouped links dropdown */}
+            {navData.grouped && (
+              <Menu as="div" className="relative">
+                <Menu.Button className="flex items-center space-x-1 text-text-secondary hover:text-lime-200 px-3 py-2 rounded-md text-sm text-text-muted transition-colors duration-200">
+                  <span>{navData.grouped.name}</span>
+                  <ChevronDownIcon className="h-4 w-4" />
+                </Menu.Button>
+
+                <Transition
+                  enter="transition ease-out duration-200"
+                  enterFrom="transform opacity-0 scale-95"
+                  enterTo="transform opacity-100 scale-100"
+                  leave="transition ease-in duration-75"
+                  leaveFrom="transform opacity-100 scale-100"
+                  leaveTo="transform opacity-0 scale-95"
+                >
+                  <Menu.Items className="absolute left-0 z-10 mt-2 w-48 origin-top-left rounded-md bg-dark-300 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    {navData.grouped.items.map((item) => (
+                      <Menu.Item key={item.name}>
+                        {({ active }) => (
+                          <Link
+                            to={item.href}
+                            className={`${
+                              active ? "bg-dark-100" : ""
+                            } flex items-center px-4 py-2 text-sm text-text-secondary`}
+                          >
+                            <Squares2X2Icon className="mr-3 h-4 w-4" />
+                            {item.name}
+                          </Link>
+                        )}
+                      </Menu.Item>
+                    ))}
+                  </Menu.Items>
+                </Transition>
+              </Menu>
+            )}
           </div>
 
           {/* Right side */}
@@ -246,7 +308,8 @@ const Navbar: React.FC = () => {
       {isMobileMenuOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-dark-900">
-            {navLinks.map((link) => (
+            {/* Main links */}
+            {navData.main.map((link) => (
               <Link
                 key={link.name}
                 to={link.href}
@@ -256,6 +319,26 @@ const Navbar: React.FC = () => {
                 {link.name}
               </Link>
             ))}
+
+            {/* Grouped links */}
+            {navData.grouped && (
+              <>
+                <div className="px-3 py-2 text-xs font-semibold text-text-muted uppercase tracking-wider">
+                  {navData.grouped.name}
+                </div>
+                {navData.grouped.items.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className="text-text-secondary hover:text-lime-200 block px-6 py-2 rounded-md text-base text-text-muted"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </>
+            )}
+
             {!isAuthenticated && (
               <>
                 <Link

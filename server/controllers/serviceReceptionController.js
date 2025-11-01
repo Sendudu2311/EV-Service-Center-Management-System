@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { sendSuccess, sendError } from "../utils/response.js";
+import { detectPartConflicts } from "../services/partConflictService.js";
 
 // Import models - avoid importing Appointment to prevent circular dependency
 const ServiceReception = mongoose.model("ServiceReception");
@@ -639,6 +640,43 @@ export const approveServiceReception = async (req, res) => {
         }`,
       });
       await appointment.save();
+    }
+
+    // Detect conflicts for requested parts if approved
+    if (
+      isApproved &&
+      serviceReception.requestedParts &&
+      serviceReception.requestedParts.length > 0
+    ) {
+      try {
+        // Get unique part IDs from requested parts
+        const partIds = [
+          ...new Set(
+            serviceReception.requestedParts
+              .map((p) => p.partId?.toString())
+              .filter(Boolean)
+          ),
+        ];
+
+        // Check conflicts for each part
+        const conflictPromises = partIds.map((partId) =>
+          detectPartConflicts(partId)
+        );
+        const conflicts = await Promise.all(conflictPromises);
+
+        // Filter out null results (no conflicts)
+        const detectedConflicts = conflicts.filter((c) => c !== null);
+
+        // Mark service reception if it has conflicts
+        if (detectedConflicts.length > 0) {
+          serviceReception.hasConflict = true;
+          serviceReception.conflictIds = detectedConflicts.map((c) => c._id);
+          await serviceReception.save();
+        }
+      } catch (conflictError) {
+        console.error("Error detecting conflicts:", conflictError);
+        // Don't fail the approval if conflict detection fails
+      }
     }
 
     const populatedReception = await ServiceReception.findById(

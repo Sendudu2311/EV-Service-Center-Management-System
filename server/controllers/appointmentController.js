@@ -3531,11 +3531,21 @@ export const staffRejectAppointment = async (req, res) => {
 
 // @desc    Handle customer arrival
 // @route   PUT /api/appointments/:id/customer-arrived
-// @access  Private (Staff, Technician, Admin)
+// @access  Private (Staff, Admin only)
 export const handleCustomerArrival = async (req, res) => {
   try {
     const appointmentId = req.params.id;
     const { vehicleConditionNotes, customerItems = [] } = req.body;
+
+    // Restrict to staff and admin only - technicians cannot mark customer arrival
+    // Technicians can only create service reception after staff confirms customer arrival
+    if (!["staff", "admin"].includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Only staff and admin can mark customer arrival. Technicians can only create service reception after customer is marked as arrived by staff.",
+      });
+    }
 
     const appointment = await Appointment.findById(appointmentId);
     if (!appointment) {
@@ -3803,6 +3813,9 @@ export const submitServiceReception = async (req, res) => {
 export const getPendingReceptionApprovals = async (req, res) => {
   try {
     const { ServiceReception } = await import("../models/index.js");
+    const { detectPartConflicts } = await import(
+      "../services/partConflictService.js"
+    );
 
     let filter = {
       "submissionStatus.submittedToStaff": true,
@@ -3825,12 +3838,66 @@ export const getPendingReceptionApprovals = async (req, res) => {
       )
       .populate("recommendedServices.addedBy", "firstName lastName")
       .populate("requestedParts.partId", "name partNumber pricing")
+      .populate("conflictIds", "conflictNumber status")
       .sort({ "submissionStatus.submittedAt": 1 });
+
+    // Add hasConflict field to each reception by checking for conflicts
+    const receptionsWithConflictStatus = await Promise.all(
+      pendingReceptions.map(async (reception) => {
+        const receptionObj = reception.toObject();
+
+        // Check if reception has unapproved parts
+        if (
+          !receptionObj.requestedParts ||
+          receptionObj.requestedParts.length === 0
+        ) {
+          receptionObj.hasConflict = false;
+          return receptionObj;
+        }
+
+        const unapprovedParts = receptionObj.requestedParts.filter(
+          (p) => !p.isApproved
+        );
+
+        if (unapprovedParts.length === 0) {
+          receptionObj.hasConflict = false;
+          return receptionObj;
+        }
+
+        // Get unique part IDs
+        const partIds = [
+          ...new Set(
+            unapprovedParts
+              .map((p) => p.partId?._id?.toString() || p.partId?.toString())
+              .filter(Boolean)
+          ),
+        ];
+
+        // Check for conflicts on each part
+        let hasAnyConflict = false;
+        for (const partId of partIds) {
+          const conflict = await detectPartConflicts(partId);
+          if (conflict !== null) {
+            // Check if this reception is involved in the conflict
+            const isInvolved = conflict.conflictingRequests.some(
+              (req) => req.requestId.toString() === reception._id.toString()
+            );
+            if (isInvolved) {
+              hasAnyConflict = true;
+              break;
+            }
+          }
+        }
+
+        receptionObj.hasConflict = hasAnyConflict;
+        return receptionObj;
+      })
+    );
 
     res.status(200).json({
       success: true,
-      count: pendingReceptions.length,
-      data: pendingReceptions,
+      count: receptionsWithConflictStatus.length,
+      data: receptionsWithConflictStatus,
     });
   } catch (error) {
     console.error("Error getting pending reception approvals:", error);
@@ -3938,11 +4005,12 @@ export const reviewServiceReception = async (req, res) => {
     // Handle parts availability check for approved receptions
     if (decision === "approved" || decision === "partially_approved") {
       // Step 1: Check parts availability FIRST
-      const { allPartsAvailable, insufficientParts } = await checkPartsAvailability(
-        serviceReception,
-        appointment,
-        req.user._id
-      );
+      const { allPartsAvailable, insufficientParts } =
+        await checkPartsAvailability(
+          serviceReception,
+          appointment,
+          req.user._id
+        );
 
       // Step 2: ONLY add services and parts to appointment if ALL parts are available
       if (allPartsAvailable) {
@@ -3950,7 +4018,10 @@ export const reviewServiceReception = async (req, res) => {
         const { Service, Part } = await import("../models/index.js");
 
         // 2a. Add recommended services to appointment
-        if (serviceReception.recommendedServices && serviceReception.recommendedServices.length > 0) {
+        if (
+          serviceReception.recommendedServices &&
+          serviceReception.recommendedServices.length > 0
+        ) {
           for (const recService of serviceReception.recommendedServices) {
             // Fetch actual service to get current basePrice
             const serviceData = await Service.findById(recService.serviceId);
@@ -3959,24 +4030,34 @@ export const reviewServiceReception = async (req, res) => {
                 serviceId: recService.serviceId,
                 quantity: recService.quantity || 1,
                 price: serviceData.basePrice || recService.estimatedCost || 0,
-                estimatedDuration: recService.estimatedDuration || serviceData.estimatedDuration || 60
+                estimatedDuration:
+                  recService.estimatedDuration ||
+                  serviceData.estimatedDuration ||
+                  60,
               });
             }
           }
         }
 
         // 2b. Add requested parts to appointment
-        if (serviceReception.requestedParts && serviceReception.requestedParts.length > 0) {
+        if (
+          serviceReception.requestedParts &&
+          serviceReception.requestedParts.length > 0
+        ) {
           for (const reqPart of serviceReception.requestedParts) {
             // Fetch actual part to get current retail price
             const partData = await Part.findById(reqPart.partId);
             if (partData) {
-              const unitPrice = partData.pricing?.retail || reqPart.actualCost || reqPart.estimatedCost || 0;
+              const unitPrice =
+                partData.pricing?.retail ||
+                reqPart.actualCost ||
+                reqPart.estimatedCost ||
+                0;
               appointment.partsUsed.push({
                 partId: reqPart.partId,
                 quantity: reqPart.quantity,
                 unitPrice: unitPrice,
-                totalPrice: unitPrice * reqPart.quantity
+                totalPrice: unitPrice * reqPart.quantity,
               });
             }
           }
@@ -3986,9 +4067,23 @@ export const reviewServiceReception = async (req, res) => {
         appointment.calculateTotal();
         await appointment.save();
 
-        console.log(`✅ [reviewServiceReception] Updated appointment ${appointment._id} with ${serviceReception.recommendedServices?.length || 0} services and ${serviceReception.requestedParts?.length || 0} parts. New totalAmount: ${appointment.totalAmount}`);
+        console.log(
+          `✅ [reviewServiceReception] Updated appointment ${
+            appointment._id
+          } with ${
+            serviceReception.recommendedServices?.length || 0
+          } services and ${
+            serviceReception.requestedParts?.length || 0
+          } parts. New totalAmount: ${appointment.totalAmount}`
+        );
       } else {
-        console.log(`⚠️ [reviewServiceReception] Parts insufficient for appointment ${appointment._id}. Services and parts NOT added. Missing: ${insufficientParts.map(p => p.partName).join(', ')}`);
+        console.log(
+          `⚠️ [reviewServiceReception] Parts insufficient for appointment ${
+            appointment._id
+          }. Services and parts NOT added. Missing: ${insufficientParts
+            .map((p) => p.partName)
+            .join(", ")}`
+        );
       }
     }
 
@@ -4901,7 +4996,9 @@ async function reducePartsForCompletedAppointment(appointmentId) {
         if (!existingPart) {
           // Part not in appointment yet - this shouldn't happen after our fix
           // But add it with price from Part model as fallback
-          console.warn(`⚠️ Part ${reducedPart.partNumber} not found in appointment.partsUsed - adding with price lookup`);
+          console.warn(
+            `⚠️ Part ${reducedPart.partNumber} not found in appointment.partsUsed - adding with price lookup`
+          );
 
           const { Part } = await import("../models/index.js");
           const partData = await Part.findById(reducedPart.partId);
@@ -4921,7 +5018,9 @@ async function reducePartsForCompletedAppointment(appointmentId) {
       appointment.calculateTotal();
       await appointment.save();
 
-      console.log(`✅ [reducePartsForCompletedAppointment] Recalculated totalAmount: ${appointment.totalAmount}`);
+      console.log(
+        `✅ [reducePartsForCompletedAppointment] Recalculated totalAmount: ${appointment.totalAmount}`
+      );
     }
 
     return {
