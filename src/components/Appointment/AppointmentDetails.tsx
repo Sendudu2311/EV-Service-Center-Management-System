@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import CancelRequestManagement from "./CancelRequestManagement";
 import CancelRequestModal from "./CancelRequestModal";
@@ -15,6 +15,12 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   onClose,
   _onUpdate,
 }) => {
+  const externalServiceAmount = appointment.services.reduce(
+    (total, service) => {
+      return total + (service.quantity * service.price || 0);
+    },
+    0
+  );
   const [showCancelModal, setShowCancelModal] = useState(false);
   const { user } = useAuth();
   const getStatusBadge = (status: string) => {

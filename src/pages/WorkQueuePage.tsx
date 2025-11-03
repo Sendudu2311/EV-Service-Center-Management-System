@@ -79,7 +79,7 @@ const WorkQueuePage: React.FC = () => {
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
   const [activeTab, setActiveTab] = useState<
-    "create_reception" | "start_work" | "completed"
+    "create_reception" | "in_progress" | "completed"
   >("create_reception");
   const [detailsTab, setDetailsTab] = useState<
     "overview" | "checklist" | "parts"
@@ -110,9 +110,9 @@ const WorkQueuePage: React.FC = () => {
           // Tab 1: Tạo phiếu tiếp nhận - appointments chờ technician tạo reception
           statusFilter = "customer_arrived";
           break;
-        case "start_work":
-          // Tab 2: Bắt đầu làm việc - appointments đã được duyệt, sẵn sàng bắt đầu
-          statusFilter = "reception_approved";
+        case "in_progress":
+          // Tab 2: Đang thực hiện - appointments đang được thực hiện
+          statusFilter = "in_progress";
           break;
         case "completed":
           // Tab 3: Hoàn thành - appointments đã hoàn thành
@@ -531,15 +531,15 @@ const WorkQueuePage: React.FC = () => {
                       <span>Tạo phiếu tiếp nhận</span>
                     </button>
                     <button
-                      onClick={() => setActiveTab("start_work")}
+                      onClick={() => setActiveTab("in_progress")}
                       className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
-                        activeTab === "start_work"
+                        activeTab === "in_progress"
                           ? "bg-lime-600 text-dark-900"
                           : "bg-dark-200 text-text-secondary hover:bg-dark-100"
                       }`}
                     >
                       <WrenchScrewdriverIcon className="h-4 w-4" />
-                      <span>Bắt đầu làm việc</span>
+                      <span>Đang thực hiện</span>
                     </button>
                     <button
                       onClick={() => setActiveTab("completed")}
@@ -566,8 +566,8 @@ const WorkQueuePage: React.FC = () => {
                     <p className="mt-1 text-sm text-text-muted">
                       {activeTab === "create_reception"
                         ? "Không có lịch hẹn nào cần tạo phiếu tiếp nhận"
-                        : activeTab === "start_work"
-                        ? "Không có lịch hẹn nào sẵn sàng bắt đầu làm việc"
+                        : activeTab === "in_progress"
+                        ? "Không có lịch hẹn nào đang thực hiện"
                         : "Không có lịch hẹn nào đã hoàn thành"}
                     </p>
                   </div>

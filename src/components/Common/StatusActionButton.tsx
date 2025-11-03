@@ -391,13 +391,32 @@ const StatusActionButton: React.FC<StatusActionProps> = ({
     action.roles.includes(userRole)
   );
 
+  // Auto-start work when status is "reception_approved" and user is technician
+  React.useEffect(() => {
+    if (currentStatus === "reception_approved" && userRole === "technician" && !disabled) {
+      const startWorkAction = userActions.find(action => action.action === "start_work");
+      if (startWorkAction) {
+        onAction(startWorkAction.action, appointmentId);
+      }
+    }
+  }, [currentStatus, userRole, disabled, appointmentId, userActions, onAction]);
+
   if (userActions.length === 0) {
+    return null;
+  }
+
+  // Filter out start_work action for reception_approved status since it's auto-triggered
+  const filteredActions = currentStatus === "reception_approved" && userRole === "technician"
+    ? userActions.filter(action => action.action !== "start_work")
+    : userActions;
+
+  if (filteredActions.length === 0) {
     return null;
   }
 
   return (
     <div className={`flex flex-wrap gap-2 ${className}`}>
-      {userActions.map((action) => {
+      {filteredActions.map((action) => {
         const Icon = action.icon;
         return (
           <button

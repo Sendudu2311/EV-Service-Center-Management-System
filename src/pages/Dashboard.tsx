@@ -1,10 +1,10 @@
-import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { RoleGuard } from '../components/Common/RoleGuard';
-import EnhancedCustomerDashboard from '../components/Dashboard/EnhancedCustomerDashboard';
-import StaffDashboard from '../components/Dashboard/StaffDashboard';
-import EnhancedTechnicianDashboard from '../components/Dashboard/EnhancedTechnicianDashboard';
-import EnhancedAdminDashboard from '../components/Dashboard/EnhancedAdminDashboard';
+import React from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { RoleGuard } from "../components/Common/RoleGuard";
+import EnhancedCustomerDashboard from "../components/Dashboard/EnhancedCustomerDashboard";
+import StaffDashboard from "../components/Dashboard/StaffDashboard";
+import EnhancedTechnicianDashboard from "../components/Dashboard/EnhancedTechnicianDashboard";
+import EnhancedAdminDashboard from "../components/Dashboard/EnhancedAdminDashboard";
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -21,7 +21,7 @@ const Dashboard: React.FC = () => {
     <div className="min-h-screen bg-dark-900">
       {/* Customer Dashboard */}
       <RoleGuard
-        allowedRoles={['customer']}
+        allowedRoles={["customer"]}
         requireBootReady={true}
         fallback={null}
       >
@@ -30,7 +30,7 @@ const Dashboard: React.FC = () => {
 
       {/* Staff Dashboard */}
       <RoleGuard
-        allowedRoles={['staff']}
+        allowedRoles={["staff"]}
         requireBootReady={true}
         fallback={null}
       >
@@ -39,7 +39,7 @@ const Dashboard: React.FC = () => {
 
       {/* Technician Dashboard */}
       <RoleGuard
-        allowedRoles={['technician']}
+        allowedRoles={["technician"]}
         requireBootReady={true}
         fallback={null}
       >
@@ -48,7 +48,7 @@ const Dashboard: React.FC = () => {
 
       {/* Admin Dashboard */}
       <RoleGuard
-        allowedRoles={['admin']}
+        allowedRoles={["admin"]}
         requireBootReady={true}
         fallback={null}
       >
