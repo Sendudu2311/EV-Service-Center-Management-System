@@ -751,13 +751,13 @@ const AppointmentsPage: React.FC = () => {
         );
       }
 
-      // Add invoice generation button for completed appointments
+      // Add payment confirmation button for reception_approved appointments
       if (
-        appointment.status === "completed" &&
+        appointment.status === "reception_approved" &&
         (user.role === "staff" || user.role === "admin")
       ) {
         console.log(
-          "Showing buttons for completed appointment:",
+          "Showing buttons for reception_approved appointment:",
           appointment.appointmentNumber,
           "Status:",
           appointment.status,
@@ -766,16 +766,6 @@ const AppointmentsPage: React.FC = () => {
         );
         return (
           <div className="flex items-center space-x-2 mt-2">
-            <button
-              onClick={() => {
-                setSelectedAppointmentForInvoiceDisplay(appointment);
-                setShowInvoiceDisplayModal(true);
-              }}
-              disabled={state.updatingStatus === appointment._id}
-              className="inline-flex items-center px-2 py-1 border border-dark-200 text-xs rounded text-text-secondary bg-dark-300 hover:bg-dark-900 disabled:opacity-50"
-            >
-              Xem hóa đơn chi tiết
-            </button>
             <button
               onClick={async () => {
                 setSelectedAppointmentForPayment(appointment);
@@ -808,6 +798,27 @@ const AppointmentsPage: React.FC = () => {
               className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
             >
               Xác nhận thanh toán
+            </button>
+          </div>
+        );
+      }
+
+      // Add invoice display button for completed appointments
+      if (
+        appointment.status === "completed" &&
+        (user.role === "staff" || user.role === "admin")
+      ) {
+        return (
+          <div className="flex items-center space-x-2 mt-2">
+            <button
+              onClick={() => {
+                setSelectedAppointmentForInvoiceDisplay(appointment);
+                setShowInvoiceDisplayModal(true);
+              }}
+              disabled={state.updatingStatus === appointment._id}
+              className="inline-flex items-center px-2 py-1 border border-dark-200 text-xs rounded text-text-secondary bg-dark-300 hover:bg-dark-900 disabled:opacity-50"
+            >
+              Xem hóa đơn chi tiết
             </button>
           </div>
         );
