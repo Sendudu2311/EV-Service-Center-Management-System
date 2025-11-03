@@ -18,9 +18,13 @@ import {
   dashboardAPI,
   appointmentsAPI,
   serviceReceptionAPI,
+<<<<<<< Updated upstream
   partConflictsAPI,
 } from "../../services/api";
 import { Link } from "react-router-dom";
+=======
+} from "../../services/api";
+>>>>>>> Stashed changes
 import toast from "react-hot-toast";
 import { useDebouncedFetch } from "../../hooks/useDebouncedFetch";
 import { format } from "date-fns";
@@ -66,12 +70,17 @@ const StaffDashboard: React.FC = () => {
   );
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<
+<<<<<<< Updated upstream
     "appointments" | "reception-review" | "customer-arrival"
   >("appointments");
   const [appointmentsNeedingArrival, setAppointmentsNeedingArrival] = useState<
     any[]
   >([]);
   const [arrivalLoading, setArrivalLoading] = useState(false);
+=======
+    "appointments" | "reception-review"
+  >("appointments");
+>>>>>>> Stashed changes
   const [pendingReceptions, setPendingReceptions] = useState<any[]>([]);
   const [receptionLoading, setReceptionLoading] = useState(false);
   const [conflictCount, setConflictCount] = useState(0);
@@ -144,7 +153,10 @@ const StaffDashboard: React.FC = () => {
 
   useEffect(() => {
     debouncedFetchDashboard();
+<<<<<<< Updated upstream
     fetchConflictStats();
+=======
+>>>>>>> Stashed changes
     if (activeTab === "reception-review") {
       fetchPendingReceptions();
     }
