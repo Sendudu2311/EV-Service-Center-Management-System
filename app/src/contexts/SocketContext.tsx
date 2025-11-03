@@ -34,7 +34,9 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const { user, token, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated && token && user) {
+    // Socket.io disabled for mobile app - causing websocket errors
+    // TODO: Re-enable when backend socket.io is properly configured for mobile
+    if (false && isAuthenticated && token && user) {
       console.log("📡 Initializing Socket.io connection...");
 
       const socketInstance = io(API_URL, {
