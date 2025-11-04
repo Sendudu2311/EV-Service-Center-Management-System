@@ -230,49 +230,17 @@ export const createServiceReception = async (req, res) => {
     // Sync checklist data with Appointment
     await syncChecklistWithAppointment(serviceReception._id, appointment);
 
-    // Update appointment with actual services from inspection
+    // NOTE: Services are NOT added to appointment here
+    // They will be added to appointment.services only when staff approves the reception
+    // This prevents duplicate services (technician proposes → staff approves → services added)
     console.log(
-      "🔍 [createServiceReception] recommendedServices:",
-      recommendedServices
+      "ℹ️ [createServiceReception] recommendedServices stored in reception:",
+      recommendedServices?.length || 0,
+      "services"
     );
     console.log(
-      "🔍 [createServiceReception] recommendedServices.length:",
-      recommendedServices?.length
+      "ℹ️ [createServiceReception] Services will be added to appointment after staff approval"
     );
-    console.log(
-      "🔍 [createServiceReception] appointment.services before update:",
-      appointment.services
-    );
-
-    if (recommendedServices && recommendedServices.length > 0) {
-      console.log(
-        "✅ [createServiceReception] Updating appointment with services"
-      );
-
-      appointment.services = recommendedServices.map((service) => ({
-        serviceId: service.serviceId,
-        quantity: service.quantity || 1,
-        price: service.estimatedPrice || 0,
-        estimatedDuration: service.estimatedDuration || 60,
-      }));
-
-      // Change booking type to full service if it was deposit booking
-      if (appointment.bookingType === "deposit_booking") {
-        appointment.bookingType = "full_service";
-        console.log(
-          "🔄 [createServiceReception] Changed booking type to full_service"
-        );
-      }
-
-      console.log(
-        "🔍 [createServiceReception] appointment.services after update:",
-        appointment.services
-      );
-    } else {
-      console.log(
-        "⚠️ [createServiceReception] No recommended services to add to appointment"
-      );
-    }
 
     // Update appointment status to reception_created
     appointment.status = "reception_created";
@@ -284,11 +252,6 @@ export const createServiceReception = async (req, res) => {
       notes: "Service reception created by technician",
     });
     await appointment.save();
-    console.log("✅ [createServiceReception] Appointment saved successfully");
-    console.log(
-      "🔍 [createServiceReception] Final appointment.services:",
-      appointment.services
-    );
 
     // Populate the response
     const populatedReception = await ServiceReception.findById(
@@ -351,6 +314,52 @@ export const getServiceReception = async (req, res) => {
     );
   } catch (error) {
     console.error("Error retrieving service reception:", error);
+    return sendError(
+      res,
+      500,
+      "Error retrieving service reception",
+      null,
+      "INTERNAL_SERVER_ERROR"
+    );
+  }
+};
+
+// Get service reception by appointment ID
+export const getServiceReceptionByAppointment = async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+
+    const serviceReception = await ServiceReception.findOne({
+      appointmentId: appointmentId,
+    })
+      .populate("customerId", "firstName lastName email phone")
+      .populate("vehicleId", "make model year licensePlate")
+      .populate("receivedBy", "firstName lastName email")
+      .populate(
+        "recommendedServices.serviceId",
+        "name description basePrice category estimatedDuration"
+      )
+      .populate("recommendedServices.addedBy", "firstName lastName")
+      .populate("requestedParts.partId", "name partNumber pricing");
+
+    if (!serviceReception) {
+      return sendError(
+        res,
+        404,
+        "Service reception not found for this appointment",
+        null,
+        "RECEPTION_NOT_FOUND"
+      );
+    }
+
+    return sendSuccess(
+      res,
+      200,
+      "Service reception retrieved successfully",
+      serviceReception
+    );
+  } catch (error) {
+    console.error("Error retrieving service reception by appointment:", error);
     return sendError(
       res,
       500,
@@ -612,21 +621,156 @@ export const approveServiceReception = async (req, res) => {
     serviceReception.submissionStatus.reviewNotes = notes;
     serviceReception.updatedAt = new Date();
 
-    await serviceReception.save();
+    // Auto-approve recommended services and available parts when staff approves
+    if (isApproved) {
+      console.log("=== AUTO-APPROVING SERVICES AND PARTS ===");
+      console.log(
+        "Recommended services count:",
+        serviceReception.recommendedServices.length
+      );
+      console.log(
+        "Requested parts count:",
+        serviceReception.requestedParts.length
+      );
 
-    // Update appointment status
+      // Set customerApproved = true for all recommended services
+      serviceReception.recommendedServices.forEach((rs, idx) => {
+        console.log(
+          `Setting recommendedServices[${idx}].customerApproved = true`
+        );
+        rs.customerApproved = true;
+      });
+
+      // Set isApproved = true for all available parts
+      serviceReception.requestedParts.forEach((part, idx) => {
+        if (part.isAvailable) {
+          console.log(
+            `Setting requestedParts[${idx}].isApproved = true (isAvailable: ${part.isAvailable})`
+          );
+          part.isApproved = true;
+        } else {
+          console.log(
+            `Skipping requestedParts[${idx}] (isAvailable: ${part.isAvailable})`
+          );
+        }
+      });
+    }
+
+    await serviceReception.save();
+    console.log("ServiceReception saved with auto-approvals");
+
+    // Update appointment status and details
     const Appointment = mongoose.model("Appointment");
+    const Service = mongoose.model("Service");
     const appointment = await Appointment.findById(
       serviceReception.appointmentId
-    );
+    ).populate("services.serviceId");
+
     if (appointment && isApproved) {
-      // Only update appointment status when approved
+      console.log("=== UPDATING APPOINTMENT ===");
+      console.log("Appointment ID:", appointment._id);
+      console.log("Current totalAmount:", appointment.totalAmount);
+      console.log("Current services count:", appointment.services.length);
+      console.log("Current partsUsed count:", appointment.partsUsed.length);
+
+      // Calculate additional costs from service reception
+      let additionalServicesCost = 0;
+      let additionalPartsCost = 0;
+      let laborCost = serviceReception.estimatedLabor?.totalCost || 0;
+
+      console.log("Labor cost:", laborCost);
+
+      // Add recommended services to appointment.services (only customer approved ones)
+      // NOTE: This is the ONLY place where services are added to the appointment
+      // Technician creates reception with recommendedServices → Staff approves → Services added here
+      for (const recommendedService of serviceReception.recommendedServices ||
+        []) {
+        console.log(
+          `Checking recommendedService - customerApproved: ${recommendedService.customerApproved}`
+        );
+        if (recommendedService.customerApproved) {
+          const serviceDoc = await Service.findById(
+            recommendedService.serviceId
+          );
+          if (serviceDoc) {
+            const serviceCost =
+              (serviceDoc.basePrice || recommendedService.estimatedCost) *
+              (recommendedService.quantity || 1);
+            console.log(
+              `Adding service: ${serviceDoc.name}, cost: ${serviceCost}`
+            );
+            additionalServicesCost += serviceCost;
+
+            // Add to appointment services array
+            appointment.services.push({
+              serviceId: recommendedService.serviceId,
+              name: serviceDoc.name,
+              description: serviceDoc.description,
+              price: serviceDoc.basePrice || recommendedService.estimatedCost,
+              quantity: recommendedService.quantity || 1,
+              category: serviceDoc.category,
+            });
+          }
+        }
+      }
+
+      console.log("Total additional services cost:", additionalServicesCost);
+
+      // Add requested parts to appointment.partsUsed (only available and approved ones)
+      // NOTE: This is the ONLY place where parts are added to the appointment
+      for (const requestedPart of serviceReception.requestedParts || []) {
+        console.log(
+          `Checking part - isAvailable: ${requestedPart.isAvailable}, isApproved: ${requestedPart.isApproved}`
+        );
+        if (requestedPart.isAvailable && requestedPart.isApproved) {
+          const unitPrice =
+            requestedPart.partId?.pricing?.retail ||
+            requestedPart.estimatedCost ||
+            0;
+          const partCost = unitPrice * requestedPart.quantity;
+          console.log(
+            `Adding part: ${
+              requestedPart.partId?.name || requestedPart.partName
+            }, cost: ${partCost}`
+          );
+          additionalPartsCost += partCost;
+
+          // Add to appointment partsUsed array
+          appointment.partsUsed.push({
+            partId: requestedPart.partId,
+            partName: requestedPart.partId?.name || requestedPart.partName,
+            quantity: requestedPart.quantity,
+            unitPrice: unitPrice,
+            totalPrice: partCost,
+          });
+        }
+      }
+
+      console.log("Total additional parts cost:", additionalPartsCost);
+
+      // Calculate total additional cost
+      const subtotalAdditional =
+        additionalServicesCost + additionalPartsCost + laborCost;
+      const taxAdditional = subtotalAdditional * 0.1; // 10% VAT
+      const totalAdditional = subtotalAdditional + taxAdditional;
+
+      console.log("Subtotal additional:", subtotalAdditional);
+      console.log("Tax additional:", taxAdditional);
+      console.log("Total additional:", totalAdditional);
+
+      // Update appointment totalAmount
+      const currentTotal = appointment.totalAmount || 0;
+      appointment.totalAmount = currentTotal + totalAdditional;
+
+      console.log("NEW totalAmount:", appointment.totalAmount);
+
+      // Update appointment status
       appointment.status = "reception_approved";
       appointment.workflowHistory.push({
         status: "reception_approved",
         changedBy: req.user._id,
         changedAt: new Date(),
-        notes: "Service reception approved by staff",
+        notes: `Service reception approved by staff. Additional cost: ${totalAdditional} VND (Services: ${additionalServicesCost}, Parts: ${additionalPartsCost}, Labor: ${laborCost})`,
       });
       await appointment.save();
     } else if (appointment && !isApproved) {
@@ -975,6 +1119,416 @@ export const getChecklistTemplates = async (req, res) => {
       res,
       500,
       "Error getting checklist templates",
+      null,
+      "INTERNAL_SERVER_ERROR"
+    );
+  }
+};
+
+// @desc    Confirm payment for service reception
+// @route   POST /api/service-receptions/:id/confirm-payment
+// @access  Private (Staff/Admin)
+export const confirmPayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      paymentMethod,
+      amount,
+      paymentDate,
+      // Bank Transfer specific
+      transferRef,
+      bankName,
+      // Cash specific
+      notes,
+    } = req.body;
+
+    // Get uploaded proof image from multer/cloudinary
+    const proofImage = req.file?.path;
+
+    // Validate required fields
+    if (!paymentMethod || !amount || !paymentDate) {
+      return sendError(
+        res,
+        400,
+        "Payment method, amount, and payment date are required",
+        null,
+        "VALIDATION_ERROR"
+      );
+    }
+
+    if (!proofImage) {
+      return sendError(
+        res,
+        400,
+        "Proof image is required",
+        null,
+        "VALIDATION_ERROR"
+      );
+    }
+
+    // Validate payment method specific fields
+    if (paymentMethod === "bank_transfer") {
+      if (!transferRef || !bankName) {
+        return sendError(
+          res,
+          400,
+          "Transfer reference and bank name are required for bank transfer",
+          null,
+          "VALIDATION_ERROR"
+        );
+      }
+    }
+
+    // Find service reception - without populate first to check raw data
+    let serviceReception = await ServiceReception.findById(id);
+
+    if (!serviceReception) {
+      return sendError(
+        res,
+        404,
+        "Service reception not found",
+        null,
+        "RECEPTION_NOT_FOUND"
+      );
+    }
+
+    // Debug: Log raw status before populate
+    console.log("=== DEBUG confirmPayment ===");
+    console.log("Service Reception ID:", serviceReception._id);
+    console.log(
+      "Raw submissionStatus:",
+      JSON.stringify(serviceReception.submissionStatus, null, 2)
+    );
+    console.log("Raw status field:", serviceReception.status);
+
+    // Check status early - before populate (to avoid populate overhead if not approved)
+    const currentStatus =
+      serviceReception.submissionStatus?.staffReviewStatus || "pending";
+    console.log("Current staffReviewStatus:", currentStatus);
+
+    if (currentStatus !== "approved") {
+      return sendError(
+        res,
+        400,
+        `Service reception must be approved first. Current status: "${currentStatus}". Please approve the reception (PUT /api/service-receptions/${id}/approve) before confirming payment.`,
+        {
+          currentStatus: currentStatus,
+          receptionId: serviceReception._id,
+          receptionNumber: serviceReception.receptionNumber,
+          possibleStatuses: [
+            "pending",
+            "approved",
+            "rejected",
+            "needs_modification",
+            "partially_approved",
+            "pending_parts_restock",
+          ],
+          actionRequired:
+            "Approve this service reception using PUT /api/service-receptions/:id/approve with decision='approved'",
+        },
+        "RECEPTION_NOT_APPROVED"
+      );
+    }
+
+    // Now populate for calculation
+    serviceReception = await ServiceReception.findById(id)
+      .populate("customerId", "firstName lastName email phone")
+      .populate("vehicleId", "make model year licensePlate vin")
+      .populate(
+        "recommendedServices.serviceId",
+        "name description basePrice category estimatedDuration"
+      )
+      .populate("requestedParts.partId", "name partNumber pricing");
+
+    // Get appointment for deposit info
+    const Appointment = mongoose.model("Appointment");
+    const appointment = await Appointment.findById(
+      serviceReception.appointmentId
+    )
+      .populate("customerId", "firstName lastName email phone")
+      .populate("vehicleId", "make model year licensePlate vin");
+
+    if (!appointment) {
+      return sendError(
+        res,
+        404,
+        "Appointment not found",
+        null,
+        "APPOINTMENT_NOT_FOUND"
+      );
+    }
+
+    // Check if appointment status is already in_progress or later (payment already confirmed)
+    if (["in_progress", "completed", "invoiced"].includes(appointment.status)) {
+      return sendError(
+        res,
+        400,
+        `Payment already confirmed for this appointment. Current status: ${appointment.status}`,
+        {
+          currentStatus: appointment.status,
+          appointmentId: appointment._id,
+          appointmentNumber: appointment.appointmentNumber,
+        },
+        "PAYMENT_ALREADY_CONFIRMED"
+      );
+    }
+
+    // Calculate invoice totals from service reception
+    let subtotalServices = 0;
+    const serviceItems = [];
+
+    // Recommended services (from serviceReception)
+    for (const recommendedService of serviceReception.recommendedServices ||
+      []) {
+      const price =
+        (typeof recommendedService.serviceId === "object" &&
+          recommendedService.serviceId?.basePrice) ||
+        recommendedService.estimatedCost ||
+        0;
+      const serviceTotal = price * (recommendedService.quantity || 1);
+      serviceItems.push({
+        serviceId:
+          typeof recommendedService.serviceId === "object"
+            ? recommendedService.serviceId._id
+            : recommendedService.serviceId,
+        serviceName: recommendedService.serviceName,
+        category: recommendedService.category,
+        quantity: recommendedService.quantity || 1,
+        unitPrice: price,
+        totalPrice: serviceTotal,
+        description: recommendedService.serviceName,
+      });
+      subtotalServices += serviceTotal;
+    }
+
+    // Calculate parts total
+    let subtotalParts = 0;
+    const partItems = [];
+    for (const requestedPart of serviceReception.requestedParts || []) {
+      const unitPrice =
+        (typeof requestedPart.partId === "object" &&
+          requestedPart.partId?.pricing?.retail) ||
+        requestedPart.estimatedCost ||
+        0;
+      const partTotal = unitPrice * (requestedPart.quantity || 1);
+      partItems.push({
+        partId:
+          typeof requestedPart.partId === "object"
+            ? requestedPart.partId._id
+            : requestedPart.partId,
+        partName: requestedPart.partName,
+        partNumber: requestedPart.partNumber || "",
+        quantity: requestedPart.quantity || 1,
+        unitPrice: unitPrice,
+        totalPrice: partTotal,
+        description: `${requestedPart.partName}${
+          requestedPart.partNumber ? ` (${requestedPart.partNumber})` : ""
+        }`,
+      });
+      subtotalParts += partTotal;
+    }
+
+    // Calculate labor (from invoicing field or estimated)
+    let subtotalLabor = serviceReception.invoicing?.laborCost || 0;
+    const laborItems = [];
+    if (subtotalLabor > 0) {
+      laborItems.push({
+        description: "Labor charges",
+        hours: serviceReception.estimatedServiceTime / 60 || 0,
+        hourlyRate:
+          subtotalLabor / (serviceReception.estimatedServiceTime / 60 || 1),
+        totalPrice: subtotalLabor,
+      });
+    }
+
+    // Calculate totals
+    const subtotal = subtotalServices + subtotalParts + subtotalLabor;
+    const taxAmount = subtotal * 0.1; // 10% VAT
+    const totalAmount = subtotal + taxAmount;
+    const depositAmount = appointment.depositInfo?.paid
+      ? appointment.depositInfo.amount
+      : 0;
+    const remainingAmount = totalAmount - depositAmount;
+
+    // Validate payment amount
+    if (Math.abs(parseFloat(amount) - remainingAmount) > 0.01) {
+      return sendError(
+        res,
+        400,
+        `Payment amount must be ${remainingAmount.toLocaleString("vi-VN")} VND`,
+        {
+          expectedAmount: remainingAmount,
+          calculatedTotals: {
+            subtotalServices,
+            subtotalParts,
+            subtotalLabor,
+            subtotal,
+            taxAmount,
+            totalAmount,
+            depositAmount,
+            remainingAmount,
+          },
+        },
+        "PAYMENT_AMOUNT_MISMATCH"
+      );
+    }
+
+    // Generate invoice number
+    const Invoice = mongoose.model("Invoice");
+    const now = new Date();
+    const year = now.getFullYear().toString().slice(-2);
+    const month = (now.getMonth() + 1).toString().padStart(2, "0");
+    const day = now.getDate().toString().padStart(2, "0");
+    const timestamp = now.getTime().toString().slice(-6);
+    const invoiceNumber = `INV${year}${month}${day}${timestamp}`;
+
+    // Create invoice
+    const invoice = new Invoice({
+      invoiceNumber,
+      appointmentId: appointment._id,
+      serviceReceptionId: serviceReception._id,
+      customerId: serviceReception.customerId._id,
+      vehicleId: serviceReception.vehicleId._id,
+      serviceItems,
+      partItems,
+      laborItems,
+      totals: {
+        subtotalServices,
+        subtotalParts,
+        subtotalLabor,
+        subtotalAdditional: 0,
+        subtotal,
+        taxRate: 10,
+        taxAmount,
+        discountAmount: 0,
+        depositAmount,
+        remainingAmount,
+        totalAmount,
+      },
+      paymentInfo: {
+        method: paymentMethod,
+        status: "paid",
+        paidAmount: totalAmount,
+        remainingAmount: 0,
+        paymentDate: new Date(paymentDate),
+        dueDate: new Date(),
+      },
+      customerInfo: {
+        name: `${serviceReception.customerId.firstName} ${serviceReception.customerId.lastName}`,
+        email: serviceReception.customerId.email,
+        phone: serviceReception.customerId.phone,
+      },
+      vehicleInfo: {
+        make: serviceReception.vehicleId.make,
+        model: serviceReception.vehicleId.model,
+        year: serviceReception.vehicleId.year,
+        licensePlate: serviceReception.vehicleId.licensePlate,
+        vin: serviceReception.vehicleId.vin,
+      },
+      generatedBy: req.user._id,
+      status: "paid",
+    });
+
+    await invoice.save();
+
+    // Create transaction
+    const TransactionService = (
+      await import("../services/transactionService.js")
+    ).default;
+
+    const transactionData = {
+      userId: serviceReception.customerId._id,
+      appointmentId: appointment._id,
+      serviceReceptionId: serviceReception._id,
+      invoiceId: invoice._id,
+      amount: parseFloat(amount),
+      paymentPurpose: "invoice_payment", // Payment for service reception invoice
+      status: "completed",
+      processedBy: req.user._id,
+      processedAt: new Date(),
+      billingInfo: {
+        mobile: serviceReception.customerId.phone,
+        email: serviceReception.customerId.email,
+        fullName: `${serviceReception.customerId.firstName} ${serviceReception.customerId.lastName}`,
+      },
+      notes: `Payment for service reception ${serviceReception.receptionNumber}`,
+    };
+
+    let transaction;
+    if (paymentMethod === "bank_transfer") {
+      transaction = await TransactionService.createTransaction(
+        "bank_transfer",
+        {
+          ...transactionData,
+          bankTransferData: {
+            bankName,
+            transferRef,
+            transferDate: new Date(paymentDate),
+            verifiedBy: req.user._id,
+            verifiedAt: new Date(),
+            verificationMethod: "other",
+            verificationNotes: "Manual verification by staff",
+            receiptImage: proofImage,
+            notes: `Bank transfer verified by staff`,
+          },
+        }
+      );
+    } else if (paymentMethod === "cash") {
+      transaction = await TransactionService.createTransaction("cash", {
+        ...transactionData,
+        cashData: {
+          receivedBy: req.user._id,
+          receivedAt: new Date(paymentDate),
+          notes:
+            notes ||
+            `Cash payment received for service reception ${serviceReception.receptionNumber}`,
+          receiptImage: proofImage,
+        },
+      });
+    } else {
+      return sendError(
+        res,
+        400,
+        "Invalid payment method",
+        null,
+        "INVALID_PAYMENT_METHOD"
+      );
+    }
+
+    // Update appointment status to in_progress
+    appointment.status = "in_progress";
+    appointment.paymentStatus = "paid";
+    await appointment.save();
+
+    // Update service reception invoicing
+    serviceReception.invoicing = {
+      laborCost: subtotalLabor,
+      partsCost: subtotalParts,
+      totalCost: totalAmount,
+      taxAmount: taxAmount,
+      grandTotal: totalAmount,
+      additionalCharges: [],
+    };
+    serviceReception.status = "in_service"; // Valid enum value for ServiceReception
+    await serviceReception.save();
+
+    return sendSuccess(
+      res,
+      200,
+      "Payment confirmed successfully. Work has started automatically.",
+      {
+        invoice: invoice,
+        transaction: transaction,
+        serviceReception: serviceReception,
+        appointment: appointment,
+      }
+    );
+  } catch (error) {
+    console.error("Error confirming payment for service reception:", error);
+    return sendError(
+      res,
+      500,
+      "Error confirming payment",
       null,
       "INTERNAL_SERVER_ERROR"
     );

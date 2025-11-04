@@ -1,20 +1,20 @@
-import React from "react";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { useAuth } from "../contexts/AuthContext";
+import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useAuth } from '../contexts/AuthContext';
 
 // Screens
-import LoginScreen from "../screens/auth/LoginScreen";
-import RegisterScreen from "../screens/auth/RegisterScreen";
-import HomeScreen from "../screens/HomeScreen";
-import DashboardScreen from "../screens/DashboardScreen";
-import VehiclesScreen from "../screens/VehiclesScreen";
-import AppointmentsScreen from "../screens/AppointmentsScreen";
-import AppointmentDetailsScreen from "../screens/AppointmentDetailsScreen";
-import CancelRequestScreen from "../screens/CancelRequestScreen";
-import InvoicesScreen from "../screens/InvoicesScreen";
-import ProfileScreen from "../screens/ProfileScreen";
-import PaymentResultScreen from "../screens/PaymentResultScreen";
+import LoginScreen from '../screens/auth/LoginScreen';
+import RegisterScreen from '../screens/auth/RegisterScreen';
+import HomeScreen from '../screens/HomeScreen';
+import DashboardScreen from '../screens/DashboardScreen';
+import VehiclesScreen from '../screens/VehiclesScreen';
+import AppointmentsScreen from '../screens/AppointmentsScreen';
+import InvoicesScreen from '../screens/InvoicesScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+
+// Role-based Navigators
+import TechnicianNavigator from './TechnicianNavigator';
 
 // Types
 export type RootStackParamList = {
@@ -22,18 +22,6 @@ export type RootStackParamList = {
   Main: undefined;
   Login: undefined;
   Register: undefined;
-  AppointmentDetails: {
-    appointmentId: string;
-  };
-  CancelRequest: {
-    appointment: any;
-  };
-  PaymentResult: {
-    success?: string;
-    transactionRef?: string;
-    amount?: string;
-    error?: string;
-  };
 };
 
 export type MainTabParamList = {
@@ -51,18 +39,24 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 // Main Tab Navigator for authenticated users
 const MainTabs = () => {
   const { user } = useAuth();
-  const isCustomer = user?.role === "customer";
+  const isCustomer = user?.role === 'customer';
+  const isTechnician = user?.role === 'technician';
+
+  // Technicians get dedicated navigator
+  if (isTechnician) {
+    return <TechnicianNavigator />;
+  }
 
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#3b82f6",
-        tabBarInactiveTintColor: "#6b7280",
+        tabBarActiveTintColor: '#3b82f6',
+        tabBarInactiveTintColor: '#6b7280',
         tabBarStyle: {
-          backgroundColor: "#ffffff",
+          backgroundColor: '#ffffff',
           borderTopWidth: 1,
-          borderTopColor: "#e5e7eb",
+          borderTopColor: '#e5e7eb',
           paddingBottom: 5,
           paddingTop: 5,
           height: 60,
@@ -73,14 +67,14 @@ const MainTabs = () => {
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarLabel: "Trang chủ",
+          tabBarLabel: 'Trang chủ',
         }}
       />
       <Tab.Screen
         name="Dashboard"
         component={DashboardScreen}
         options={{
-          tabBarLabel: "Bảng điều khiển",
+          tabBarLabel: 'Bảng điều khiển',
         }}
       />
       {isCustomer && (
@@ -88,7 +82,7 @@ const MainTabs = () => {
           name="Vehicles"
           component={VehiclesScreen}
           options={{
-            tabBarLabel: "Xe của tôi",
+            tabBarLabel: 'Xe của tôi',
           }}
         />
       )}
@@ -96,14 +90,14 @@ const MainTabs = () => {
         name="Appointments"
         component={AppointmentsScreen}
         options={{
-          tabBarLabel: "Lịch hẹn",
+          tabBarLabel: 'Lịch hẹn',
         }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
-          tabBarLabel: "Tài khoản",
+          tabBarLabel: 'Tài khoản',
         }}
       />
     </Tab.Navigator>
@@ -126,19 +120,7 @@ const RootNavigator = () => {
           <Stack.Screen name="Register" component={RegisterScreen} />
         </>
       ) : (
-        <>
-          <Stack.Screen name="Main" component={MainTabs} />
-          <Stack.Screen
-            name="AppointmentDetails"
-            component={AppointmentDetailsScreen}
-          />
-          <Stack.Screen name="CancelRequest" component={CancelRequestScreen} />
-          <Stack.Screen
-            name="PaymentResult"
-            component={PaymentResultScreen}
-            options={{ presentation: "modal" }}
-          />
-        </>
+        <Stack.Screen name="Main" component={MainTabs} />
       )}
     </Stack.Navigator>
   );

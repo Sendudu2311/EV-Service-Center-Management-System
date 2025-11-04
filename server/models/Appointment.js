@@ -453,11 +453,9 @@ appointmentSchema.methods.calculateTotal = function () {
     total += part.totalPrice;
   });
 
-  // Add deposit amount if deposit has been paid (for deposit_booking)
-  // This ensures totalAmount includes the 200,000 VND deposit
-  if (this.bookingType === "deposit_booking" && this.depositInfo?.paid) {
-    total += this.depositInfo.amount || 200000; // Default to 200,000 if not specified
-  }
+  // DO NOT add deposit amount to totalAmount
+  // Deposit is separate and used for payment calculation (remainingAmount = totalAmount - depositAmount)
+  // totalAmount should only include actual services and parts costs
 
   this.totalAmount = total;
   return total;

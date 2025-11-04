@@ -31,9 +31,8 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
   const fetchInvoice = async () => {
     try {
       setLoading(true);
-      const response = await appointmentsAPI.getInvoiceByAppointment(
-        appointmentId
-      );
+      const response =
+        await appointmentsAPI.getInvoiceByAppointment(appointmentId);
       if (response.data.success) {
         console.log("Invoice data:", response.data.data);
         console.log("Transactions:", response.data.data.transactions);
@@ -161,8 +160,8 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
         <div class="vehicle-info">
           <h3>Thông tin xe</h3>
           <p className="font-semibold text-white"><strong>Xe:</strong> ${invoice.vehicleInfo?.make || "N/A"} ${
-      invoice.vehicleInfo?.model || "N/A"
-    }</p>
+            invoice.vehicleInfo?.model || "N/A"
+          }</p>
           <p className="font-semibold text-white"><strong>Năm:</strong> ${invoice.vehicleInfo?.year || "N/A"}</p>
           <p className="font-semibold text-white"><strong>Biển số:</strong> ${
             invoice.vehicleInfo?.licensePlate || "N/A"
@@ -208,6 +207,16 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
           <p className="font-semibold text-white"><strong>Tổng cộng:</strong> ${formatCurrency(
             invoice.totals?.totalAmount || 0
           )}</p>
+          ${
+            invoice.totals?.depositAmount > 0
+              ? `<p style="color: #10b981;"><strong>Đã đặt cọc:</strong> -${formatCurrency(
+                  invoice.totals.depositAmount
+                )}</p>
+              <p style="color: #f97316; font-size: 18px;"><strong>Còn phải trả:</strong> ${formatCurrency(
+                invoice.totals?.remainingAmount || 0
+              )}</p>`
+              : ""
+          }
         </div>
 
         <div class="footer">
@@ -261,7 +270,9 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
         {loading ? (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span className="ml-2 text-text-secondary">Đang tải hóa đơn...</span>
+            <span className="ml-2 text-text-secondary">
+              Đang tải hóa đơn...
+            </span>
           </div>
         ) : invoice ? (
           <div className="space-y-6">
@@ -316,7 +327,9 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
                   <p className="text-sm text-text-secondary">Số hóa đơn</p>
-                  <p className="font-semibold text-white">{invoice.invoiceNumber}</p>
+                  <p className="font-semibold text-white">
+                    {invoice.invoiceNumber}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-text-secondary">Ngày tạo</p>
@@ -392,7 +405,9 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-white">Tạm tính:</span>
-                    <span className="text-white">{formatCurrency(invoice.totals?.subtotal || 0)}</span>
+                    <span className="text-white">
+                      {formatCurrency(invoice.totals?.subtotal || 0)}
+                    </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-white">VAT (10%):</span>
@@ -408,6 +423,26 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
                       </span>
                     </div>
                   </div>
+
+                  {/* Deposit Deduction */}
+                  {invoice.totals?.depositAmount > 0 && (
+                    <div className="flex justify-between text-sm border-t pt-2">
+                      <span className="text-white">Đã đặt cọc:</span>
+                      <span className="text-green-600">
+                        -{formatCurrency(invoice.totals.depositAmount)}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Remaining Amount */}
+                  {invoice.totals?.depositAmount > 0 && (
+                    <div className="flex justify-between text-lg font-semibold">
+                      <span className="text-white">Còn phải trả:</span>
+                      <span className="text-orange-500">
+                        {formatCurrency(invoice.totals?.remainingAmount || 0)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -427,12 +462,14 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
                       {invoice.paymentInfo.method === "bank_transfer"
                         ? "Chuyển khoản ngân hàng"
                         : invoice.paymentInfo.method === "cash"
-                        ? "Tiền mặt"
-                        : invoice.paymentInfo.method}
+                          ? "Tiền mặt"
+                          : invoice.paymentInfo.method}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-text-secondary">Ngày thanh toán</p>
+                    <p className="text-sm text-text-secondary">
+                      Ngày thanh toán
+                    </p>
                     <p className="font-semibold text-white">
                       {invoice.paymentInfo.paymentDate
                         ? formatDate(invoice.paymentInfo.paymentDate)
@@ -441,7 +478,9 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
                   </div>
                   {invoice.paymentInfo.transactionRef && (
                     <div>
-                      <p className="text-sm text-text-secondary">Mã giao dịch</p>
+                      <p className="text-sm text-text-secondary">
+                        Mã giao dịch
+                      </p>
                       <p className="font-semibold text-white">
                         {invoice.paymentInfo.transactionRef}
                       </p>
@@ -467,10 +506,11 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
                               {transaction.transactionType === "bank_transfer"
                                 ? "Chuyển khoản ngân hàng"
                                 : transaction.transactionType === "cash"
-                                ? "Tiền mặt"
-                                : transaction.transactionType === "deposit"
-                                ? "Đặt cọc"
-                                : transaction.transactionType || "Giao dịch"}
+                                  ? "Tiền mặt"
+                                  : transaction.transactionType === "deposit"
+                                    ? "Đặt cọc"
+                                    : transaction.transactionType ||
+                                      "Giao dịch"}
                             </p>
                             <p className="text-sm text-text-secondary">
                               {transaction.transactionRef} -{" "}

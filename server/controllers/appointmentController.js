@@ -4835,6 +4835,509 @@ export const confirmFinalPayment = async (req, res) => {
   }
 };
 
+// @desc    Confirm payment after service reception approval (NEW WORKFLOW)
+// @route   POST /api/appointments/:id/confirm-payment-after-reception
+// @access  Private (Staff/Admin)
+export const confirmPaymentAfterReception = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      paymentMethod,
+      amount,
+      paymentDate,
+      // Bank Transfer specific
+      transferRef,
+      bankName,
+      // Cash specific
+      notes,
+    } = req.body;
+
+    // Get uploaded proof image
+    const proofImage = req.file?.path;
+
+    // Validate required fields
+    if (!paymentMethod || !amount || !paymentDate) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment method, amount, and payment date are required",
+      });
+    }
+
+    if (!proofImage) {
+      return res.status(400).json({
+        success: false,
+        message: "Proof image is required",
+      });
+    }
+
+    // Validate payment method specific fields
+    if (paymentMethod === "bank_transfer") {
+      if (!transferRef || !bankName) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Transfer reference and bank name are required for bank transfer",
+        });
+      }
+    }
+
+    // Find appointment
+    const appointment = await Appointment.findById(id)
+      .populate("customerId", "firstName lastName email phone")
+      .populate("vehicleId", "make model year licensePlate vin");
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
+    }
+
+    // Validate appointment status (must be reception_approved)
+    if (appointment.status !== "reception_approved") {
+      return res.status(400).json({
+        success: false,
+        message: "Appointment must have approved service reception to confirm payment",
+      });
+    }
+
+    // Get service reception data
+    const { ServiceReception, Service } = await import("../models/index.js");
+    const serviceReception = await ServiceReception.findOne({
+      appointmentId: id
+    })
+      .populate("recommendedServices.serviceId", "name category basePrice")
+      .populate("requestedParts.partId", "name partNumber pricing");
+
+    if (!serviceReception) {
+      return res.status(400).json({
+        success: false,
+        message: "Service reception not found",
+      });
+    }
+
+    if (serviceReception.submissionStatus.staffReviewStatus !== "approved") {
+      return res.status(400).json({
+        success: false,
+        message: "Service reception must be approved first",
+      });
+    }
+
+    // Calculate invoice totals from service reception
+
+    // Calculate services total
+    let subtotalServices = 0;
+    const serviceItems = [];
+
+    // Initial booked service (already paid via deposit)
+    for (const service of appointment.services) {
+      if (service.serviceId) {
+        const serviceDoc = await Service.findById(service.serviceId);
+        if (serviceDoc) {
+          serviceItems.push({
+            serviceId: service.serviceId,
+            serviceName: serviceDoc.name,
+            description: serviceDoc.description,
+            category: serviceDoc.category,
+            quantity: service.quantity || 1,
+            unitPrice: service.price || serviceDoc.price,
+            totalPrice: (service.price || serviceDoc.price) * (service.quantity || 1),
+          });
+          subtotalServices += (service.price || serviceDoc.price) * (service.quantity || 1);
+        }
+      }
+    }
+
+    // Recommended services (additional)
+    for (const recommendedService of serviceReception.recommendedServices || []) {
+      if (recommendedService.customerApproved) {
+        const serviceTotal = recommendedService.serviceId.basePrice * recommendedService.quantity;
+        serviceItems.push({
+          serviceId: recommendedService.serviceId._id,
+          serviceName: recommendedService.serviceId.name,
+          category: recommendedService.serviceId.category,
+          quantity: recommendedService.quantity,
+          unitPrice: recommendedService.serviceId.basePrice,
+          totalPrice: serviceTotal,
+          description: `${recommendedService.serviceId.name} - Recommended Service`,
+        });
+        subtotalServices += serviceTotal;
+      }
+    }
+
+    // Calculate parts total
+    let subtotalParts = 0;
+    const partItems = [];
+    for (const requestedPart of serviceReception.requestedParts || []) {
+      if (requestedPart.isAvailable && requestedPart.isApproved) {
+        const unitPrice = requestedPart.partId.pricing?.retail || requestedPart.estimatedCost || 0;
+        const partTotal = unitPrice * requestedPart.quantity;
+        partItems.push({
+          partId: requestedPart.partId._id,
+          partName: requestedPart.partId.name,
+          partNumber: requestedPart.partId.partNumber,
+          quantity: requestedPart.quantity,
+          unitPrice: unitPrice,
+          totalPrice: partTotal,
+          description: `${requestedPart.partId.name} (${requestedPart.partId.partNumber})`,
+        });
+        subtotalParts += partTotal;
+      }
+    }
+
+    // Calculate labor (estimated)
+    let subtotalLabor = 0;
+    const laborItems = [];
+    if (serviceReception.estimatedLabor?.totalCost) {
+      subtotalLabor = serviceReception.estimatedLabor.totalCost;
+      laborItems.push({
+        description: "Estimated labor charges",
+        hours: serviceReception.estimatedLabor.hours || 0,
+        hourlyRate: serviceReception.estimatedLabor.hourlyRate || 50000,
+        totalPrice: subtotalLabor,
+      });
+    }
+
+    // Calculate totals
+    const subtotal = subtotalServices + subtotalParts + subtotalLabor;
+    const taxAmount = subtotal * 0.1; // 10% VAT
+    const totalAmount = subtotal + taxAmount;
+    const depositAmount = appointment.depositInfo?.paid ? appointment.depositInfo.amount : 0;
+    const remainingAmount = totalAmount - depositAmount;
+
+    // Validate payment amount
+    if (Math.abs(parseFloat(amount) - remainingAmount) > 0.01) {
+      return res.status(400).json({
+        success: false,
+        message: `Payment amount must be ${remainingAmount.toLocaleString("vi-VN")} VND`,
+        expectedAmount: remainingAmount,
+        calculatedTotals: {
+          subtotalServices,
+          subtotalParts,
+          subtotalLabor,
+          subtotal,
+          taxAmount,
+          totalAmount,
+          depositAmount,
+          remainingAmount,
+        },
+      });
+    }
+
+    // Generate invoice number
+    const now = new Date();
+    const year = now.getFullYear().toString().slice(-2);
+    const month = (now.getMonth() + 1).toString().padStart(2, "0");
+    const day = now.getDate().toString().padStart(2, "0");
+    const timestamp = now.getTime().toString().slice(-6);
+    const invoiceNumber = `INV${year}${month}${day}${timestamp}`;
+
+    // Create invoice
+    const invoice = new Invoice({
+      invoiceNumber,
+      appointmentId: id,
+      customerId: appointment.customerId._id,
+      vehicleId: appointment.vehicleId._id,
+      serviceItems,
+      partItems,
+      laborItems,
+      totals: {
+        subtotalServices,
+        subtotalParts,
+        subtotalLabor,
+        subtotalAdditional: 0,
+        subtotal,
+        taxRate: 10,
+        taxAmount,
+        discountAmount: 0,
+        depositAmount,
+        remainingAmount,
+        totalAmount,
+      },
+      paymentInfo: {
+        method: paymentMethod,
+        status: "paid",
+        paidAmount: totalAmount,
+        remainingAmount: 0,
+        paymentDate: new Date(paymentDate),
+        dueDate: new Date(), // Paid immediately
+      },
+      customerInfo: {
+        name: `${appointment.customerId.firstName} ${appointment.customerId.lastName}`,
+        email: appointment.customerId.email,
+        phone: appointment.customerId.phone,
+      },
+      vehicleInfo: {
+        make: appointment.vehicleId.make,
+        model: appointment.vehicleId.model,
+        year: appointment.vehicleId.year,
+        licensePlate: appointment.vehicleId.licensePlate,
+        vin: appointment.vehicleId.vin,
+      },
+      generatedBy: req.user._id,
+      status: "paid",
+    });
+
+    await invoice.save();
+
+    // Create transaction
+    const TransactionService = (
+      await import("../services/transactionService.js")
+    ).default;
+
+    const transactionData = {
+      userId: appointment.customerId._id,
+      appointmentId: id,
+      invoiceId: invoice._id,
+      amount: parseFloat(amount),
+      paymentPurpose: "appointment_payment",
+      status: "completed",
+      processedBy: req.user._id,
+      processedAt: new Date(),
+      billingInfo: {
+        mobile: appointment.customerId.phone,
+        email: appointment.customerId.email,
+        fullName: `${appointment.customerId.firstName} ${appointment.customerId.lastName}`,
+      },
+      notes: `Payment for appointment ${appointment.appointmentNumber} after reception approval`,
+    };
+
+    let transaction;
+    if (paymentMethod === "bank_transfer") {
+      transaction = await TransactionService.createTransaction(
+        "bank_transfer",
+        {
+          ...transactionData,
+          bankTransferData: {
+            bankName,
+            transferRef,
+            transferDate: new Date(paymentDate),
+            verifiedBy: req.user._id,
+            verifiedAt: new Date(),
+            verificationMethod: "other",
+            verificationNotes: "Manual verification by staff",
+            receiptImage: proofImage,
+            notes: `Bank transfer verified by staff`,
+          },
+        }
+      );
+    } else if (paymentMethod === "cash") {
+      transaction = await TransactionService.createTransaction("cash", {
+        ...transactionData,
+        cashData: {
+          receivedBy: req.user._id,
+          receivedAt: new Date(paymentDate),
+          notes: notes || `Cash payment for appointment ${appointment.appointmentNumber}`,
+          receiptImage: proofImage,
+        },
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment method",
+      });
+    }
+
+    // Update invoice with transaction reference
+    invoice.paymentInfo.transactionRef = transaction.transactionRef;
+    invoice.transactions.push(transaction._id);
+    await invoice.save();
+
+    // Update appointment status to in_progress (auto-start work after payment)
+    await appointment.updateStatus(
+      "in_progress",
+      req.user._id,
+      "staff",
+      "Payment confirmed, work started automatically",
+      `Payment of ${amount.toLocaleString("vi-VN")} VND via ${paymentMethod}`
+    );
+
+    // Update appointment payment status
+    appointment.paymentStatus = "paid";
+    appointment.transactions.push(transaction._id);
+    await appointment.save();
+
+    // Send email notification
+    try {
+      const { sendEmail } = await import("../utils/email.js");
+      await sendEmail({
+        to: appointment.customerId.email,
+        subject: `Payment Confirmed - Appointment ${appointment.appointmentNumber}`,
+        template: "payment-confirmed",
+        data: {
+          customerName: `${appointment.customerId.firstName} ${appointment.customerId.lastName}`,
+          appointmentNumber: appointment.appointmentNumber,
+          amount: amount.toLocaleString("vi-VN"),
+          paymentMethod,
+          transactionRef: transaction.transactionRef,
+          invoiceNumber: invoice.invoiceNumber,
+        },
+      });
+    } catch (emailError) {
+      console.error("Failed to send payment confirmation email:", emailError);
+    }
+
+    // Emit socket notification
+    try {
+      const { emitToUser } = await import("../utils/socket.js");
+      emitToUser(appointment.customerId._id, "payment_confirmed", {
+        appointmentId: id,
+        appointmentNumber: appointment.appointmentNumber,
+        amount: parseFloat(amount),
+        paymentMethod,
+        transactionRef: transaction.transactionRef,
+        invoiceNumber: invoice.invoiceNumber,
+      });
+    } catch (socketError) {
+      console.error("Failed to emit socket notification:", socketError);
+    }
+
+    res.json({
+      success: true,
+      message: "Payment confirmed and work started automatically",
+      data: {
+        appointment: {
+          _id: appointment._id,
+          appointmentNumber: appointment.appointmentNumber,
+          status: appointment.status,
+          paymentStatus: appointment.paymentStatus,
+        },
+        invoice: {
+          _id: invoice._id,
+          invoiceNumber: invoice.invoiceNumber,
+          status: invoice.status,
+          totalAmount: invoice.totals.totalAmount,
+        },
+        transaction: {
+          _id: transaction._id,
+          transactionRef: transaction.transactionRef,
+          transactionType: transaction.transactionType,
+          amount: transaction.amount,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error confirming payment after reception:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error confirming payment",
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Staff final confirmation after technician completes work (NEW WORKFLOW)
+// @route   POST /api/appointments/:id/staff-final-confirm
+// @access  Private (Staff/Admin)
+export const staffFinalConfirmation = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find appointment
+    const appointment = await Appointment.findById(id)
+      .populate("customerId", "firstName lastName email phone")
+      .populate("vehicleId", "make model year licensePlate vin");
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
+    }
+
+    // Validate appointment status (must be completed)
+    if (appointment.status !== "completed") {
+      return res.status(400).json({
+        success: false,
+        message: "Appointment must be completed by technician first",
+        currentStatus: appointment.status,
+      });
+    }
+
+    // Check if invoice exists and is paid
+    const invoice = await Invoice.findOne({ appointmentId: id });
+    if (!invoice) {
+      return res.status(400).json({
+        success: false,
+        message: "Invoice not found. Payment must be confirmed first.",
+      });
+    }
+
+    if (invoice.paymentInfo.status !== "paid") {
+      return res.status(400).json({
+        success: false,
+        message: "Payment must be completed before final confirmation",
+        paymentStatus: invoice.paymentInfo.status,
+      });
+    }
+
+    // Update appointment status to invoiced (final state)
+    await appointment.updateStatus(
+      "invoiced",
+      req.user._id,
+      "staff",
+      "Final confirmation - Service completed",
+      "Staff confirmed completion after technician finished work"
+    );
+
+    await appointment.save();
+
+    // Send email notification
+    try {
+      const { sendEmail } = await import("../utils/email.js");
+      await sendEmail({
+        to: appointment.customerId.email,
+        subject: `Service Completed - Appointment ${appointment.appointmentNumber}`,
+        template: "service-completed",
+        data: {
+          customerName: `${appointment.customerId.firstName} ${appointment.customerId.lastName}`,
+          appointmentNumber: appointment.appointmentNumber,
+          vehicleInfo: `${appointment.vehicleId.make} ${appointment.vehicleId.model} (${appointment.vehicleId.licensePlate})`,
+          invoiceNumber: invoice.invoiceNumber,
+        },
+      });
+    } catch (emailError) {
+      console.error("Failed to send completion email:", emailError);
+    }
+
+    // Emit socket notification
+    try {
+      const { emitToUser } = await import("../utils/socket.js");
+      emitToUser(appointment.customerId._id, "service_completed", {
+        appointmentId: id,
+        appointmentNumber: appointment.appointmentNumber,
+        invoiceNumber: invoice.invoiceNumber,
+      });
+    } catch (socketError) {
+      console.error("Failed to emit socket notification:", socketError);
+    }
+
+    res.json({
+      success: true,
+      message: "Service completion confirmed successfully",
+      data: {
+        appointment: {
+          _id: appointment._id,
+          appointmentNumber: appointment.appointmentNumber,
+          status: appointment.status,
+        },
+        invoice: {
+          _id: invoice._id,
+          invoiceNumber: invoice.invoiceNumber,
+          status: invoice.status,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error with staff final confirmation:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error confirming completion",
+      error: error.message,
+    });
+  }
+};
+
 // ============ HELPER FUNCTION: Reduce Parts on Appointment Completion ============
 // @desc    Automatically reduce parts when appointment is completed
 // @uses    Called from completeAppointment() controller
