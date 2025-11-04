@@ -164,11 +164,11 @@ export const generateInvoice = async (req, res) => {
       });
     }
 
-    // Check if appointment is completed
-    if (appointment.status !== "completed") {
+    // Check if appointment is completed or reception_approved (for pre-payment)
+    if (!["completed", "reception_approved"].includes(appointment.status)) {
       return res.status(400).json({
         success: false,
-        message: `Cannot generate invoice. Appointment status is: ${appointment.status}`,
+        message: `Cannot generate invoice. Appointment status is: ${appointment.status}. Must be 'completed' or 'reception_approved'`,
       });
     }
 
@@ -195,7 +195,8 @@ export const generateInvoice = async (req, res) => {
     }
 
     // Note: EV checklist completion check removed for deposit booking flow
-    // This allows invoice generation as soon as appointment is completed
+    // For reception_approved status, allow invoice generation for pre-payment
+    // Final invoice can be generated later when appointment is completed
 
     // Calculate invoice items
     const invoiceItems = {
@@ -386,24 +387,28 @@ export const generateInvoice = async (req, res) => {
 
       serviceDetails: {
         serviceDate: appointment.scheduledDate,
-        completedDate: new Date(),
-        actualServiceTime: actualServiceTime,
+        completedDate: appointment.status === "completed" ? new Date() : null,
+        actualServiceTime: appointment.status === "completed" ? actualServiceTime : 0,
         estimatedServiceTime: serviceReception.estimatedServiceTime,
-        workPerformed: (serviceReception.recommendedServices || [])
-          .filter((s) => s.isCompleted && s.customerApproved)
-          .map((s) => s.serviceId.name),
-        evChecklistCompleted: serviceReception.evChecklistProgress.isCompleted,
+        workPerformed: appointment.status === "completed"
+          ? (serviceReception.recommendedServices || [])
+              .filter((s) => s.isCompleted && s.customerApproved)
+              .map((s) => s.serviceId.name)
+          : [],
+        evChecklistCompleted: appointment.status === "completed" && serviceReception.evChecklistProgress.isCompleted,
+        isPrePayment: appointment.status === "reception_approved",
       },
 
       paymentInfo: {
         method: appointment.depositInfo?.paid ? "e_wallet" : "cash",
-        status: remainingAmount <= 0 ? "paid" : "partial",
+        status: appointment.status === "reception_approved" ? "unpaid" : (remainingAmount <= 0 ? "paid" : "partial"),
         dueDate:
           paymentTerms === "immediate"
             ? new Date()
             : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
         paidAmount: depositAmount,
         remainingAmount: remainingAmount,
+        isPrePaymentInvoice: appointment.status === "reception_approved",
       },
 
       notes,

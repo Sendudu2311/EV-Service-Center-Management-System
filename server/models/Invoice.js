@@ -265,6 +265,10 @@ const invoiceSchema = new mongoose.Schema(
       paymentDate: Date,
       transactionRef: String,
       paymentNotes: String,
+      isPrePaymentInvoice: {
+        type: Boolean,
+        default: false,
+      },
       installmentPlan: {
         totalInstallments: Number,
         installmentAmount: Number,
@@ -346,6 +350,20 @@ const invoiceSchema = new mongoose.Schema(
     },
 
     customerViewedAt: Date,
+
+    // Service details
+    serviceDetails: {
+      serviceDate: Date,
+      completedDate: Date,
+      actualServiceTime: Number,
+      estimatedServiceTime: Number,
+      workPerformed: [String],
+      evChecklistCompleted: Boolean,
+      isPrePayment: {
+        type: Boolean,
+        default: false,
+      },
+    },
 
     // Notes and special instructions
     notes: String,

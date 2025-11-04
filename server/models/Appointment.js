@@ -478,7 +478,7 @@ appointmentSchema.methods.canTransitionTo = function (
       "parts_insufficient",
       "cancelled",
     ],
-    reception_approved: ["in_progress", "cancelled"],
+    reception_approved: ["in_progress", "cancelled", "invoiced"],
     parts_insufficient: [
       "waiting_for_parts",
       "in_progress",
@@ -662,8 +662,8 @@ appointmentSchema.methods.validateTransitionRequirements = function (
       return true; // Allow completion from in_progress
     },
     invoiced: () => {
-      // Must be completed
-      return this.status === "completed";
+      // Must be completed OR reception_approved (for pre-payment flow)
+      return ["completed", "reception_approved"].includes(this.status);
     },
   };
 
