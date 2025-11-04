@@ -213,6 +213,16 @@ export interface Appointment {
   requiresApproval: boolean;
   isApproved: boolean;
 
+  // External Parts Flag
+  hasExternalParts?: boolean;
+  externalPartsInfo?: {
+    requiresExternalOrder: boolean;
+    customerAgreedToLeaveVehicle: boolean;
+    technicianNote?: string;
+    markedBy?: string;
+    markedAt?: string;
+  };
+
   // Cancel Request
   cancelRequest?: CancelRequest;
 

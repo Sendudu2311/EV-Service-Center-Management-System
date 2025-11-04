@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { appointmentsAPI } from '../services/api';
-import { 
-  ClipboardDocumentListIcon, 
-  CalendarIcon, 
+import {
+  ClipboardDocumentListIcon,
+  CalendarIcon,
   ClockIcon,
   CheckCircleIcon,
   ShieldCheckIcon,
@@ -10,6 +10,7 @@ import {
   CubeIcon,
   ChatBubbleLeftRightIcon,
   StarIcon,
+  ShoppingBagIcon,
 } from '@heroicons/react/24/outline';
 import { formatVietnameseDateTime, formatVND } from '../utils/vietnamese';
 import {
@@ -20,6 +21,7 @@ import {
   type Warranty,
 } from '../utils/warranty';
 import toast from 'react-hot-toast';
+import ExternalPartsTag from '../components/Common/ExternalPartsTag';
 
 interface ServiceNote {
   note: string;
@@ -53,6 +55,23 @@ interface PartUsed {
   };
   quantity: number;
   unitPrice: number;
+  isExternalPart?: boolean;
+}
+
+interface ExternalPart {
+  partName: string;
+  partNumber?: string;
+  supplier?: {
+    name: string;
+  };
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  warranty?: {
+    period: number;
+    description?: string;
+  };
+  notes?: string;
 }
 
 interface AppointmentService {
@@ -94,6 +113,8 @@ interface CompletedAppointment {
   };
   serviceNotes: ServiceNote[];
   partsUsed: PartUsed[];
+  externalParts?: ExternalPart[];
+  hasExternalParts?: boolean;
   feedback?: {
     rating: number;
     comment: string;
@@ -101,6 +122,11 @@ interface CompletedAppointment {
   };
   workflowHistory: WorkflowHistory[];
   createdAt: string;
+  serviceReceptionId?: {
+    _id: string;
+    externalParts?: ExternalPart[];
+    hasExternalParts?: boolean;
+  };
 }
 
 const ServiceHistoryPage: React.FC = () => {
@@ -297,7 +323,7 @@ const ServiceHistoryPage: React.FC = () => {
                           const warrantyStatus = part.partId.warranty
                             ? getWarrantyStatus(appointment.actualCompletion, part.partId.warranty)
                             : null;
-                          
+
                           return (
                             <li key={index} className="flex items-start justify-between gap-2 p-3 bg-dark-900 rounded-md border border-blue-200">
                               <div className="flex-1">
@@ -332,6 +358,52 @@ const ServiceHistoryPage: React.FC = () => {
                             </li>
                           );
                         })}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* External Parts - Parts Ordered from Outside */}
+                  {(appointment.serviceReceptionId?.externalParts && appointment.serviceReceptionId.externalParts.length > 0) && (
+                    <div className="mb-4">
+                      <h4 className="text-sm text-text-muted text-text-secondary mb-2 flex items-center gap-2">
+                        <ShoppingBagIcon className="h-4 w-4" />
+                        Linh kiện đặt từ bên ngoài:
+                      </h4>
+                      <ul className="space-y-2">
+                        {appointment.serviceReceptionId.externalParts.map((part, index) => (
+                          <li key={index} className="flex items-start justify-between gap-2 p-3 bg-amber-50 rounded-md border-2 border-amber-400">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-sm font-semibold text-amber-900">
+                                  {part.partName}
+                                </span>
+                                <ExternalPartsTag size="sm" showIcon={false} />
+                              </div>
+                              <p className="text-xs text-amber-800">
+                                Mã: {part.partNumber || 'EXTERNAL'} • Số lượng: {part.quantity}
+                              </p>
+                              {part.supplier && (
+                                <p className="text-xs text-amber-700 mt-1">
+                                  Nhà cung cấp: {part.supplier.name}
+                                </p>
+                              )}
+                              {part.warranty && part.warranty.period > 0 && (
+                                <p className="text-xs text-lime-700 mt-1">
+                                  Bảo hành: {part.warranty.period} tháng
+                                  {part.warranty.description && ` - ${part.warranty.description}`}
+                                </p>
+                              )}
+                              {part.notes && (
+                                <p className="text-xs text-amber-600 mt-1 italic">
+                                  Ghi chú: {part.notes}
+                                </p>
+                              )}
+                            </div>
+                            <span className="text-sm font-semibold text-amber-900 whitespace-nowrap">
+                              {formatVND(part.totalPrice)}
+                            </span>
+                          </li>
+                        ))}
                       </ul>
                     </div>
                   )}

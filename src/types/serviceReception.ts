@@ -220,6 +220,40 @@ export interface ServiceReception {
     actualCost?: number;
   }[];
 
+  // External parts ordered from outside suppliers
+  // Used when technician notes that vehicle will be left for external part orders
+  externalParts?: {
+    _id?: string;
+    partName: string;
+    partNumber?: string;
+    supplier?: {
+      name: string;
+      contact?: string;
+      address?: string;
+    };
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+    warranty?: {
+      period: number; // in months
+      description?: string;
+    };
+    estimatedArrival?: string;
+    actualArrival?: string;
+    orderStatus?: "pending_order" | "ordered" | "in_transit" | "arrived" | "installed";
+    orderDetails?: {
+      orderNumber?: string;
+      orderDate?: string;
+      orderedBy?: string;
+    };
+    notes?: string;
+    addedBy?: string;
+    addedAt?: string;
+  }[];
+
+  // Flag to indicate if this service reception has external parts
+  hasExternalParts?: boolean;
+
   // Special Instructions
   specialInstructions: {
     fromCustomer?: string;

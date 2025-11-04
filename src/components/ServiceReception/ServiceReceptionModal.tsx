@@ -72,6 +72,7 @@ interface ServiceReceptionData {
   }>;
   specialInstructions: {
     fromCustomer: string;
+    fromStaff?: string;
     safetyPrecautions: string[];
     warningNotes: string[];
   };
@@ -168,6 +169,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
     customerItems: [],
     specialInstructions: {
       fromCustomer: "",
+      fromStaff: "",
       safetyPrecautions: [],
       warningNotes: [],
     },
@@ -1115,6 +1117,36 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* External Parts Note - Large text area for technician notes about external parts */}
+            <div className="bg-amber-50 rounded-lg p-4 border-2 border-amber-300">
+              <div className="flex items-center gap-2 mb-3">
+                <h4 className="text-md font-semibold text-amber-900">
+                  Ghi chú về linh kiện đặt ngoài
+                </h4>
+                <span className="text-xs text-amber-700 bg-amber-100 px-2 py-1 rounded">
+                  (Dành cho linh kiện không có sẵn trong kho)
+                </span>
+              </div>
+              <textarea
+                value={formData.specialInstructions.fromStaff || ""}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    specialInstructions: {
+                      ...prev.specialInstructions,
+                      fromStaff: e.target.value,
+                    },
+                  }))
+                }
+                rows={4}
+                className="block w-full rounded-md bg-white text-gray-900 border-amber-300 shadow-sm focus:border-amber-500 focus:ring-amber-500 text-sm"
+                placeholder="Ví dụ: Cần đặt ngoài linh kiện pin lithium 72V 100Ah từ nhà cung cấp ABC. Khách hàng đồng ý để xe lại. Dự kiến giao hàng 3-5 ngày..."
+              />
+              <p className="mt-2 text-xs text-amber-700">
+                💡 Ghi rõ: tên linh kiện cần đặt, lý do, thời gian dự kiến, và xác nhận khách đồng ý để xe
+              </p>
             </div>
           </div>
         );

@@ -10,6 +10,7 @@ import {
 import toast from "react-hot-toast";
 import { formatVND } from "../../utils/vietnamese";
 import { partConflictsAPI } from "../../services/api";
+import ExternalPartsManager from "./ExternalPartsManager";
 
 interface ServiceReception {
   _id: string;
@@ -127,7 +128,8 @@ interface ServiceReceptionReviewProps {
   onReview: (
     receptionId: string,
     decision: "approve" | "reject",
-    notes: string
+    notes: string,
+    externalParts?: any[]
   ) => Promise<void>;
   loading?: boolean;
   onReceptionUpdated?: () => void;
@@ -143,6 +145,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
     useState<ServiceReception | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [externalParts, setExternalParts] = useState<any[]>([]);
 
   const handleReviewSubmit = async (decision: "approve" | "reject") => {
     if (!selectedReception) return;
@@ -203,7 +206,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
         }
       }
 
-      await onReview(selectedReception._id, decision, reviewNotes);
+      await onReview(selectedReception._id, decision, reviewNotes, externalParts);
 
       toast.success(
         decision === "approve"
@@ -213,6 +216,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
       setSelectedReception(null);
       setReviewNotes("");
+      setExternalParts([]);
       if (onReceptionUpdated) {
         onReceptionUpdated();
       }
@@ -814,6 +818,34 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                       </div>
                     )}
 
+                  {/* Technician Note about External Parts */}
+                  {selectedReception.specialInstructions?.fromStaff && (
+                    <div className="mb-6">
+                      <h4 className="text-text-muted text-text-secondary mb-2 flex items-center gap-2">
+                        <span className="text-amber-500">📝</span>
+                        Ghi chú từ kỹ thuật viên
+                      </h4>
+                      <div className="bg-amber-50 border-2 border-amber-400 rounded-lg p-4 text-sm text-gray-900">
+                        <p className="whitespace-pre-wrap">{selectedReception.specialInstructions.fromStaff}</p>
+                      </div>
+                      {console.log("📝 fromStaff note exists:", selectedReception.specialInstructions.fromStaff)}
+                    </div>
+                  )}
+
+                  {/* External Parts Manager - Always show if technician has note */}
+                  {selectedReception.specialInstructions?.fromStaff ? (
+                    <div className="mb-6">
+                      {console.log("🔧 Showing ExternalPartsManager for note:", selectedReception.specialInstructions.fromStaff)}
+                      <ExternalPartsManager
+                        technicianNote={selectedReception.specialInstructions.fromStaff}
+                        existingParts={(selectedReception as any).externalParts || []}
+                        onChange={setExternalParts}
+                      />
+                    </div>
+                  ) : (
+                    console.log("❌ No fromStaff note, specialInstructions:", selectedReception.specialInstructions)
+                  )}
+
                   {/* Review Section */}
                   <div className="bg-dark-900 rounded-lg p-4">
                     <h4 className="text-text-muted text-gray-800 mb-4">
@@ -838,7 +870,11 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                             total + (part.estimatedCost || 0) * part.quantity,
                           0
                         );
-                        const totalCost = servicesCost + partsCost;
+                        const externalPartsCost = (externalParts || []).reduce(
+                          (total, part) => total + (part.totalPrice || 0),
+                          0
+                        );
+                        const totalCost = servicesCost + partsCost + externalPartsCost;
 
                         return totalCost > 0 ? (
                           <div className="bg-dark-900 border border-blue-200 rounded-lg p-4 mb-4">
@@ -862,6 +898,17 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                   {partsCost.toLocaleString("vi-VN")} VNĐ
                                 </span>
                               </div>
+                              {externalPartsCost > 0 && (
+                                <div className="flex justify-between">
+                                  <span className="text-amber-600 flex items-center gap-1">
+                                    <span>🛒</span>
+                                    Linh kiện đặt ngoài:
+                                  </span>
+                                  <span className="text-amber-500 font-semibold">
+                                    {externalPartsCost.toLocaleString("vi-VN")} VNĐ
+                                  </span>
+                                </div>
+                              )}
                               <div className="flex justify-between font-semibold border-t border-dark-200 pt-2 mt-2">
                                 <span className="text-white">Tổng cộng:</span>
                                 <span className="text-lime-600">
