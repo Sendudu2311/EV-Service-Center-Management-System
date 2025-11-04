@@ -579,7 +579,8 @@ export const resubmitServiceReception = async (req, res) => {
 export const approveServiceReception = async (req, res) => {
   try {
     const { id } = req.params;
-    const { decision, reviewNotes, approved, staffNotes, externalParts } = req.body;
+    const { decision, reviewNotes, approved, staffNotes, externalParts } =
+      req.body;
 
     // Support both old format (approved: boolean) and new format (decision: 'approved'/'rejected')
     const isApproved = decision ? decision === "approved" : approved;
@@ -608,12 +609,17 @@ export const approveServiceReception = async (req, res) => {
     }
 
     // Handle external parts if provided (staff adding external part orders)
-    if (isApproved && externalParts && Array.isArray(externalParts) && externalParts.length > 0) {
+    if (
+      isApproved &&
+      externalParts &&
+      Array.isArray(externalParts) &&
+      externalParts.length > 0
+    ) {
       console.log("=== ADDING EXTERNAL PARTS ===");
       console.log("External parts count:", externalParts.length);
 
       // Add external parts to service reception
-      serviceReception.externalParts = externalParts.map(part => ({
+      serviceReception.externalParts = externalParts.map((part) => ({
         ...part,
         addedBy: req.user._id,
         addedAt: new Date(),
@@ -803,9 +809,16 @@ export const approveServiceReception = async (req, res) => {
     }
 
     // Handle external parts if present
-    if (isApproved && serviceReception.externalParts && serviceReception.externalParts.length > 0) {
+    if (
+      isApproved &&
+      serviceReception.externalParts &&
+      serviceReception.externalParts.length > 0
+    ) {
       console.log("=== PROCESSING EXTERNAL PARTS ===");
-      console.log("External parts count:", serviceReception.externalParts.length);
+      console.log(
+        "External parts count:",
+        serviceReception.externalParts.length
+      );
 
       // Mark service reception as having external parts
       serviceReception.hasExternalParts = true;
@@ -816,7 +829,9 @@ export const approveServiceReception = async (req, res) => {
         appointment.externalPartsInfo = {
           requiresExternalOrder: true,
           customerAgreedToLeaveVehicle: true,
-          technicianNote: serviceReception.specialInstructions?.fromStaff || "Requires external parts order",
+          technicianNote:
+            serviceReception.specialInstructions?.fromStaff ||
+            "Requires external parts order",
           markedBy: req.user._id,
           markedAt: new Date(),
         };
@@ -825,7 +840,9 @@ export const approveServiceReception = async (req, res) => {
         let externalPartsCost = 0;
         serviceReception.externalParts.forEach((part) => {
           externalPartsCost += part.totalPrice;
-          console.log(`External part: ${part.partName}, cost: ${part.totalPrice}`);
+          console.log(
+            `External part: ${part.partName}, cost: ${part.totalPrice}`
+          );
         });
 
         // Add tax to external parts cost
@@ -833,7 +850,8 @@ export const approveServiceReception = async (req, res) => {
         const totalExternalParts = externalPartsCost + taxExternalParts;
 
         // Update appointment total
-        appointment.totalAmount = (appointment.totalAmount || 0) + totalExternalParts;
+        appointment.totalAmount =
+          (appointment.totalAmount || 0) + totalExternalParts;
         console.log("External parts total (with VAT):", totalExternalParts);
         console.log("Updated appointment total:", appointment.totalAmount);
 
@@ -918,9 +936,8 @@ const syncChecklistWithAppointment = async (
   appointment
 ) => {
   try {
-    const serviceReception = await ServiceReception.findById(
-      serviceReceptionId
-    );
+    const serviceReception =
+      await ServiceReception.findById(serviceReceptionId);
     if (!serviceReception || !appointment) return;
 
     // Sync evChecklistItems to Appointment.checklistItems
@@ -1398,14 +1415,79 @@ export const confirmPayment = async (req, res) => {
       });
     }
 
-    // Calculate totals
-    const subtotal = subtotalServices + subtotalParts + subtotalLabor;
+    // Calculate external parts cost if hasExternalParts flag is true
+    let subtotalExternalParts = 0;
+    const externalPartItems = [];
+    if (
+      serviceReception.hasExternalParts &&
+      serviceReception.externalParts &&
+      serviceReception.externalParts.length > 0
+    ) {
+      console.log("=== Processing External Parts ===");
+      console.log(
+        "Has external parts flag:",
+        serviceReception.hasExternalParts
+      );
+      console.log(
+        "External parts count:",
+        serviceReception.externalParts.length
+      );
+
+      for (const externalPart of serviceReception.externalParts) {
+        const partTotal =
+          externalPart.totalPrice ||
+          externalPart.unitPrice * externalPart.quantity;
+        console.log(
+          `External part: ${externalPart.partName}, Total: ${partTotal}`
+        );
+
+        externalPartItems.push({
+          partName: externalPart.partName,
+          partNumber: externalPart.partNumber || "",
+          quantity: externalPart.quantity,
+          unitPrice: externalPart.unitPrice,
+          totalPrice: partTotal,
+          supplier: externalPart.supplier?.name || "External Supplier",
+          description: `${externalPart.partName}${
+            externalPart.partNumber ? ` (${externalPart.partNumber})` : ""
+          } - External`,
+        });
+        subtotalExternalParts += partTotal;
+      }
+
+      console.log("Total external parts cost:", subtotalExternalParts);
+    } else {
+      console.log("=== No External Parts ===");
+      console.log("hasExternalParts:", serviceReception.hasExternalParts);
+      console.log("externalParts exists:", !!serviceReception.externalParts);
+      console.log(
+        "externalParts length:",
+        serviceReception.externalParts?.length || 0
+      );
+    }
+
+    // Calculate totals (including external parts)
+    const subtotal =
+      subtotalServices + subtotalParts + subtotalLabor + subtotalExternalParts;
     const taxAmount = subtotal * 0.1; // 10% VAT
     const totalAmount = subtotal + taxAmount;
     const depositAmount = appointment.depositInfo?.paid
       ? appointment.depositInfo.amount
       : 0;
     const remainingAmount = totalAmount - depositAmount;
+
+    // Log calculation breakdown for debugging
+    console.log("=== Payment Calculation Breakdown ===");
+    console.log("Services subtotal:", subtotalServices);
+    console.log("Parts subtotal:", subtotalParts);
+    console.log("Labor subtotal:", subtotalLabor);
+    console.log("External parts subtotal:", subtotalExternalParts);
+    console.log("Subtotal (before tax):", subtotal);
+    console.log("Tax amount (10%):", taxAmount);
+    console.log("Total amount:", totalAmount);
+    console.log("Deposit amount:", depositAmount);
+    console.log("Remaining amount to pay:", remainingAmount);
+    console.log("Amount from request:", amount);
 
     // Validate payment amount
     if (Math.abs(parseFloat(amount) - remainingAmount) > 0.01) {
@@ -1419,6 +1501,7 @@ export const confirmPayment = async (req, res) => {
             subtotalServices,
             subtotalParts,
             subtotalLabor,
+            subtotalExternalParts,
             subtotal,
             taxAmount,
             totalAmount,
@@ -1439,6 +1522,20 @@ export const confirmPayment = async (req, res) => {
     const timestamp = now.getTime().toString().slice(-6);
     const invoiceNumber = `INV${year}${month}${day}${timestamp}`;
 
+    // Prepare additional charges for external parts
+    const additionalCharges = [];
+    if (externalPartItems && externalPartItems.length > 0) {
+      externalPartItems.forEach((externalPart) => {
+        additionalCharges.push({
+          description: `External Part: ${externalPart.description}`,
+          amount: externalPart.totalPrice,
+          type: "other",
+          isPercentage: false,
+          applyTo: "subtotal",
+        });
+      });
+    }
+
     // Create invoice
     const invoice = new Invoice({
       invoiceNumber,
@@ -1449,11 +1546,12 @@ export const confirmPayment = async (req, res) => {
       serviceItems,
       partItems,
       laborItems,
+      additionalCharges,
       totals: {
         subtotalServices,
         subtotalParts,
         subtotalLabor,
-        subtotalAdditional: 0,
+        subtotalAdditional: subtotalExternalParts,
         subtotal,
         taxRate: 10,
         taxAmount,
@@ -1557,14 +1655,22 @@ export const confirmPayment = async (req, res) => {
     appointment.paymentStatus = "paid";
     await appointment.save();
 
-    // Update service reception invoicing
+    // Update service reception invoicing (including external parts if applicable)
+    const invoicingAdditionalCharges = [];
+    if (subtotalExternalParts > 0) {
+      invoicingAdditionalCharges.push({
+        description: "External Parts",
+        amount: subtotalExternalParts,
+      });
+    }
+
     serviceReception.invoicing = {
       laborCost: subtotalLabor,
-      partsCost: subtotalParts,
+      partsCost: subtotalParts + subtotalExternalParts, // Include external parts in parts cost
       totalCost: totalAmount,
       taxAmount: taxAmount,
       grandTotal: totalAmount,
-      additionalCharges: [],
+      additionalCharges: invoicingAdditionalCharges,
     };
     serviceReception.status = "in_service"; // Valid enum value for ServiceReception
     await serviceReception.save();

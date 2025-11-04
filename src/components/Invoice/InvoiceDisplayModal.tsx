@@ -197,14 +197,111 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
           </tbody>
         </table>
 
+        ${
+          invoice.partItems && invoice.partItems.length > 0
+            ? `
+        <h3>Phụ tùng</h3>
+        <table class="services-table">
+          <thead>
+            <tr>
+              <th>Tên phụ tùng</th>
+              <th>Mã phụ tùng</th>
+              <th>Số lượng</th>
+              <th>Đơn giá</th>
+              <th>Thành tiền</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${invoice.partItems
+              .map(
+                (item: any) => `
+              <tr>
+                <td>${item.partName || "N/A"}</td>
+                <td>${item.partNumber || "N/A"}</td>
+                <td>${item.quantity || 1}</td>
+                <td>${formatCurrency(item.unitPrice || 0)}</td>
+                <td>${formatCurrency(item.totalPrice || 0)}</td>
+              </tr>
+            `
+              )
+              .join("")}
+          </tbody>
+        </table>
+        `
+            : ""
+        }
+
+        ${
+          invoice.additionalCharges &&
+          invoice.additionalCharges.filter(
+            (c: any) => c.type === "other" && c.description.includes("External")
+          ).length > 0
+            ? `
+        <h3>Phụ tùng ngoài (External Parts)</h3>
+        <table class="services-table">
+          <thead>
+            <tr>
+              <th>Mô tả</th>
+              <th>Thành tiền</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${invoice.additionalCharges
+              .filter(
+                (c: any) =>
+                  c.type === "other" && c.description.includes("External")
+              )
+              .map(
+                (item: any) => `
+              <tr>
+                <td>${item.description || "N/A"}</td>
+                <td>${formatCurrency(item.amount || 0)}</td>
+              </tr>
+            `
+              )
+              .join("")}
+          </tbody>
+        </table>
+        `
+            : ""
+        }
+
         <div class="totals">
-          <p className="font-semibold text-white"><strong>Tạm tính:</strong> ${formatCurrency(
+          ${
+            invoice.totals?.subtotalServices > 0
+              ? `<p><strong>Tạm tính (dịch vụ):</strong> ${formatCurrency(
+                  invoice.totals.subtotalServices
+                )}</p>`
+              : ""
+          }
+          ${
+            invoice.totals?.subtotalParts > 0
+              ? `<p><strong>Phụ tùng:</strong> ${formatCurrency(
+                  invoice.totals.subtotalParts
+                )}</p>`
+              : ""
+          }
+          ${
+            invoice.totals?.subtotalLabor > 0
+              ? `<p><strong>Chi phí công:</strong> ${formatCurrency(
+                  invoice.totals.subtotalLabor
+                )}</p>`
+              : ""
+          }
+          ${
+            invoice.totals?.subtotalAdditional > 0
+              ? `<p><strong>Phụ tùng ngoài:</strong> ${formatCurrency(
+                  invoice.totals.subtotalAdditional
+                )}</p>`
+              : ""
+          }
+          <p style="border-top: 1px solid #ddd; padding-top: 8px; margin-top: 8px;"><strong>Tổng tạm tính:</strong> ${formatCurrency(
             invoice.totals?.subtotal || 0
           )}</p>
           <p className="font-semibold text-white"><strong>VAT (10%):</strong> ${formatCurrency(
             invoice.totals?.taxAmount || 0
           )}</p>
-          <p className="font-semibold text-white"><strong>Tổng cộng:</strong> ${formatCurrency(
+          <p style="font-size: 18px; font-weight: bold;"><strong>Tổng cộng:</strong> ${formatCurrency(
             invoice.totals?.totalAmount || 0
           )}</p>
           ${
@@ -363,16 +460,16 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-dark-900">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs text-text-muted uppercase tracking-wider">
                         Dịch vụ
                       </th>
-                      <th className="px-6 py-3 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs text-text-muted uppercase tracking-wider">
                         Số lượng
                       </th>
-                      <th className="px-6 py-3 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs text-text-muted uppercase tracking-wider">
                         Đơn giá
                       </th>
-                      <th className="px-6 py-3 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs text-text-muted uppercase tracking-wider">
                         Thành tiền
                       </th>
                     </tr>
@@ -389,7 +486,7 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                           {formatCurrency(item.unitPrice)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted text-white">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
                           {formatCurrency(item.totalPrice)}
                         </td>
                       </tr>
@@ -399,12 +496,143 @@ const InvoiceDisplayModal: React.FC<InvoiceDisplayModalProps> = ({
               </div>
             </div>
 
+            {/* Parts Section (Phụ tùng từ kho) */}
+            {invoice.partItems && invoice.partItems.length > 0 && (
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold text-white mb-4">
+                  Phụ tùng
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-dark-900">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs text-text-muted uppercase tracking-wider">
+                          Tên phụ tùng
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs text-text-muted uppercase tracking-wider">
+                          Mã phụ tùng
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs text-text-muted uppercase tracking-wider">
+                          Số lượng
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs text-text-muted uppercase tracking-wider">
+                          Đơn giá
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs text-text-muted uppercase tracking-wider">
+                          Thành tiền
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-dark-300 divide-y divide-gray-200">
+                      {invoice.partItems.map((item: any, index: number) => (
+                        <tr key={index}>
+                          <td className="px-6 py-4 text-sm text-white">
+                            {item.partName}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                            {item.partNumber || "N/A"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                            {item.quantity}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                            {formatCurrency(item.unitPrice)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                            {formatCurrency(item.totalPrice)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* External Parts Section */}
+            {invoice.additionalCharges &&
+              invoice.additionalCharges.length > 0 && (
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">
+                    Phụ tùng ngoài (External Parts)
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-dark-900">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs text-text-muted text-text-muted uppercase tracking-wider">
+                            Mô tả
+                          </th>
+                          <th className="px-6 py-3 text-right text-xs text-text-muted text-text-muted uppercase tracking-wider">
+                            Thành tiền
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-dark-300 divide-y divide-gray-200">
+                        {invoice.additionalCharges
+                          .filter(
+                            (charge: any) =>
+                              charge.type === "other" &&
+                              charge.description.includes("External")
+                          )
+                          .map((charge: any, index: number) => (
+                            <tr key={index}>
+                              <td className="px-6 py-4 text-sm text-white">
+                                {charge.description}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-white">
+                                {formatCurrency(charge.amount)}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
             {/* Totals */}
             <div className="border-t pt-6">
               <div className="max-w-md ml-auto">
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-white">Tạm tính:</span>
+                  {/* Services */}
+                  {invoice.totals?.subtotalServices > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-white">Tạm tính (dịch vụ):</span>
+                      <span className="text-white">
+                        {formatCurrency(invoice.totals.subtotalServices)}
+                      </span>
+                    </div>
+                  )}
+                  {/* Parts from inventory */}
+                  {invoice.totals?.subtotalParts > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-white">Phụ tùng:</span>
+                      <span className="text-white">
+                        {formatCurrency(invoice.totals.subtotalParts)}
+                      </span>
+                    </div>
+                  )}
+                  {/* Labor */}
+                  {invoice.totals?.subtotalLabor > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-white">Chi phí công:</span>
+                      <span className="text-white">
+                        {formatCurrency(invoice.totals.subtotalLabor)}
+                      </span>
+                    </div>
+                  )}
+                  {/* External Parts */}
+                  {invoice.totals?.subtotalAdditional > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-white">Phụ tùng ngoài:</span>
+                      <span className="text-white">
+                        {formatCurrency(invoice.totals.subtotalAdditional)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm border-t pt-2">
+                    <span className="text-white">Tổng tạm tính:</span>
                     <span className="text-white">
                       {formatCurrency(invoice.totals?.subtotal || 0)}
                     </span>

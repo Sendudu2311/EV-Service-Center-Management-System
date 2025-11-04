@@ -78,11 +78,30 @@ const PaymentPreviewModal: React.FC<PaymentPreviewModalProps> = ({
       }
     });
 
+    // Calculate external parts (if hasExternalParts flag is true)
+    let externalPartsTotal = 0;
+    if (
+      serviceReception.hasExternalParts &&
+      serviceReception.externalParts &&
+      serviceReception.externalParts.length > 0
+    ) {
+      serviceReception.externalParts.forEach((externalPart: any) => {
+        const partTotal =
+          externalPart.totalPrice ||
+          externalPart.unitPrice * externalPart.quantity;
+        externalPartsTotal += partTotal;
+      });
+    }
+
     // Calculate labor
     const laborTotal = serviceReception.estimatedLabor?.totalCost || 0;
 
     const subtotal =
-      servicesTotal + recommendedServicesTotal + partsTotal + laborTotal;
+      servicesTotal +
+      recommendedServicesTotal +
+      partsTotal +
+      externalPartsTotal +
+      laborTotal;
     const taxAmount = subtotal * 0.1;
     const totalAmount = subtotal + taxAmount;
     const remainingAmount = totalAmount - depositAmount;
@@ -92,6 +111,7 @@ const PaymentPreviewModal: React.FC<PaymentPreviewModalProps> = ({
       servicesTotal,
       recommendedServicesTotal,
       partsTotal,
+      externalPartsTotal,
       laborTotal,
       subtotal,
       taxAmount,
@@ -259,6 +279,40 @@ const PaymentPreviewModal: React.FC<PaymentPreviewModalProps> = ({
                 </div>
               )}
 
+              {/* External Parts */}
+              {totals.externalPartsTotal && totals.externalPartsTotal > 0 && (
+                <div className="mb-4 pb-3 border-b border-dark-200">
+                  <h4 className="text-sm font-semibold text-text-secondary mb-2">
+                    Phụ tùng ngoài (External Parts):
+                  </h4>
+                  {serviceReception.externalParts.map(
+                    (externalPart: any, index: number) => {
+                      const partTotal =
+                        externalPart.totalPrice ||
+                        externalPart.unitPrice * externalPart.quantity;
+                      return (
+                        <div
+                          key={index}
+                          className="flex justify-between text-sm text-text-muted mb-1"
+                        >
+                          <span>
+                            • {externalPart.partName} (x{externalPart.quantity})
+                            {externalPart.supplier?.name &&
+                              ` - ${externalPart.supplier.name}`}
+                          </span>
+                          <span className="text-orange-600">
+                            {new Intl.NumberFormat("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            }).format(partTotal)}
+                          </span>
+                        </div>
+                      );
+                    }
+                  )}
+                </div>
+              )}
+
               {/* Totals Summary */}
               <div className="grid grid-cols-2 gap-4 text-sm mt-4">
                 <div>
@@ -267,7 +321,7 @@ const PaymentPreviewModal: React.FC<PaymentPreviewModalProps> = ({
                     {new Intl.NumberFormat("vi-VN", {
                       style: "currency",
                       currency: "VND",
-                    }).format(totals.subtotal)}
+                    }).format(totals.subtotal || 0)}
                   </span>
                 </div>
                 <div>
@@ -276,7 +330,7 @@ const PaymentPreviewModal: React.FC<PaymentPreviewModalProps> = ({
                     {new Intl.NumberFormat("vi-VN", {
                       style: "currency",
                       currency: "VND",
-                    }).format(totals.taxAmount)}
+                    }).format(totals.taxAmount || 0)}
                   </span>
                 </div>
                 <div>
