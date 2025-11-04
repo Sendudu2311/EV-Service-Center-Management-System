@@ -216,6 +216,7 @@ export const getAppointments = async (req, res) => {
       )
       .populate("partsUsed.partId", "name partNumber pricing warranty")
       .populate("assignedTechnician", "firstName lastName specializations")
+      .populate("serviceReceptionId", "externalParts hasExternalParts")
       .skip(skip)
       .limit(parseInt(limit));
 
@@ -274,7 +275,8 @@ export const getAppointment = async (req, res) => {
       .populate("serviceNotes.addedBy", "firstName lastName role")
       .populate("checklistItems.completedBy", "firstName lastName")
       .populate("cancelRequest.approvedBy", "firstName lastName")
-      .populate("cancelRequest.refundProcessedBy", "firstName lastName");
+      .populate("cancelRequest.refundProcessedBy", "firstName lastName")
+      .populate("serviceReceptionId", "externalParts hasExternalParts");
 
     if (!appointment) {
       return res.status(404).json({

@@ -77,12 +77,22 @@ const ReceptionPaymentModal: React.FC<ReceptionPaymentModalProps> = ({
     }
     console.log("Parts total:", partsTotal);
 
-    // 3. Labor cost (if available in serviceReception)
+    // 3. External Parts (from serviceReception - parts ordered from outside)
+    let externalPartsTotal = 0;
+    if (serviceReception.externalParts) {
+      externalPartsTotal = serviceReception.externalParts.reduce(
+        (sum: number, ep: any) => sum + (ep.totalPrice || 0),
+        0
+      );
+    }
+    console.log("External parts total:", externalPartsTotal);
+
+    // 4. Labor cost (if available in serviceReception)
     const laborTotal = serviceReception.invoicing?.laborCost || 0;
     console.log("Labor total:", laborTotal);
 
     // Calculate totals
-    const subtotal = recommendedServicesTotal + partsTotal + laborTotal;
+    const subtotal = recommendedServicesTotal + partsTotal + externalPartsTotal + laborTotal;
     const taxAmount = subtotal * 0.1; // 10% VAT
     const totalAmount = subtotal + taxAmount;
     const remainingAmount = totalAmount - depositAmount;
@@ -378,6 +388,39 @@ const ReceptionPaymentModal: React.FC<ReceptionPaymentModalProps> = ({
                     </div>
                   );
                 }
+              )}
+            </div>
+          )}
+
+          {/* External Parts - Parts ordered from outside */}
+          {serviceReception?.externalParts?.length > 0 && (
+            <div className="mb-4 pb-3 border-b border-amber-300 bg-amber-50 -mx-4 px-4 py-3">
+              <h4 className="text-sm font-semibold text-amber-800 mb-2 flex items-center gap-2">
+                <span>🛒</span>
+                Linh kiện đặt từ bên ngoài:
+              </h4>
+              {serviceReception.externalParts.map(
+                (part: any, index: number) => (
+                  <div
+                    key={index}
+                    className="flex justify-between text-sm text-amber-900 mb-1"
+                  >
+                    <span>
+                      • {part.partName} (x{part.quantity || 1})
+                      {part.supplier?.name && (
+                        <span className="text-xs text-amber-700 ml-1">
+                          - {part.supplier.name}
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-amber-600 font-semibold">
+                      {new Intl.NumberFormat("vi-VN", {
+                        style: "currency",
+                        currency: "VND",
+                      }).format(part.totalPrice || 0)}
+                    </span>
+                  </div>
+                )
               )}
             </div>
           )}

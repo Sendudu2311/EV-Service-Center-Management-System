@@ -255,7 +255,8 @@ const StaffDashboard: React.FC = () => {
   const handleReceptionReview = async (
     receptionId: string,
     decision: "approve" | "reject",
-    notes: string
+    notes: string,
+    externalParts?: any[]
   ) => {
     try {
       // receptionId is now the actual ServiceReception _id, not appointment ID
@@ -270,6 +271,7 @@ const StaffDashboard: React.FC = () => {
           body: JSON.stringify({
             decision: decision === "approve" ? "approved" : "rejected",
             reviewNotes: notes,
+            externalParts: externalParts || [],
           }),
         }
       );

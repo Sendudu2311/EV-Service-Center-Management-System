@@ -307,6 +307,51 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                         </>
                       )}
 
+                    {/* External Parts Section */}
+                    {appointment.serviceReceptionId?.externalParts &&
+                      appointment.serviceReceptionId.externalParts.length > 0 && (
+                        <>
+                          <div className="pt-3 border-t border-amber-400">
+                            <h5 className="text-sm font-semibold text-amber-500 mb-2 flex items-center gap-2">
+                              <span>🛒</span>
+                              Linh kiện đặt từ bên ngoài
+                            </h5>
+                          </div>
+                          {appointment.serviceReceptionId.externalParts.map((part: any, index: number) => (
+                            <div
+                              key={index}
+                              className="border-b border-amber-200 pb-3 last:border-0 bg-amber-50 -mx-3 px-3 py-2"
+                            >
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="text-sm text-amber-900 font-semibold">
+                                    {part.partName}
+                                  </p>
+                                  {part.partNumber && (
+                                    <p className="text-xs text-amber-700">
+                                      Mã: {part.partNumber}
+                                    </p>
+                                  )}
+                                  {part.supplier?.name && (
+                                    <p className="text-xs text-amber-600">
+                                      NCC: {part.supplier.name}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm text-amber-700 font-semibold">
+                                    {formatVND(part.totalPrice)}
+                                  </p>
+                                  <p className="text-xs text-amber-600">
+                                    SL: {part.quantity}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </>
+                      )}
+
                     {/* Subtotals and Total */}
                     <div className="pt-3 border-t border-dark-300 space-y-2">
                       {(() => {
@@ -324,7 +369,13 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                               (part.unitPrice || 0) * (part.quantity || 1),
                             0
                           ) || 0;
-                        const subtotal = servicesTotal + partsTotal;
+                        const externalPartsTotal =
+                          appointment.serviceReceptionId?.externalParts?.reduce(
+                            (sum: number, part: any) =>
+                              sum + (part.totalPrice || 0),
+                            0
+                          ) || 0;
+                        const subtotal = servicesTotal + partsTotal + externalPartsTotal;
                         const vatAmount = subtotal * 0.1;
                         const totalWithVAT = subtotal + vatAmount;
 
@@ -349,6 +400,20 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                                   </span>
                                   <span className="text-white">
                                     {formatVND(partsTotal)}
+                                  </span>
+                                </div>
+                              )}
+
+                            {/* External Parts Subtotal */}
+                            {appointment.serviceReceptionId?.externalParts &&
+                              appointment.serviceReceptionId.externalParts.length > 0 && (
+                                <div className="flex justify-between items-center text-sm">
+                                  <span className="text-amber-600 flex items-center gap-1">
+                                    <span>🛒</span>
+                                    Tổng linh kiện ngoài:
+                                  </span>
+                                  <span className="text-amber-500 font-semibold">
+                                    {formatVND(externalPartsTotal)}
                                   </span>
                                 </div>
                               )}

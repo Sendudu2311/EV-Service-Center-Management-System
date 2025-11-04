@@ -411,6 +411,29 @@ const appointmentSchema = new mongoose.Schema(
         notes: String,
       },
     ],
+
+    // External parts flag - indicates this appointment requires external part orders
+    // and vehicle will be left at service center
+    hasExternalParts: {
+      type: Boolean,
+      default: false,
+    },
+    externalPartsInfo: {
+      requiresExternalOrder: {
+        type: Boolean,
+        default: false,
+      },
+      customerAgreedToLeaveVehicle: {
+        type: Boolean,
+        default: false,
+      },
+      technicianNote: String, // Original note from technician (e.g., "cần đặt ngoài linh kiện abc...")
+      markedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      markedAt: Date,
+    },
   },
   {
     timestamps: true,

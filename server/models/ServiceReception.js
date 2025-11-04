@@ -617,6 +617,76 @@ const serviceReceptionSchema = new mongoose.Schema(
         ref: "PartConflict",
       },
     ],
+
+    // External parts ordering (parts ordered from outside suppliers)
+    // Used when technician notes in specialInstructions that vehicle will be left for external part orders
+    externalParts: [
+      {
+        partName: {
+          type: String,
+          required: true,
+        },
+        partNumber: String,
+        supplier: {
+          name: String,
+          contact: String,
+          address: String,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
+        unitPrice: {
+          type: Number,
+          required: true,
+          min: 0,
+        },
+        totalPrice: {
+          type: Number,
+          required: true,
+          min: 0,
+        },
+        warranty: {
+          period: {
+            type: Number, // in months
+            default: 0,
+          },
+          description: String,
+        },
+        estimatedArrival: Date,
+        actualArrival: Date,
+        orderStatus: {
+          type: String,
+          enum: ["pending_order", "ordered", "in_transit", "arrived", "installed"],
+          default: "pending_order",
+        },
+        orderDetails: {
+          orderNumber: String,
+          orderDate: Date,
+          orderedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+          },
+        },
+        notes: String,
+        // Track when this part was added (by staff during review)
+        addedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        addedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
+    // Flag to indicate if this service reception has external parts
+    hasExternalParts: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

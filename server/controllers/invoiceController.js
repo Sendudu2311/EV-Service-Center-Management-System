@@ -251,8 +251,30 @@ export const generateInvoice = async (req, res) => {
           totalPrice: partTotal,
           description: `${requestedPart.partId.name} (${requestedPart.partId.partNumber})`,
           reason: requestedPart.reason,
+          isExternalPart: false, // Mark as internal part
         });
         subtotalParts += partTotal;
+      }
+    }
+
+    // Process external parts (parts ordered from outside suppliers)
+    // These parts have already been added by staff with pricing during reception approval
+    for (const externalPart of serviceReception.externalParts || []) {
+      if (externalPart.orderStatus === "installed" || externalPart.orderStatus === "arrived") {
+        invoiceItems.parts.push({
+          partId: null, // External parts don't have partId in system
+          partName: externalPart.partName,
+          partNumber: externalPart.partNumber || "EXTERNAL",
+          quantity: externalPart.quantity,
+          unitPrice: externalPart.unitPrice,
+          totalPrice: externalPart.totalPrice,
+          description: `${externalPart.partName} (External Order)${externalPart.supplier?.name ? ` - ${externalPart.supplier.name}` : ""}`,
+          isExternalPart: true, // Mark as external part for UI display
+          supplier: externalPart.supplier?.name,
+          warranty: externalPart.warranty,
+          notes: externalPart.notes,
+        });
+        subtotalParts += externalPart.totalPrice;
       }
     }
 

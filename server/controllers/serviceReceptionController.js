@@ -579,7 +579,7 @@ export const resubmitServiceReception = async (req, res) => {
 export const approveServiceReception = async (req, res) => {
   try {
     const { id } = req.params;
-    const { decision, reviewNotes, approved, staffNotes } = req.body;
+    const { decision, reviewNotes, approved, staffNotes, externalParts } = req.body;
 
     // Support both old format (approved: boolean) and new format (decision: 'approved'/'rejected')
     const isApproved = decision ? decision === "approved" : approved;
@@ -605,6 +605,22 @@ export const approveServiceReception = async (req, res) => {
         null,
         "UNAUTHORIZED_ROLE"
       );
+    }
+
+    // Handle external parts if provided (staff adding external part orders)
+    if (isApproved && externalParts && Array.isArray(externalParts) && externalParts.length > 0) {
+      console.log("=== ADDING EXTERNAL PARTS ===");
+      console.log("External parts count:", externalParts.length);
+
+      // Add external parts to service reception
+      serviceReception.externalParts = externalParts.map(part => ({
+        ...part,
+        addedBy: req.user._id,
+        addedAt: new Date(),
+      }));
+      serviceReception.hasExternalParts = true;
+
+      console.log("External parts added to service reception");
     }
 
     // Update approval info
@@ -784,6 +800,47 @@ export const approveServiceReception = async (req, res) => {
         }`,
       });
       await appointment.save();
+    }
+
+    // Handle external parts if present
+    if (isApproved && serviceReception.externalParts && serviceReception.externalParts.length > 0) {
+      console.log("=== PROCESSING EXTERNAL PARTS ===");
+      console.log("External parts count:", serviceReception.externalParts.length);
+
+      // Mark service reception as having external parts
+      serviceReception.hasExternalParts = true;
+
+      // Mark appointment as having external parts
+      if (appointment) {
+        appointment.hasExternalParts = true;
+        appointment.externalPartsInfo = {
+          requiresExternalOrder: true,
+          customerAgreedToLeaveVehicle: true,
+          technicianNote: serviceReception.specialInstructions?.fromStaff || "Requires external parts order",
+          markedBy: req.user._id,
+          markedAt: new Date(),
+        };
+
+        // Calculate external parts cost and add to appointment total
+        let externalPartsCost = 0;
+        serviceReception.externalParts.forEach((part) => {
+          externalPartsCost += part.totalPrice;
+          console.log(`External part: ${part.partName}, cost: ${part.totalPrice}`);
+        });
+
+        // Add tax to external parts cost
+        const taxExternalParts = externalPartsCost * 0.1; // 10% VAT
+        const totalExternalParts = externalPartsCost + taxExternalParts;
+
+        // Update appointment total
+        appointment.totalAmount = (appointment.totalAmount || 0) + totalExternalParts;
+        console.log("External parts total (with VAT):", totalExternalParts);
+        console.log("Updated appointment total:", appointment.totalAmount);
+
+        await appointment.save();
+      }
+
+      await serviceReception.save();
     }
 
     // Detect conflicts for requested parts if approved
