@@ -1,8 +1,10 @@
 import express from "express";
 import { protect, authorize } from "../middleware/auth.js";
+import { uploadPaymentProof } from "../middleware/upload.js";
 import {
   createServiceReception,
   getServiceReception,
+  getServiceReceptionByAppointment,
   updateServiceReception,
   approveServiceReception,
   resubmitServiceReception,
@@ -11,6 +13,7 @@ import {
   getChecklistProgress,
   updateChecklistItem,
   getChecklistTemplates,
+  confirmPayment,
 } from "../controllers/serviceReceptionController.js";
 
 const router = express.Router();
@@ -34,6 +37,9 @@ router.post(
 
 // Get service reception by ID
 router.get("/:id", getServiceReception);
+
+// Get service reception by appointment ID
+router.get("/appointment/:appointmentId", getServiceReceptionByAppointment);
 
 // Update service reception (technician or admin only)
 router.put("/:id", authorize(["technician", "admin"]), updateServiceReception);
@@ -79,6 +85,14 @@ router.put(
   "/:id/checklist-item/:stepNumber",
   authorize(["technician", "admin"]),
   updateChecklistItem
+);
+
+// Confirm payment for service reception (staff or admin only)
+router.post(
+  "/:id/confirm-payment",
+  authorize(["staff", "admin"]),
+  uploadPaymentProof.single("proofImage"),
+  confirmPayment
 );
 
 export default router;

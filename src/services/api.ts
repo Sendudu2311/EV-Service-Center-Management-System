@@ -369,6 +369,22 @@ export const appointmentsAPI = {
       }
     ),
 
+  // Payment confirmation after reception approval (NEW WORKFLOW)
+  confirmPaymentAfterReception: (appointmentId: string, formData: FormData) =>
+    api.post<ApiResponse<any>>(
+      `/api/appointments/${appointmentId}/confirm-payment-after-reception`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    ),
+
+  // Staff final confirmation after technician completes (NEW WORKFLOW)
+  staffFinalConfirm: (appointmentId: string) =>
+    api.post<ApiResponse<any>>(
+      `/api/appointments/${appointmentId}/staff-final-confirm`
+    ),
+
   // Get invoice by appointment
   getInvoiceByAppointment: (appointmentId: string) =>
     api.get<ApiResponse<any>>(`/api/invoices/appointment/${appointmentId}`),
@@ -502,8 +518,13 @@ export const serviceReceptionAPI = {
       { params }
     ),
 
-  getById: (appointmentId: string) =>
-    api.get<ApiResponse<any>>(`/api/appointments/${appointmentId}`),
+  getById: (serviceReceptionId: string) =>
+    api.get<ApiResponse<any>>(`/api/service-receptions/${serviceReceptionId}`),
+
+  getByAppointment: (appointmentId: string) =>
+    api.get<ApiResponse<any>>(
+      `/api/service-receptions/appointment/${appointmentId}`
+    ),
 
   update: (appointmentId: string, updateData: any) =>
     api.put<ApiResponse<any>>(
@@ -515,6 +536,16 @@ export const serviceReceptionAPI = {
     api.put<ApiResponse<any>>(
       `/api/appointments/${appointmentId}/review-reception`,
       approvalData
+    ),
+
+  // Confirm payment for service reception
+  confirmPayment: (serviceReceptionId: string, formData: FormData) =>
+    api.post<ApiResponse<any>>(
+      `/api/service-receptions/${serviceReceptionId}/confirm-payment`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
     ),
 };
 
@@ -646,23 +677,29 @@ export const partConflictsAPI = {
     api.post<ApiResponse<any>>("/api/part-conflicts/detect", { partId }),
 
   checkReceptionConflicts: (receptionId: string) =>
-    api.get<ApiResponse<{ hasConflict: boolean; conflictCount: number; conflicts: any[] }>>(
-      `/api/part-conflicts/check-reception/${receptionId}`
-    ),
+    api.get<
+      ApiResponse<{
+        hasConflict: boolean;
+        conflictCount: number;
+        conflicts: any[];
+      }>
+    >(`/api/part-conflicts/check-reception/${receptionId}`),
 
   getSuggestedResolution: (conflictId: string) =>
-    api.get<ApiResponse<{
-      suggested: Array<{
-        requestId: string;
-        receptionNumber: string;
-        priority: string;
-        scheduledDate: string;
-        requestedQuantity: number;
-        reasoning: string;
-      }>;
-      availableStock: number;
-      totalRequested: number;
-    }>>(`/api/part-conflicts/${conflictId}/suggestion`),
+    api.get<
+      ApiResponse<{
+        suggested: Array<{
+          requestId: string;
+          receptionNumber: string;
+          priority: string;
+          scheduledDate: string;
+          requestedQuantity: number;
+          reasoning: string;
+        }>;
+        availableStock: number;
+        totalRequested: number;
+      }>
+    >(`/api/part-conflicts/${conflictId}/suggestion`),
 
   approveRequest: (
     conflictId: string,
@@ -670,12 +707,15 @@ export const partConflictsAPI = {
       requestId: string;
       notes?: string;
     }
-  ) => api.post<ApiResponse<{
-      requestId: string;
-      conflictStatus: string;
-      newAvailableStock: number;
-      receptionStatus: string;
-    }>>(`/api/part-conflicts/${conflictId}/approve-request`, data),
+  ) =>
+    api.post<
+      ApiResponse<{
+        requestId: string;
+        conflictStatus: string;
+        newAvailableStock: number;
+        receptionStatus: string;
+      }>
+    >(`/api/part-conflicts/${conflictId}/approve-request`, data),
 
   rejectRequest: (
     conflictId: string,
@@ -683,11 +723,14 @@ export const partConflictsAPI = {
       requestId: string;
       reason: string;
     }
-  ) => api.post<ApiResponse<{
-      requestId: string;
-      conflictStatus: string;
-      receptionStatus: string;
-    }>>(`/api/part-conflicts/${conflictId}/reject-request`, data),
+  ) =>
+    api.post<
+      ApiResponse<{
+        requestId: string;
+        conflictStatus: string;
+        receptionStatus: string;
+      }>
+    >(`/api/part-conflicts/${conflictId}/reject-request`, data),
 };
 
 // Invoices API
@@ -696,6 +739,9 @@ export const invoicesAPI = {
     api.get<ApiResponse<any[]>>("/api/invoices", { params }),
 
   getById: (id: string) => api.get<ApiResponse<any>>(`/api/invoices/${id}`),
+
+  getByAppointment: (appointmentId: string) =>
+    api.get<ApiResponse<any>>(`/api/invoices/appointment/${appointmentId}`),
 
   generate: (appointmentId: string, data: any) =>
     api.post<ApiResponse<any>>(`/api/invoices/generate/${appointmentId}`, data),

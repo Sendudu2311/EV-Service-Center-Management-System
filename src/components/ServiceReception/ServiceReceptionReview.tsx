@@ -174,7 +174,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                 `Vui lòng giải quyết xung đột trong tab "Quản lý xung đột" trước khi duyệt.`,
               {
                 duration: 8000,
-                icon: '🚫',
+                icon: "🚫",
               }
             );
             setIsSubmitting(false);
@@ -182,19 +182,20 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
           }
         } catch (conflictError: any) {
           console.error("Error checking conflicts:", conflictError);
-          
+
           // HARD BLOCK on API error too - cannot verify safety
-          const errorMsg = conflictError.response?.data?.message || 
-                          conflictError.message || 
-                          "Lỗi kết nối";
-          
+          const errorMsg =
+            conflictError.response?.data?.message ||
+            conflictError.message ||
+            "Lỗi kết nối";
+
           toast.error(
             `🚫 Không thể kiểm tra xung đột phụ tùng!\n\n` +
-            `Lỗi: ${errorMsg}\n\n` +
-            `Vui lòng thử lại hoặc liên hệ quản trị viên.`,
+              `Lỗi: ${errorMsg}\n\n` +
+              `Vui lòng thử lại hoặc liên hệ quản trị viên.`,
             {
               duration: 8000,
-              icon: '🚫',
+              icon: "🚫",
             }
           );
           setIsSubmitting(false);
@@ -219,9 +220,10 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
       console.error("Error submitting review:", error);
 
       // Show specific error message from API if available
-      const errorMessage = error.response?.data?.message ||
-                          error.message ||
-                          "Không thể submit đánh giá";
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        "Không thể submit đánh giá";
 
       toast.error(errorMessage, {
         duration: 5000,
@@ -262,8 +264,8 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
             key={reception._id}
             className={`bg-dark-300 border rounded-lg shadow-sm hover:shadow-md transition-all ${
               (reception as any).hasConflict
-                ? 'border-red-500 border-2 bg-red-900/10'
-                : 'border-dark-200'
+                ? "border-red-500 border-2 bg-red-900/10"
+                : "border-dark-200"
             }`}
           >
             <div className="p-6">
@@ -289,14 +291,14 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                   <div className="text-yellow-400 text-sm flex items-center">
                     <ExclamationTriangleIcon className="h-4 w-4 mr-1" />
                     <span>
-                      Có xung đột phụ tùng.{' '}
+                      Có xung đột phụ tùng.{" "}
                       <button
                         onClick={() => setSelectedReception(reception)}
                         className="text-blue-400 underline hover:text-blue-300"
                       >
                         Xem chi tiết
-                      </button>
-                      {' '}hoặc{' '}
+                      </button>{" "}
+                      hoặc{" "}
                       <a
                         href="/part-conflicts"
                         className="text-blue-400 underline hover:text-blue-300"
@@ -451,23 +453,31 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                   <div className="bg-dark-900 rounded-lg p-4 mb-4">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="text-text-muted">Xe:</span>{" "}
-                        {selectedReception.vehicleId.year}{" "}
-                        {selectedReception.vehicleId.make}{" "}
-                        {selectedReception.vehicleId.model}
+                        <span className="text-text-secondary">Xe:</span>{" "}
+                        <span className="text-white">
+                          {selectedReception.vehicleId.year}{" "}
+                          {selectedReception.vehicleId.make}{" "}
+                          {selectedReception.vehicleId.model}
+                        </span>
                       </div>
                       <div>
-                        <span className="text-text-muted">Biển số:</span>{" "}
-                        {selectedReception.vehicleId.licensePlate}
+                        <span className="text-text-secondary">Biển số:</span>{" "}
+                        <span className="text-white">
+                          {selectedReception.vehicleId.licensePlate}
+                        </span>
                       </div>
                       <div>
-                        <span className="text-text-muted">VIN:</span>{" "}
-                        {selectedReception.vehicleId.vin}
+                        <span className="text-text-secondary">VIN:</span>{" "}
+                        <span className="text-white">
+                          {selectedReception.vehicleId.vin}
+                        </span>
                       </div>
                       <div>
-                        <span className="text-text-muted">Số km:</span>{" "}
-                        {selectedReception.vehicleCondition?.mileage?.current?.toLocaleString() ||
-                          "N/A"}
+                        <span className="text-text-secondary">Số km:</span>{" "}
+                        <span className="text-white">
+                          {selectedReception.vehicleCondition?.mileage?.current?.toLocaleString() ||
+                            "N/A"}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -832,31 +842,37 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
                         return totalCost > 0 ? (
                           <div className="bg-dark-900 border border-blue-200 rounded-lg p-4 mb-4">
-                            <h5 className="text-text-muted text-gray-800 mb-3">
+                            <h5 className="text-white font-semibold mb-3">
                               Tóm tắt chi phí
                             </h5>
                             <div className="space-y-2 text-sm">
                               <div className="flex justify-between">
-                                <span>Dịch vụ đề xuất:</span>
-                                <span className="text-text-muted">
+                                <span className="text-text-secondary">
+                                  Dịch vụ đề xuất:
+                                </span>
+                                <span className="text-white">
                                   {servicesCost.toLocaleString("vi-VN")} VNĐ
                                 </span>
                               </div>
                               <div className="flex justify-between">
-                                <span>Phụ tùng:</span>
-                                <span className="text-text-muted">
+                                <span className="text-text-secondary">
+                                  Phụ tùng:
+                                </span>
+                                <span className="text-white">
                                   {partsCost.toLocaleString("vi-VN")} VNĐ
                                 </span>
                               </div>
-                              <div className="flex justify-between font-semibold border-t pt-2">
-                                <span>Tổng cộng:</span>
+                              <div className="flex justify-between font-semibold border-t border-dark-200 pt-2 mt-2">
+                                <span className="text-white">Tổng cộng:</span>
                                 <span className="text-lime-600">
                                   {totalCost.toLocaleString("vi-VN")} VNĐ
                                 </span>
                               </div>
-                              <div className="flex justify-between text-xs text-text-secondary">
-                                <span>Bao gồm VAT 10%:</span>
-                                <span className="text-text-muted">
+                              <div className="flex justify-between text-xs border-t border-dark-200 pt-2 mt-2">
+                                <span className="text-text-secondary">
+                                  Bao gồm VAT 10%:
+                                </span>
+                                <span className="text-lime-500">
                                   {(totalCost * 1.1).toLocaleString("vi-VN")}{" "}
                                   VNĐ
                                 </span>
@@ -899,7 +915,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                 <div className="flex items-center text-yellow-400 text-sm px-4 py-2 bg-yellow-900/20 rounded-md border border-yellow-600/30">
                   <ExclamationTriangleIcon className="h-5 w-5 mr-2" />
                   <span>
-                    Không thể duyệt do có xung đột phụ tùng.{' '}
+                    Không thể duyệt do có xung đột phụ tùng.{" "}
                     <a
                       href="/part-conflicts"
                       className="text-blue-400 underline hover:text-blue-300 font-semibold"

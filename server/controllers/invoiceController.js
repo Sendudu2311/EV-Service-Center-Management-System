@@ -164,11 +164,11 @@ export const generateInvoice = async (req, res) => {
       });
     }
 
-    // Check if appointment is completed or reception_approved (for pre-payment)
-    if (!["completed", "reception_approved"].includes(appointment.status)) {
+    // Check if appointment is completed or reception_approved (NEW WORKFLOW)
+    if (appointment.status !== "completed" && appointment.status !== "reception_approved") {
       return res.status(400).json({
         success: false,
-        message: `Cannot generate invoice. Appointment status is: ${appointment.status}. Must be 'completed' or 'reception_approved'`,
+        message: `Cannot generate invoice. Appointment status must be 'completed' or 'reception_approved', current status: ${appointment.status}`,
       });
     }
 
