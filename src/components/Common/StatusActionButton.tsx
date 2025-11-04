@@ -4,6 +4,7 @@ import {
   PlayIcon,
   CheckCircleIcon,
   DocumentPlusIcon,
+  DocumentTextIcon,
   ExclamationTriangleIcon,
   ClockIcon,
   XMarkIcon,
@@ -163,12 +164,12 @@ const getStatusActions = (status: string): StatusAction[] => {
     case "reception_approved":
       actions.push(
         {
-          action: "start_work",
-          label: "Bắt đầu làm việc",
-          icon: PlayIcon,
-          variant: "success",
-          description: "Bắt đầu thực hiện dịch vụ",
-          roles: ["technician"],
+          action: "confirm_payment",
+          label: "Xác nhận thanh toán",
+          icon: CreditCardIcon,
+          variant: "primary",
+          description: "Xác nhận thanh toán và bắt đầu làm việc",
+          roles: ["staff", "admin"],
         },
         {
           action: "view_reception",
@@ -190,6 +191,14 @@ const getStatusActions = (status: string): StatusAction[] => {
           variant: "success",
           description: "Hoàn thành công việc",
           roles: ["technician"],
+        },
+        {
+          action: "view_invoice",
+          label: "Xem hóa đơn",
+          icon: DocumentTextIcon,
+          variant: "secondary",
+          description: "Xem chi tiết hóa đơn",
+          roles: ["customer", "staff", "admin"],
         },
         {
           action: "view_progress",
@@ -250,20 +259,20 @@ const getStatusActions = (status: string): StatusAction[] => {
     case "completed":
       actions.push(
         {
-          action: "generate_invoice",
-          label: "Tạo hóa đơn",
-          icon: DocumentPlusIcon,
-          variant: "primary",
-          description: "Tạo hóa đơn thanh toán",
-          roles: ["staff", "admin"],
+          action: "view_invoice",
+          label: "Xem hóa đơn",
+          icon: DocumentTextIcon,
+          variant: "secondary",
+          description: "Xem chi tiết hóa đơn",
+          roles: ["customer", "staff", "admin"],
         },
         {
-          action: "final_inspection",
-          label: "Kiểm tra cuối",
+          action: "staff_final_confirm",
+          label: "Xác nhận hoàn thành",
           icon: CheckCircleIcon,
-          variant: "secondary",
-          description: "Kiểm tra chất lượng cuối cùng",
-          roles: ["technician", "staff", "admin"],
+          variant: "primary",
+          description: "Xác nhận dịch vụ đã hoàn thành",
+          roles: ["staff", "admin"],
         },
         {
           action: "notify_customer",
@@ -289,26 +298,18 @@ const getStatusActions = (status: string): StatusAction[] => {
         {
           action: "view_invoice",
           label: "Xem hóa đơn",
-          icon: DocumentPlusIcon,
+          icon: DocumentTextIcon,
           variant: "secondary",
           description: "Xem chi tiết hóa đơn",
           roles: ["customer", "staff", "admin"],
         },
         {
-          action: "process_payment",
-          label: "Xử lý thanh toán",
-          icon: CreditCardIcon,
-          variant: "primary",
-          description: "Thực hiện thanh toán",
-          roles: ["customer", "staff", "admin"],
-        },
-        {
-          action: "send_invoice",
-          label: "Gửi hóa đơn",
-          icon: ChatBubbleLeftRightIcon,
+          action: "view_details",
+          label: "Xem chi tiết",
+          icon: EyeIcon,
           variant: "secondary",
-          description: "Gửi hóa đơn cho khách hàng",
-          roles: ["staff", "admin"],
+          description: "Xem thông tin chi tiết",
+          roles: ["customer", "staff", "admin"],
         }
       );
       break;

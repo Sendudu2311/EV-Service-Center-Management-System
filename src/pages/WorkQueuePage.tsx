@@ -111,8 +111,9 @@ const WorkQueuePage: React.FC = () => {
           statusFilter = "customer_arrived";
           break;
         case "start_work":
-          // Tab 2: Bắt đầu làm việc - appointments đã được duyệt, sẵn sàng bắt đầu
-          statusFilter = "reception_approved";
+          // Tab 2: Bắt đầu làm việc - appointments đã được duyệt hoặc đang làm việc (đã thanh toán)
+          // Include both "reception_approved" (approved but not paid yet) and "in_progress" (paid and work started)
+          statusFilter = "reception_approved,in_progress";
           break;
         case "completed":
           // Tab 3: Hoàn thành - appointments đã hoàn thành

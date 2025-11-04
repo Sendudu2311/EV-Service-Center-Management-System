@@ -7,6 +7,7 @@ import {
   FunnelIcon,
   CheckCircleIcon,
   ClockIcon,
+  DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "../contexts/AuthContext";
 import { useSocket, useCustomEvent } from "../contexts/SocketContext";
@@ -751,6 +752,27 @@ const AppointmentsPage: React.FC = () => {
         );
       }
 
+      // Add invoice display button for in_progress appointments (after payment confirmed)
+      if (
+        appointment.status === "in_progress" &&
+        (user.role === "staff" || user.role === "admin" || user.role === "customer")
+      ) {
+        return (
+          <div className="flex items-center space-x-2 mt-2">
+            <button
+              onClick={() => {
+                setSelectedAppointmentForInvoiceDisplay(appointment);
+                setShowInvoiceDisplayModal(true);
+              }}
+              disabled={state.updatingStatus === appointment._id}
+              className="inline-flex items-center px-2 py-1 border border-dark-200 text-xs rounded text-text-secondary bg-dark-300 hover:bg-dark-900 disabled:opacity-50"
+            >
+              Xem hóa đơn
+            </button>
+          </div>
+        );
+      }
+
       // Add invoice generation button for completed appointments
       if (
         appointment.status === "completed" &&
@@ -1296,9 +1318,22 @@ const AppointmentsPage: React.FC = () => {
                       </div>
 
                       <div className="flex items-center space-x-2 ml-4">
+                        {/* Show invoice button for in_progress, completed, and invoiced statuses */}
+                        {["in_progress", "completed", "invoiced"].includes(appointment.status) && (
+                          <button
+                            onClick={() => {
+                              setSelectedAppointmentForInvoiceDisplay(appointment);
+                              setShowInvoiceDisplayModal(true);
+                            }}
+                            className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-all duration-200 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-dark-900"
+                            aria-label={`Xem hóa đơn #${appointment.appointmentNumber}`}
+                          >
+                            <DocumentTextIcon className="h-4 w-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleViewDetails(appointment)}
-                          className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-dark-900 bg-lime-200 hover:bg-lime-100 transition-all duration-200 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-offset-dark-900"
+                          className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-dark-900 bg-lime-200 hover:bg-lime-100 transition-all duration-200 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-lime-400 focus:ring-offset-2 focus:ring-offset-dark-900"
                           aria-label={`Xem chi tiết lịch hẹn #${appointment.appointmentNumber}`}
                         >
                           <EyeIcon className="h-4 w-4" />

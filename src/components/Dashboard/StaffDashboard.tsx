@@ -18,18 +18,15 @@ import {
   dashboardAPI,
   appointmentsAPI,
   serviceReceptionAPI,
-<<<<<<< Updated upstream
   partConflictsAPI,
 } from "../../services/api";
 import { Link } from "react-router-dom";
-=======
-} from "../../services/api";
->>>>>>> Stashed changes
 import toast from "react-hot-toast";
 import { useDebouncedFetch } from "../../hooks/useDebouncedFetch";
 import { format } from "date-fns";
 import TechnicianSelection from "../Appointment/TechnicianSelection";
 import ServiceReceptionReview from "../ServiceReception/ServiceReceptionReview";
+import ReceptionPaymentModal from "../Payment/ReceptionPaymentModal";
 
 interface DashboardData {
   stats: {
@@ -70,21 +67,31 @@ const StaffDashboard: React.FC = () => {
   );
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<
-<<<<<<< Updated upstream
-    "appointments" | "reception-review" | "customer-arrival"
+    "appointments" | "reception-review" | "customer-arrival" | "pending-payment" | "completed-approval"
   >("appointments");
   const [appointmentsNeedingArrival, setAppointmentsNeedingArrival] = useState<
     any[]
   >([]);
   const [arrivalLoading, setArrivalLoading] = useState(false);
-=======
-    "appointments" | "reception-review"
-  >("appointments");
->>>>>>> Stashed changes
   const [pendingReceptions, setPendingReceptions] = useState<any[]>([]);
   const [receptionLoading, setReceptionLoading] = useState(false);
   const [conflictCount, setConflictCount] = useState(0);
   const [conflictLoading, setConflictLoading] = useState(false);
+
+  // NEW WORKFLOW: Reception Payment Modal
+  const [showReceptionPaymentModal, setShowReceptionPaymentModal] = useState(false);
+  const [selectedAppointmentForPayment, setSelectedAppointmentForPayment] = useState<any>(null);
+  const [selectedServiceReception, setSelectedServiceReception] = useState<any>(null);
+  const [pendingPaymentAppointments, setPendingPaymentAppointments] = useState<any[]>([]);
+  const [pendingPaymentLoading, setPendingPaymentLoading] = useState(false);
+
+  // NEW: Completed appointments waiting for final staff approval
+  const [completedAppointments, setCompletedAppointments] = useState<any[]>([]);
+  const [completedLoading, setCompletedLoading] = useState(false);
+
+  // Confirmation modal for final approval
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [appointmentToConfirm, setAppointmentToConfirm] = useState<string | null>(null);
 
   const debouncedFetchDashboard = () => {
     debouncedFetch(fetchDashboardData);
@@ -151,17 +158,55 @@ const StaffDashboard: React.FC = () => {
     }
   };
 
+  // NEW WORKFLOW: Fetch appointments pending payment (reception_approved status)
+  const fetchPendingPaymentAppointments = async () => {
+    try {
+      setPendingPaymentLoading(true);
+      const response = await appointmentsAPI.getAll({ status: "reception_approved" });
+      const appointments = response.data.data || response.data || [];
+      setPendingPaymentAppointments(appointments);
+    } catch (error: any) {
+      console.error("Error fetching pending payment appointments:", error);
+      toast.error("Không thể tải danh sách lịch hẹn chờ thanh toán");
+    } finally {
+      setPendingPaymentLoading(false);
+    }
+  };
+
+
+  // NEW: Fetch completed appointments waiting for staff final approval
+  const fetchCompletedAppointments = async () => {
+    try {
+      setCompletedLoading(true);
+      const response = await appointmentsAPI.getAll({
+        status: "completed",
+        limit: 100, // Increase limit to show more completed appointments
+        dateRange: "all" // Get all dates, not just today
+      });
+      const appointments = response.data.data || response.data || [];
+      setCompletedAppointments(appointments);
+    } catch (error: any) {
+      console.error("Error fetching completed appointments:", error);
+      toast.error("Không thể tải danh sách lịch hẹn đã hoàn thành");
+    } finally {
+      setCompletedLoading(false);
+    }
+  };
+
   useEffect(() => {
     debouncedFetchDashboard();
-<<<<<<< Updated upstream
     fetchConflictStats();
-=======
->>>>>>> Stashed changes
     if (activeTab === "reception-review") {
       fetchPendingReceptions();
     }
     if (activeTab === "customer-arrival") {
       fetchAppointmentsNeedingArrival();
+    }
+    if (activeTab === "pending-payment") {
+      fetchPendingPaymentAppointments();
+    }
+    if (activeTab === "completed-approval") {
+      fetchCompletedAppointments();
     }
   }, [activeTab]);
 
@@ -312,6 +357,63 @@ const StaffDashboard: React.FC = () => {
     }
   };
 
+  // NEW WORKFLOW: Handle confirm payment after reception approval
+  const handleConfirmPayment = async (appointmentId: string) => {
+    try {
+      // Fetch appointment and service reception data
+      const appointmentResponse = await appointmentsAPI.getById(appointmentId);
+      const appointment = appointmentResponse.data.data;
+
+      // Fetch service reception by appointment ID
+      const receptionResponse = await serviceReceptionAPI.getByAppointment(appointmentId);
+      const serviceReception = receptionResponse.data.data;
+
+      // Set state and open modal
+      setSelectedAppointmentForPayment(appointment);
+      setSelectedServiceReception(serviceReception);
+      setShowReceptionPaymentModal(true);
+    } catch (error: any) {
+      console.error("Error fetching appointment/reception data:", error);
+      toast.error(error.response?.data?.message || "Không thể tải dữ liệu appointment");
+    }
+  };
+
+  // NEW WORKFLOW: Handle staff final confirmation
+  const handleStaffFinalConfirm = async (appointmentId: string) => {
+    setAppointmentToConfirm(appointmentId);
+    setShowConfirmModal(true);
+  };
+
+  const confirmFinalApproval = async () => {
+    if (!appointmentToConfirm) return;
+
+    setActionLoading(appointmentToConfirm);
+    setShowConfirmModal(false);
+    try {
+      await appointmentsAPI.staffFinalConfirm(appointmentToConfirm);
+      toast.success("Xác nhận hoàn thành thành công!");
+      fetchCompletedAppointments(); // Refresh completed list
+      immediateFetchDashboard(); // Refresh dashboard stats
+    } catch (error: any) {
+      console.error("Error confirming completion:", error);
+      toast.error(
+        error.response?.data?.message || "Không thể xác nhận hoàn thành"
+      );
+    } finally {
+      setActionLoading(null);
+      setAppointmentToConfirm(null);
+    }
+  };
+
+  // Handle payment modal success
+  const handlePaymentSuccess = () => {
+    setShowReceptionPaymentModal(false);
+    setSelectedAppointmentForPayment(null);
+    setSelectedServiceReception(null);
+    immediateFetchDashboard();
+    toast.success("Thanh toán thành công! Công việc đã bắt đầu.");
+  };
+
   if (loading || fetchLoading()) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -385,6 +487,44 @@ const StaffDashboard: React.FC = () => {
                   {conflictCount > 0 && (
                     <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-yellow-100 bg-yellow-600 rounded-full">
                       {conflictCount} xung đột
+                    </span>
+                  )}
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab("pending-payment")}
+                className={`px-4 py-2 rounded-md text-sm text-text-muted transition-colors ${
+                  activeTab === "pending-payment"
+                    ? "bg-dark-300 text-lime-600 shadow-sm"
+                    : "text-text-muted hover:text-text-secondary"
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <span>Chờ thanh toán</span>
+                  {pendingPaymentAppointments.length > 0 && (
+                    <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+                      {pendingPaymentAppointments.length}
+                    </span>
+                  )}
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab("completed-approval")}
+                className={`px-4 py-2 rounded-md text-sm text-text-muted transition-colors ${
+                  activeTab === "completed-approval"
+                    ? "bg-dark-300 text-lime-600 shadow-sm"
+                    : "text-text-muted hover:text-text-secondary"
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="h-4 w-4" />
+                  <span>Duyệt hoàn thành</span>
+                  {completedAppointments.length > 0 && (
+                    <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+                      {completedAppointments.length}
                     </span>
                   )}
                 </div>
@@ -801,7 +941,260 @@ const StaffDashboard: React.FC = () => {
             />
           </>
         )}
+
+        {activeTab === "pending-payment" && (
+          // Pending Payment Tab Content (NEW WORKFLOW)
+          <div className="bg-dark-300 shadow rounded-lg">
+            <div className="px-4 py-5 sm:p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg leading-6 text-white">
+                  Lịch hẹn chờ xác nhận thanh toán
+                </h3>
+                <button
+                  onClick={fetchPendingPaymentAppointments}
+                  disabled={pendingPaymentLoading}
+                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs rounded text-white bg-lime-600 hover:bg-lime-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-500 disabled:opacity-50"
+                >
+                  {pendingPaymentLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-1" />
+                      Làm mới
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {pendingPaymentLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lime-600"></div>
+                </div>
+              ) : pendingPaymentAppointments.length === 0 ? (
+                <div className="text-center py-12">
+                  <CheckCircle className="mx-auto h-12 w-12 text-text-muted" />
+                  <h3 className="mt-2 text-sm text-text-muted">
+                    Không có lịch hẹn chờ thanh toán
+                  </h3>
+                  <p className="mt-1 text-sm text-text-muted">
+                    Tất cả phiếu tiếp nhận đã được xử lý thanh toán
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-hidden">
+                  <ul className="divide-y divide-dark-200">
+                    {pendingPaymentAppointments.map((appointment: any) => (
+                      <li key={appointment._id} className="py-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-3">
+                              <div className="flex-shrink-0">
+                                <span className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-lime-600">
+                                  <span className="text-xs text-dark-900 font-bold truncate px-1">
+                                    #{appointment.appointmentNumber}
+                                  </span>
+                                </span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-white truncate">
+                                  {appointment.customerId?.firstName}{" "}
+                                  {appointment.customerId?.lastName}
+                                </p>
+                                <p className="text-xs text-text-muted">
+                                  {appointment.vehicleId?.make}{" "}
+                                  {appointment.vehicleId?.model} -{" "}
+                                  {appointment.vehicleId?.licensePlate}
+                                </p>
+                                <p className="text-xs text-text-muted mt-1">
+                                  <Clock className="inline h-3 w-3 mr-1" />
+                                  {appointment.scheduledDate
+                                    ? `${format(
+                                        new Date(appointment.scheduledDate),
+                                        "dd/MM/yyyy"
+                                      )} ${appointment.scheduledTime || ""}`
+                                    : "N/A"}
+                                </p>
+                                <p className="text-xs text-yellow-400 mt-1">
+                                  Phiếu tiếp nhận đã được duyệt - Chờ xác nhận thanh toán
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="ml-4 flex-shrink-0">
+                            <button
+                              onClick={() => handleConfirmPayment(appointment._id)}
+                              disabled={actionLoading === appointment._id}
+                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm rounded text-dark-900 bg-lime-600 hover:bg-lime-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-500 disabled:opacity-50 transition-all duration-200 transform hover:scale-105"
+                            >
+                              {actionLoading === appointment._id ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-dark-900"></div>
+                              ) : (
+                                <>
+                                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                  </svg>
+                                  Xác nhận thanh toán
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "completed-approval" && (
+          // Completed Approval Tab Content (NEW WORKFLOW)
+          <div className="bg-dark-300 shadow rounded-lg">
+            <div className="px-4 py-5 sm:p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg leading-6 text-white">
+                  Lịch hẹn chờ duyệt hoàn thành
+                </h3>
+                <button
+                  onClick={fetchCompletedAppointments}
+                  disabled={completedLoading}
+                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs rounded text-white bg-lime-600 hover:bg-lime-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-500 disabled:opacity-50"
+                >
+                  {completedLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-1" />
+                      Làm mới
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {completedLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-lime-600"></div>
+                </div>
+              ) : completedAppointments.length === 0 ? (
+                <div className="text-center py-12">
+                  <CheckCircle className="mx-auto h-12 w-12 text-text-muted" />
+                  <h3 className="mt-2 text-sm text-text-muted">
+                    Không có lịch hẹn chờ duyệt hoàn thành
+                  </h3>
+                  <p className="mt-1 text-sm text-text-muted">
+                    Tất cả dịch vụ đã được xác nhận hoàn thành
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-hidden">
+                  <ul className="divide-y divide-dark-200">
+                    {completedAppointments.map((appointment: any) => (
+                      <li key={appointment._id} className="py-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-3">
+                              <div className="flex-shrink-0">
+                                <span className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-green-600">
+                                  <span className="text-xs text-white font-bold truncate px-1">
+                                    #{appointment.appointmentNumber}
+                                  </span>
+                                </span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-white truncate">
+                                  {appointment.customerId?.firstName}{" "}
+                                  {appointment.customerId?.lastName}
+                                </p>
+                                <p className="text-xs text-text-muted">
+                                  {appointment.vehicleId?.make}{" "}
+                                  {appointment.vehicleId?.model} -{" "}
+                                  {appointment.vehicleId?.licensePlate}
+                                </p>
+                                <p className="text-xs text-text-muted mt-1">
+                                  <Clock className="inline h-3 w-3 mr-1" />
+                                  {appointment.scheduledDate
+                                    ? `${format(
+                                        new Date(appointment.scheduledDate),
+                                        "dd/MM/yyyy"
+                                      )} ${appointment.scheduledTime || ""}`
+                                    : "N/A"}
+                                </p>
+                                <p className="text-xs text-green-400 mt-1">
+                                  Technician đã hoàn thành công việc
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="ml-4 flex-shrink-0">
+                            <button
+                              onClick={() => handleStaffFinalConfirm(appointment._id)}
+                              disabled={actionLoading === appointment._id}
+                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm rounded text-dark-900 bg-lime-600 hover:bg-lime-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-500 disabled:opacity-50 transition-all duration-200 transform hover:scale-105"
+                            >
+                              {actionLoading === appointment._id ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-dark-900"></div>
+                              ) : (
+                                <>
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Duyệt hoàn thành
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* NEW WORKFLOW: Reception Payment Modal */}
+      {showReceptionPaymentModal && selectedAppointmentForPayment && (
+        <ReceptionPaymentModal
+          appointment={selectedAppointmentForPayment}
+          serviceReception={selectedServiceReception}
+          isOpen={showReceptionPaymentModal}
+          onClose={() => setShowReceptionPaymentModal(false)}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
+
+      {/* Custom Confirmation Modal for Final Approval */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-dark-800 rounded-lg p-6 max-w-md w-full mx-4 border border-dark-600 shadow-xl">
+            <h3 className="text-xl font-bold text-text-primary mb-4">
+              Xác nhận dịch vụ đã hoàn thành?
+            </h3>
+            <p className="text-text-muted mb-6">
+              Bạn có chắc chắn muốn xác nhận dịch vụ đã hoàn thành? Sau khi xác nhận,
+              trạng thái sẽ chuyển sang "Đã xuất hóa đơn" và không thể hoàn tác.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  setAppointmentToConfirm(null);
+                }}
+                className="px-4 py-2 bg-dark-600 text-text-muted rounded-lg hover:bg-dark-500 transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={confirmFinalApproval}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

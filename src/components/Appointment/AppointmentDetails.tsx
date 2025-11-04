@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import CancelRequestManagement from "./CancelRequestManagement";
 import CancelRequestModal from "./CancelRequestModal";
+import PaymentPreviewModal from "../Payment/PaymentPreviewModal";
 import { useAuth } from "../../contexts/AuthContext";
 
 interface AppointmentDetailsProps {
@@ -16,7 +17,9 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   _onUpdate,
 }) => {
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showPaymentPreview, setShowPaymentPreview] = useState(false);
   const { user } = useAuth();
+
   const getStatusBadge = (status: string) => {
     const colors = {
       pending: "bg-orange-600 text-white",
@@ -142,8 +145,8 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                           appointment.priority === "high"
                             ? "text-red-600"
                             : appointment.priority === "medium"
-                            ? "text-yellow-600"
-                            : "text-green-600"
+                              ? "text-yellow-600"
+                              : "text-green-600"
                         }`}
                       >
                         {appointment.priority === "high" && "Cao"}
@@ -257,15 +260,146 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                         </div>
                       </div>
                     ))}
-                    <div className="pt-3 border-t border-dark-300">
-                      <div className="flex justify-between items-center">
-                        <span className="text-base font-semibold text-white">
-                          Tổng cộng:
-                        </span>
-                        <span className="text-base font-semibold text-white">
-                          {formatVND(appointment.totalAmount)}
-                        </span>
-                      </div>
+
+                    {/* Parts Used Section */}
+                    {appointment.partsUsed &&
+                      appointment.partsUsed.length > 0 && (
+                        <>
+                          <div className="pt-3 border-t border-dark-300">
+                            <h5 className="text-sm font-semibold text-white mb-2">
+                              Phụ tùng đã sử dụng
+                            </h5>
+                          </div>
+                          {appointment.partsUsed.map((part, index) => (
+                            <div
+                              key={index}
+                              className="border-b border-dark-200 pb-3 last:border-0"
+                            >
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="text-sm text-text-muted text-white">
+                                    {part.partId?.name ||
+                                      "Phụ tùng không xác định"}
+                                  </p>
+                                  {part.partId?.partNumber && (
+                                    <p className="text-xs text-text-muted">
+                                      Mã: {part.partId.partNumber}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm text-text-muted text-white">
+                                    {formatVND(part.unitPrice * part.quantity)}
+                                  </p>
+                                  <p className="text-xs text-text-muted">
+                                    SL: {part.quantity}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </>
+                      )}
+
+                    {/* Subtotals and Total */}
+                    <div className="pt-3 border-t border-dark-300 space-y-2">
+                      {(() => {
+                        // Calculate subtotals
+                        const servicesTotal = appointment.services.reduce(
+                          (sum: number, service: any) =>
+                            sum +
+                            (service.price || 0) * (service.quantity || 1),
+                          0
+                        );
+                        const partsTotal =
+                          appointment.partsUsed?.reduce(
+                            (sum: number, part: any) =>
+                              sum +
+                              (part.unitPrice || 0) * (part.quantity || 1),
+                            0
+                          ) || 0;
+                        const subtotal = servicesTotal + partsTotal;
+                        const vatAmount = subtotal * 0.1;
+                        const totalWithVAT = subtotal + vatAmount;
+
+                        return (
+                          <>
+                            {/* Services Subtotal */}
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-text-muted">
+                                Tổng dịch vụ:
+                              </span>
+                              <span className="text-white">
+                                {formatVND(servicesTotal)}
+                              </span>
+                            </div>
+
+                            {/* Parts Subtotal */}
+                            {appointment.partsUsed &&
+                              appointment.partsUsed.length > 0 && (
+                                <div className="flex justify-between items-center text-sm">
+                                  <span className="text-text-muted">
+                                    Tổng phụ tùng:
+                                  </span>
+                                  <span className="text-white">
+                                    {formatVND(partsTotal)}
+                                  </span>
+                                </div>
+                              )}
+
+                            {/* VAT */}
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-text-muted">
+                                VAT (10%):
+                              </span>
+                              <span className="text-white">
+                                {formatVND(vatAmount)}
+                              </span>
+                            </div>
+
+                            {/* Deposit */}
+                            {appointment.depositInfo &&
+                              appointment.depositInfo.paid &&
+                              appointment.depositInfo.amount && (
+                                <div className="flex justify-between items-center text-sm border-t border-dark-200 pt-2">
+                                  <span className="text-text-muted">
+                                    Đã đặt cọc:
+                                  </span>
+                                  <span className="text-green-600">
+                                    -{formatVND(appointment.depositInfo.amount)}
+                                  </span>
+                                </div>
+                              )}
+
+                            {/* Total */}
+                            <div className="flex justify-between items-center pt-2 border-t border-dark-200">
+                              <span className="text-base font-semibold text-white">
+                                Tổng cộng:
+                              </span>
+                              <span className="text-lg font-bold text-lime-600">
+                                {formatVND(totalWithVAT)}
+                              </span>
+                            </div>
+
+                            {/* Remaining Amount */}
+                            {appointment.depositInfo &&
+                              appointment.depositInfo.paid &&
+                              appointment.depositInfo.amount && (
+                                <div className="flex justify-between items-center text-sm">
+                                  <span className="text-text-muted">
+                                    Còn phải trả:
+                                  </span>
+                                  <span className="text-orange-500 font-semibold">
+                                    {formatVND(
+                                      totalWithVAT -
+                                        appointment.depositInfo.amount
+                                    )}
+                                  </span>
+                                </div>
+                              )}
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -341,9 +475,24 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
           {/* Footer */}
           <div className="bg-dark-900 px-6 py-4 sm:flex sm:flex-row-reverse">
             <div className="flex space-x-3">
+              {/* Payment Preview Button for Customers - show when reception is approved */}
+              {user?.role === "customer" &&
+                (appointment.customerId === user._id ||
+                  appointment.customerId?._id === user._id) &&
+                appointment.status === "reception_approved" && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPaymentPreview(true)}
+                    className="inline-flex w-full justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:w-auto"
+                  >
+                    Xem chi tiết thanh toán
+                  </button>
+                )}
+
               {/* Cancel Request Button for Customers */}
               {user?.role === "customer" &&
-                appointment.customerId === user._id &&
+                (appointment.customerId === user._id ||
+                  appointment.customerId?._id === user._id) &&
                 ["pending", "confirmed"].includes(appointment.status) && (
                   <button
                     type="button"
@@ -375,6 +524,13 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
           _onUpdate();
           setShowCancelModal(false);
         }}
+      />
+
+      {/* Payment Preview Modal */}
+      <PaymentPreviewModal
+        appointment={appointment}
+        isOpen={showPaymentPreview}
+        onClose={() => setShowPaymentPreview(false)}
       />
     </div>
   );

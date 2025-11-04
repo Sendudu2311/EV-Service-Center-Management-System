@@ -37,8 +37,10 @@ import {
   requestCancellation,
   approveCancellation,
   processRefund,
-  // Payment Confirmation API
+  // Payment Confirmation APIs
   confirmFinalPayment,
+  confirmPaymentAfterReception,
+  staffFinalConfirmation,
 } from "../controllers/appointmentController.js";
 import { protect } from "../middleware/auth.js";
 import { uploadPaymentProof } from "../middleware/upload.js";
@@ -93,12 +95,20 @@ router.post("/:id/request-cancel", requestCancellation);
 router.post("/:id/approve-cancel", approveCancellation);
 router.post("/:id/process-refund", processRefund);
 
-// Payment confirmation route (all authenticated users)
+// Payment confirmation routes (all authenticated users)
 router.post(
   "/:id/confirm-payment",
   uploadPaymentProof.single("proofImage"),
   confirmFinalPayment
 );
+
+router.post(
+  "/:id/confirm-payment-after-reception",
+  uploadPaymentProof.single("proofImage"),
+  confirmPaymentAfterReception
+);
+
+router.post("/:id/staff-final-confirm", staffFinalConfirmation);
 
 // Parameterized routes - must come after specific routes
 router.get("/:id", getAppointment);
