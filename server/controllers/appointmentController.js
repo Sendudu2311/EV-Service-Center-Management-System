@@ -4566,11 +4566,12 @@ export const confirmFinalPayment = async (req, res) => {
       });
     }
 
-    // Validate appointment status
-    if (appointment.status !== "completed") {
+    // Validate appointment status - allow payment from service work stages onward
+    const payableStatuses = ["reception_approved", "in_progress", "completed", "invoiced"];
+    if (!payableStatuses.includes(appointment.status)) {
       return res.status(400).json({
         success: false,
-        message: "Appointment must be completed to confirm payment",
+        message: "Appointment must be in service to confirm payment",
       });
     }
 

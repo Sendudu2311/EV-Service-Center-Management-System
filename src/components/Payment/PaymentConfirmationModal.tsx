@@ -104,6 +104,7 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
 
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update form data when appointment changes
@@ -194,6 +195,69 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
     setImagePreview(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("File ảnh không được vượt quá 5MB");
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "application/pdf",
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("Chỉ chấp nhận file JPG, PNG hoặc PDF");
+        return;
+      }
+
+      setFormData((prev) => ({
+        ...prev,
+        proofImage: file,
+      }));
+
+      // Create preview for images
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setImagePreview(e.target?.result as string);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setImagePreview(null);
+      }
     }
   };
 
@@ -479,7 +543,17 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
             <label className="block text-sm text-text-muted text-text-secondary mb-1">
               Ảnh chứng minh thanh toán *
             </label>
-            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dark-300 border-dashed rounded-md hover:border-dark-400 transition-colors">
+            <div
+            className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors ${
+              isDragOver
+                ? 'border-lime-500 bg-lime-900 bg-opacity-10'
+                : 'border-dark-300 hover:border-dark-400'
+            }`}
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
               <div className="space-y-1 text-center">
                 {imagePreview ? (
                   <div className="relative">
