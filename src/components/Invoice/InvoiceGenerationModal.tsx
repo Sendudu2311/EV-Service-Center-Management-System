@@ -44,25 +44,50 @@ const InvoiceGenerationModal: React.FC<InvoiceGenerationModalProps> = ({
     let partsTotal = 0;
     let recommendedServicesTotal = 0;
     let laborTotal = 0;
+    let externalPartsTotal = 0;
 
     if (serviceReception) {
       // Parts from service reception
       partsTotal = (serviceReception.requestedParts || [])
         .filter((part: any) => part.isAvailable)
         .reduce((sum: number, part: any) => {
-          const unitPrice = part.partId?.pricing?.retail || part.estimatedCost || 0;
-          return sum + (unitPrice * part.quantity);
+          const unitPrice =
+            part.partId?.pricing?.retail || part.estimatedCost || 0;
+          return sum + unitPrice * part.quantity;
         }, 0);
 
       // Recommended services discovered during inspection
-      recommendedServicesTotal = (serviceReception.recommendedServices || [])
-        .reduce((sum: number, rs: any) => sum + (rs.estimatedCost || 0), 0);
+      recommendedServicesTotal = (
+        serviceReception.recommendedServices || []
+      ).reduce((sum: number, rs: any) => sum + (rs.estimatedCost || 0), 0);
 
       // Labor estimates
       laborTotal = serviceReception.estimatedLabor?.totalCost || 0;
+
+      // External parts (if hasExternalParts flag is true)
+      if (
+        serviceReception.hasExternalParts &&
+        serviceReception.externalParts &&
+        serviceReception.externalParts.length > 0
+      ) {
+        externalPartsTotal = serviceReception.externalParts.reduce(
+          (sum: number, externalPart: any) => {
+            const partTotal =
+              externalPart.totalPrice ||
+              externalPart.unitPrice * externalPart.quantity;
+            return sum + partTotal;
+          },
+          0
+        );
+      }
     }
 
-    const subtotal = servicesTotal + partsTotal + recommendedServicesTotal + laborTotal;
+    const subtotal =
+      servicesTotal +
+      partsTotal +
+      recommendedServicesTotal +
+      laborTotal +
+      externalPartsTotal;
     const taxAmount = subtotal * 0.1; // 10% VAT
     const totalAmount = subtotal + taxAmount;
     const remainingAmount = totalAmount - depositAmount;
@@ -118,6 +143,10 @@ const InvoiceGenerationModal: React.FC<InvoiceGenerationModalProps> = ({
       })),
       totals: {
         subtotal,
+        subtotalServices: servicesTotal + recommendedServicesTotal,
+        subtotalParts: partsTotal,
+        subtotalLabor: laborTotal,
+        subtotalAdditional: externalPartsTotal,
         taxAmount,
         depositAmount,
         totalAmount,
@@ -131,8 +160,8 @@ const InvoiceGenerationModal: React.FC<InvoiceGenerationModalProps> = ({
       },
       financialSummary: {
         subtotal,
-        laborCost: 0,
-        partsCost: 0,
+        laborCost: laborTotal,
+        partsCost: partsTotal + externalPartsTotal,
         vatAmount: taxAmount,
         vatRate: 10,
         totalAmount,
@@ -169,9 +198,7 @@ const InvoiceGenerationModal: React.FC<InvoiceGenerationModalProps> = ({
     <div className="fixed inset-0 bg-dark-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div className="relative top-4 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-dark-300 mb-8">
         <div className="flex items-center justify-between mb-6 pb-4 border-b">
-          <h2 className="text-xl font-bold text-white">
-            Thông tin thanh toán
-          </h2>
+          <h2 className="text-xl font-bold text-white">Thông tin thanh toán</h2>
           <button
             onClick={onClose}
             className="text-text-muted hover:text-text-secondary"

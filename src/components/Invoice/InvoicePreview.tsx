@@ -65,6 +65,18 @@ interface Invoice {
     currency: string;
   };
 
+  totals?: {
+    subtotal: number;
+    subtotalServices?: number;
+    subtotalParts?: number;
+    subtotalLabor?: number;
+    subtotalAdditional?: number;
+    taxAmount: number;
+    depositAmount?: number;
+    totalAmount: number;
+    remainingAmount?: number;
+  };
+
   paymentInfo: {
     dueDate: string;
     paidAmount: number;
@@ -248,11 +260,15 @@ const InvoicePreview: React.FC<Props> = ({
             <div className="space-y-1">
               <p className="font-semibold text-white">EV Service Center</p>
               <p className="text-sm text-text-secondary">EV-SC-001</p>
-              <p className="text-sm text-text-secondary">123 Main Street, Ward 1</p>
+              <p className="text-sm text-text-secondary">
+                123 Main Street, Ward 1
+              </p>
               <p className="text-sm text-text-secondary">
                 District 1, Ho Chi Minh City
               </p>
-              <p className="text-sm text-text-secondary">ĐT: +84 28 1234 5678</p>
+              <p className="text-sm text-text-secondary">
+                ĐT: +84 28 1234 5678
+              </p>
               <p className="text-sm text-text-secondary">
                 Email: info@evservicecenter.com
               </p>
@@ -376,8 +392,8 @@ const InvoicePreview: React.FC<Props> = ({
                               {item.warranty.unit === "months"
                                 ? "tháng"
                                 : item.warranty.unit === "years"
-                                ? "năm"
-                                : "ngày"}
+                                  ? "năm"
+                                  : "ngày"}
                             </span>
                           )}
                         </p>
@@ -414,7 +430,16 @@ const InvoicePreview: React.FC<Props> = ({
                 {formatVND(invoice.financialSummary.partsCost)}
               </span>
             </div>
-            <div className="flex justify-between text-sm">
+            {invoice.totals?.subtotalAdditional &&
+              invoice.totals.subtotalAdditional > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-text-secondary">Phụ tùng ngoài:</span>
+                  <span className="text-white">
+                    {formatVND(invoice.totals.subtotalAdditional || 0)}
+                  </span>
+                </div>
+              )}
+            <div className="flex justify-between text-sm border-t border-dark-300 pt-2">
               <span className="text-text-secondary">Tạm tính:</span>
               <span className="text-white">
                 {formatVND(invoice.financialSummary.subtotal)}
@@ -440,12 +465,15 @@ const InvoicePreview: React.FC<Props> = ({
             {/* Payment Information */}
             {invoice.paymentInfo.paidAmount > 0 && (
               <>
-                {invoice.totals?.depositAmount > 0 && (
-                  <div className="flex justify-between text-sm text-lime-600">
-                    <span>Tiền cọc đã trả:</span>
-                    <span>-{formatVND(invoice.totals.depositAmount)}</span>
-                  </div>
-                )}
+                {invoice.totals?.depositAmount &&
+                  invoice.totals.depositAmount > 0 && (
+                    <div className="flex justify-between text-sm text-lime-600">
+                      <span>Tiền cọc đã trả:</span>
+                      <span>
+                        -{formatVND(invoice.totals.depositAmount || 0)}
+                      </span>
+                    </div>
+                  )}
                 <div className="flex justify-between text-sm text-green-600">
                   <span>Đã thanh toán:</span>
                   <span>-{formatVND(invoice.paymentInfo.paidAmount)}</span>
