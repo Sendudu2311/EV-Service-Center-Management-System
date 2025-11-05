@@ -195,10 +195,7 @@ export async function detectPartConflicts(partId) {
             priority: appointment.priority || "normal",
             scheduledDate: appointment.scheduledDate,
             scheduledTime: appointment.scheduledTime,
-            requestedAt:
-              reception.requestedParts.find(
-                (p) => p.partId.toString() === partId.toString()
-              )?.requestedAt || reception.receivedAt,
+            requestedAt: reception.receivedAt || new Date(),
             customerId: reception.customerId,
             technicianId: reception.receivedBy,
             staffReviewStatus:
@@ -226,7 +223,7 @@ export async function detectPartConflicts(partId) {
             priority: appointment.priority || "normal",
             scheduledDate: appointment.scheduledDate,
             scheduledTime: appointment.scheduledTime,
-            requestedAt: partRequest.requestedAt,
+            requestedAt: partRequest.createdAt || new Date(),
             customerId: appointment.customerId,
             technicianId: partRequest.requestedBy,
             staffReviewStatus: "N/A",
