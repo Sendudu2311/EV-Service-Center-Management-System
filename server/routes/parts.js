@@ -20,13 +20,29 @@ import { uploadImage } from '../middleware/upload.js';
 
 const router = express.Router();
 
-// All routes require authentication
-router.use(protect);
-
+// Public routes - accessible to guests
 // @route   GET /api/parts
 // @desc    Get all parts with filtering
-// @access  Private (All authenticated users)
+// @access  Public
 router.get('/', getParts);
+
+// @route   GET /api/parts/search
+// @desc    Search compatible parts
+// @access  Public
+router.get('/search', searchCompatibleParts);
+
+// @route   GET /api/parts/by-service/:category
+// @desc    Get parts by service category
+// @access  Public
+router.get('/by-service/:category', getPartsByServiceCategory);
+
+// @route   GET /api/parts/:id
+// @desc    Get single part details
+// @access  Public
+router.get('/:id', getPart);
+
+// Protected routes - require authentication
+router.use(protect);
 
 // @route   GET /api/parts/analytics
 // @desc    Get parts analytics and statistics
@@ -37,16 +53,6 @@ router.get('/analytics', authorize('staff', 'admin', 'technician'), getPartsAnal
 // @desc    Get parts with low stock
 // @access  Private (Staff, Admin, Technician)
 router.get('/low-stock', authorize('staff', 'admin', 'technician'), getLowStockParts);
-
-// @route   GET /api/parts/search
-// @desc    Search compatible parts
-// @access  Private (All authenticated users)
-router.get('/search', searchCompatibleParts);
-
-// @route   GET /api/parts/by-service/:category
-// @desc    Get parts by service category
-// @access  Private (All authenticated users)
-router.get('/by-service/:category', getPartsByServiceCategory);
 
 // @route   POST /api/parts
 // @desc    Create new part with images
@@ -71,11 +77,6 @@ router.get('/appointment/:appointmentId', getAppointmentParts);
 // @desc    Update part usage (mark as used)
 // @access  Private (All authenticated users)
 router.put('/use', useReservedParts);
-
-// @route   GET /api/parts/:id
-// @desc    Get single part details
-// @access  Private (All authenticated users)
-router.get('/:id', getPart);
 
 // @route   PUT /api/parts/:id
 // @desc    Update part with optional images

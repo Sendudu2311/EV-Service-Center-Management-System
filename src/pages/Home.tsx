@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { servicesAPI, partsAPI } from '../services/api';
 import {
   BoltIcon,
   ClockIcon,
@@ -9,11 +10,44 @@ import {
   UserGroupIcon,
   CogIcon,
   ArrowRightIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  WrenchScrewdriverIcon,
+  CubeIcon
 } from '@heroicons/react/24/outline';
 
 const Home: React.FC = () => {
   const { isAuthenticated } = useAuth();
+  const [services, setServices] = useState<any[]>([]);
+  const [parts, setParts] = useState<any[]>([]);
+  const [loadingServices, setLoadingServices] = useState(true);
+  const [loadingParts, setLoadingParts] = useState(true);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await servicesAPI.getAll({ limit: 6 });
+        setServices(response.data.data || []);
+      } catch (error) {
+        console.error('Error fetching services:', error);
+      } finally {
+        setLoadingServices(false);
+      }
+    };
+
+    const fetchParts = async () => {
+      try {
+        const response = await partsAPI.getAll({ limit: 6 });
+        setParts(response.data.data || []);
+      } catch (error) {
+        console.error('Error fetching parts:', error);
+      } finally {
+        setLoadingParts(false);
+      }
+    };
+
+    fetchServices();
+    fetchParts();
+  }, []);
 
   const features = [
     {
@@ -144,27 +178,6 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Stats Section - SPLASH Theme */}
-      <section className="py-16 bg-dark-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center p-6 bg-dark-200 rounded-lg border border-dark-100 hover:border-lime-200 transition-all duration-300">
-                <div className="text-4xl lg:text-5xl font-bold text-lime-200 mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-lg font-semibold text-white mb-1">
-                  {stat.label}
-                </div>
-                <div className="text-sm text-text-muted">
-                  {stat.description}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Features Section - SPLASH Theme */}
       <section className="py-20 bg-dark-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -173,7 +186,7 @@ const Home: React.FC = () => {
               Comprehensive EV Service Management
             </h2>
             <p className="text-xl text-text-secondary max-w-3xl mx-auto">
-              Everything you need to manage electric vehicle service operations efficiently, 
+              Everything you need to manage electric vehicle service operations efficiently,
               from customer intake to service completion and payment processing.
             </p>
           </div>
@@ -199,62 +212,153 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Benefits Section - SPLASH Theme */}
-      <section className="py-20 bg-dark-300">
+      {/* Services Section - SPLASH Theme */}
+      <section className="py-20 bg-dark-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
-                Transform Your EV Service Operations
-              </h2>
-              <p className="text-lg text-text-secondary mb-8">
-                Our comprehensive platform helps service centers optimize operations, 
-                improve customer satisfaction, and increase profitability through 
-                intelligent automation and real-time insights.
-              </p>
-              <div className="space-y-4">
-                {benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-start space-x-3">
-                    <CheckCircleIcon className="h-6 w-6 text-lime-200 flex-shrink-0 mt-0.5" />
-                    <span className="text-text-secondary">{benefit}</span>
-                  </div>
-                ))}
-              </div>
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-lime-200/20 mb-6">
+              <WrenchScrewdriverIcon className="h-8 w-8 text-lime-200" />
             </div>
-            <div className="relative">
-              <div className="bg-dark-200 rounded-2xl p-8 border border-dark-100">
-                <div className="space-y-6">
-                  <div className="bg-dark-300 rounded-lg p-6 shadow-sm border border-dark-100">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm text-text-muted text-text-muted">Service Efficiency</span>
-                      <span className="text-sm font-bold text-lime-200">+35%</span>
-                    </div>
-                    <div className="w-full bg-dark-200 rounded-full h-2 border border-dark-100">
-                      <div className="bg-gradient-to-r from-lime-200 to-lime-300 h-2 rounded-full" style={{ width: '85%' }}></div>
-                    </div>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+              Our EV Services
+            </h2>
+            <p className="text-xl text-text-secondary max-w-3xl mx-auto">
+              Professional electric vehicle maintenance and repair services tailored to your EV's needs.
+            </p>
+          </div>
+
+          {loadingServices ? (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-lime-200"></div>
+              <p className="mt-4 text-text-secondary">Loading services...</p>
+            </div>
+          ) : services.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {services.map((service) => (
+                <div
+                  key={service._id}
+                  className="bg-dark-300 rounded-xl p-8 shadow-lg hover:shadow-glow transition-all duration-300 transform hover:-translate-y-2 border border-dark-200 hover:border-lime-200"
+                >
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-lime-200/20 mb-6 text-lime-200">
+                    <WrenchScrewdriverIcon className="h-6 w-6" />
                   </div>
-                  <div className="bg-dark-300 rounded-lg p-6 shadow-sm border border-dark-100">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm text-text-muted text-text-muted">Customer Satisfaction</span>
-                      <span className="text-sm font-bold text-lime-200">98%</span>
-                    </div>
-                    <div className="w-full bg-dark-200 rounded-full h-2 border border-dark-100">
-                      <div className="bg-gradient-to-r from-lime-200 to-lime-300 h-2 rounded-full" style={{ width: '98%' }}></div>
-                    </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    {service.name}
+                  </h3>
+                  {service.category && (
+                    <span className="inline-block px-3 py-1 text-xs font-medium bg-lime-200/10 text-lime-200 rounded-full mb-4">
+                      {service.category}
+                    </span>
+                  )}
+                  <p className="text-text-secondary leading-relaxed mb-4">
+                    {service.description}
+                  </p>
+                  <div className="flex items-center justify-between pt-4 border-t border-dark-200">
+                    <span className="text-sm text-text-muted">Duration</span>
+                    <span className="text-white font-semibold">{service.estimatedDuration} mins</span>
                   </div>
-                  <div className="bg-dark-300 rounded-lg p-6 shadow-sm border border-dark-100">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm text-text-muted text-text-muted">Revenue Growth</span>
-                      <span className="text-sm font-bold text-lime-200">+42%</span>
-                    </div>
-                    <div className="w-full bg-dark-200 rounded-full h-2 border border-dark-100">
-                      <div className="bg-gradient-to-r from-lime-200 to-lime-300 h-2 rounded-full" style={{ width: '75%' }}></div>
-                    </div>
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-sm text-text-muted">Price</span>
+                    <span className="text-lime-200 font-bold">
+                      {service.basePrice?.toLocaleString('vi-VN')} VND
+                    </span>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-text-secondary">No services available at the moment.</p>
+            </div>
+          )}
+
+          {services.length > 0 && (
+            <div className="text-center mt-12">
+              <Link
+                to="/customer-services"
+                className="inline-flex items-center justify-center px-8 py-4 bg-lime-200 text-dark-900 font-semibold rounded-lg hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-glow"
+              >
+                View All Services
+                <ArrowRightIcon className="ml-2 h-5 w-5" />
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Parts Section - SPLASH Theme */}
+      <section className="py-20 bg-dark-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-lime-200/20 mb-6">
+              <CubeIcon className="h-8 w-8 text-lime-200" />
+            </div>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+              Genuine EV Parts
+            </h2>
+            <p className="text-xl text-text-secondary max-w-3xl mx-auto">
+              High-quality genuine parts and components for all electric vehicle models.
+            </p>
           </div>
+
+          {loadingParts ? (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-lime-200"></div>
+              <p className="mt-4 text-text-secondary">Loading parts...</p>
+            </div>
+          ) : parts.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {parts.map((part) => (
+                <div
+                  key={part._id}
+                  className="bg-dark-300 rounded-xl p-8 shadow-lg hover:shadow-glow transition-all duration-300 transform hover:-translate-y-2 border border-dark-200 hover:border-lime-200"
+                >
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-lime-200/20 mb-6 text-lime-200">
+                    <CubeIcon className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    {part.name}
+                  </h3>
+                  {part.partNumber && (
+                    <p className="text-sm text-text-muted mb-4">
+                      Part #: {part.partNumber}
+                    </p>
+                  )}
+                  <p className="text-text-secondary leading-relaxed mb-4 line-clamp-3">
+                    {part.description || 'High-quality genuine part for electric vehicles'}
+                  </p>
+                  <div className="flex items-center justify-between pt-4 border-t border-dark-200">
+                    <span className="text-sm text-text-muted">Stock</span>
+                    <span className={`font-semibold ${part.inventory?.currentStock > 0 ? 'text-lime-200' : 'text-red-400'}`}>
+                      {part.inventory?.currentStock > 0 ? `${part.inventory.currentStock} available` : 'Out of stock'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-sm text-text-muted">Price</span>
+                    <span className="text-lime-200 font-bold">
+                      {part.pricing?.retail?.toLocaleString('vi-VN')} VND
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-text-secondary">No parts available at the moment.</p>
+            </div>
+          )}
+
+          {parts.length > 0 && (
+            <div className="text-center mt-12">
+              <Link
+                to="/customer-parts"
+                className="inline-flex items-center justify-center px-8 py-4 bg-lime-200 text-dark-900 font-semibold rounded-lg hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-glow"
+              >
+                View All Parts
+                <ArrowRightIcon className="ml-2 h-5 w-5" />
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
