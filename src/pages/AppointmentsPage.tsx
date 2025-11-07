@@ -1254,6 +1254,16 @@ const AppointmentsPage: React.FC = () => {
                             #{appointment.appointmentNumber}
                           </h2>
                           {getStatusBadge(appointment.status)}
+                          {appointment.hasExternalParts && (
+                            <span
+                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-yellow-600 text-white border-yellow-700"
+                              title="Cần đặt linh kiện ngoài - Xe sẽ được để lại trung tâm"
+                              role="status"
+                              aria-label="Cần đặt linh kiện ngoài"
+                            >
+                              📦 Part ngoài - Để xe lại
+                            </span>
+                          )}
                         </header>
 
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-3">

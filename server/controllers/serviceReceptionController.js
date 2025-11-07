@@ -579,7 +579,7 @@ export const resubmitServiceReception = async (req, res) => {
 export const approveServiceReception = async (req, res) => {
   try {
     const { id } = req.params;
-    const { decision, reviewNotes, approved, staffNotes, externalParts } =
+    const { decision, reviewNotes, approved, staffNotes, externalParts, extendedCompletionDate } =
       req.body;
 
     // Support both old format (approved: boolean) and new format (decision: 'approved'/'rejected')
@@ -786,13 +786,38 @@ export const approveServiceReception = async (req, res) => {
 
       console.log("NEW totalAmount:", appointment.totalAmount);
 
+      // Update estimatedCompletion if staff provided a new date (for external parts)
+      // Staff only provides date (YYYY-MM-DD), we need to combine with original appointment time
+      if (extendedCompletionDate) {
+        // Get original appointment time (hour and minute)
+        const originalCompletion = appointment.estimatedCompletion
+          ? new Date(appointment.estimatedCompletion)
+          : new Date(appointment.scheduledDate);
+
+        // Parse the new date (format: YYYY-MM-DD)
+        const newDate = new Date(extendedCompletionDate);
+
+        // Combine new date with original time
+        const newCompletionDate = new Date(
+          newDate.getFullYear(),
+          newDate.getMonth(),
+          newDate.getDate(),
+          originalCompletion.getHours(),
+          originalCompletion.getMinutes(),
+          originalCompletion.getSeconds()
+        );
+
+        appointment.estimatedCompletion = newCompletionDate;
+        console.log("Updated estimatedCompletion to:", newCompletionDate, "(date:", extendedCompletionDate, ", time from original:", originalCompletion.toLocaleTimeString('vi-VN'), ")");
+      }
+
       // Update appointment status
       appointment.status = "reception_approved";
       appointment.workflowHistory.push({
         status: "reception_approved",
         changedBy: req.user._id,
         changedAt: new Date(),
-        notes: `Service reception approved by staff. Additional cost: ${totalAdditional} VND (Services: ${additionalServicesCost}, Parts: ${additionalPartsCost}, Labor: ${laborCost})`,
+        notes: `Service reception approved by staff. Additional cost: ${totalAdditional} VND (Services: ${additionalServicesCost}, Parts: ${additionalPartsCost}, Labor: ${laborCost})${extendedCompletionDate ? `. Extended completion date: ${new Date(extendedCompletionDate).toLocaleDateString('vi-VN')}` : ''}`,
       });
       await appointment.save();
     } else if (appointment && !isApproved) {
