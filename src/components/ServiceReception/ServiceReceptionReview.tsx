@@ -103,6 +103,7 @@ interface ServiceReception {
   }>;
   specialInstructions: {
     fromCustomer: string;
+    fromStaff?: string;
     safetyPrecautions: string[];
     warningNotes: string[];
   };
@@ -146,6 +147,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
   const [reviewNotes, setReviewNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [externalParts, setExternalParts] = useState<any[]>([]);
+  const [extendedCompletionDate, setExtendedCompletionDate] = useState<string>("");
 
   const handleReviewSubmit = async (decision: "approve" | "reject") => {
     if (!selectedReception) return;
@@ -206,7 +208,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
         }
       }
 
-      await onReview(selectedReception._id, decision, reviewNotes, externalParts);
+      await onReview(selectedReception._id, decision, reviewNotes, externalParts, extendedCompletionDate);
 
       toast.success(
         decision === "approve"
@@ -217,6 +219,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
       setSelectedReception(null);
       setReviewNotes("");
       setExternalParts([]);
+      setExtendedCompletionDate("");
       if (onReceptionUpdated) {
         onReceptionUpdated();
       }
@@ -828,22 +831,18 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                       <div className="bg-amber-50 border-2 border-amber-400 rounded-lg p-4 text-sm text-gray-900">
                         <p className="whitespace-pre-wrap">{selectedReception.specialInstructions.fromStaff}</p>
                       </div>
-                      {console.log("📝 fromStaff note exists:", selectedReception.specialInstructions.fromStaff)}
                     </div>
                   )}
 
                   {/* External Parts Manager - Always show if technician has note */}
-                  {selectedReception.specialInstructions?.fromStaff ? (
+                  {selectedReception.specialInstructions?.fromStaff && (
                     <div className="mb-6">
-                      {console.log("🔧 Showing ExternalPartsManager for note:", selectedReception.specialInstructions.fromStaff)}
                       <ExternalPartsManager
                         technicianNote={selectedReception.specialInstructions.fromStaff}
                         existingParts={(selectedReception as any).externalParts || []}
                         onChange={setExternalParts}
                       />
                     </div>
-                  ) : (
-                    console.log("❌ No fromStaff note, specialInstructions:", selectedReception.specialInstructions)
                   )}
 
                   {/* Review Section */}
@@ -928,6 +927,27 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                           </div>
                         ) : null;
                       })()}
+
+                      {/* Extended Completion Date - Show when there are external parts OR technician note about external parts */}
+                      {(externalParts.length > 0 ||
+                        (selectedReception as any).externalParts?.length > 0 ||
+                        selectedReception.specialInstructions?.fromStaff) && (
+                        <div className="bg-amber-900/20 border border-amber-600/30 rounded-lg p-4">
+                          <label className="block text-sm font-medium text-amber-400 mb-2">
+                            📅 Ngày hoàn thành dự kiến mới (có part ngoài)
+                          </label>
+                          <input
+                            type="date"
+                            value={extendedCompletionDate}
+                            onChange={(e) => setExtendedCompletionDate(e.target.value)}
+                            className="block w-full rounded-md bg-dark-300 text-white border-amber-600/50 shadow-sm focus:border-amber-400 focus:ring-amber-400"
+                            placeholder="Chọn ngày hoàn thành mới..."
+                          />
+                          <p className="mt-2 text-xs text-amber-300">
+                            💡 Chọn ngày dự kiến hoàn thành mới (giờ sẽ giữ theo lịch hẹn gốc). Vì cần đặt linh kiện ngoài nên xe có thể phải để lại lâu hơn.
+                          </p>
+                        </div>
+                      )}
 
                       <div>
                         <label className="block text-sm text-text-muted text-text-secondary mb-2">
