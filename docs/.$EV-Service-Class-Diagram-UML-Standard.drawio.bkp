@@ -1,0 +1,310 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="UML-Class-Diagram" name="UML Standard Class Diagram">
+    <mxGraphModel dx="1950" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="2339" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Package: Core Domain -->
+        <mxCell id="pkg-core" value="«package»&lt;br&gt;&lt;b&gt;Core Domain&lt;/b&gt;" style="shape=folder;fontStyle=1;tabWidth=110;tabHeight=30;tabPosition=left;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=left;verticalAlign=top;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="40" y="40" width="620" height="480" as="geometry" />
+        </mxCell>
+
+        <!-- User Class -->
+        <mxCell id="user" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;User&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ email: String {unique}&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- password: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ firstName: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ lastName: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ phone: String&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ role: RoleEnum&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ isActive: Boolean&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ specializations: String[0..*]&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ matchPassword(pwd: String): Boolean&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ getFullName(): String&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=11;fontFamily=Helvetica;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="60" y="100" width="260" height="220" as="geometry" />
+        </mxCell>
+
+        <!-- Vehicle Class -->
+        <mxCell id="vehicle" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Vehicle&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ vin: String [1] {unique}&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ make: String [1]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ model: String [1]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ year: int [1]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ batteryType: BatteryTypeEnum&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ batteryCapacity: decimal&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ mileage: int&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ calculateNextMaintenance(): Date&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ isMaintenanceDue(): Boolean&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=11;fontFamily=Helvetica;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="360" y="100" width="280" height="200" as="geometry" />
+        </mxCell>
+
+        <!-- Appointment Class -->
+        <mxCell id="appointment" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Appointment&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ appointmentNumber: String [1] {unique}&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ scheduledDate: Date [1]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ scheduledTime: String [1]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ status: AppointmentStatusEnum&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ coreStatus: CoreStatusEnum&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ totalAmount: decimal&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ paymentStatus: PaymentStatusEnum&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ calculateTotal(): decimal&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ canTransitionTo(status: String): Boolean&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ updateStatus(status: String): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ requestCancellation(reason: String): void&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=11;fontFamily=Helvetica;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="60" y="360" width="300" height="240" as="geometry" />
+        </mxCell>
+
+        <!-- Package: Service Management -->
+        <mxCell id="pkg-service" value="«package»&lt;br&gt;&lt;b&gt;Service Management&lt;/b&gt;" style="shape=folder;fontStyle=1;tabWidth=140;tabHeight=30;tabPosition=left;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=left;verticalAlign=top;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="700" y="40" width="900" height="600" as="geometry" />
+        </mxCell>
+
+        <!-- ServiceReception Class -->
+        <mxCell id="serviceReception" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;ServiceReception&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ receptionNumber: String [1] {unique}&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ receivedAt: Date [1]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ status: ReceptionStatusEnum&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ vehicleCondition: VehicleCondition&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ estimatedCompletionTime: Date&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ hasExternalParts: Boolean&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ submitToStaff(techId: Identifier): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ staffReview(decision: String): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ canBeApproved(): Boolean&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ getEstimatedCost(): decimal&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=11;fontFamily=Helvetica;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
+          <mxGeometry x="720" y="100" width="320" height="240" as="geometry" />
+        </mxCell>
+
+        <!-- EVChecklist Class -->
+        <mxCell id="evChecklist" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;EVChecklist&lt;/b&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;(Template)&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ code: String [1] {unique}&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ name: String [1]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ category: CategoryEnum&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ estimatedDuration: int&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ isActive: Boolean&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ createInstance(aptId: Identifier): ChecklistInstance&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ isApplicableToVehicle(vehicle: Vehicle): Boolean&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=11;fontFamily=Helvetica;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
+          <mxGeometry x="1080" y="100" width="380" height="180" as="geometry" />
+        </mxCell>
+
+        <!-- ChecklistInstance Class -->
+        <mxCell id="checklistInstance" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;ChecklistInstance&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ status: InstanceStatusEnum&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ startedAt: Date [0..1]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ completedAt: Date [0..1]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ progressPercentage: int&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ overallResult: ResultEnum&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ startChecklist(techId: Identifier): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ completeItem(stepNo: int, result: String): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ calculateQualityScore(): int&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=11;fontFamily=Helvetica;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
+          <mxGeometry x="1080" y="320" width="320" height="200" as="geometry" />
+        </mxCell>
+
+        <!-- Service Class -->
+        <mxCell id="service" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Service&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ code: String [1] {unique}&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ name: String [1]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ category: ServiceCategoryEnum&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ basePrice: decimal [1]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ estimatedDuration: int [1]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ isActive: Boolean&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=11;fontFamily=Helvetica;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
+          <mxGeometry x="720" y="380" width="280" height="150" as="geometry" />
+        </mxCell>
+
+        <!-- Package: Parts Management -->
+        <mxCell id="pkg-parts" value="«package»&lt;br&gt;&lt;b&gt;Parts Management&lt;/b&gt;" style="shape=folder;fontStyle=1;tabWidth=140;tabHeight=30;tabPosition=left;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=left;verticalAlign=top;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="40" y="660" width="860" height="560" as="geometry" />
+        </mxCell>
+
+        <!-- Part Class -->
+        <mxCell id="part" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Part&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ partNumber: String [1] {unique}&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ name: String [1]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ category: PartCategoryEnum&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ brand: String [1]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ pricing: Pricing&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ inventory: Inventory&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ isActive: Boolean&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ getAvailableStock(): int&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ needsReorder(): Boolean&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ calculateDynamicReorderPoint(): int&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=11;fontFamily=Helvetica;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+          <mxGeometry x="60" y="720" width="320" height="240" as="geometry" />
+        </mxCell>
+
+        <!-- PartRequest Class -->
+        <mxCell id="partRequest" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;PartRequest&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ requestNumber: String [1] {unique}&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ type: RequestTypeEnum&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ status: RequestStatusEnum&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ urgency: UrgencyEnum&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ estimatedCost: decimal&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ calculateEstimatedCost(): decimal&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ checkPartsAvailability(): Object&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ approve(staffId: Identifier, decision: String): void&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=11;fontFamily=Helvetica;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+          <mxGeometry x="420" y="720" width="340" height="200" as="geometry" />
+        </mxCell>
+
+        <!-- PartConflict Class -->
+        <mxCell id="partConflict" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;PartConflict&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ conflictNumber: String [1] {unique}&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ availableStock: int&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ totalRequested: int&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ shortfall: int&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ status: ConflictStatusEnum&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ resolve(staffId: Identifier, notes: String): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;{static} + generateConflictNumber(): String&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=11;fontFamily=Helvetica;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+          <mxGeometry x="420" y="960" width="340" height="180" as="geometry" />
+        </mxCell>
+
+        <!-- Package: Financial -->
+        <mxCell id="pkg-financial" value="«package»&lt;br&gt;&lt;b&gt;Financial&lt;/b&gt;" style="shape=folder;fontStyle=1;tabWidth=110;tabHeight=30;tabPosition=left;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=left;verticalAlign=top;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="940" y="660" width="660" height="560" as="geometry" />
+        </mxCell>
+
+        <!-- Invoice Class -->
+        <mxCell id="invoice" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Invoice&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ invoiceNumber: String [1] {unique}&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ status: InvoiceStatusEnum&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ totals: InvoiceTotals&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ paymentInfo: PaymentInfo&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ sentToCustomer: Boolean&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ calculateTotals(): InvoiceTotals&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ recordPayment(data: Object): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ sendToCustomer(method: String): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ isOverdue(): Boolean&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=11;fontFamily=Helvetica;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="960" y="720" width="300" height="220" as="geometry" />
+        </mxCell>
+
+        <!-- Transaction Class -->
+        <mxCell id="transaction" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;Transaction&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ transactionRef: String [1] {unique}&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ transactionType: PaymentMethodEnum&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ paymentPurpose: PurposeEnum&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ amount: decimal [1]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ status: TransactionStatusEnum&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ currency: String = &quot;VND&quot;&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ updateStatus(status: String): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ handleFailure(code: String, msg: String): void&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ isExpired(): Boolean&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;{static} + getStatistics(range: Object): Object&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=11;fontFamily=Helvetica;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="1300" y="720" width="280" height="260" as="geometry" />
+        </mxCell>
+
+        <!-- ===== RELATIONSHIPS (updated) ===== -->
+
+        <!-- User — Vehicle (Association, was Aggregation) -->
+        <mxCell id="rel-user-vehicle" value="" style="endArrow=none;html=1;endSize=12;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="user" target="vehicle" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="320" y="150" as="sourcePoint" />
+            <mxPoint x="360" y="150" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel-user-vehicle-label1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-user-vehicle" vertex="1" connectable="0">
+          <mxGeometry x="-0.85" relative="1" as="geometry"><mxPoint x="-5" y="-10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-user-vehicle-label2" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-user-vehicle" vertex="1" connectable="0">
+          <mxGeometry x="0.85" relative="1" as="geometry"><mxPoint x="10" y="-10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-user-vehicle-role" value="owns" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;fontStyle=2" parent="rel-user-vehicle" vertex="1" connectable="0">
+          <mxGeometry x="0.1" relative="1" as="geometry"><mxPoint y="12" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- User — Appointment (Association, was Aggregation) -->
+        <mxCell id="rel-user-appointment" value="" style="endArrow=none;html=1;endSize=12;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="user" target="appointment" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-user-apt-label1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-user-appointment" vertex="1" connectable="0">
+          <mxGeometry x="-0.85" relative="1" as="geometry"><mxPoint x="10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-user-apt-label2" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-user-appointment" vertex="1" connectable="0">
+          <mxGeometry x="0.85" relative="1" as="geometry"><mxPoint x="-10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-user-apt-role" value="books" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;fontStyle=2" parent="rel-user-appointment" vertex="1" connectable="0">
+          <mxGeometry x="0.3" relative="1" as="geometry"><mxPoint x="15" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- Vehicle scheduled for Appointment (Association) -->
+        <mxCell id="rel-vehicle-apt" value="" style="endArrow=none;html=1;endSize=12;edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="vehicle" target="appointment" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-vehicle-apt-label1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-vehicle-apt" vertex="1" connectable="0">
+          <mxGeometry x="-0.85" relative="1" as="geometry"><mxPoint x="10" y="-10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-vehicle-apt-label2" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-vehicle-apt" vertex="1" connectable="0">
+          <mxGeometry x="0.85" relative="1" as="geometry"><mxPoint x="-10" y="-10" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- User (Technician) assigned to Appointment (Association - now solid) -->
+        <mxCell id="rel-tech-apt" value="" style="endArrow=none;html=1;endSize=12;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="user" target="appointment" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-tech-apt-label1" value="0..1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-tech-apt" vertex="1" connectable="0">
+          <mxGeometry x="-0.85" relative="1" as="geometry"><mxPoint x="15" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-tech-apt-label2" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-tech-apt" vertex="1" connectable="0">
+          <mxGeometry x="0.85" relative="1" as="geometry"><mxPoint x="15" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-tech-apt-role" value="assignedTechnician" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=2" parent="rel-tech-apt" vertex="1" connectable="0">
+          <mxGeometry x="0.2" relative="1" as="geometry"><mxPoint x="40" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- Appointment creates ServiceReception (Composition) -->
+        <mxCell id="rel-apt-reception" value="" style="endArrow=none;html=1;endSize=12;startArrow=diamondThin;startSize=20;startFill=1;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="appointment" target="serviceReception" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-apt-reception-label1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-apt-reception" vertex="1" connectable="0">
+          <mxGeometry x="-0.85" relative="1" as="geometry"><mxPoint x="-10" y="-10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-apt-reception-label2" value="0..1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-apt-reception" vertex="1" connectable="0">
+          <mxGeometry x="0.85" relative="1" as="geometry"><mxPoint x="10" y="-10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-apt-reception-role" value="creates" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;fontStyle=2" parent="rel-apt-reception" vertex="1" connectable="0">
+          <mxGeometry x="0.1" relative="1" as="geometry"><mxPoint y="12" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- EVChecklist instantiates ChecklistInstance (Dependency) -->
+        <mxCell id="rel-checklist-instance" value="" style="endArrow=open;html=1;endSize=12;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="evChecklist" target="checklistInstance" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-checklist-instance-label" value="«instantiate»" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=2" parent="rel-checklist-instance" vertex="1" connectable="0">
+          <mxGeometry x="0.1" relative="1" as="geometry"><mxPoint x="35" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- ServiceReception uses ChecklistInstance (Association) -->
+        <mxCell id="rel-reception-instance" value="" style="endArrow=none;html=1;endSize=12;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="serviceReception" target="checklistInstance" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-reception-instance-label1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-reception-instance" vertex="1" connectable="0">
+          <mxGeometry x="-0.85" relative="1" as="geometry"><mxPoint x="-10" y="-10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-reception-instance-label2" value="0..1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-reception-instance" vertex="1" connectable="0">
+          <mxGeometry x="0.85" relative="1" as="geometry"><mxPoint x="10" y="-10" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- ServiceReception requests PartRequest (Association) -->
+        <mxCell id="rel-reception-partreq" value="" style="endArrow=none;html=1;endSize=12;edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="serviceReception" target="partRequest" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-reception-partreq-label1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-reception-partreq" vertex="1" connectable="0">
+          <mxGeometry x="-0.9" relative="1" as="geometry"><mxPoint x="-10" y="-10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-reception-partreq-label2" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-reception-partreq" vertex="1" connectable="0">
+          <mxGeometry x="0.9" relative="1" as="geometry"><mxPoint x="10" y="-10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-reception-partreq-role" value="requests" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;fontStyle=2" parent="rel-reception-partreq" vertex="1" connectable="0">
+          <mxGeometry x="0.1" relative="1" as="geometry"><mxPoint y="12" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- PartRequest refers Part (Association) -->
+        <mxCell id="rel-partreq-part" value="" style="endArrow=none;html=1;endSize=12;edgeStyle=orthogonalEdgeStyle;exitX=0;exitY=0.75;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="partRequest" target="part" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-partreq-part-label1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-partreq-part" vertex="1" connectable="0">
+          <mxGeometry x="-0.9" relative="1" as="geometry"><mxPoint x="10" y="-10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-partreq-part-label2" value="1..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-partreq-part" vertex="1" connectable="0">
+          <mxGeometry x="0.9" relative="1" as="geometry"><mxPoint x="-10" y="-10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-partreq-part-role" value="requestedParts" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=2" parent="rel-partreq-part" vertex="1" connectable="0">
+          <mxGeometry x="0.2" relative="1" as="geometry"><mxPoint y="12" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- Part creates PartConflict (Association) -->
+        <mxCell id="rel-part-conflict" value="" style="endArrow=none;html=1;endSize=12;edgeStyle=orthogonalEdgeStyle;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="part" target="partConflict" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-part-conflict-label1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-part-conflict" vertex="1" connectable="0">
+          <mxGeometry x="-0.85" relative="1" as="geometry"><mxPoint x="10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-part-conflict-label2" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-part-conflict" vertex="1" connectable="0">
+          <mxGeometry x="0.85" relative="1" as="geometry"><mxPoint x="-10" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- Appointment generates Invoice (Composition) -->
+        <mxCell id="rel-apt-invoice" value="" style="endArrow=none;html=1;endSize=12;startArrow=diamondThin;startSize=20;startFill=1;edgeStyle=orthogonalEdgeStyle;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="appointment" target="invoice" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="285" y="640" />
+              <mxPoint x="900" y="640" />
+              <mxPoint x="900" y="775" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel-apt-invoice-label1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-apt-invoice" vertex="1" connectable="0">
+          <mxGeometry x="-0.95" relative="1" as="geometry"><mxPoint x="-10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-apt-invoice-label2" value="0..1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-apt-invoice" vertex="1" connectable="0">
+          <mxGeometry x="0.95" relative="1" as="geometry"><mxPoint x="-10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-apt-invoice-role" value="generates" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;fontStyle=2" parent="rel-apt-invoice" vertex="1" connectable="0">
+          <mxGeometry x="-0.5" relative="1" as="geometry"><mxPoint y="-10" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- Invoice records Transaction (Association) -->
+        <mxCell id="rel-invoice-transaction" value="" style="endArrow=none;html=1;endSize=12;edgeStyle=orthogonalEdgeStyle;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="invoice" target="transaction" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-invoice-trans-label1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-invoice-transaction" vertex="1" connectable="0">
+          <mxGeometry x="-0.85" relative="1" as="geometry"><mxPoint x="-10" y="-10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-invoice-trans-label2" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-invoice-transaction" vertex="1" connectable="0">
+          <mxGeometry x="0.85" relative="1" as="geometry"><mxPoint x="10" y="-10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-invoice-trans-role" value="records" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=11;fontStyle=2" parent="rel-invoice-transaction" vertex="1" connectable="0">
+          <mxGeometry x="0.1" relative="1" as="geometry"><mxPoint y="12" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- Appointment — Transaction (keep dashed only if pre-auth). Here remove dashed: make association solid if you keep it -->
+        <mxCell id="rel-apt-transaction" value="" style="endArrow=none;html=1;endSize=12;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;" parent="1" source="appointment" target="transaction" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="360" y="680" />
+              <mxPoint x="1370" y="680" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel-apt-trans-label1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-apt-transaction" vertex="1" connectable="0">
+          <mxGeometry x="-0.95" relative="1" as="geometry"><mxPoint x="10" as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-apt-trans-label2" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontStyle=1" parent="rel-apt-transaction" vertex="1" connectable="0">
+          <mxGeometry x="0.95" relative="1" as="geometry"><mxPoint x="-10" as="offset" /></mxGeometry>
+        </mxCell>
+
+        <!-- ===== Association Class: AppointmentService ===== -->
+        <mxCell id="appointmentService" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;AppointmentService&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ qty: int&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ unitPrice: decimal&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ discount: decimal&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ lineTotal: decimal {derived}&lt;/p&gt;&lt;hr size=&quot;1&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;+ calculateLineTotal(): decimal&lt;/p&gt;" style="verticalAlign=top;align=left;overflow=fill;fontSize=11;fontFamily=Helvetica;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
+          <mxGeometry x="760" y="540" width="320" height="170" as="geometry" />
+        </mxCell>
+
+        <!-- Appointment 1 —— * AppointmentService -->
+        <mxCell id="rel-apt-aptSvc" value="" style="endArrow=none;html=1;endSize=12;edgeStyle=orthogonalEdgeStyle;strokeWidth=2;" parent="1" source="appointment" target="appointmentService" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-apt-aptSvc-l1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=12;fontStyle=1" parent="rel-apt-aptSvc" vertex="1" connectable="0">
+          <mxGeometry x="-0.9" relative="1" as="geometry"><mxPoint x="-10" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-apt-aptSvc-l2" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=12;fontStyle=1" parent="rel-apt-aptSvc" vertex="1" connectable="0">
+          <mxGeometry x="0.9" relative="1" as="geometry"><mxPoint x="10" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- Service 1 —— * AppointmentService -->
+        <mxCell id="rel-svc-aptSvc" value="" style="endArrow=none;html=1;endSize=12;edgeStyle=orthogonalEdgeStyle;strokeWidth=2;" parent="1" source="service" target="appointmentService" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rel-svc-aptSvc-l1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=12;fontStyle=1" parent="rel-svc-aptSvc" vertex="1" connectable="0">
+          <mxGeometry x="-0.9" relative="1" as="geometry"><mxPoint x="-10" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+        <mxCell id="rel-svc-aptSvc-l2" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=12;fontStyle=1" parent="rel-svc-aptSvc" vertex="1" connectable="0">
+          <mxGeometry x="0.9" relative="1" as="geometry"><mxPoint x="10" y="-10" as="offset"/></mxGeometry>
+        </mxCell>
+
+        <!-- (Optional) Service — Appointment association previously dashed: keep association node-free now removed -->
+
+        <!-- Legend (unchanged) -->
+        <mxCell id="legend" value="&lt;b style=&quot;font-size:14px&quot;&gt;UML STANDARD LEGEND&lt;/b&gt;&lt;hr&gt;&lt;b&gt;Visibility:&lt;/b&gt;&lt;br&gt;+ public&lt;br&gt;- private&lt;br&gt;# protected&lt;br&gt;&lt;br&gt;&lt;b&gt;Multiplicity:&lt;/b&gt;&lt;br&gt;[1] exactly one&lt;br&gt;[0..1] zero or one&lt;br&gt;[0..*] zero or many&lt;br&gt;[1..*] one or many&lt;br&gt;&lt;br&gt;&lt;b&gt;Relationships:&lt;/b&gt;&lt;br&gt;◇—— Aggregation (has-a)&lt;br&gt;◆—— Composition (owns)&lt;br&gt;- - - -&gt; Dependency&lt;br&gt;———— Association&lt;br&gt;&lt;br&gt;&lt;b&gt;Packages:&lt;/b&gt;&lt;br&gt;Core Domain (Blue)&lt;br&gt;Service Mgmt (Purple)&lt;br&gt;Parts Mgmt (Red)&lt;br&gt;Financial (Green)" style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontColor=#333333;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="1300" y="1040" width="280" height="360" as="geometry" />
+        </mxCell>
+
+        <!-- Note (unchanged) -->
+        <mxCell id="note-missing" value="&lt;b style=&quot;font-size:13px&quot;&gt;📝 SUPPORTING MODELS&lt;/b&gt;&lt;br&gt;(Not shown for clarity)&lt;hr&gt;• Slot - Time slot booking&lt;br&gt;• Contact - Customer feedback&lt;br&gt;• TechnicianProfile - Tech info&lt;br&gt;• VNPAYTransaction - Payment gateway&lt;br&gt;&lt;br&gt;These are utility/supporting models&lt;br&gt;and don't affect core domain logic." style="text;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=11;" parent="1" vertex="1">
+          <mxGeometry x="960" y="1000" width="300" height="180" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

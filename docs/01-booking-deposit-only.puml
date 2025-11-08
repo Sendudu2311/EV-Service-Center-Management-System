@@ -1,0 +1,363 @@
+@startuml Booking with Deposit Payment Flow (Deposit Only)
+!theme plain
+
+' Cấu hình style
+skinparam ParticipantPadding 20
+skinparam BoxPadding 10
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 5
+
+' Màu sắc theo vai trò
+skinparam participant {
+    BackgroundColor<<Actor>> LightBlue
+    BackgroundColor<<UI>> LightGreen
+    BackgroundColor<<Service>> LightYellow
+    BackgroundColor<<External>> LightPink
+    BackgroundColor<<System>> WhiteSmoke
+}
+
+title Booking with Deposit Payment Flow (Deposit Only)\nEV Service Center Management System
+
+' ============================================================================
+' LIFELINES - Sắp xếp từ trái sang phải theo luồng tương tác
+' ============================================================================
+
+actor Customer <<Actor>>
+participant "BookingPage" as UI <<UI>>
+participant "AppointmentService" as AppSvc <<Service>>
+participant "VNPayController" as VNPay <<Service>>
+participant "TransactionService" as TxSvc <<Service>>
+participant "VNPayGateway" as Gateway <<External>>
+participant "Database" as DB <<System>>
+participant "EmailService" as Email <<System>>
+
+note over Customer, Email
+    **Use Case:** Customer đặt cọc 200,000 VND để book lịch hẹn (không chọn dịch vụ)
+    **Pre-condition:** Customer đã đăng nhập, có xe trong hệ thống
+    **Post-condition:** Appointment được tạo với status "confirmed", cọc đã thanh toán
+    **Note:** Dịch vụ cụ thể sẽ xác định sau khi technician kiểm tra xe
+end note
+
+' ============================================================================
+' PHASE 1: CUSTOMER ĐIỀN FORM BOOKING
+' ============================================================================
+
+Customer -> UI : fillBookingForm()
+activate UI
+
+UI -> UI : validateInput()
+
+note right of UI
+    Validate:
+    - vehicleId exists
+    - scheduledDate valid
+    - scheduledTime available
+    - bookingType: "deposit_booking"
+end note
+
+UI --> Customer : showBookingPreview()
+deactivate UI
+
+Customer -> UI : confirmBooking()
+activate UI
+
+' ============================================================================
+' PHASE 2: TẠO PAYMENT URL
+' ============================================================================
+
+UI -> VNPay : POST /api/vnpay/create-payment
+activate VNPay
+
+note right of VNPay
+    Request body:
+    - amount: 200000
+    - orderInfo: "Thanh toan dat coc xe dien"
+    - paymentType: "deposit"
+    - appointmentData: {
+        vehicleId,
+        scheduledDate,
+        scheduledTime
+      }
+end note
+
+VNPay -> TxSvc : createTransaction(vnpay, data)
+activate TxSvc
+
+TxSvc -> DB : INSERT Transaction
+activate DB
+DB --> TxSvc : transactionId
+deactivate DB
+
+note right of TxSvc
+    Transaction:
+    - transactionRef: APP{timestamp}{random}
+    - status: "pending"
+    - paymentPurpose: "deposit_booking"
+    - amount: 200000
+    - metadata: {appointmentData}
+end note
+
+TxSvc --> VNPay : Transaction
+deactivate TxSvc
+
+VNPay -> VNPay : buildPaymentUrl()
+
+note right of VNPay
+    VNPay params:
+    - vnp_TxnRef
+    - vnp_Amount: 20000000 (VND * 100)
+    - vnp_ReturnUrl
+    - vnp_SecureHash
+end note
+
+VNPay --> UI : {paymentUrl, transactionRef, transactionId}
+deactivate VNPay
+
+' ============================================================================
+' PHASE 3: THANH TOÁN TẠI VNPAY
+' ============================================================================
+
+UI -> Gateway : redirect(paymentUrl)
+deactivate UI
+activate Gateway
+
+Gateway -> Customer : displayPaymentPage()
+deactivate Gateway
+
+Customer -> Gateway : enterPaymentInfo()
+activate Gateway
+
+Gateway -> Gateway : processPayment()
+
+alt Payment Success [vnp_ResponseCode == "00"]
+
+    Gateway -> VNPay : GET /api/vnpay/return\n[vnp_ResponseCode=00]
+    activate VNPay
+
+    note right of VNPay
+        Callback params:
+        - vnp_TxnRef
+        - vnp_ResponseCode: "00"
+        - vnp_TransactionNo
+        - vnp_Amount
+        - vnp_SecureHash
+    end note
+
+    VNPay -> VNPay : verifyReturnUrl()
+
+    VNPay -> DB : SELECT Transaction\nWHERE transactionRef = vnp_TxnRef
+    activate DB
+    DB --> VNPay : Transaction
+    deactivate DB
+
+    VNPay -> TxSvc : updateTransactionStatus(completed, data)
+    activate TxSvc
+
+    TxSvc -> DB : UPDATE Transaction\nSET status = "completed"
+    activate DB
+    DB --> TxSvc : OK
+    deactivate DB
+
+    note right of TxSvc
+        Update:
+        - status: "completed"
+        - responseCode: "00"
+        - paidAmount: 200000
+        - vnpayData: {bankCode, cardType, payDate}
+    end note
+
+    TxSvc --> VNPay : Transaction
+    deactivate TxSvc
+
+    VNPay --> Gateway : redirect(clientUrl/payment/vnpay-return?success=true)
+    deactivate VNPay
+
+    Gateway --> UI : redirect
+    deactivate Gateway
+
+    activate UI
+
+    UI -> Customer : displayPaymentSuccess()
+
+    ' ============================================================================
+    ' PHASE 4: TẠO APPOINTMENT SAU KHI THANH TOÁN THÀNH CÔNG
+    ' ============================================================================
+
+    UI -> AppSvc : POST /api/appointments
+    activate AppSvc
+
+    note right of AppSvc
+        Request body:
+        - vehicleId
+        - bookingType: "deposit_booking"
+        - services: [] (empty)
+        - scheduledDate, scheduledTime
+        - customerNotes (optional)
+        - paymentInfo: {transactionRef}
+    end note
+
+    AppSvc -> DB : SELECT Vehicle\nWHERE _id = vehicleId AND customerId = userId
+    activate DB
+    DB --> AppSvc : Vehicle
+    deactivate DB
+
+    AppSvc -> AppSvc : validateVehicleOwnership()
+
+    AppSvc -> AppSvc : generateAppointmentNumber()
+
+    note right of AppSvc
+        appointmentNumber: APT{YYMMDD}{random3digits}
+        Example: APT250106234
+    end note
+
+    AppSvc -> DB : INSERT Appointment
+    activate DB
+
+    note right of DB
+        Appointment:
+        - appointmentNumber: APT250106234
+        - customerId
+        - vehicleId
+        - services: [] (empty)
+        - bookingType: "deposit_booking"
+        - depositInfo: {
+            amount: 200000,
+            paid: true,
+            paidAt: now,
+            transactionId
+          }
+        - status: "confirmed"
+        - scheduledDate, scheduledTime
+        - customerNotes (optional)
+    end note
+
+    DB --> AppSvc : appointmentId
+    deactivate DB
+
+    AppSvc -> TxSvc : updateTransactionAppointmentId(transactionRef, appointmentId)
+    activate TxSvc
+
+    TxSvc -> DB : UPDATE Transaction\nSET appointmentId = appointmentId
+    activate DB
+    DB --> TxSvc : OK
+    deactivate DB
+
+    TxSvc --> AppSvc : OK
+    deactivate TxSvc
+
+    ' ============================================================================
+    ' PHASE 5: GỬI EMAIL XÁC NHẬN
+    ' ============================================================================
+
+    par Send email confirmation
+        AppSvc -> Email : sendAppointmentConfirmation(appointmentData, userData)
+        activate Email
+
+        note right of Email
+            Email content:
+            - Appointment number: APT250106234
+            - Scheduled date & time
+            - Service center info
+            - Deposit paid: 200,000 VND
+            - Note: Dịch vụ cụ thể sẽ xác định
+              sau khi technician kiểm tra xe
+        end note
+
+        Email -> Customer : confirmationEmail
+        deactivate Email
+    end
+
+    AppSvc -> DB : SELECT Appointment\nWITH populate(vehicle)
+    activate DB
+    DB --> AppSvc : PopulatedAppointment
+    deactivate DB
+
+    AppSvc --> UI : {success: true, data: Appointment}
+    deactivate AppSvc
+
+    UI -> Customer : showAppointmentConfirmation()
+    deactivate UI
+
+else Payment Failed [vnp_ResponseCode != "00"]
+
+    Gateway -> VNPay : GET /api/vnpay/return\n[vnp_ResponseCode != "00"]
+    activate VNPay
+
+    VNPay -> VNPay : verifyReturnUrl()
+
+    VNPay -> DB : SELECT Transaction
+    activate DB
+    DB --> VNPay : Transaction
+    deactivate DB
+
+    VNPay -> TxSvc : updateTransactionStatus(failed, data)
+    activate TxSvc
+
+    TxSvc -> DB : UPDATE Transaction\nSET status = "failed"
+    activate DB
+
+    note right of DB
+        Update:
+        - status: "failed"
+        - errorCode: vnp_ResponseCode
+        - errorMessage: "Payment failed"
+    end note
+
+    DB --> TxSvc : OK
+    deactivate DB
+
+    TxSvc --> VNPay : Transaction
+    deactivate TxSvc
+
+    VNPay --> Gateway : redirect(clientUrl/payment/vnpay-return?success=false&error=...)
+    deactivate VNPay
+
+    Gateway --> UI : redirect
+    deactivate Gateway
+
+    activate UI
+    UI -> Customer : displayPaymentFailed()
+    deactivate UI
+
+    note over Customer
+        Customer có thể:
+        - Retry payment
+        - Cancel booking
+        - Contact support
+    end note
+
+end
+
+' ============================================================================
+' NOTES - Business Rules và Technical Details
+' ============================================================================
+
+note over Customer, Email
+    **Business Rules:**
+    1. Deposit amount cố định: 200,000 VND
+    2. Appointment auto-confirmed sau khi thanh toán thành công
+    3. Transaction lifecycle: pending → completed/failed
+    4. **Deposit Booking**: services[] = empty, xác định sau khi kiểm tra xe
+    5. Customer chỉ chọn ngày/giờ và xe, không chọn dịch vụ
+
+    **Technical Details:**
+    - VNPay amount: VND * 100 (20,000,000 = 200k VND)
+    - Transaction ref format: APP{timestamp}{random9chars}
+    - Appointment number format: APT{YYMMDD}{random3digits}
+    - Payment timeout: 15 minutes
+    - bookingType: "deposit_booking" (services empty)
+
+    **Security:**
+    - VNPay secure hash verification
+    - Vehicle ownership validation
+    - JWT authentication for all API calls
+
+    **Next Steps:**
+    Sau khi customer đến service center:
+    1. Technician kiểm tra xe (EV diagnostics)
+    2. Tạo ServiceReception với recommended services
+    3. Staff duyệt services và parts
+    4. Customer đồng ý → Proceed to service
+end note
+
+@enduml
