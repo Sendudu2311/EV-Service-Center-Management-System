@@ -7,9 +7,6 @@ import Appointment from "../models/Appointment.js";
 import Part from "../models/Part.js";
 import TechnicianProfile from "../models/TechnicianProfile.js";
 import ServiceReception from "../models/ServiceReception.js";
-import EVChecklist from "../models/EVChecklist.js";
-import ChecklistInstance from "../models/ChecklistInstance.js";
-import PartRequest from "../models/PartRequest.js";
 import Invoice from "../models/Invoice.js";
 import Slot from "../models/Slot.js";
 import { is } from "zod/v4/locales";
@@ -32,9 +29,6 @@ const connectDB = async () => {
 const clearData = async () => {
   try {
     await Invoice.deleteMany({});
-    await PartRequest.deleteMany({});
-    await ChecklistInstance.deleteMany({});
-    await EVChecklist.deleteMany({});
     await ServiceReception.deleteMany({});
     await TechnicianProfile.deleteMany({});
     await Appointment.deleteMany({});
@@ -1562,216 +1556,6 @@ const createTechnicianProfiles = async (users) => {
   }
 };
 
-// Create EV service checklists
-const createEVChecklists = async () => {
-  try {
-    const checklists = [
-      {
-        name: "Battery Health Assessment",
-        code: "CHK-BAT-001",
-        description:
-          "Comprehensive battery health check and diagnostic procedure",
-        category: "battery_check",
-        serviceTypes: ["battery"],
-        applicableVehicleTypes: [
-          {
-            make: "Tesla",
-            model: "Model 3",
-            year: { from: 2020, to: 2024 },
-            batteryType: "lithium-ion",
-          },
-          {
-            make: "Tesla",
-            model: "Model Y",
-            year: { from: 2020, to: 2024 },
-            batteryType: "lithium-ion",
-          },
-          {
-            make: "VinFast",
-            model: "VF e34",
-            year: { from: 2022, to: 2024 },
-            batteryType: "lithium-ion",
-          },
-          {
-            make: "Hyundai",
-            model: "IONIQ 5",
-            year: { from: 2022, to: 2024 },
-            batteryType: "lithium-ion",
-          },
-        ],
-        estimatedDuration: 60,
-        skillLevel: "intermediate",
-        safetyRequirements: [
-          "High voltage safety certification required",
-          "Insulated gloves mandatory",
-          "Safety glasses required",
-          "Fire extinguisher on standby",
-        ],
-        checklistItems: [
-          {
-            stepNumber: 1,
-            title: "Safety Protocol Setup",
-            description:
-              "Establish safety perimeter and don protective equipment",
-            category: "safety",
-            isRequired: true,
-            estimatedTime: 10,
-            qualityCriteria: "All safety equipment properly worn and tested",
-            skillLevel: "beginner",
-          },
-          {
-            stepNumber: 2,
-            title: "Battery Voltage Check",
-            description:
-              "Measure battery pack voltage using calibrated multimeter",
-            category: "testing",
-            isRequired: true,
-            estimatedTime: 15,
-            qualityCriteria: "Voltage within manufacturer specifications",
-            skillLevel: "intermediate",
-          },
-          {
-            stepNumber: 3,
-            title: "Cell Balance Analysis",
-            description:
-              "Check individual cell voltages for balance and degradation",
-            category: "inspection",
-            isRequired: true,
-            estimatedTime: 20,
-            qualityCriteria: "Cell voltage variance less than 50mV",
-            skillLevel: "intermediate",
-          },
-          {
-            stepNumber: 4,
-            title: "Charging Capacity Test",
-            description: "Test battery charging capacity and efficiency",
-            category: "testing",
-            isRequired: true,
-            estimatedTime: 10,
-            qualityCriteria: "Charging capacity within 95% of rated capacity",
-            skillLevel: "intermediate",
-          },
-          {
-            stepNumber: 5,
-            title: "Thermal Management Check",
-            description: "Verify cooling system operation and thermal sensors",
-            category: "verification",
-            isRequired: true,
-            estimatedTime: 5,
-            qualityCriteria:
-              "All thermal sensors responding within normal range",
-            skillLevel: "beginner",
-          },
-        ],
-        version: "2.1",
-        effectiveDate: new Date("2024-01-01"),
-        createdBy: "System Administrator",
-      },
-      {
-        name: "Motor Performance Diagnostic",
-        code: "CHK-MOT-001",
-        description:
-          "Electric motor performance analysis and diagnostic procedure",
-        category: "motor_check",
-        serviceTypes: ["motor"],
-        applicableVehicleTypes: [
-          {
-            make: "Tesla",
-            model: "Model 3",
-            year: { from: 2020, to: 2024 },
-            batteryType: "lithium-ion",
-          },
-          {
-            make: "Tesla",
-            model: "Model Y",
-            year: { from: 2020, to: 2024 },
-            batteryType: "lithium-ion",
-          },
-          {
-            make: "VinFast",
-            model: "VF e34",
-            year: { from: 2022, to: 2024 },
-            batteryType: "lithium-ion",
-          },
-        ],
-        estimatedDuration: 90,
-        skillLevel: "advanced",
-        safetyRequirements: [
-          "Motor systems certification required",
-          "Vehicle must be properly secured",
-          "High voltage disconnection required",
-        ],
-        checklistItems: [
-          {
-            stepNumber: 1,
-            title: "Pre-Test Safety Check",
-            description:
-              "Ensure vehicle is secure and high voltage is disconnected",
-            category: "safety",
-            isRequired: true,
-            estimatedTime: 15,
-            qualityCriteria: "High voltage isolation confirmed",
-            skillLevel: "intermediate",
-          },
-          {
-            stepNumber: 2,
-            title: "Motor Mount Inspection",
-            description:
-              "Check motor mounting points for wear and proper torque",
-            category: "inspection",
-            isRequired: true,
-            estimatedTime: 20,
-            qualityCriteria: "All mounts secure, no visible wear or damage",
-            skillLevel: "beginner",
-          },
-          {
-            stepNumber: 3,
-            title: "Performance Analysis",
-            description: "Test motor performance under various load conditions",
-            category: "testing",
-            isRequired: true,
-            estimatedTime: 45,
-            qualityCriteria: "Performance within manufacturer specifications",
-            skillLevel: "advanced",
-          },
-          {
-            stepNumber: 4,
-            title: "Vibration Analysis",
-            description: "Check for abnormal vibrations during operation",
-            category: "inspection",
-            isRequired: true,
-            estimatedTime: 10,
-            qualityCriteria: "Vibration levels within acceptable range",
-            skillLevel: "intermediate",
-          },
-        ],
-        version: "1.8",
-        effectiveDate: new Date("2024-01-15"),
-        createdBy: "Motor Systems Team",
-      },
-    ];
-
-    const createdChecklists = [];
-    for (const checklist of checklists) {
-      const exists = await EVChecklist.findOne({ code: checklist.code });
-      if (!exists) {
-        const newChecklist = await EVChecklist.create(checklist);
-        createdChecklists.push(newChecklist);
-      } else {
-        createdChecklists.push(exists);
-      }
-    }
-
-    console.log(
-      `✅ ${createdChecklists.length} EV checklists created successfully`
-    );
-    return createdChecklists;
-  } catch (error) {
-    console.error("Error creating EV checklists:", error);
-    throw error;
-  }
-};
-
 // Create service reception records
 const createServiceReceptions = async (vehicles, appointments, users) => {
   try {
@@ -2644,7 +2428,7 @@ const createParts = async () => {
         },
         leadTime: 2,
         warranty: {
-          duration: 24,
+          duration: 730,
           type: "manufacturer",
           description: "2 years shelf life",
         },
@@ -2704,7 +2488,7 @@ const createParts = async () => {
         },
         leadTime: 5,
         warranty: {
-          duration: 36,
+          duration: 1095,
           type: "manufacturer",
           description: "3 years shelf life",
         },
@@ -2761,7 +2545,7 @@ const createParts = async () => {
         },
         leadTime: 7,
         warranty: {
-          duration: 24,
+          duration: 730,
           type: "manufacturer",
           description: "2 years battery cell warranty",
         },
@@ -2815,7 +2599,7 @@ const createParts = async () => {
         },
         leadTime: 10,
         warranty: {
-          duration: 12,
+          duration: 365,
           type: "manufacturer",
           description: "1 year charging cable warranty",
         },
@@ -2869,7 +2653,7 @@ const createParts = async () => {
         },
         leadTime: 21,
         warranty: {
-          duration: 36,
+          duration: 1095,
           type: "manufacturer",
           description: "3 years electronic component warranty",
         },
@@ -2924,7 +2708,7 @@ const createParts = async () => {
         },
         leadTime: 5,
         warranty: {
-          duration: 6,
+          duration: 180,
           type: "manufacturer",
           description: "6 months tire warranty",
         },
@@ -2978,7 +2762,7 @@ const createParts = async () => {
         },
         leadTime: 3,
         warranty: {
-          duration: 6,
+          duration: 180,
           type: "manufacturer",
           description: "6 months filter performance warranty",
         },
@@ -3009,7 +2793,7 @@ const createParts = async () => {
     console.error("Error creating parts:", error);
     throw error;
   }
-};
+};;
 
 // Create sample appointments
 const createAppointments = async (
@@ -3718,123 +3502,6 @@ const createSlots = async (users) => {
   }
 };
 
-// Create part requests for testing workflow
-const createPartRequests = async (appointments, parts, users) => {
-  try {
-    const technicians = users.filter((u) => u.role === "technician");
-    const staff = users.filter((u) => u.role === "staff");
-
-    // Get completed and in-progress appointments that would have part requests
-    const relevantAppointments = appointments.filter((apt) =>
-      [
-        "reception_created",
-        "reception_approved",
-        "in_progress",
-        "parts_requested",
-        "completed",
-      ].includes(apt.status)
-    );
-
-    const partRequests = [];
-
-    // Create initial service part requests
-    for (let i = 0; i < Math.min(3, relevantAppointments.length); i++) {
-      const appointment = relevantAppointments[i];
-      const selectedParts = parts.slice(i * 2, i * 2 + 2); // Select different parts for each request
-
-      // Generate request number manually
-      const date = new Date();
-      const year = date.getFullYear().toString().slice(-2);
-      const month = (date.getMonth() + 1).toString().padStart(2, "0");
-      const day = date.getDate().toString().padStart(2, "0");
-      const requestNumber = `PRQ${year}${month}${day}${(i + 1)
-        .toString()
-        .padStart(3, "0")}`;
-
-      const partRequest = await PartRequest.create({
-        requestNumber,
-        appointmentId: appointment._id,
-        requestedBy: technicians[i % technicians.length]._id,
-        type: "initial_service",
-        requestedParts: selectedParts.map((part) => ({
-          partId: part._id,
-          quantity: Math.floor(Math.random() * 3) + 1,
-          reason: `Required for ${
-            appointment.services[0]?.serviceId ? "service" : "maintenance"
-          }`,
-          priority: ["normal", "high"][Math.floor(Math.random() * 2)],
-          partInfo: {
-            name: part.name,
-            partNumber: part.partNumber,
-            category: part.category,
-          },
-        })),
-        urgency: ["normal", "high"][Math.floor(Math.random() * 2)],
-        requestNotes: "Parts needed for scheduled service",
-        status: ["approved", "pending", "fulfilled"][
-          Math.floor(Math.random() * 3)
-        ],
-      });
-
-      // Add review details for approved/rejected requests
-      if (partRequest.status === "approved") {
-        partRequest.reviewDetails = {
-          reviewedBy: staff[0]._id,
-          reviewedAt: new Date(),
-          decision: "approve_all",
-          staffNotes: "All parts available in stock",
-        };
-        await partRequest.save();
-      }
-
-      partRequests.push(partRequest);
-    }
-
-    // Create additional part requests during service
-    if (relevantAppointments.length > 0) {
-      const date2 = new Date();
-      const year2 = date2.getFullYear().toString().slice(-2);
-      const month2 = (date2.getMonth() + 1).toString().padStart(2, "0");
-      const day2 = date2.getDate().toString().padStart(2, "0");
-      const additionalRequestNumber = `PRQ${year2}${month2}${day2}${(
-        partRequests.length + 1
-      )
-        .toString()
-        .padStart(3, "0")}`;
-
-      const additionalRequest = await PartRequest.create({
-        requestNumber: additionalRequestNumber,
-        appointmentId: relevantAppointments[0]._id,
-        requestedBy: technicians[0]._id,
-        type: "additional_during_service",
-        requestedParts: [
-          {
-            partId: parts[5]._id,
-            quantity: 1,
-            reason: "Additional part needed after inspection",
-            priority: "high",
-            partInfo: {
-              name: parts[5].name,
-              partNumber: parts[5].partNumber,
-              category: parts[5].category,
-            },
-          },
-        ],
-        urgency: "high",
-        requestNotes: "Found additional issue during service",
-        status: "pending",
-      });
-
-      partRequests.push(additionalRequest);
-    }
-
-    return partRequests;
-  } catch (error) {
-    console.error("Error creating part requests:", error);
-    throw error;
-  }
-};
-
 // Create invoices for completed appointments
 const createInvoices = async (appointments, users, parts) => {
   try {
@@ -3940,10 +3607,10 @@ const seedData = async () => {
     // Optional: Clear existing data (uncomment if needed)
     await clearData();
 
-    console.log("� Creating parts...");
+    console.log("⚙️ Creating parts...");
     const parts = await createParts();
 
-    console.log("�📝 Creating services...");
+    console.log("✅📝 Creating services...");
     const services = await createServices();
 
     console.log("🏢 Creating service centers...");
@@ -3953,10 +3620,10 @@ const seedData = async () => {
     console.log("👥 Creating users...");
     const users = await createUsers(serviceCenters);
 
-    console.log("� Creating slots...");
+    console.log("⏱️ Creating slots...");
     const slots = await createSlots(users);
 
-    console.log("�🚗 Creating vehicles...");
+    console.log("⚙️🚗 Creating vehicles...");
     const vehicles = await createVehicles(users);
 
     console.log("📅 Creating appointments...");
@@ -3971,18 +3638,12 @@ const seedData = async () => {
     console.log("👨‍🔧 Creating technician profiles...");
     const technicianProfiles = await createTechnicianProfiles(users);
 
-    console.log("✅ Creating EV checklists...");
-    const evChecklists = await createEVChecklists();
-
     console.log("📋 Creating service receptions...");
     const serviceReceptions = await createServiceReceptions(
       vehicles,
       appointments,
       users
     );
-
-    console.log("📦 Creating part requests...");
-    const partRequests = await createPartRequests(appointments, parts, users);
 
     console.log("💰 Creating invoices...");
     const invoices = await createInvoices(appointments, users, parts);
@@ -4004,9 +3665,7 @@ const seedData = async () => {
       `   - Appointments: ${appointments.length} (Complete workflow states)`
     );
     console.log(`   - Technician Profiles: ${technicianProfiles.length}`);
-    console.log(`   - EV Checklists: ${evChecklists.length}`);
     console.log(`   - Service Receptions: ${serviceReceptions.length}`);
-    console.log(`   - Part Requests: ${partRequests.length}`);
     console.log(
       `   - Invoices: ${invoices.length} (Vietnamese VAT compliance)`
     );
@@ -4055,6 +3714,6 @@ const seedData = async () => {
     console.error("❌ Error seeding data:", error);
     process.exit(1);
   }
-};
+};;
 
 seedData();

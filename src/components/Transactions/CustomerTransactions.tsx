@@ -391,11 +391,6 @@ const CustomerTransactions: React.FC = () => {
                           <div className="text-2xl font-bold text-white mb-1">
                             {formatVND(transaction.amount)}
                           </div>
-                          {transaction.paidAmount !== transaction.amount && (
-                            <div className="text-sm text-text-muted">
-                              Đã thanh toán: {formatVND(transaction.paidAmount)}
-                            </div>
-                          )}
                           {transaction.transactionRef && (
                             <div className="text-xs text-text-muted mt-1">
                               Mã: {transaction.transactionRef}

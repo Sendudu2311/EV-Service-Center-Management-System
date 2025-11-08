@@ -721,7 +721,7 @@ const EnhancedCustomerDashboard: React.FC = () => {
                           {getNotificationIcon(notification.type)}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <p className="text-sm text-text-muted text-white">
+                              <p className="text-sm text-text-muted font-semibold">
                                 {notification.title}
                               </p>
                               {notification.priority === 'high' && (

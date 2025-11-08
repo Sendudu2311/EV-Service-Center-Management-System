@@ -256,7 +256,8 @@ const StaffDashboard: React.FC = () => {
     receptionId: string,
     decision: "approve" | "reject",
     notes: string,
-    externalParts?: any[]
+    externalParts?: any[],
+    extendedCompletionDate?: string
   ) => {
     try {
       // receptionId is now the actual ServiceReception _id, not appointment ID
@@ -272,6 +273,7 @@ const StaffDashboard: React.FC = () => {
             decision: decision === "approve" ? "approved" : "rejected",
             reviewNotes: notes,
             externalParts: externalParts || [],
+            extendedCompletionDate: extendedCompletionDate || null,
           }),
         }
       );
@@ -286,7 +288,7 @@ const StaffDashboard: React.FC = () => {
       console.error("Error reviewing reception:", error);
       throw error;
     }
-  };
+  };;
 
   const getStatusColor = (status: string) => {
     switch (status) {
