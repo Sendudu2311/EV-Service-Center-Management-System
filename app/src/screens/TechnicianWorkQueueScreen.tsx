@@ -17,11 +17,13 @@ import type {
   Pagination,
 } from '../types/technician.types';
 import { TechnicianStackParamList } from '../types/navigation.types';
+import { useAuth } from '../contexts/AuthContext';
 
 type NavigationProp = NativeStackNavigationProp<TechnicianStackParamList, 'WorkQueue'>;
 
 const TechnicianWorkQueueScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const { logout } = useAuth();
 
   // State
   const [appointments, setAppointments] = useState<WorkQueueAppointment[]>([]);
@@ -76,6 +78,32 @@ const TechnicianWorkQueueScreen: React.FC = () => {
     navigation.navigate('AppointmentDetail', {
       appointmentId: appointment._id,
     });
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    Alert.alert(
+      'Đăng xuất',
+      'Bạn có chắc chắn muốn đăng xuất?',
+      [
+        {
+          text: 'Hủy',
+          style: 'cancel',
+        },
+        {
+          text: 'Đăng xuất',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+            } catch (error) {
+              console.error('Error during logout:', error);
+              Alert.alert('Lỗi', 'Không thể đăng xuất');
+            }
+          },
+        },
+      ]
+    );
   };
 
   // Get priority color
@@ -247,8 +275,11 @@ const TechnicianWorkQueueScreen: React.FC = () => {
           >
             <Text style={styles.scheduleButtonText}>📅 Lịch</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleRefresh}>
+          <TouchableOpacity onPress={handleRefresh} style={styles.iconButton}>
             <Text style={styles.refreshButton}>🔄</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Text style={styles.logoutButtonText}>Đăng xuất</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -344,8 +375,22 @@ const styles = StyleSheet.create({
     color: '#3B82F6',
     fontWeight: '600',
   },
+  iconButton: {
+    padding: 4,
+  },
   refreshButton: {
     fontSize: 24,
+  },
+  logoutButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#FEE2E2',
+    borderRadius: 8,
+  },
+  logoutButtonText: {
+    fontSize: 14,
+    color: '#DC2626',
+    fontWeight: '600',
   },
   statisticsContainer: {
     flexDirection: 'row',

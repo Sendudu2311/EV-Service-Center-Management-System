@@ -318,11 +318,20 @@ export const completeWork = async (appointmentId: string, completionData: {
 };
 
 /**
- * Get service reception by appointment ID
+ * Get service reception by appointment ID (returns latest active one)
  * Backend: GET /api/service-receptions/appointment/:appointmentId
  */
 export const getServiceReceptionByAppointment = async (appointmentId: string): Promise<any> => {
   const response = await api.get(`/api/service-receptions/appointment/${appointmentId}`);
+  return response.data;
+};
+
+/**
+ * Get ALL service receptions by appointment ID (returns array)
+ * Backend: GET /api/service-receptions/appointment/:appointmentId/all
+ */
+export const getAllServiceReceptionsByAppointment = async (appointmentId: string): Promise<any> => {
+  const response = await api.get(`/api/service-receptions/appointment/${appointmentId}/all`);
   return response.data;
 };
 
@@ -430,6 +439,7 @@ export default {
   startWork,
   completeWork,
   getServiceReceptionByAppointment,
+  getAllServiceReceptionsByAppointment,
   updateServiceReception,
   addRecommendedService,
   requestParts,

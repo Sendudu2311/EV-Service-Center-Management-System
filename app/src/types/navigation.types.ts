@@ -11,6 +11,7 @@ export type TechnicianStackParamList = {
   };
   CreateReception: {
     appointmentId: string;
+    rejectedReceptionId?: string; // Optional: ID of rejected reception to pre-fill form
   };
   ViewReception: {
     appointmentId: string;
