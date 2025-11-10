@@ -1,59 +1,29 @@
-[plugin:vite:react-babel] D:\Document\WDP392\EV-Service-Center-Management-System\src\components\Dashboard\StaffDashboard.tsx: Unexpected keyword 'const'. (69:9)
-  72 |     "appointments" | "reception-review" | "customer-arrival" | "pending-payment"
-D:/Document/WDP392/EV-Service-Center-Management-System/src/components/Dashboard/StaffDashboard.tsx:69:9
-68 |    const [actionLoading, setActionLoading] = useState<string | null>(null);
-69 |    const [const [activeTab, setActiveTab] = useState<
-70 |      "appointments" | "reception-review" | "customer-arrival" | "completed-approval"
-   |                          ^
-71 |    >("appointments");, setActiveTab] = useState<
-72 |      "appointments" | "reception-review" | "customer-arrival" | "pending-payment"
-    at constructor (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:362:19)
-    at TypeScriptParserMixin.raise (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:3259:19)
-    at TypeScriptParserMixin.checkReservedWord (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:11739:12)
-    at TypeScriptParserMixin.checkReservedWord (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:9030:13)
-    at TypeScriptParserMixin.parseIdentifierName (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:11726:12)
-    at TypeScriptParserMixin.parseIdentifier (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:11701:23)
-    at TypeScriptParserMixin.parseBindingAtom (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:7159:17)
-    at TypeScriptParserMixin.parseBindingAtom (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:9589:18)
-    at TypeScriptParserMixin.parseMaybeDefault (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:7240:50)
-    at TypeScriptParserMixin.parseMaybeDefault (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:9617:24)
-    at TypeScriptParserMixin.parseAssignableListItem (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:8845:23)
-    at TypeScriptParserMixin.parseBindingList (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:7193:24)
-    at TypeScriptParserMixin.parseBindingAtom (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:7153:32)
-    at TypeScriptParserMixin.parseBindingAtom (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:9589:18)
-    at TypeScriptParserMixin.parseVarId (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:12882:21)
-    at TypeScriptParserMixin.parseVarId (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:9398:11)
-    at TypeScriptParserMixin.parseVar (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:12863:12)
-    at TypeScriptParserMixin.parseVarStatement (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:12710:10)
-    at TypeScriptParserMixin.parseVarStatement (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:9127:31)
-    at TypeScriptParserMixin.parseStatementContent (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:12326:23)
-    at TypeScriptParserMixin.parseStatementContent (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:9157:18)
-    at TypeScriptParserMixin.parseStatementLike (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:12243:17)
-    at TypeScriptParserMixin.parseStatementListItem (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:12223:17)
-    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:12796:61)
-    at TypeScriptParserMixin.parseBlockBody (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:12789:10)
-    at TypeScriptParserMixin.parseBlock (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:12777:10)
-    at TypeScriptParserMixin.parseFunctionBody (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:11620:24)
-    at TypeScriptParserMixin.parseArrowExpression (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:11595:10)
-    at TypeScriptParserMixin.parseParenAndDistinguishExpression (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:11208:12)
-    at TypeScriptParserMixin.parseExprAtom (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:10849:23)
-    at TypeScriptParserMixin.parseExprAtom (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:6811:20)
-    at TypeScriptParserMixin.parseExprSubscripts (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:10591:23)
-    at TypeScriptParserMixin.parseUpdate (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:10576:21)
-    at TypeScriptParserMixin.parseMaybeUnary (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:10556:23)
-    at TypeScriptParserMixin.parseMaybeUnary (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:9483:18)
-    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:10410:61)
-    at TypeScriptParserMixin.parseExprOps (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:10415:23)
-    at TypeScriptParserMixin.parseMaybeConditional (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:10392:23)
-    at TypeScriptParserMixin.parseMaybeAssign (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:10355:21)
-    at TypeScriptParserMixin.parseMaybeAssign (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:9432:20)
-    at D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:10325:39
-    at TypeScriptParserMixin.allowInAnd (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:11932:16)
-    at TypeScriptParserMixin.parseMaybeAssignAllowIn (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:10325:17)
-    at TypeScriptParserMixin.parseVar (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:12864:91)
-    at TypeScriptParserMixin.parseVarStatement (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:12710:10)
-    at TypeScriptParserMixin.parseVarStatement (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:9127:31)
-    at TypeScriptParserMixin.parseStatementContent (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:12326:23)
-    at TypeScriptParserMixin.parseStatementContent (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:9157:18)
-    at TypeScriptParserMixin.parseStatementLike (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:12243:17)
-    at TypeScriptParserMixin.parseModuleItem (D:\Document\WDP392\EV-Service-Center-Management-System\node_modules\@babel\parser\lib\index.js:12220:17
+Error retrieving service reception: CastError: Cast to ObjectId failed for value "[object Object]" (type string) at path "_id" for model "ServiceReception"
+    at SchemaObjectId.cast (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/schema/objectId.js:251:11)
+    at SchemaType.applySetters (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/schemaType.js:1258:12)
+    at SchemaType.castForQuery (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/schemaType.js:1694:17)
+    at cast (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/cast.js:390:32)
+    at Query.cast (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/query.js:5060:12)
+    at Query._castConditions (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/query.js:2374:10)
+    at model.Query._findOne (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/query.js:2697:8)
+    at model.Query.exec (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/query.js:4627:80)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async getServiceReception (file:///Users/tranduy/Downloads/project/server/controllers/serviceReceptionController.js:258:30) {
+  stringValue: '"[object Object]"',
+  messageFormat: undefined,
+  kind: 'ObjectId',
+  value: '[object Object]',
+  path: '_id',
+  reason: BSONError: input must be a 24 character hex string, 12 byte Uint8Array, or an integer
+      at new ObjectId (/Users/tranduy/Downloads/project/server/node_modules/bson/lib/bson.cjs:2538:23)
+      at castObjectId (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/cast/objectid.js:25:12)
+      at SchemaObjectId.cast (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/schema/objectId.js:249:12)
+      at SchemaType.applySetters (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/schemaType.js:1258:12)
+      at SchemaType.castForQuery (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/schemaType.js:1694:17)
+      at cast (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/cast.js:390:32)
+      at Query.cast (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/query.js:5060:12)
+      at Query._castConditions (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/query.js:2374:10)
+      at model.Query._findOne (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/query.js:2697:8)
+      at model.Query.exec (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/query.js:4627:80),
+  valueType: 'string'
+}

@@ -7,10 +7,14 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TechnicianStackParamList } from '../types/navigation.types';
 import { getAppointmentDetail } from '../services/technician.api';
+import { createAdditionalPartRequest } from '../services/partRequest.api';
+import AdditionalPartRequestModal from '../components/AdditionalPartRequestModal';
 import api from '../services/api';
 
 type Props = NativeStackScreenProps<TechnicianStackParamList, 'ViewReception'>;
@@ -18,6 +22,7 @@ type Props = NativeStackScreenProps<TechnicianStackParamList, 'ViewReception'>;
 interface ServiceReception {
   _id: string;
   receptionNumber: string;
+  appointmentId: string | { _id: string };
   status: string;
   createdAt: string;
   submissionStatus: {
@@ -80,6 +85,25 @@ interface ServiceReception {
     safetyPrecautions?: string[];
     warningNotes?: string[];
   };
+  externalParts?: Array<{
+    partName: string;
+    partNumber: string;
+    supplier?: {
+      name: string;
+      contact?: string;
+      address?: string;
+    };
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+    warranty?: {
+      period: number;
+      description: string;
+    };
+    estimatedArrival?: string;
+    orderStatus: string;
+    notes?: string;
+  }>;
   estimatedServiceTime: number;
 }
 
@@ -89,9 +113,25 @@ const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
   const [loading, setLoading] = useState(true);
   const [reception, setReception] = useState<ServiceReception | null>(null);
 
+  // Part request states
+  const [availableParts, setAvailableParts] = useState<any[]>([]);
+  const [partPickerVisible, setPartPickerVisible] = useState(false);
+  const [partRequestModalVisible, setPartRequestModalVisible] = useState(false);
+  const [selectedPart, setSelectedPart] = useState<any>(null);
+
   useEffect(() => {
     loadReception();
+    loadParts();
   }, [appointmentId]);
+
+  const loadParts = async () => {
+    try {
+      const response = await api.get('/api/parts');
+      setAvailableParts(response.data.data || []);
+    } catch (error) {
+      console.error('Error loading parts:', error);
+    }
+  };
 
   const loadReception = async () => {
     try {
@@ -108,15 +148,34 @@ const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
 
       const appointment = appointmentResponse.data;
 
-      // Step 2: Check if appointment has serviceReceptionId
-      if (!appointment.serviceReceptionId) {
+      // Step 2: Get all service receptions for this appointment
+      // Find the latest non-rejected reception
+      const receptionsResponse = await api.get(`/api/service-receptions/appointment/${appointmentId}/all`);
+
+      if (!receptionsResponse.data.success || !receptionsResponse.data.data || receptionsResponse.data.data.length === 0) {
         Alert.alert('Lỗi', 'Chưa có phiếu tiếp nhận cho appointment này');
         navigation.goBack();
         return;
       }
 
-      // Step 3: Get service reception by ID
-      const receptionResponse = await api.get(`/api/service-receptions/${appointment.serviceReceptionId}`);
+      // Filter out rejected receptions and get the latest one
+      const activeReceptions = receptionsResponse.data.data.filter(
+        (r: any) => r.status !== 'rejected'
+      );
+
+      if (activeReceptions.length === 0) {
+        Alert.alert('Lỗi', 'Tất cả phiếu tiếp nhận đã bị từ chối');
+        navigation.goBack();
+        return;
+      }
+
+      // Get the latest active reception (sorted by createdAt)
+      const latestReception = activeReceptions.sort(
+        (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )[0];
+
+      // Step 3: Get full reception details
+      const receptionResponse = await api.get(`/api/service-receptions/${latestReception._id}`);
 
       if (receptionResponse.data.success && receptionResponse.data.data) {
         setReception(receptionResponse.data.data);
@@ -152,6 +211,20 @@ const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
         <Text style={[styles.statusText, { color: config.color }]}>{config.label}</Text>
       </View>
     );
+  };
+
+  const handlePartRequestSubmit = async (data: any) => {
+    if (!reception) return;
+
+    try {
+      await createAdditionalPartRequest(reception._id, data);
+      setPartRequestModalVisible(false);
+      setSelectedPart(null);
+      // Reload reception to show new part request
+      await loadReception();
+    } catch (error: any) {
+      throw error; // Let modal handle the error
+    }
   };
 
   const formatVND = (amount: number): string => {
@@ -355,6 +428,55 @@ const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
           </View>
         )}
 
+        {/* External Parts */}
+        {reception.externalParts && reception.externalParts.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>📦 Phụ tùng đặt ngoài ({reception.externalParts.length})</Text>
+            {reception.externalParts.map((part, index) => (
+              <View key={index} style={styles.externalPartItem}>
+                <View style={styles.partHeader}>
+                  <Text style={styles.partName}>{part.partName}</Text>
+                  <View style={{
+                    backgroundColor: part.orderStatus === 'delivered' ? '#d1fae5' :
+                                    part.orderStatus === 'in_transit' ? '#dbeafe' : '#fef3c7',
+                    paddingHorizontal: 8,
+                    paddingVertical: 2,
+                    borderRadius: 8
+                  }}>
+                    <Text style={{
+                      fontSize: 10,
+                      fontWeight: '600',
+                      color: part.orderStatus === 'delivered' ? '#065f46' :
+                             part.orderStatus === 'in_transit' ? '#1e40af' : '#92400e'
+                    }}>
+                      {part.orderStatus === 'delivered' ? 'Đã giao' :
+                       part.orderStatus === 'in_transit' ? 'Đang vận chuyển' : 'Đang đặt hàng'}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.partNumber}>Mã: {part.partNumber}</Text>
+                {part.supplier && (
+                  <Text style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>
+                    Nhà cung cấp: {part.supplier.name}
+                  </Text>
+                )}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+                  <Text style={{ fontSize: 13, color: '#6b7280' }}>Số lượng: {part.quantity}</Text>
+                  <Text style={{ fontSize: 13, color: '#6b7280' }}>Đơn giá: {formatVND(part.unitPrice)}</Text>
+                </View>
+                <Text style={[styles.partCost, { fontWeight: '700' }]}>Tổng: {formatVND(part.totalPrice)}</Text>
+                {part.notes && (
+                  <View style={{ backgroundColor: '#f9fafb', padding: 8, borderRadius: 6, marginTop: 8 }}>
+                    <Text style={{ fontSize: 12, color: '#4b5563', fontStyle: 'italic' }}>
+                      Ghi chú: {part.notes}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* Special Instructions */}
         {reception.specialInstructions && (
           <View style={styles.section}>
@@ -450,20 +572,97 @@ const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Action Buttons - Show edit button if rejected */}
+      {/* Action Buttons */}
       {(reception.submissionStatus.staffReviewStatus === 'rejected' ||
         reception.submissionStatus.staffReviewStatus === 'needs_modification') && (
         <View style={styles.bottomBar}>
           <TouchableOpacity
             style={styles.editButton}
             onPress={() => {
-              // TODO: Navigate to edit screen
-              Alert.alert('Thông báo', 'Chức năng sửa phiếu đang được phát triển');
+              // Navigate to CreateReception with rejected reception data for creating new reception
+              const appointmentId = typeof reception.appointmentId === 'string'
+                ? reception.appointmentId
+                : reception.appointmentId._id;
+              navigation.navigate('CreateReception', {
+                appointmentId,
+                rejectedReceptionId: reception._id, // Pass rejected reception ID to pre-fill form
+              });
             }}
           >
-            <Text style={styles.editButtonText}>✏️ Sửa lại phiếu</Text>
+            <Text style={styles.editButtonText}>✏️ Sửa và gửi phiếu mới</Text>
           </TouchableOpacity>
         </View>
+      )}
+
+      {/* Request Additional Parts Button - Show when approved */}
+      {reception.submissionStatus.staffReviewStatus === 'approved' && (
+        <View style={styles.bottomBar}>
+          <TouchableOpacity
+            style={styles.requestPartButton}
+            onPress={() => setPartPickerVisible(true)}
+          >
+            <Text style={styles.requestPartButtonText}>🔩 Yêu cầu phụ tùng thêm</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Part Picker Modal */}
+      <Modal
+        visible={partPickerVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setPartPickerVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Chọn phụ tùng</Text>
+              <TouchableOpacity onPress={() => setPartPickerVisible(false)}>
+                <Text style={styles.modalCloseButton}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={availableParts}
+              keyExtractor={(item) => item._id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.modalItem}
+                  onPress={() => {
+                    setSelectedPart(item);
+                    setPartPickerVisible(false);
+                    setPartRequestModalVisible(true);
+                  }}
+                >
+                  <View>
+                    <Text style={styles.modalItemName}>{item.name}</Text>
+                    <Text style={styles.modalItemDetail}>
+                      Mã: {item.partNumber} • {item.pricing?.retail?.toLocaleString('vi-VN')} VND •
+                      Tồn kho: {item.inventory?.currentStock || 0}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+              ListEmptyComponent={
+                <Text style={styles.emptyText}>Không có phụ tùng nào</Text>
+              }
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Additional Part Request Modal */}
+      {selectedPart && (
+        <AdditionalPartRequestModal
+          visible={partRequestModalVisible}
+          onClose={() => {
+            setPartRequestModalVisible(false);
+            setSelectedPart(null);
+          }}
+          onSubmit={handlePartRequestSubmit}
+          part={selectedPart}
+          serviceReceptionId={reception._id}
+        />
       )}
     </View>
   );
@@ -676,6 +875,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
   },
+  externalPartItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    backgroundColor: '#f9fafb',
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#3b82f6',
+  },
   partHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -767,6 +975,69 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#ffffff',
+  },
+  requestPartButton: {
+    backgroundColor: '#10b981',
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  requestPartButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '80%',
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  modalCloseButton: {
+    fontSize: 24,
+    color: '#6B7280',
+    fontWeight: '300',
+  },
+  modalItem: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  modalItemName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  modalItemDetail: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    padding: 32,
   },
 });
 

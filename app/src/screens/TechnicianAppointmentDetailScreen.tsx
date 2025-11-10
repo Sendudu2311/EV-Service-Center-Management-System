@@ -13,7 +13,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   getAppointmentDetail,
   startWork,
-  getServiceReceptionByAppointment,
+  getAllServiceReceptionsByAppointment,
 } from '../services/technician.api';
 import { TechnicianStackParamList } from '../types/navigation.types';
 import api from '../services/api';
@@ -45,9 +45,20 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
 
       // Try to fetch service reception if exists
       try {
-        const receptionResponse = await getServiceReceptionByAppointment(appointmentId);
-        if (receptionResponse.success) {
-          setServiceReception(receptionResponse.data);
+        const receptionResponse = await getAllServiceReceptionsByAppointment(appointmentId);
+        if (receptionResponse.success && receptionResponse.data && receptionResponse.data.length > 0) {
+          // Filter out rejected receptions and get the latest active one
+          const activeReceptions = receptionResponse.data.filter(
+            (r: any) => r.status !== 'rejected'
+          );
+
+          if (activeReceptions.length > 0) {
+            // Get the latest active reception (sorted by createdAt)
+            const latestReception = activeReceptions.sort(
+              (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            )[0];
+            setServiceReception(latestReception);
+          }
         }
       } catch (error: any) {
         // Reception might not exist yet, that's okay
@@ -168,6 +179,50 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
       style: 'currency',
       currency: 'VND',
     }).format(amount);
+  };
+
+  // Get order status text
+  const getOrderStatusText = (status: string) => {
+    const statusMap: Record<string, string> = {
+      ordered: 'Đã đặt hàng',
+      in_transit: 'Đang vận chuyển',
+      delivered: 'Đã giao',
+      cancelled: 'Đã hủy',
+      pending: 'Chờ đặt hàng',
+    };
+    return statusMap[status] || status;
+  };
+
+  // Get order status badge style
+  const getOrderStatusBadgeStyle = (status: string) => {
+    switch (status) {
+      case 'delivered':
+        return { backgroundColor: '#D1FAE5' };
+      case 'in_transit':
+        return { backgroundColor: '#DBEAFE' };
+      case 'ordered':
+        return { backgroundColor: '#FEF3C7' };
+      case 'cancelled':
+        return { backgroundColor: '#FEE2E2' };
+      default:
+        return { backgroundColor: '#F3F4F6' };
+    }
+  };
+
+  // Get order status text style
+  const getOrderStatusTextStyle = (status: string) => {
+    switch (status) {
+      case 'delivered':
+        return { color: '#065F46' };
+      case 'in_transit':
+        return { color: '#1E40AF' };
+      case 'ordered':
+        return { color: '#92400E' };
+      case 'cancelled':
+        return { color: '#991B1B' };
+      default:
+        return { color: '#374151' };
+    }
   };
 
   // Loading state
@@ -461,10 +516,45 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
           </View>
         )}
 
+        {/* External Parts (from Staff) */}
+        {serviceReception && serviceReception.externalParts && serviceReception.externalParts.length > 0 && (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>📦 Phụ tùng đặt ngoài (Staff thêm)</Text>
+            {serviceReception.externalParts.map((part: any, index: number) => (
+              <View key={index} style={styles.externalPartItem}>
+                <View style={styles.serviceHeader}>
+                  <Text style={styles.serviceName}>{part.partName}</Text>
+                  <View style={[styles.badge, getOrderStatusBadgeStyle(part.orderStatus)]}>
+                    <Text style={[styles.badgeText, getOrderStatusTextStyle(part.orderStatus)]}>
+                      {getOrderStatusText(part.orderStatus)}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.serviceDetail}>Mã: {part.partNumber}</Text>
+                <Text style={styles.serviceDetail}>
+                  SL: {part.quantity} • {formatCurrency(part.unitPrice)} x {part.quantity} = {formatCurrency(part.totalPrice)}
+                </Text>
+                {part.supplier && (
+                  <Text style={styles.serviceDetail}>NCC: {part.supplier.name}</Text>
+                )}
+                {part.estimatedArrival && (
+                  <Text style={styles.serviceDetail}>Dự kiến: {new Date(part.estimatedArrival).toLocaleDateString('vi-VN')}</Text>
+                )}
+                {part.warranty && (
+                  <Text style={styles.serviceDetail}>BH: {part.warranty.period} tháng</Text>
+                )}
+                {part.notes && (
+                  <Text style={styles.serviceReason}>Ghi chú: {part.notes}</Text>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* Requested Parts from Reception */}
         {serviceReception && serviceReception.requestedParts && serviceReception.requestedParts.length > 0 && (
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>🔩 Phụ tùng yêu cầu</Text>
+            <Text style={styles.cardTitle}>🔩 Phụ tùng yêu cầu (Technician)</Text>
             {serviceReception.requestedParts.map((part: any, index: number) => (
               <View key={index} style={styles.serviceItem}>
                 <View style={styles.serviceHeader}>
@@ -755,6 +845,15 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '600',
     color: '#065F46',
+  },
+  externalPartItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#3B82F6',
   },
   serviceDetail: {
     fontSize: 13,

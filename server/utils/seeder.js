@@ -7,6 +7,8 @@ import Appointment from "../models/Appointment.js";
 import Part from "../models/Part.js";
 import TechnicianProfile from "../models/TechnicianProfile.js";
 import ServiceReception from "../models/ServiceReception.js";
+import EVChecklist from "../models/EVChecklist.js";
+import PartRequest from "../models/PartRequest.js";
 import Invoice from "../models/Invoice.js";
 import Slot from "../models/Slot.js";
 import { is } from "zod/v4/locales";
@@ -29,6 +31,8 @@ const connectDB = async () => {
 const clearData = async () => {
   try {
     await Invoice.deleteMany({});
+    await PartRequest.deleteMany({});
+    await EVChecklist.deleteMany({});
     await ServiceReception.deleteMany({});
     await TechnicianProfile.deleteMany({});
     await Appointment.deleteMany({});
@@ -2806,124 +2810,17 @@ const createAppointments = async (
   try {
     const customers = users.filter((u) => u.role === "customer");
     const technicians = users.filter((u) => u.role === "technician");
+    const staff = users.find((u) => u.role === "staff");
 
-    // Helper function to create completed appointments spread across 6 months
-    const createCompletedAppointments = () => {
-      const completed = [];
-      const monthsBack = 6;
-      const appointmentsPerMonth = 4;
-      let appointmentCounter = 100;
-
-      for (let month = 0; month < monthsBack; month++) {
-        for (let i = 0; i < appointmentsPerMonth; i++) {
-          const dayOffset = month * 30 + i * 7;
-          const scheduledDate = new Date(Date.now() - dayOffset * 24 * 60 * 60 * 1000);
-          const serviceIdx = (appointmentCounter + i + month) % services.length;
-          const customerIdx = appointmentCounter % customers.length;
-          const technicianIdx = appointmentCounter % technicians.length;
-          const vehicleIdx = appointmentCounter % vehicles.length;
-          const totalAmount = services[serviceIdx].basePrice;
-
-          completed.push({
-            appointmentNumber: `APT25${String(appointmentCounter).padStart(4, "0")}`,
-            customerId: customers[customerIdx]._id,
-            vehicleId: vehicles[vehicleIdx]._id,
-            services: [
-              {
-                serviceId: services[serviceIdx]._id,
-                quantity: 1,
-                price: services[serviceIdx].basePrice,
-                estimatedDuration: services[serviceIdx].estimatedDuration,
-              },
-            ],
-            totalAmount: totalAmount,
-            paymentStatus: Math.random() > 0.15 ? "paid" : "pending",
-            scheduledDate: scheduledDate,
-            scheduledTime: "09:00",
-            status: "completed",
-            priority: ["low", "normal", "high"][Math.floor(Math.random() * 3)],
-            customerNotes: `Service appointment for ${services[serviceIdx].name}`,
-            assignedTechnician: technicians[technicianIdx]._id,
-            actualCompletion: new Date(
-              scheduledDate.getTime() + services[serviceIdx].estimatedDuration * 60 * 1000
-            ),
-            workflowHistory: [
-              {
-                status: "pending",
-                changedBy: customers[customerIdx]._id,
-                changedAt: new Date(scheduledDate.getTime() - 48 * 60 * 60 * 1000),
-                reason: "appointment_created",
-                notes: "Appointment booked",
-              },
-              {
-                status: "confirmed",
-                changedBy: users.find((u) => u.role === "staff")._id,
-                changedAt: new Date(scheduledDate.getTime() - 24 * 60 * 60 * 1000),
-                reason: "staff_confirmation",
-                notes: "Confirmed and technician assigned",
-              },
-              {
-                status: "customer_arrived",
-                changedBy: users.find((u) => u.role === "staff")._id,
-                changedAt: scheduledDate,
-                reason: "customer_arrival",
-                notes: "Customer checked in",
-              },
-              {
-                status: "in_progress",
-                changedBy: technicians[technicianIdx]._id,
-                changedAt: new Date(scheduledDate.getTime() + 15 * 60 * 1000),
-                reason: "service_started",
-                notes: "Service work started",
-              },
-              {
-                status: "completed",
-                changedBy: technicians[technicianIdx]._id,
-                changedAt: new Date(
-                  scheduledDate.getTime() + services[serviceIdx].estimatedDuration * 60 * 1000
-                ),
-                reason: "service_completed",
-                notes: "Service completed successfully",
-              },
-            ],
-            customerArrival: {
-              expectedAt: scheduledDate,
-              arrivedAt: scheduledDate,
-            },
-            serviceNotes: [
-              {
-                note: `${services[serviceIdx].name} completed successfully`,
-                addedBy: technicians[technicianIdx]._id,
-                addedAt: new Date(
-                  scheduledDate.getTime() + services[serviceIdx].estimatedDuration * 30 * 1000
-                ),
-              },
-            ],
-            feedback: {
-              rating: Math.floor(Math.random() * 2) + 4, // 4 or 5 stars
-              comment: "Satisfied with service quality",
-              submittedAt: new Date(
-                scheduledDate.getTime() + services[serviceIdx].estimatedDuration * 60 * 1000 + 24 * 60 * 60 * 1000
-              ),
-            },
-          });
-
-          appointmentCounter++;
-        }
-      }
-      return completed;
-    };
-
-    // Create base appointments
+    // NEW FLOW: All appointments start from "confirmed" (after payment)
+    // NO MORE "pending" status in seed data
+    
     const appointments = [
-      ...createCompletedAppointments(),
-
-      // Confirmed appointment with full workflow tracking
+      // 1. CONFIRMED - Đã thanh toán deposit, chờ khách đến (2 days from now)
       {
         appointmentNumber: "APT251201001",
         customerId: customers[0]._id,
         vehicleId: vehicles[0]._id,
-        // serviceCenterId removed - single center architecture
         services: [
           {
             serviceId: services[0]._id,
@@ -2932,30 +2829,28 @@ const createAppointments = async (
             estimatedDuration: services[0].estimatedDuration,
           },
         ],
-        scheduledDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
+        bookingType: "deposit_booking",
+        depositInfo: {
+          amount: 200000,
+          paid: true,
+          paidAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
+        },
+        scheduledDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
         scheduledTime: "08:00",
         status: "confirmed",
+        coreStatus: "Scheduled",
         priority: "normal",
-        customerNotes:
-          "Battery seems to be draining faster than usual. Please check charging efficiency.",
+        customerNotes: "Battery seems to be draining faster than usual. Please check charging efficiency.",
         assignedTechnician: technicians[0]._id,
-        estimatedCompletion: new Date(
-          Date.now() + 2 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000
-        ),
+        estimatedCompletion: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000),
+        paymentStatus: "partial",
         workflowHistory: [
           {
-            status: "pending",
-            changedBy: customers[0]._id,
-            changedAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-            reason: "appointment_created",
-            notes: "Customer booked appointment online",
-          },
-          {
             status: "confirmed",
-            changedBy: users.find((u) => u.role === "staff")._id,
-            changedAt: new Date(Date.now() - 23 * 60 * 60 * 1000),
-            reason: "staff_confirmation",
-            notes: "Appointment confirmed and technician assigned",
+            changedBy: customers[0]._id,
+            changedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
+            reason: "payment_completed",
+            notes: "Deposit paid via VNPay, appointment auto-confirmed",
           },
         ],
         customerArrival: {
@@ -2964,151 +2859,11 @@ const createAppointments = async (
         },
       },
 
-      // Pending appointment awaiting staff confirmation
+      // 2. CUSTOMER_ARRIVED - Khách đã đến, chờ technician tạo phiếu (30 min ago)
       {
         appointmentNumber: "APT251201002",
         customerId: customers[1]._id,
         vehicleId: vehicles[2]._id,
-        // serviceCenterId removed - single center architecture
-        services: [
-          {
-            serviceId: services[2]._id,
-            quantity: 1,
-            price: services[2].basePrice,
-            estimatedDuration: services[2].estimatedDuration,
-          },
-        ],
-        scheduledDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // 1 day from now
-        scheduledTime: "10:00",
-        status: "pending",
-        priority: "high",
-        customerNotes:
-          "Charging port not working properly. Urgent repair needed for business use.",
-        estimatedCompletion: new Date(
-          Date.now() + 1 * 24 * 60 * 60 * 1000 + 75 * 60 * 1000
-        ),
-        workflowHistory: [
-          {
-            status: "pending",
-            changedBy: customers[1]._id,
-            changedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-            reason: "appointment_created",
-            notes: "Customer booked appointment with high priority",
-          },
-        ],
-        customerArrival: {
-          expectedAt: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-        },
-      },
-
-      // Completed appointment with full service history
-      {
-        appointmentNumber: "APT251201003",
-        customerId: customers[0]._id,
-        vehicleId: vehicles[1]._id,
-        // serviceCenterId removed - single center architecture
-        services: [
-          {
-            serviceId: services[6]._id,
-            quantity: 1,
-            price: services[6].basePrice,
-            estimatedDuration: services[6].estimatedDuration,
-          },
-        ],
-        scheduledDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-        scheduledTime: "10:00",
-        status: "completed",
-        priority: "normal",
-        customerNotes:
-          "Annual maintenance service. Please check all systems thoroughly.",
-        assignedTechnician: technicians[1]._id,
-        actualCompletion: new Date(
-          Date.now() - 7 * 24 * 60 * 60 * 1000 + 180 * 60 * 1000
-        ),
-        workflowHistory: [
-          {
-            status: "pending",
-            changedBy: customers[0]._id,
-            changedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
-            reason: "appointment_created",
-            notes: "Annual maintenance scheduled",
-          },
-          {
-            status: "confirmed",
-            changedBy: users.find((u) => u.role === "staff")._id,
-            changedAt: new Date(
-              Date.now() - 7 * 24 * 60 * 60 * 1000 - 30 * 60 * 1000
-            ),
-            reason: "staff_confirmation",
-            notes: "Appointment confirmed, technician assigned",
-          },
-          {
-            status: "customer_arrived",
-            changedBy: users.find((u) => u.role === "staff")._id,
-            changedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-            reason: "customer_arrival",
-            notes: "Customer arrived on time",
-          },
-          {
-            status: "in_progress",
-            changedBy: technicians[1]._id,
-            changedAt: new Date(
-              Date.now() - 7 * 24 * 60 * 60 * 1000 + 15 * 60 * 1000
-            ),
-            reason: "service_started",
-            notes: "Started comprehensive maintenance check",
-          },
-          {
-            status: "completed",
-            changedBy: technicians[1]._id,
-            changedAt: new Date(
-              Date.now() - 7 * 24 * 60 * 60 * 1000 + 180 * 60 * 1000
-            ),
-            reason: "service_completed",
-            notes: "All maintenance tasks completed successfully",
-          },
-        ],
-        customerArrival: {
-          expectedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-          arrivedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        },
-        serviceNotes: [
-          {
-            note: "Battery health: 98% - Excellent condition",
-            addedBy: technicians[1]._id,
-            addedAt: new Date(
-              Date.now() - 7 * 24 * 60 * 60 * 1000 + 30 * 60 * 1000
-            ),
-          },
-          {
-            note: "Motor performance: All parameters within normal range",
-            addedBy: technicians[1]._id,
-            addedAt: new Date(
-              Date.now() - 7 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000
-            ),
-          },
-          {
-            note: "Charging system: Functioning optimally, no issues detected",
-            addedBy: technicians[1]._id,
-            addedAt: new Date(
-              Date.now() - 7 * 24 * 60 * 60 * 1000 + 120 * 60 * 1000
-            ),
-          },
-        ],
-        feedback: {
-          rating: 5,
-          comment:
-            "Excellent service! Very thorough inspection and clear explanation of results.",
-          submittedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
-        },
-      },
-
-      // Customer arrived and waiting for reception
-      {
-        appointmentNumber: "APT251201004",
-        customerId: customers[1]._id,
-        vehicleId: vehicles[3]._id,
-        // serviceCenterId removed - single center architecture
         services: [
           {
             serviceId: services[1]._id,
@@ -3117,34 +2872,34 @@ const createAppointments = async (
             estimatedDuration: services[1].estimatedDuration,
           },
         ],
-        scheduledDate: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
+        bookingType: "deposit_booking",
+        depositInfo: {
+          amount: 200000,
+          paid: true,
+          paidAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        },
+        scheduledDate: new Date(Date.now() - 30 * 60 * 1000),
         scheduledTime: "10:00",
         status: "customer_arrived",
+        coreStatus: "CheckedIn",
         priority: "normal",
-        customerNotes:
-          "Motor making unusual noise during acceleration. Need diagnostic check.",
+        customerNotes: "Motor making unusual noise during acceleration. Need diagnostic check.",
         assignedTechnician: technicians[0]._id,
+        paymentStatus: "partial",
         workflowHistory: [
           {
-            status: "pending",
+            status: "confirmed",
             changedBy: customers[1]._id,
             changedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-            reason: "appointment_created",
-            notes: "Customer reported motor noise issue",
-          },
-          {
-            status: "confirmed",
-            changedBy: users.find((u) => u.role === "staff")._id,
-            changedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-            reason: "staff_confirmation",
-            notes: "Confirmed for motor diagnostic service",
+            reason: "payment_completed",
+            notes: "Deposit paid, appointment confirmed",
           },
           {
             status: "customer_arrived",
-            changedBy: users.find((u) => u.role === "staff")._id,
+            changedBy: staff._id,
             changedAt: new Date(Date.now() - 30 * 60 * 1000),
-            reason: "customer_arrival",
-            notes: "Customer checked in, ready for service reception",
+            reason: "customer_checkin",
+            notes: "Customer checked in at reception",
           },
         ],
         customerArrival: {
@@ -3152,11 +2907,68 @@ const createAppointments = async (
           arrivedAt: new Date(Date.now() - 30 * 60 * 1000),
         },
       },
+
+      // 3. RECEPTION_CREATED - Technician đã tạo phiếu, chờ staff duyệt (2 hours ago)
       {
-        appointmentNumber: "APT251201005",
+        appointmentNumber: "APT251201003",
+        customerId: customers[2]._id,
+        vehicleId: vehicles[1]._id,
+        services: [
+          {
+            serviceId: services[2]._id,
+            quantity: 1,
+            price: services[2].basePrice,
+            estimatedDuration: services[2].estimatedDuration,
+          },
+        ],
+        bookingType: "deposit_booking",
+        depositInfo: {
+          amount: 200000,
+          paid: true,
+          paidAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        },
+        scheduledDate: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        scheduledTime: "14:00",
+        status: "reception_created",
+        coreStatus: "CheckedIn",
+        priority: "high",
+        customerNotes: "Charging port not working properly. Urgent repair needed.",
+        assignedTechnician: technicians[1]._id,
+        paymentStatus: "partial",
+        workflowHistory: [
+          {
+            status: "confirmed",
+            changedBy: customers[2]._id,
+            changedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+            reason: "payment_completed",
+            notes: "Deposit paid",
+          },
+          {
+            status: "customer_arrived",
+            changedBy: staff._id,
+            changedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+            reason: "customer_checkin",
+            notes: "Customer arrived",
+          },
+          {
+            status: "reception_created",
+            changedBy: technicians[1]._id,
+            changedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
+            reason: "technician_inspection",
+            notes: "Service reception form created with EV checklist",
+          },
+        ],
+        customerArrival: {
+          expectedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+          arrivedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        },
+      },
+
+      // 4. RECEPTION_APPROVED - Staff đã duyệt, chờ khách thanh toán (1 hour ago)
+      {
+        appointmentNumber: "APT251201004",
         customerId: customers[0]._id,
         vehicleId: vehicles[3]._id,
-        // serviceCenterId removed - single center architecture
         services: [
           {
             serviceId: services[3]._id,
@@ -3165,25 +2977,61 @@ const createAppointments = async (
             estimatedDuration: services[3].estimatedDuration,
           },
         ],
-        scheduledDate: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-        scheduledTime: "13:30",
-        status: "in_progress", // InService core status
-        priority: "high",
-        customerNotes: "Motor making unusual noises during acceleration",
-        assignedTechnician: technicians[1]._id,
-        serviceNotes: [
+        bookingType: "deposit_booking",
+        depositInfo: {
+          amount: 200000,
+          paid: true,
+          paidAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+        },
+        scheduledDate: new Date(Date.now() - 3 * 60 * 60 * 1000),
+        scheduledTime: "15:00",
+        status: "reception_approved",
+        coreStatus: "InService",
+        priority: "normal",
+        customerNotes: "Battery diagnostic and charging system check",
+        assignedTechnician: technicians[0]._id,
+        paymentStatus: "partial",
+        workflowHistory: [
           {
-            note: "Started diagnostic tests on motor system",
-            addedBy: technicians[1]._id,
-            addedAt: new Date(),
+            status: "confirmed",
+            changedBy: customers[0]._id,
+            changedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+            reason: "payment_completed",
+            notes: "Deposit paid",
+          },
+          {
+            status: "customer_arrived",
+            changedBy: staff._id,
+            changedAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
+            reason: "customer_checkin",
+            notes: "Customer checked in",
+          },
+          {
+            status: "reception_created",
+            changedBy: technicians[0]._id,
+            changedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+            reason: "technician_inspection",
+            notes: "Initial inspection completed",
+          },
+          {
+            status: "reception_approved",
+            changedBy: staff._id,
+            changedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
+            reason: "staff_approval",
+            notes: "Service reception and parts approved",
           },
         ],
+        customerArrival: {
+          expectedAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
+          arrivedAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
+        },
       },
+
+      // 5. IN_PROGRESS - Đang thực hiện service (started 30 min ago)
       {
-        appointmentNumber: "APT251201006",
+        appointmentNumber: "APT251201005",
         customerId: customers[1]._id,
-        vehicleId: vehicles[2]._id,
-        // serviceCenterId removed - single center architecture
+        vehicleId: vehicles[0]._id,
         services: [
           {
             serviceId: services[4]._id,
@@ -3192,26 +3040,80 @@ const createAppointments = async (
             estimatedDuration: services[4].estimatedDuration,
           },
         ],
-        scheduledDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // Yesterday
-        scheduledTime: "15:00",
-        status: "completed", // Changed from parts_insufficient
-        priority: "normal",
-        customerNotes: "Need brake pad replacement",
-        assignedTechnician: technicians[0]._id,
-        actualCompletion: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 90 * 60 * 1000),
+        bookingType: "full_service",
+        depositInfo: {
+          amount: 200000,
+          paid: true,
+          paidAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        },
+        scheduledDate: new Date(Date.now() - 4 * 60 * 60 * 1000),
+        scheduledTime: "09:00",
+        status: "in_progress",
+        coreStatus: "InService",
+        priority: "high",
+        customerNotes: "Motor replacement required",
+        assignedTechnician: technicians[1]._id,
+        paymentStatus: "paid",
+        workflowHistory: [
+          {
+            status: "confirmed",
+            changedBy: customers[1]._id,
+            changedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+            reason: "payment_completed",
+            notes: "Full payment completed",
+          },
+          {
+            status: "customer_arrived",
+            changedBy: staff._id,
+            changedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
+            reason: "customer_checkin",
+            notes: "Customer arrived",
+          },
+          {
+            status: "reception_created",
+            changedBy: technicians[1]._id,
+            changedAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
+            reason: "technician_inspection",
+            notes: "Inspection completed",
+          },
+          {
+            status: "reception_approved",
+            changedBy: staff._id,
+            changedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+            reason: "staff_approval",
+            notes: "Approved with parts",
+          },
+          {
+            status: "in_progress",
+            changedBy: technicians[1]._id,
+            changedAt: new Date(Date.now() - 30 * 60 * 1000),
+            reason: "work_started",
+            notes: "Started motor replacement work",
+          },
+        ],
+        customerArrival: {
+          expectedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
+          arrivedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
+        },
         serviceNotes: [
           {
-            note: "Brake pads replaced successfully",
-            addedBy: technicians[0]._id,
-            addedAt: new Date(),
+            note: "Motor diagnostics completed - replacement required",
+            addedBy: technicians[1]._id,
+            addedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+          },
+          {
+            note: "Motor replacement in progress",
+            addedBy: technicians[1]._id,
+            addedAt: new Date(Date.now() - 30 * 60 * 1000),
           },
         ],
       },
+
+      // 6. COMPLETED - Đã hoàn thành, chờ xuất hóa đơn (1 day ago)
       {
-        appointmentNumber: "APT251201007",
-        customerId: customers[0]._id,
-        vehicleId: vehicles[1]._id,
-        // serviceCenterId removed - single center architecture
+        appointmentNumber: "APT251201006",
+        customerId: customers[2]._id,
+        vehicleId: vehicles[2]._id,
         services: [
           {
             serviceId: services[5]._id,
@@ -3220,28 +3122,175 @@ const createAppointments = async (
             estimatedDuration: services[5].estimatedDuration,
           },
         ],
-        scheduledDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
-        scheduledTime: "09:30",
-        status: "invoiced", // ReadyForPickup core status
+        bookingType: "full_service",
+        depositInfo: {
+          amount: 200000,
+          paid: true,
+          paidAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        },
+        scheduledDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        scheduledTime: "11:00",
+        status: "completed",
+        coreStatus: "ReadyForPickup",
         priority: "normal",
-        customerNotes: "AC system not cooling properly",
-        assignedTechnician: technicians[1]._id,
-        actualCompletion: new Date(
-          Date.now() - 3 * 24 * 60 * 60 * 1000 + 120 * 60 * 1000
-        ),
+        customerNotes: "Regular maintenance service",
+        assignedTechnician: technicians[0]._id,
+        actualCompletion: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 90 * 60 * 1000),
+        paymentStatus: "paid",
+        workflowHistory: [
+          {
+            status: "confirmed",
+            changedBy: customers[2]._id,
+            changedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+            reason: "payment_completed",
+            notes: "Payment confirmed",
+          },
+          {
+            status: "customer_arrived",
+            changedBy: staff._id,
+            changedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+            reason: "customer_checkin",
+            notes: "Customer checked in",
+          },
+          {
+            status: "reception_created",
+            changedBy: technicians[0]._id,
+            changedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 15 * 60 * 1000),
+            reason: "technician_inspection",
+            notes: "Initial inspection",
+          },
+          {
+            status: "reception_approved",
+            changedBy: staff._id,
+            changedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 30 * 60 * 1000),
+            reason: "staff_approval",
+            notes: "Approved",
+          },
+          {
+            status: "in_progress",
+            changedBy: technicians[0]._id,
+            changedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 45 * 60 * 1000),
+            reason: "work_started",
+            notes: "Service started",
+          },
+          {
+            status: "completed",
+            changedBy: technicians[0]._id,
+            changedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 90 * 60 * 1000),
+            reason: "work_completed",
+            notes: "All maintenance tasks completed successfully",
+          },
+        ],
+        customerArrival: {
+          expectedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+          arrivedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        },
         serviceNotes: [
           {
-            note: "AC system cleaned and recharged",
-            addedBy: technicians[1]._id,
-            addedAt: new Date(),
+            note: "Battery health: 95% - Good condition",
+            addedBy: technicians[0]._id,
+            addedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000),
           },
         ],
       },
+
+      // 7. INVOICED - Đã xuất hóa đơn, sẵn sàng lấy xe (2 days ago)
+      {
+        appointmentNumber: "APT251201007",
+        customerId: customers[0]._id,
+        vehicleId: vehicles[1]._id,
+        services: [
+          {
+            serviceId: services[6]._id,
+            quantity: 1,
+            price: services[6].basePrice,
+            estimatedDuration: services[6].estimatedDuration,
+          },
+        ],
+        bookingType: "full_service",
+        depositInfo: {
+          amount: 200000,
+          paid: true,
+          paidAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        },
+        scheduledDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        scheduledTime: "13:00",
+        status: "invoiced",
+        coreStatus: "ReadyForPickup",
+        priority: "normal",
+        customerNotes: "Charging system upgrade",
+        assignedTechnician: technicians[1]._id,
+        actualCompletion: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 120 * 60 * 1000),
+        paymentStatus: "paid",
+        workflowHistory: [
+          {
+            status: "confirmed",
+            changedBy: customers[0]._id,
+            changedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+            reason: "payment_completed",
+            notes: "Confirmed",
+          },
+          {
+            status: "customer_arrived",
+            changedBy: staff._id,
+            changedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+            reason: "customer_checkin",
+            notes: "Checked in",
+          },
+          {
+            status: "reception_created",
+            changedBy: technicians[1]._id,
+            changedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 20 * 60 * 1000),
+            reason: "technician_inspection",
+            notes: "Inspection done",
+          },
+          {
+            status: "reception_approved",
+            changedBy: staff._id,
+            changedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 40 * 60 * 1000),
+            reason: "staff_approval",
+            notes: "Approved",
+          },
+          {
+            status: "in_progress",
+            changedBy: technicians[1]._id,
+            changedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000),
+            reason: "work_started",
+            notes: "Work started",
+          },
+          {
+            status: "completed",
+            changedBy: technicians[1]._id,
+            changedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 120 * 60 * 1000),
+            reason: "work_completed",
+            notes: "Charging system upgraded successfully",
+          },
+          {
+            status: "invoiced",
+            changedBy: staff._id,
+            changedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 130 * 60 * 1000),
+            reason: "invoice_generated",
+            notes: "Invoice generated and sent to customer",
+          },
+        ],
+        customerArrival: {
+          expectedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+          arrivedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        },
+        serviceNotes: [
+          {
+            note: "Charging system upgraded to 22kW",
+            addedBy: technicians[1]._id,
+            addedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 100 * 60 * 1000),
+          },
+        ],
+      },
+
+      // 8. CANCELLED - Khách hủy (future appointment)
       {
         appointmentNumber: "APT251201008",
         customerId: customers[1]._id,
-        vehicleId: vehicles[0]._id,
-        // serviceCenterId removed - single center architecture
+        vehicleId: vehicles[3]._id,
         services: [
           {
             serviceId: services[7]._id,
@@ -3250,17 +3299,48 @@ const createAppointments = async (
             estimatedDuration: services[7].estimatedDuration,
           },
         ],
-        scheduledDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
-        scheduledTime: "08:00",
-        status: "cancelled", // Closed core status
+        bookingType: "deposit_booking",
+        depositInfo: {
+          amount: 200000,
+          paid: true,
+          paidAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+        },
+        scheduledDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        scheduledTime: "10:00",
+        status: "cancelled",
+        coreStatus: "Closed",
         priority: "low",
-        customerNotes: "Customer cancelled due to travel plans",
+        customerNotes: "Customer cancelled due to schedule change",
+        paymentStatus: "refunded",
+        cancellationInfo: {
+          cancelledBy: customers[1]._id,
+          cancelledAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+          reason: "customer_request",
+          notes: "Schedule conflict - customer requested cancellation",
+        },
+        workflowHistory: [
+          {
+            status: "confirmed",
+            changedBy: customers[1]._id,
+            changedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+            reason: "payment_completed",
+            notes: "Deposit paid",
+          },
+          {
+            status: "cancelled",
+            changedBy: customers[1]._id,
+            changedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+            reason: "customer_cancellation",
+            notes: "Customer cancelled - deposit refunded",
+          },
+        ],
       },
+
+      // 9. NO_SHOW - Khách không đến
       {
         appointmentNumber: "APT251201009",
-        customerId: customers[0]._id,
-        vehicleId: vehicles[2]._id,
-        // serviceCenterId removed - single center architecture
+        customerId: customers[2]._id,
+        vehicleId: vehicles[0]._id,
         services: [
           {
             serviceId: services[8]._id,
@@ -3269,27 +3349,43 @@ const createAppointments = async (
             estimatedDuration: services[8].estimatedDuration,
           },
         ],
-        scheduledDate: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-        scheduledTime: "15:00",
-        status: "completed", // Changed from waiting_for_parts
-        priority: "high",
-        customerNotes: "Charging cable needs replacement",
-        assignedTechnician: technicians[0]._id,
-        actualCompletion: new Date(Date.now() - 4 * 60 * 60 * 1000 + 120 * 60 * 1000),
-        serviceNotes: [
+        bookingType: "deposit_booking",
+        depositInfo: {
+          amount: 200000,
+          paid: true,
+          paidAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+        },
+        scheduledDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        scheduledTime: "14:00",
+        status: "no_show",
+        coreStatus: "Closed",
+        priority: "normal",
+        customerNotes: "Customer did not arrive for appointment",
+        paymentStatus: "partial",
+        reasonCode: "no_show",
+        workflowHistory: [
           {
-            note: "Charging cable replaced successfully",
-            addedBy: technicians[0]._id,
-            addedAt: new Date(),
+            status: "confirmed",
+            changedBy: customers[2]._id,
+            changedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+            reason: "payment_completed",
+            notes: "Deposit paid",
+          },
+          {
+            status: "no_show",
+            changedBy: staff._id,
+            changedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 30 * 60 * 1000),
+            reason: "customer_no_show",
+            notes: "Customer did not arrive within 30 minutes of scheduled time",
           },
         ],
       },
-      // Additional statuses to cover full workflow
+
+      // 10. CANCEL_REQUESTED - Khách yêu cầu hủy, chờ staff duyệt
       {
         appointmentNumber: "APT251201010",
-        customerId: customers[1]._id,
-        vehicleId: vehicles[1]._id,
-        // serviceCenterId removed - single center architecture
+        customerId: customers[0]._id,
+        vehicleId: vehicles[2]._id,
         services: [
           {
             serviceId: services[0]._id,
@@ -3298,19 +3394,48 @@ const createAppointments = async (
             estimatedDuration: services[0].estimatedDuration,
           },
         ],
-        scheduledDate: new Date(Date.now() + 4 * 60 * 60 * 1000), // 4 hours from now
-        scheduledTime: "14:30",
-        status: "reception_created", // CheckedIn core status
+        bookingType: "deposit_booking",
+        depositInfo: {
+          amount: 200000,
+          paid: true,
+          paidAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        },
+        scheduledDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+        scheduledTime: "09:00",
+        status: "cancel_requested",
+        coreStatus: "OnHold",
         priority: "normal",
-        customerNotes:
-          "Service reception form created, waiting for staff approval",
-        assignedTechnician: technicians[1]._id,
+        customerNotes: "Need to cancel - emergency came up",
+        paymentStatus: "partial",
+        cancellationInfo: {
+          cancelledBy: customers[0]._id,
+          cancelledAt: new Date(Date.now() - 30 * 60 * 1000),
+          reason: "customer_request",
+          notes: "Customer requested cancellation - emergency situation",
+        },
+        workflowHistory: [
+          {
+            status: "confirmed",
+            changedBy: customers[0]._id,
+            changedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+            reason: "payment_completed",
+            notes: "Deposit paid",
+          },
+          {
+            status: "cancel_requested",
+            changedBy: customers[0]._id,
+            changedAt: new Date(Date.now() - 30 * 60 * 1000),
+            reason: "customer_cancel_request",
+            notes: "Customer requested cancellation - awaiting staff approval",
+          },
+        ],
       },
+
+      // 11. CANCEL_APPROVED - Staff đã duyệt hủy, chờ xử lý hoàn tiền
       {
         appointmentNumber: "APT251201011",
-        customerId: customers[0]._id,
-        vehicleId: vehicles[0]._id,
-        // serviceCenterId removed - single center architecture
+        customerId: customers[1]._id,
+        vehicleId: vehicles[1]._id,
         services: [
           {
             serviceId: services[1]._id,
@@ -3319,18 +3444,57 @@ const createAppointments = async (
             estimatedDuration: services[1].estimatedDuration,
           },
         ],
-        scheduledDate: new Date(Date.now() + 5 * 60 * 60 * 1000), // 5 hours from now
-        scheduledTime: "15:00",
-        status: "reception_approved", // CheckedIn core status
-        priority: "normal",
-        customerNotes: "Parts approved, ready to start work",
-        assignedTechnician: technicians[0]._id,
+        bookingType: "deposit_booking",
+        depositInfo: {
+          amount: 200000,
+          paid: true,
+          paidAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
+        },
+        scheduledDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+        scheduledTime: "11:00",
+        status: "cancel_approved",
+        coreStatus: "OnHold",
+        priority: "low",
+        customerNotes: "Cancellation approved, processing refund",
+        paymentStatus: "partial",
+        cancellationInfo: {
+          cancelledBy: customers[1]._id,
+          cancelledAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+          reason: "customer_request",
+          notes: "Approved by staff, refund in progress",
+          approvedBy: staff._id,
+          approvedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
+        },
+        workflowHistory: [
+          {
+            status: "confirmed",
+            changedBy: customers[1]._id,
+            changedAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
+            reason: "payment_completed",
+            notes: "Deposit paid",
+          },
+          {
+            status: "cancel_requested",
+            changedBy: customers[1]._id,
+            changedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+            reason: "customer_cancel_request",
+            notes: "Cancellation requested",
+          },
+          {
+            status: "cancel_approved",
+            changedBy: staff._id,
+            changedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
+            reason: "staff_cancel_approval",
+            notes: "Cancellation approved, processing refund",
+          },
+        ],
       },
+
+      // 12. CANCEL_REFUNDED - Đã hoàn tiền thành công
       {
         appointmentNumber: "APT251201012",
-        customerId: customers[1]._id,
-        vehicleId: vehicles[2]._id,
-        // serviceCenterId removed - single center architecture
+        customerId: customers[2]._id,
+        vehicleId: vehicles[3]._id,
         services: [
           {
             serviceId: services[2]._id,
@@ -3339,39 +3503,59 @@ const createAppointments = async (
             estimatedDuration: services[2].estimatedDuration,
           },
         ],
-        scheduledDate: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour from now
-        scheduledTime: "10:30",
-        status: "in_progress", // Changed from parts_requested
-        priority: "high",
-        customerNotes: "Service in progress",
-        assignedTechnician: technicians[1]._id,
-        serviceNotes: [
+        bookingType: "deposit_booking",
+        depositInfo: {
+          amount: 200000,
+          paid: true,
+          paidAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        },
+        scheduledDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+        scheduledTime: "15:00",
+        status: "cancel_refunded",
+        coreStatus: "Closed",
+        priority: "normal",
+        customerNotes: "Cancellation completed with full refund",
+        paymentStatus: "refunded",
+        cancellationInfo: {
+          cancelledBy: customers[2]._id,
+          cancelledAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+          reason: "customer_request",
+          notes: "Full refund completed",
+          approvedBy: staff._id,
+          approvedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+          refundedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+          refundAmount: 200000,
+        },
+        workflowHistory: [
           {
-            note: "Service work in progress",
-            addedBy: technicians[1]._id,
-            addedAt: new Date(),
+            status: "confirmed",
+            changedBy: customers[2]._id,
+            changedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+            reason: "payment_completed",
+            notes: "Deposit paid",
+          },
+          {
+            status: "cancel_requested",
+            changedBy: customers[2]._id,
+            changedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+            reason: "customer_cancel_request",
+            notes: "Requested cancellation",
+          },
+          {
+            status: "cancel_approved",
+            changedBy: staff._id,
+            changedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+            reason: "staff_cancel_approval",
+            notes: "Approved cancellation",
+          },
+          {
+            status: "cancel_refunded",
+            changedBy: staff._id,
+            changedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+            reason: "refund_completed",
+            notes: "Refund of 200,000 VND completed successfully",
           },
         ],
-      },
-      {
-        appointmentNumber: "APT251201013",
-        customerId: customers[0]._id,
-        vehicleId: vehicles[1]._id,
-        // serviceCenterId removed - single center architecture
-        services: [
-          {
-            serviceId: services[3]._id,
-            quantity: 1,
-            price: services[3].basePrice,
-            estimatedDuration: services[3].estimatedDuration,
-          },
-        ],
-        scheduledDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-        scheduledTime: "10:00",
-        status: "no_show", // Closed core status
-        priority: "low",
-        customerNotes: "Customer did not arrive for scheduled appointment",
-        reasonCode: "no_show",
       },
     ];
 
@@ -3397,9 +3581,22 @@ const createAppointments = async (
       await newAppointment.save();
       createdAppointments.push(newAppointment);
     }
-    console.log(
-      `✅ ${createdAppointments.length} appointments created successfully`
-    );
+    
+    console.log(`✅ ${createdAppointments.length} appointments created successfully`);
+    console.log("   Status distribution (NEW FLOW - NO PENDING):");
+    console.log("   - confirmed: 1 (Deposit paid, awaiting arrival)");
+    console.log("   - customer_arrived: 1 (Customer checked in)");
+    console.log("   - reception_created: 1 (Awaiting staff approval)");
+    console.log("   - reception_approved: 1 (Ready to start work)");
+    console.log("   - in_progress: 1 (Service in progress)");
+    console.log("   - completed: 1 (Work finished)");
+    console.log("   - invoiced: 1 (Invoice generated)");
+    console.log("   - cancelled: 1 (Cancelled by customer)");
+    console.log("   - no_show: 1 (Customer did not arrive)");
+    console.log("   - cancel_requested: 1 (Awaiting staff approval)");
+    console.log("   - cancel_approved: 1 (Processing refund)");
+    console.log("   - cancel_refunded: 1 (Refund completed)");
+    
     return createdAppointments;
   } catch (error) {
     console.error("Error creating appointments:", error);
@@ -3691,14 +3888,22 @@ const seedData = async () => {
     console.log("   - BMW i4 eDrive40");
     console.log("   - Mercedes EQS 450+");
 
-    console.log("\n📋 Appointment Workflow States:");
-    console.log("   - pending: Awaiting staff confirmation");
-    console.log("   - confirmed: Staff confirmed, technician assigned");
-    console.log("   - customer_arrived: Customer checked in");
-    console.log("   - reception_created: Service reception form created");
-    console.log("   - in_progress: Service work started");
+    console.log("\n📋 Appointment Workflow States (NEW FLOW - NO PENDING!):");
+    console.log("   Main Flow:");
+    console.log("   - confirmed: Deposit paid via VNPay, auto-confirmed");
+    console.log("   - customer_arrived: Customer checked in at reception");
+    console.log("   - reception_created: Technician created service reception form");
+    console.log("   - reception_approved: Staff approved reception & parts");
+    console.log("   - in_progress: Service work in progress");
     console.log("   - completed: Service work finished");
-    console.log("   - invoiced: Invoice generated");
+    console.log("   - invoiced: Invoice generated, ready for pickup");
+    console.log("   Cancellation Flow:");
+    console.log("   - cancel_requested: Customer requested cancellation");
+    console.log("   - cancel_approved: Staff approved, processing refund");
+    console.log("   - cancel_refunded: Refund completed");
+    console.log("   Other:");
+    console.log("   - cancelled: Direct cancellation");
+    console.log("   - no_show: Customer did not arrive");
 
     console.log("\n🔧 Enhanced Features:");
     console.log("   - Vietnamese phone number format (09xxxxxxxx)");

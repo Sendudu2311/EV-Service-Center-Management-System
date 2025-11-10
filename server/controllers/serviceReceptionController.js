@@ -9,7 +9,6 @@ const Vehicle = mongoose.model("Vehicle");
 const Service = mongoose.model("Service");
 const Part = mongoose.model("Part");
 const EVChecklist = mongoose.model("EVChecklist");
-const ChecklistInstance = mongoose.model("ChecklistInstance");
 
 export const createServiceReception = async (req, res) => {
   try {
@@ -27,12 +26,13 @@ export const createServiceReception = async (req, res) => {
     } = req.body;
 
     // Check if service reception already exists for this appointment
+    // Allow creating new reception if previous one was rejected
     const existingReception = await ServiceReception.findOne({ appointmentId });
-    if (existingReception) {
+    if (existingReception && existingReception.status !== "rejected") {
       return sendError(
         res,
         400,
-        "Service reception already exists for this appointment",
+        "Service reception already exists for this appointment. Previous reception must be rejected before creating a new one.",
         null,
         "RECEPTION_EXISTS"
       );
@@ -189,44 +189,6 @@ export const createServiceReception = async (req, res) => {
 
     await serviceReception.save();
 
-    // Auto-create ChecklistInstance if EVChecklist items are provided
-    let checklistInstance = null;
-    if (evChecklistItems && evChecklistItems.length > 0) {
-      try {
-        // Find the default EVChecklist template
-        const defaultChecklist = await EVChecklist.findOne({
-          category: "pre_service",
-          isActive: true,
-        }).sort({ createdAt: -1 });
-
-        if (defaultChecklist) {
-          // Create ChecklistInstance from template
-          checklistInstance = await defaultChecklist.createInstance(
-            appointmentId,
-            req.user._id
-          );
-
-          // Link ChecklistInstance to ServiceReception
-          serviceReception.evChecklistProgress.checklistInstanceId =
-            checklistInstance._id;
-          serviceReception.evChecklistProgress.totalItems =
-            evChecklistItems.length;
-          serviceReception.evChecklistProgress.completedItems =
-            evChecklistItems.filter((item) => item.checked).length;
-          serviceReception.evChecklistProgress.progressPercentage = Math.round(
-            (serviceReception.evChecklistProgress.completedItems /
-              serviceReception.evChecklistProgress.totalItems) *
-              100
-          );
-
-          await serviceReception.save();
-        }
-      } catch (checklistError) {
-        console.error("Error creating checklist instance:", checklistError);
-        // Don't fail the entire operation if checklist creation fails
-      }
-    }
-
     // Sync checklist data with Appointment
     await syncChecklistWithAppointment(serviceReception._id, appointment);
 
@@ -241,6 +203,14 @@ export const createServiceReception = async (req, res) => {
     console.log(
       "ℹ️ [createServiceReception] Services will be added to appointment after staff approval"
     );
+
+    // Change booking type to full service if it was deposit booking
+    if (recommendedServices && recommendedServices.length > 0 && appointment.bookingType === "deposit_booking") {
+      appointment.bookingType = "full_service";
+      console.log(
+        "🔄 [createServiceReception] Changed booking type to full_service"
+      );
+    }
 
     // Update appointment status to reception_created
     appointment.status = "reception_created";
@@ -364,6 +334,54 @@ export const getServiceReceptionByAppointment = async (req, res) => {
       res,
       500,
       "Error retrieving service reception",
+      null,
+      "INTERNAL_SERVER_ERROR"
+    );
+  }
+};
+
+// Get ALL service receptions by appointment ID (returns array)
+export const getAllServiceReceptionsByAppointment = async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+
+    // Find ALL service receptions for this appointment
+    const serviceReceptions = await ServiceReception.find({
+      appointmentId: appointmentId,
+    })
+      .populate("customerId", "firstName lastName email phone")
+      .populate("vehicleId", "make model year licensePlate")
+      .populate("receivedBy", "firstName lastName email")
+      .populate(
+        "recommendedServices.serviceId",
+        "name description basePrice category estimatedDuration"
+      )
+      .populate("recommendedServices.addedBy", "firstName lastName")
+      .populate("requestedParts.partId", "name partNumber pricing")
+      .sort({ createdAt: -1 }); // Sort by newest first
+
+    if (!serviceReceptions || serviceReceptions.length === 0) {
+      return sendError(
+        res,
+        404,
+        "No service receptions found for this appointment",
+        null,
+        "RECEPTIONS_NOT_FOUND"
+      );
+    }
+
+    return sendSuccess(
+      res,
+      200,
+      "Service receptions retrieved successfully",
+      serviceReceptions
+    );
+  } catch (error) {
+    console.error("Error retrieving all service receptions by appointment:", error);
+    return sendError(
+      res,
+      500,
+      "Error retrieving service receptions",
       null,
       "INTERNAL_SERVER_ERROR"
     );
@@ -630,11 +648,8 @@ export const approveServiceReception = async (req, res) => {
     }
 
     // Update approval info
-    // Note: Only update serviceReception.status to 'approved' if approved
-    // If rejected, keep current status (usually 'received')
-    if (isApproved) {
-      serviceReception.status = "approved";
-    }
+    // Note: Update serviceReception.status to 'approved' or 'rejected'
+    serviceReception.status = isApproved ? "approved" : "rejected";
     serviceReception.submissionStatus.staffReviewStatus = isApproved
       ? "approved"
       : "rejected";
@@ -821,14 +836,15 @@ export const approveServiceReception = async (req, res) => {
       });
       await appointment.save();
     } else if (appointment && !isApproved) {
-      // When rejected, just add to history but keep current status
+      // When rejected, reset appointment to customer_arrived so technician can create new reception
+      appointment.status = "customer_arrived";
       appointment.workflowHistory.push({
-        status: appointment.status, // Keep current status
+        status: "customer_arrived",
         changedBy: req.user._id,
         changedAt: new Date(),
         notes: `Service reception rejected by staff: ${
           notes || "No reason provided"
-        }`,
+        }. Appointment reset to customer_arrived for new reception creation.`,
       });
       await appointment.save();
     }
@@ -988,209 +1004,6 @@ const syncChecklistWithAppointment = async (
   }
 };
 
-// @desc    Create ChecklistInstance for appointment
-// @route   POST /api/service-receptions/:id/checklist-instance
-// @access  Private (Technician)
-export const createChecklistInstance = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { checklistId, technicianId } = req.body;
-
-    const serviceReception = await ServiceReception.findById(id);
-    if (!serviceReception) {
-      return sendError(
-        res,
-        404,
-        "Service reception not found",
-        null,
-        "RECEPTION_NOT_FOUND"
-      );
-    }
-
-    // Find EVChecklist template
-    const evChecklist = await EVChecklist.findById(checklistId);
-    if (!evChecklist) {
-      return sendError(
-        res,
-        404,
-        "EVChecklist template not found",
-        null,
-        "CHECKLIST_NOT_FOUND"
-      );
-    }
-
-    // Create ChecklistInstance
-    const checklistInstance = await evChecklist.createInstance(
-      serviceReception.appointmentId,
-      technicianId || req.user._id
-    );
-
-    // Link to ServiceReception
-    serviceReception.evChecklistProgress.checklistInstanceId =
-      checklistInstance._id;
-    serviceReception.evChecklistProgress.totalItems =
-      checklistInstance.items.length;
-    serviceReception.evChecklistProgress.completedItems = 0;
-    serviceReception.evChecklistProgress.progressPercentage = 0;
-
-    await serviceReception.save();
-
-    // Sync with Appointment
-    const Appointment = mongoose.model("Appointment");
-    const appointment = await Appointment.findById(
-      serviceReception.appointmentId
-    );
-    if (appointment) {
-      await syncChecklistWithAppointment(serviceReception._id, appointment);
-    }
-
-    return sendSuccess(res, 201, "Checklist instance created successfully", {
-      checklistInstance,
-      serviceReception: serviceReception.evChecklistProgress,
-    });
-  } catch (error) {
-    console.error("Error creating checklist instance:", error);
-    return sendError(
-      res,
-      500,
-      "Error creating checklist instance",
-      null,
-      "INTERNAL_SERVER_ERROR"
-    );
-  }
-};
-
-// @desc    Get ChecklistInstance progress
-// @route   GET /api/service-receptions/:id/checklist-progress
-// @access  Private (Technician/Staff)
-export const getChecklistProgress = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const serviceReception = await ServiceReception.findById(id)
-      .populate("evChecklistProgress.checklistInstanceId")
-      .populate("appointmentId", "appointmentNumber customerId vehicleId");
-
-    if (!serviceReception) {
-      return sendError(
-        res,
-        404,
-        "Service reception not found",
-        null,
-        "RECEPTION_NOT_FOUND"
-      );
-    }
-
-    const progress = {
-      serviceReceptionId: serviceReception._id,
-      appointmentId: serviceReception.appointmentId,
-      checklistInstanceId:
-        serviceReception.evChecklistProgress.checklistInstanceId,
-      totalItems: serviceReception.evChecklistProgress.totalItems,
-      completedItems: serviceReception.evChecklistProgress.completedItems,
-      progressPercentage:
-        serviceReception.evChecklistProgress.progressPercentage,
-      isCompleted: serviceReception.evChecklistProgress.isCompleted,
-      completedAt: serviceReception.evChecklistProgress.completedAt,
-      criticalIssues: serviceReception.evChecklistProgress.criticalIssuesFound,
-    };
-
-    return sendSuccess(
-      res,
-      200,
-      "Checklist progress retrieved successfully",
-      progress
-    );
-  } catch (error) {
-    console.error("Error getting checklist progress:", error);
-    return sendError(
-      res,
-      500,
-      "Error getting checklist progress",
-      null,
-      "INTERNAL_SERVER_ERROR"
-    );
-  }
-};
-
-// @desc    Update ChecklistInstance item
-// @route   PUT /api/service-receptions/:id/checklist-item/:stepNumber
-// @access  Private (Technician)
-export const updateChecklistItem = async (req, res) => {
-  try {
-    const { id, stepNumber } = req.params;
-    const { result, notes, photos, measurements, issues } = req.body;
-
-    const serviceReception = await ServiceReception.findById(id);
-    if (!serviceReception) {
-      return sendError(
-        res,
-        404,
-        "Service reception not found",
-        null,
-        "RECEPTION_NOT_FOUND"
-      );
-    }
-
-    const checklistInstance = await ChecklistInstance.findById(
-      serviceReception.evChecklistProgress.checklistInstanceId
-    );
-    if (!checklistInstance) {
-      return sendError(
-        res,
-        404,
-        "Checklist instance not found",
-        null,
-        "CHECKLIST_INSTANCE_NOT_FOUND"
-      );
-    }
-
-    // Update checklist item
-    await checklistInstance.completeItem(stepNumber, result, {
-      completedBy: req.user._id,
-      notes,
-      photos,
-      measurements,
-      issues,
-    });
-
-    // Update ServiceReception progress
-    serviceReception.evChecklistProgress.completedItems =
-      checklistInstance.completedItems;
-    serviceReception.evChecklistProgress.progressPercentage =
-      checklistInstance.progressPercentage;
-
-    if (checklistInstance.status === "completed") {
-      serviceReception.evChecklistProgress.isCompleted = true;
-      serviceReception.evChecklistProgress.completedAt = new Date();
-    }
-
-    await serviceReception.save();
-
-    // Sync with Appointment
-    const Appointment = mongoose.model("Appointment");
-    const appointment = await Appointment.findById(
-      serviceReception.appointmentId
-    );
-    if (appointment) {
-      await syncChecklistWithAppointment(serviceReception._id, appointment);
-    }
-
-    return sendSuccess(res, 200, "Checklist item updated successfully", {
-      checklistInstance,
-      progress: serviceReception.evChecklistProgress,
-    });
-  } catch (error) {
-    console.error("Error updating checklist item:", error);
-    return sendError(
-      res,
-      500,
-      "Error updating checklist item",
-      null,
-      "INTERNAL_SERVER_ERROR"
-    );
-  }
-};
 
 // @desc    Get available EVChecklist templates
 // @route   GET /api/service-receptions/checklist-templates

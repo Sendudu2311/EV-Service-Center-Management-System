@@ -294,6 +294,7 @@ const serviceReceptionSchema = new mongoose.Schema(
         "received",
         "inspected",
         "approved",
+        "rejected",
         "in_service",
         "completed",
         "ready_for_pickup",
@@ -526,10 +527,6 @@ const serviceReceptionSchema = new mongoose.Schema(
 
     // EV Checklist tracking
     evChecklistProgress: {
-      checklistInstanceId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "ChecklistInstance",
-      },
       totalItems: Number,
       completedItems: Number,
       progressPercentage: {

@@ -226,47 +226,6 @@ evChecklistSchema.methods.isApplicableToVehicle = function(vehicleData) {
   });
 };
 
-// Method to create checklist instance for appointment
-evChecklistSchema.methods.createInstance = function(appointmentId, technicianId) {
-  const ChecklistInstance = mongoose.model('ChecklistInstance');
-  
-  const instance = new ChecklistInstance({
-    checklistId: this._id,
-    appointmentId: appointmentId,
-    assignedTo: technicianId,
-    items: this.checklistItems.map(item => ({
-      stepNumber: item.stepNumber,
-      title: item.title,
-      description: item.description,
-      category: item.category,
-      isRequired: item.isRequired,
-      isSafetyItem: item.isSafetyItem,
-      estimatedTime: item.estimatedTime,
-      tools: item.tools,
-      safetyPrecautions: item.safetyPrecautions,
-      expectedResults: item.expectedResults,
-      documentation: item.documentation,
-      subItems: item.subItems.map(subItem => ({
-        title: subItem.title,
-        description: subItem.description,
-        isRequired: subItem.isRequired,
-        expectedValue: subItem.expectedValue,
-        measurementType: subItem.measurementType,
-        isCompleted: false
-      })),
-      isCompleted: false,
-      completedAt: null,
-      completedBy: null,
-      actualTime: 0,
-      notes: '',
-      photos: [],
-      measurements: [],
-      issues: []
-    }))
-  });
-  
-  return instance.save();
-};
 
 // Method to update usage statistics
 evChecklistSchema.methods.updateUsage = function(completionTime, success = true) {
