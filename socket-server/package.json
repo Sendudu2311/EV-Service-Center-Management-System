@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
+    "build": "echo 'No build required for Socket.io server'",
     "dev": "nodemon index.js"
   },
   "dependencies": {
