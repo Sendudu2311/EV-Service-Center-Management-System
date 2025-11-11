@@ -1,7 +1,10 @@
 import axios, { AxiosResponse, AxiosError } from "axios";
 import toast from "react-hot-toast";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+// In production (Vercel), use empty string because API is on same domain via rewrites
+// In development, use localhost:3000
+const API_URL = import.meta.env.VITE_API_URL ??
+  (import.meta.env.PROD ? "" : "http://localhost:3000");
 
 // Create axios instance
 const api = axios.create({

@@ -56,7 +56,8 @@ const ManualGoogleLogin: React.FC<ManualGoogleLoginProps> = ({
 
         try {
           // Process the auth code
-          const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+          const API_URL = import.meta.env.VITE_API_URL ??
+            (import.meta.env.PROD ? "" : "http://localhost:3000");
           const response = await fetch(
             `${API_URL}/api/auth/google-auth`,
             {
