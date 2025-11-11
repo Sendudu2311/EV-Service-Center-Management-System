@@ -13,6 +13,47 @@ import { sendEmail } from "../utils/email.js";
 import { generateRefundNotificationTemplate } from "../utils/emailTemplates.js";
 
 /**
+ * Get client URL based on environment
+ * @returns {string} - Client URL for current environment
+ */
+const getClientUrl = () => {
+  // Production: Use PRODUCTION_CLIENT_URL if available
+  if (process.env.NODE_ENV === "production" && process.env.CLIENT_URL) {
+    return process.env.CLIENT_URL;
+  }
+  // Development/fallback: Use CLIENT_URL or localhost
+  return process.env.CLIENT_URL || "http://localhost:5173";
+};
+
+/**
+ * Get server URL based on environment and request
+ * @param {Request} req - Express request object
+ * @returns {string} - Server URL for current environment
+ */
+const getServerUrl = (req) => {
+  // Production: Use PRODUCTION_SERVER_URL if available
+  if (process.env.NODE_ENV === "production" && process.env.PUBLIC_BASE_URL) {
+    return process.env.PUBLIC_BASE_URL;
+  }
+
+  // Use SERVER_URL from env if available
+  if (process.env.SERVER_URL) {
+    return process.env.SERVER_URL;
+  }
+
+  // Try to detect from request headers
+  const protocol = req.protocol || "http";
+  const host = req.get("host") || req.get("x-forwarded-host");
+
+  if (host) {
+    return `${protocol}://${host}`;
+  }
+
+  // Fallback to localhost for web, but this won't work for mobile
+  return "http://localhost:3000";
+};
+
+/**
  * Create VNPay payment URL for appointment booking
  */
 export const createPayment = async (req, res, next) => {
@@ -73,20 +114,7 @@ export const createPayment = async (req, res, next) => {
     // Create payment URL parameters
     // Get server URL - use IP from request host if available (important for mobile)
     // Mobile devices can't access localhost, need actual IP
-    let serverUrl = process.env.SERVER_URL;
-
-    if (!serverUrl) {
-      // Try to detect from request headers
-      const protocol = req.protocol || "http";
-      const host = req.get("host") || req.get("x-forwarded-host");
-
-      if (host) {
-        serverUrl = `${protocol}://${host}`;
-      } else {
-        // Fallback to localhost for web, but this won't work for mobile
-        serverUrl = "http://localhost:3000";
-      }
-    }
+    const serverUrl = getServerUrl(req);
 
     console.log(
       "🌐 VNPay Return URL will be:",
@@ -276,9 +304,7 @@ export const handleReturn = async (req, res, next) => {
           }
         );
       }
-      const redirectUrl = `${
-        process.env.CLIENT_URL || "http://localhost:5173"
-      }/payment/vnpay-return?success=false&error=Invalid payment verification`;
+      const redirectUrl = `${getClientUrl()}/payment/vnpay-return?success=false&error=Invalid payment verification`;
       return res.redirect(redirectUrl);
     }
 
@@ -467,9 +493,7 @@ export const handleReturn = async (req, res, next) => {
         userAgentIsMobile; // User-Agent detection
 
       // Build redirect URLs
-      const webRedirectUrl = `${
-        process.env.CLIENT_URL || "http://localhost:5173"
-      }/payment/vnpay-return?success=${success}&transactionRef=${vnp_TxnRef}&amount=${displayAmount}`;
+      const webRedirectUrl = `${getClientUrl()}/payment/vnpay-return?success=${success}&transactionRef=${vnp_TxnRef}&amount=${displayAmount}`;
 
       const mobileDeepLink = `evservicecenter://payment/vnpay-return?success=${success}&transactionRef=${vnp_TxnRef}&amount=${displayAmount}`;
 
@@ -547,9 +571,7 @@ export const handleReturn = async (req, res, next) => {
         });
         await legacyTransaction.save();
 
-        const redirectUrl = `${
-          process.env.CLIENT_URL || "http://localhost:5173"
-        }/payment/vnpay-return?success=false&error=Payment record not found`;
+        const redirectUrl = `${getClientUrl()}/payment/vnpay-return?success=false&error=Payment record not found`;
         return res.redirect(redirectUrl);
       }
 
@@ -601,9 +623,7 @@ export const handleReturn = async (req, res, next) => {
       });
       await invoiceTransaction.save();
 
-      const redirectUrl = `${
-        process.env.CLIENT_URL || "http://localhost:5173"
-      }/payment/vnpay-return?success=${vnp_ResponseCode === "00"}&invoiceId=${
+      const redirectUrl = `${getClientUrl()}/payment/vnpay-return?success=${vnp_ResponseCode === "00"}&invoiceId=${
         invoice._id
       }&transactionRef=${vnp_TxnRef}`;
       return res.redirect(redirectUrl);
@@ -1225,9 +1245,7 @@ export const testConfig = async (req, res) => {
       vnp_OrderInfo: "Test payment",
       vnp_OrderType: "other",
       vnp_Amount: 100000,
-      vnp_ReturnUrl: `${
-        process.env.CLIENT_URL || "http://localhost:5173"
-      }/payment/vnpay-return`,
+      vnp_ReturnUrl: `${getClientUrl()}/payment/vnpay-return`,
       vnp_IpAddr: "127.0.0.1",
       vnp_CreateDate: parseInt(
         new Date()
