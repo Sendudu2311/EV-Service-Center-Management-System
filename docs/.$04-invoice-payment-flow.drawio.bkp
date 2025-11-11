@@ -1,0 +1,393 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.0.4 Chrome/138.0.7204.97 Electron/37.2.1 Safari/537.36" version="28.0.4">
+  <diagram name="Invoice and Payment Flow (After Reception Approval)" id="invoice-payment-diagram">
+    <mxGraphModel dx="1279" dy="806" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="2400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="Invoice Generation and Payment Flow (After Reception Approval)&#xa;EV Service Center Management System" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=16;fontStyle=1" parent="1" vertex="1">
+          <mxGeometry x="300" y="20" width="1000" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- Actors and Systems -->
+        <mxCell id="staff-box" value="Staff" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+          <mxGeometry x="80" y="100" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-line" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;strokeColor=#666666;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="100" y="2300" as="sourcePoint" />
+            <mxPoint x="100" y="180" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="staff-dashboard-box" value="StaffDashboard" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="250" y="120" width="130" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="staff-dashboard-line" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;strokeColor=#666666;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="315" y="2300" as="sourcePoint" />
+            <mxPoint x="315" y="160" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="reception-controller-box" value="ServiceReceptionController" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="440" y="120" width="180" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="reception-controller-line" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;strokeColor=#666666;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="530" y="2300" as="sourcePoint" />
+            <mxPoint x="530" y="160" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="transaction-svc-box" value="TransactionService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="680" y="120" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="transaction-svc-line" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;strokeColor=#666666;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="750" y="2300" as="sourcePoint" />
+            <mxPoint x="750" y="160" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="db-box" value="Database&#xa;(Invoice, Transaction,&#xa;Appointment,&#xa;ServiceReception)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="880" y="120" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="db-line" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;strokeColor=#666666;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="950" y="2300" as="sourcePoint" />
+            <mxPoint x="950" y="180" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Trigger Note -->
+        <mxCell id="trigger-note" value="TRIGGER: This flow starts AFTER diagram 03 completes&#xa;Pre-condition: Appointment status = 'reception_approved', ServiceReception approved by staff&#xa;Entry point: Staff navigates to 'Chờ thanh toán' (Waiting for Payment) tab in dashboard" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#d4edda;strokeColor=#009900;align=left;size=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="240" width="940" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- PHASE 1: Staff Views Payment Queue -->
+        <mxCell id="phase1-label" value="PHASE 1: STAFF VIEWS PAYMENT QUEUE" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#0066CC;" vertex="1" parent="1">
+          <mxGeometry x="80" y="340" width="940" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="staff-act1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="95" y="380" width="10" height="1840" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg1" value="navigateTo('pending-payment' tab)" style="endArrow=block;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry x="-0.8" y="20" relative="1" as="geometry">
+            <mxPoint x="105" y="380" as="sourcePoint" />
+            <mxPoint x="315" y="380" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="dashboard-act1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="310" y="380" width="10" height="170" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg2" value="GET /api/appointments?status=reception_approved" style="endArrow=block;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry x="-1" y="30" relative="1" as="geometry">
+            <mxPoint x="320" y="410" as="sourcePoint" />
+            <mxPoint x="950" y="410" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="db-act1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="945" y="410" width="10" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg3" value="appointments[]" style="endArrow=open;endFill=0;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;dashed=1;" edge="1" parent="1">
+          <mxGeometry x="0.7" y="-20" relative="1" as="geometry">
+            <mxPoint x="950" y="435" as="sourcePoint" />
+            <mxPoint x="315" y="435" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="msg4" value="showPendingPaymentAppointments()" style="endArrow=open;endFill=0;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;dashed=1;" edge="1" parent="1">
+          <mxGeometry x="0.5" y="-20" relative="1" as="geometry">
+            <mxPoint x="315" y="550" as="sourcePoint" />
+            <mxPoint x="100" y="550" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="payment-queue-note" value="Staff sees:&#xa;- List of appointments with reception_approved status&#xa;- Each appointment shows:&#xa;  • Customer name, vehicle info&#xa;  • Services recommended&#xa;  • Parts needed (internal + external)&#xa;  • Estimated total amount&#xa;  • Deposit amount already paid&#xa;  • Remaining amount to collect&#xa;- 'Confirm Payment' button for each appointment" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#fff4e6;strokeColor=#ff6600;align=left;size=8;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="110" y="460" width="240" height="140" as="geometry" />
+        </mxCell>
+
+        <!-- PHASE 2: Staff Processes Payment -->
+        <mxCell id="phase2-label" value="PHASE 2: STAFF PROCESSES PAYMENT AND INVOICE CREATION" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#0066CC;" vertex="1" parent="1">
+          <mxGeometry x="80" y="640" width="940" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg5" value="clickConfirmPayment(appointmentId, serviceReceptionId)" style="endArrow=block;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry x="-1" y="30" relative="1" as="geometry">
+            <mxPoint x="105" y="680" as="sourcePoint" />
+            <mxPoint x="315" y="680" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="dashboard-act2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="310" y="680" width="10" height="250" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg6" value="showPaymentModal(totalAmount, depositAmount)" style="endArrow=open;endFill=0;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;dashed=1;" edge="1" parent="1">
+          <mxGeometry x="0.5" y="-20" relative="1" as="geometry">
+            <mxPoint x="315" y="710" as="sourcePoint" />
+            <mxPoint x="100" y="710" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="payment-modal-note" value="Payment Modal shows:&#xa;- Total amount to pay&#xa;- Deposit already paid&#xa;- Remaining amount&#xa;- Payment method selection:&#xa;  • Cash&#xa;  • Bank Transfer&#xa;- Payment date input&#xa;- Upload proof image&#xa;- Notes field" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#fff4e6;strokeColor=#ff6600;align=left;size=8;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="110" y="740" width="180" height="140" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg7" value="submitPayment(method, amount, date, proofImage)" style="endArrow=block;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry x="-1" y="30" relative="1" as="geometry">
+            <mxPoint x="105" y="900" as="sourcePoint" />
+            <mxPoint x="315" y="900" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Alt frame for payment methods -->
+        <mxCell id="alt-frame" value="alt" style="shape=umlFrame;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;width=40;height=20;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="250" y="980" width="770" height="370" as="geometry" />
+        </mxCell>
+
+        <mxCell id="alt-cash-condition" value="[method = &quot;cash&quot;]" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="260" y="1000" width="120" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg8" value="POST /api/service-receptions/:id/confirm-payment&#xa;(method='cash', amount, date, proofImage, notes)" style="endArrow=block;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry x="-0.6" y="20" relative="1" as="geometry">
+            <mxPoint x="320" y="1040" as="sourcePoint" />
+            <mxPoint x="530" y="1040" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="reception-controller-act1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="525" y="940" width="10" height="620" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg9" value="createTransaction('cash', cashData)" style="endArrow=block;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry x="-0.6" y="20" relative="1" as="geometry">
+            <mxPoint x="535" y="1070" as="sourcePoint" />
+            <mxPoint x="750" y="1070" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="transaction-svc-act1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="745" y="1070" width="10" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg10" value="INSERT Transaction (type='cash', purpose='invoice_payment')" style="endArrow=block;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;strokeColor=#009900;" edge="1" parent="1">
+          <mxGeometry x="-1" y="30" relative="1" as="geometry">
+            <mxPoint x="755" y="1100" as="sourcePoint" />
+            <mxPoint x="950" y="1100" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="db-act2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="945" y="1100" width="10" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg11" value="{transaction}" style="endArrow=open;endFill=0;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;dashed=1;" edge="1" parent="1">
+          <mxGeometry x="0.6" y="-20" relative="1" as="geometry">
+            <mxPoint x="750" y="1150" as="sourcePoint" />
+            <mxPoint x="530" y="1150" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="alt-separator" value="" style="endArrow=none;dashed=1;html=1;dashPattern=2 4;strokeWidth=1;strokeColor=#666666;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="250" y="1180" as="sourcePoint" />
+            <mxPoint x="1020" y="1180" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="alt-bank-condition" value="[method = &quot;bank_transfer&quot;]" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;fontStyle=2;" vertex="1" parent="1">
+          <mxGeometry x="260" y="1190" width="150" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg12" value="POST /api/service-receptions/:id/confirm-payment&#xa;(method='bank_transfer', amount, date, proofImage, transferRef, bankName)" style="endArrow=block;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry x="-0.6" y="20" relative="1" as="geometry">
+            <mxPoint x="320" y="1230" as="sourcePoint" />
+            <mxPoint x="530" y="1230" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="msg13" value="createTransaction('bank_transfer', bankTransferData)" style="endArrow=block;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry x="-0.6" y="20" relative="1" as="geometry">
+            <mxPoint x="535" y="1260" as="sourcePoint" />
+            <mxPoint x="750" y="1260" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="transaction-svc-act2" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="745" y="1260" width="10" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg14" value="INSERT Transaction (type='bank_transfer', purpose='invoice_payment')" style="endArrow=block;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;strokeColor=#009900;" edge="1" parent="1">
+          <mxGeometry x="-1" y="30" relative="1" as="geometry">
+            <mxPoint x="755" y="1290" as="sourcePoint" />
+            <mxPoint x="950" y="1290" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="db-act3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="945" y="1290" width="10" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg15" value="{transaction}" style="endArrow=open;endFill=0;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;dashed=1;" edge="1" parent="1">
+          <mxGeometry x="0.6" y="-20" relative="1" as="geometry">
+            <mxPoint x="750" y="1340" as="sourcePoint" />
+            <mxPoint x="530" y="1340" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Continue after alt frame -->
+        <mxCell id="msg16" value="INSERT Invoice (WITH invoice items, totals, transaction)" style="endArrow=block;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;strokeColor=#FF0000;strokeWidth=3;" edge="1" parent="1">
+          <mxGeometry x="-0.7" y="20" relative="1" as="geometry">
+            <mxPoint x="535" y="1400" as="sourcePoint" />
+            <mxPoint x="950" y="1400" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="db-act4" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="945" y="1400" width="10" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="invoice-creation-note" value="IMPORTANT: Invoice is created HERE&#xa;during payment processing!&#xa;&#xa;Invoice includes:&#xa;- serviceItems (from recommendedServices)&#xa;- partItems (from requestedParts)&#xa;- externalPartItems (from externalParts)&#xa;- laborItems (calculated from time)&#xa;- totals with 10% VAT&#xa;- deposit deduction&#xa;- paymentInfo.status = 'paid'&#xa;- Transaction reference" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#ffcccc;strokeColor=#FF0000;align=left;size=8;fontSize=9;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="840" y="1340" width="200" height="200" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg17" value="UPDATE Appointment SET status='in_progress'" style="endArrow=block;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;strokeColor=#0066CC;strokeWidth=3;" edge="1" parent="1">
+          <mxGeometry x="-0.7" y="20" relative="1" as="geometry">
+            <mxPoint x="535" y="1450" as="sourcePoint" />
+            <mxPoint x="950" y="1450" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="db-act5" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="945" y="1450" width="10" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="status-note" value="KEY FINDING:&#xa;Status changes to 'in_progress'&#xa;NOT 'invoiced'!&#xa;&#xa;This allows work to start immediately." style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#cfe2ff;strokeColor=#0066CC;align=left;size=8;fontSize=9;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="840" y="1440" width="180" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg18" value="UPDATE Appointment SET paymentStatus='paid'" style="endArrow=block;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;strokeColor=#0066CC;" edge="1" parent="1">
+          <mxGeometry x="-1" y="30" relative="1" as="geometry">
+            <mxPoint x="535" y="1500" as="sourcePoint" />
+            <mxPoint x="950" y="1500" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="db-act6" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="945" y="1500" width="10" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg19" value="UPDATE ServiceReception SET status='in_service'" style="endArrow=block;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry x="-0.7" y="20" relative="1" as="geometry">
+            <mxPoint x="535" y="1550" as="sourcePoint" />
+            <mxPoint x="950" y="1550" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="db-act7" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="945" y="1550" width="10" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg20" value="paymentSuccess(invoice, transaction)" style="endArrow=open;endFill=0;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;dashed=1;" edge="1" parent="1">
+          <mxGeometry x="0.6" y="-20" relative="1" as="geometry">
+            <mxPoint x="530" y="1560" as="sourcePoint" />
+            <mxPoint x="315" y="1560" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="msg21" value="showPaymentConfirmation()" style="endArrow=open;endFill=0;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;dashed=1;" edge="1" parent="1">
+          <mxGeometry x="0.5" y="-20" relative="1" as="geometry">
+            <mxPoint x="315" y="930" as="sourcePoint" />
+            <mxPoint x="100" y="930" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- PHASE 3: Display Invoice on UI -->
+        <mxCell id="phase3-label" value="PHASE 3: DISPLAY INVOICE ON UI (Optional - Invoice Already Created)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;fontColor=#0066CC;" vertex="1" parent="1">
+          <mxGeometry x="80" y="1640" width="940" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg22" value="viewInvoice(appointmentId)" style="endArrow=block;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry x="-1" y="30" relative="1" as="geometry">
+            <mxPoint x="105" y="1680" as="sourcePoint" />
+            <mxPoint x="315" y="1680" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="dashboard-act3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="310" y="1680" width="10" height="180" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg23" value="GET /api/invoices/appointment/:appointmentId" style="endArrow=block;endFill=1;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;" edge="1" parent="1">
+          <mxGeometry x="-0.7" y="20" relative="1" as="geometry">
+            <mxPoint x="320" y="1710" as="sourcePoint" />
+            <mxPoint x="950" y="1710" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="db-act8" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="945" y="1710" width="10" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="msg24" value="invoice (with all items, totals, transaction)" style="endArrow=open;endFill=0;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;dashed=1;" edge="1" parent="1">
+          <mxGeometry x="0.7" y="-20" relative="1" as="geometry">
+            <mxPoint x="950" y="1735" as="sourcePoint" />
+            <mxPoint x="315" y="1735" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="msg25" value="displayInvoice(invoice)" style="endArrow=open;endFill=0;html=1;edgeStyle=orthogonalEdgeStyle;align=left;verticalAlign=top;strokeWidth=2;dashed=1;" edge="1" parent="1">
+          <mxGeometry x="0.5" y="-20" relative="1" as="geometry">
+            <mxPoint x="315" y="1860" as="sourcePoint" />
+            <mxPoint x="100" y="1860" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="invoice-display-note" value="Invoice shown on UI contains:&#xa;- All data from Invoice table (already stored)&#xa;- Services, parts, external parts, labor&#xa;- Subtotal + 10% VAT = Total&#xa;- Deposit deducted&#xa;- Transaction reference&#xa;- Payment status = 'paid'&#xa;&#xa;NO calculation needed - just display!" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#d4edda;strokeColor=#009900;align=left;size=8;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="110" y="1740" width="200" height="140" as="geometry" />
+        </mxCell>
+
+        <!-- Business Rules -->
+        <mxCell id="business-rules" value="Business Rules (CORRECTED FLOW):&#xa;&#xa;1. Pre-condition: Appointment status = 'reception_approved' (from diagram 03)&#xa;2. Staff navigates to 'Chờ thanh toán' (Waiting for Payment) tab in dashboard&#xa;3. Staff sees list of appointments with reception_approved status&#xa;4. Staff clicks 'Confirm Payment' button → payment modal opens&#xa;5. Staff selects payment method (cash OR bank_transfer only - 2 types)&#xa;6. Staff enters payment details and uploads proof image&#xa;7. POST /api/service-receptions/:id/confirm-payment&#xa;&#xa;8. KEY: Invoice is created DURING payment processing (confirmPayment function)&#xa;   - Invoice includes: services, parts, external parts, labor, 10% VAT, deposit deduction&#xa;   - Invoice.paymentInfo.status = 'paid' (payment already completed)&#xa;   - Transaction record created and linked to invoice&#xa;&#xa;9. Appointment status changes: reception_approved → in_progress (NOT invoiced!)&#xa;10. ServiceReception status changes to 'in_service'&#xa;11. Work starts immediately after payment confirmation&#xa;&#xa;12. Invoice display on UI: Just fetch from Invoice table (already complete with all data)&#xa;&#xa;IMPORTANT CORRECTIONS:&#xa;- Invoice is NOT created automatically after reception approval&#xa;- Invoice IS created during payment processing (confirmPayment function)&#xa;- Status goes to 'in_progress' NOT 'invoiced'&#xa;- Payment methods: Only cash and bank_transfer (2 types)&#xa;- Invoice data is stored in database, not calculated on UI" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#ffe6cc;strokeColor=#d79b00;align=left;size=10;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="80" y="1960" width="940" height="340" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
