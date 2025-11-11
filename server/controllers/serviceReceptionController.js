@@ -785,6 +785,84 @@ export const approveServiceReception = async (req, res) => {
 
       console.log("Total additional parts cost:", additionalPartsCost);
 
+      // ✅ IMMEDIATE PART REDUCTION: Reduce inventory when staff approves service reception
+      console.log("\n🔧 [IMMEDIATE PART REDUCTION] Reducing parts inventory...");
+      const Part = mongoose.model("Part");
+
+      // METHOD 1: Reduce requestedParts (parts đề xuất trong phiếu)
+      console.log("📦 [METHOD 1] Processing requestedParts...");
+      for (const requestedPart of serviceReception.requestedParts || []) {
+        // Only reduce parts that are available (skip out-of-stock parts)
+        if (requestedPart.isAvailable) {
+          try {
+            const part = await Part.findById(requestedPart.partId);
+            if (!part) {
+              console.warn(`⚠️ Part not found: ${requestedPart.partId}`);
+              continue;
+            }
+
+            console.log(`   Processing requested part: ${part.partNumber} - ${part.name} (Qty: ${requestedPart.quantity})`);
+            console.log(`   - Current stock: ${part.inventory.currentStock}, Used stock: ${part.inventory.usedStock}`);
+
+            if (part.inventory.currentStock >= requestedPart.quantity) {
+              part.inventory.currentStock -= requestedPart.quantity;
+              part.inventory.usedStock += requestedPart.quantity;
+              part.inventory.averageUsage = Math.round(
+                part.inventory.averageUsage * 0.9 + requestedPart.quantity * 0.1
+              );
+              await part.save();
+              console.log(`   ✅ Reduced! New currentStock: ${part.inventory.currentStock}, usedStock: ${part.inventory.usedStock}`);
+            } else {
+              console.warn(`   ⚠️ Insufficient stock: Available ${part.inventory.currentStock}, Needed ${requestedPart.quantity}`);
+            }
+          } catch (partError) {
+            console.error(`❌ Error reducing requested part ${requestedPart.partNumber}:`, partError);
+          }
+        }
+      }
+
+      // METHOD 2: Reduce commonParts from approved services (parts liên quan trong dịch vụ)
+      console.log("\n📦 [METHOD 2] Processing commonParts from approved services...");
+      for (const recommendedService of serviceReception.recommendedServices || []) {
+        try {
+          const serviceDoc = await Service.findById(recommendedService.serviceId);
+          if (serviceDoc && serviceDoc.commonParts && serviceDoc.commonParts.length > 0) {
+            console.log(`   Service: ${serviceDoc.name} has ${serviceDoc.commonParts.length} common parts`);
+
+            for (const commonPart of serviceDoc.commonParts) {
+              // Only reduce required parts (skip optional parts)
+              if (!commonPart.isOptional) {
+                const part = await Part.findById(commonPart.partId);
+                if (!part) {
+                  console.warn(`   ⚠️ Common part not found: ${commonPart.partId}`);
+                  continue;
+                }
+
+                const quantity = commonPart.quantity * (recommendedService.quantity || 1);
+                console.log(`   Processing common part: ${part.partNumber} - ${part.name} (Qty: ${quantity})`);
+                console.log(`   - Current stock: ${part.inventory.currentStock}, Used stock: ${part.inventory.usedStock}`);
+
+                if (part.inventory.currentStock >= quantity) {
+                  part.inventory.currentStock -= quantity;
+                  part.inventory.usedStock += quantity;
+                  part.inventory.averageUsage = Math.round(
+                    part.inventory.averageUsage * 0.9 + quantity * 0.1
+                  );
+                  await part.save();
+                  console.log(`   ✅ Reduced! New currentStock: ${part.inventory.currentStock}, usedStock: ${part.inventory.usedStock}`);
+                } else {
+                  console.warn(`   ⚠️ Insufficient stock: Available ${part.inventory.currentStock}, Needed ${quantity}`);
+                }
+              }
+            }
+          }
+        } catch (serviceError) {
+          console.error(`❌ Error processing service ${recommendedService.serviceId}:`, serviceError);
+        }
+      }
+
+      console.log("✅ [IMMEDIATE PART REDUCTION] Completed\n");
+
       // Calculate total additional cost
       const subtotalAdditional =
         additionalServicesCost + additionalPartsCost + laborCost;

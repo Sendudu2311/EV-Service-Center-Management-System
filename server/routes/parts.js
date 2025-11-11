@@ -31,6 +31,16 @@ router.get('/', getParts);
 // @access  Public
 router.get('/search', searchCompatibleParts);
 
+// @route   GET /api/parts/analytics
+// @desc    Get parts analytics and statistics
+// @access  Private (Staff, Admin, Technician)
+router.get('/analytics', protect, authorize('staff', 'admin', 'technician'), getPartsAnalytics);
+
+// @route   GET /api/parts/low-stock
+// @desc    Get parts with low stock
+// @access  Private (Staff, Admin, Technician)
+router.get('/low-stock', protect, authorize('staff', 'admin', 'technician'), getLowStockParts);
+
 // @route   GET /api/parts/by-service/:category
 // @desc    Get parts by service category
 // @access  Public
@@ -44,20 +54,11 @@ router.get('/:id', getPart);
 // Protected routes - require authentication
 router.use(protect);
 
-// @route   GET /api/parts/analytics
-// @desc    Get parts analytics and statistics
-// @access  Private (Staff, Admin, Technician)
-router.get('/analytics', authorize('staff', 'admin', 'technician'), getPartsAnalytics);
-
-// @route   GET /api/parts/low-stock
-// @desc    Get parts with low stock
-// @access  Private (Staff, Admin, Technician)
-router.get('/low-stock', authorize('staff', 'admin', 'technician'), getLowStockParts);
-
 // @route   POST /api/parts
 // @desc    Create new part with images
 // @access  Private (Staff, Admin)
 router.post('/', authorize('staff', 'admin'), uploadImage.array('images', 5), createPart);
+
 // @route   POST /api/parts/import
 // @desc    Bulk import parts from JSON/Excel mapping
 // @access  Private (Staff, Admin)

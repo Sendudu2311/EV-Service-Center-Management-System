@@ -5346,6 +5346,8 @@ export const staffFinalConfirmation = async (req, res) => {
 // @logic   Reduces both requestedParts (from ServiceReception) and commonParts (from Service)
 async function reducePartsForCompletedAppointment(appointmentId) {
   try {
+    console.log(`\n🔧 [reducePartsForCompletedAppointment] Starting for appointment: ${appointmentId}`);
+    
     const { ServiceReception, Service, Part } = await import(
       "../models/index.js"
     );
@@ -5358,32 +5360,49 @@ async function reducePartsForCompletedAppointment(appointmentId) {
       ],
     });
 
-    if (!appointment || !appointment.serviceReceptionId) {
+    if (!appointment) {
+      console.log(`❌ [reducePartsForCompletedAppointment] Appointment not found`);
       return { success: false, message: "No service reception found" };
     }
+
+    console.log(`✅ [reducePartsForCompletedAppointment] Appointment found: ${appointment.appointmentNumber}`);
+
+    if (!appointment.serviceReceptionId) {
+      console.log(`⚠️ [reducePartsForCompletedAppointment] No service reception found for appointment`);
+      return { success: false, message: "No service reception found" };
+    }
+
+    console.log(`✅ [reducePartsForCompletedAppointment] Service reception found: ${appointment.serviceReceptionId._id}`);
 
     const serviceReception = appointment.serviceReceptionId;
     const partsToReduce = [];
     const errors = [];
 
     // ====== METHOD 1: Reduce RequestedParts (explicitly requested during service) ======
+    console.log(`\n📦 [METHOD 1] Checking requestedParts...`);
     if (
       serviceReception.requestedParts &&
       serviceReception.requestedParts.length > 0
     ) {
+      console.log(`   Found ${serviceReception.requestedParts.length} requested parts`);
+      
       for (const requestedPart of serviceReception.requestedParts) {
-        // Reduce ALL requested parts (regardless of approval status)
-        // Approval status is only for customer/staff decision, not for actual usage
+        console.log(`   Processing part: ${requestedPart.partNumber} (${requestedPart.partName})`);
+        console.log(`   - Quantity: ${requestedPart.quantity}`);
+        console.log(`   - Approved: ${requestedPart.isApproved}`);
 
         try {
           const part = await Part.findById(requestedPart.partId);
           if (!part) {
+            console.log(`   ❌ Part not found in database`);
             errors.push({
               partNumber: requestedPart.partNumber,
               reason: "Part not found in database",
             });
             continue;
           }
+
+          console.log(`   Current stock: ${part.inventory.currentStock}, Used stock: ${part.inventory.usedStock}`);
 
           // Check if sufficient stock available
           if (part.inventory.currentStock >= requestedPart.quantity) {
@@ -5400,6 +5419,8 @@ async function reducePartsForCompletedAppointment(appointmentId) {
 
             await part.save();
 
+            console.log(`   ✅ Reduced stock! New currentStock: ${part.inventory.currentStock}, New usedStock: ${part.inventory.usedStock}`);
+
             partsToReduce.push({
               partId: part._id,
               partNumber: part.partNumber,
@@ -5410,46 +5431,69 @@ async function reducePartsForCompletedAppointment(appointmentId) {
               newStock: part.inventory.currentStock,
             });
           } else {
+            console.log(`   ❌ Insufficient stock! Available: ${part.inventory.currentStock}, Requested: ${requestedPart.quantity}`);
             errors.push({
               partNumber: requestedPart.partNumber,
               reason: `Insufficient stock. Available: ${part.inventory.currentStock}, Requested: ${requestedPart.quantity}`,
             });
           }
         } catch (err) {
+          console.log(`   ❌ Error: ${err.message}`);
           errors.push({
             partNumber: requestedPart.partNumber,
             reason: err.message,
           });
         }
       }
+    } else {
+      console.log(`   No requested parts found`);
     }
 
     // ====== METHOD 2: Reduce CommonParts from Services (if service was completed) ======
+    console.log(`\n🔧 [METHOD 2] Checking recommendedServices...`);
     if (
       serviceReception.recommendedServices &&
       serviceReception.recommendedServices.length > 0
     ) {
+      console.log(`   Found ${serviceReception.recommendedServices.length} recommended services`);
+      
       for (const recommendedService of serviceReception.recommendedServices) {
+        console.log(`   Service: ${recommendedService.serviceName}, Completed: ${recommendedService.isCompleted}`);
+        
         // Only process completed services
-        if (!recommendedService.isCompleted) continue;
+        if (!recommendedService.isCompleted) {
+          console.log(`   ⏭️ Skipping - service not completed`);
+          continue;
+        }
 
         try {
           const service = await Service.findById(
             recommendedService.serviceId
           ).populate("commonParts.partId");
 
-          if (!service || !service.commonParts) continue;
+          if (!service || !service.commonParts) {
+            console.log(`   ⏭️ Service has no common parts`);
+            continue;
+          }
+
+          console.log(`   Found ${service.commonParts.length} common parts for service ${service.name}`);
 
           // Process each common part associated with the service
           for (const commonPart of service.commonParts) {
             // Skip optional parts
-            if (commonPart.isOptional) continue;
+            if (commonPart.isOptional) {
+              console.log(`   ⏭️ Skipping optional part`);
+              continue;
+            }
 
             // Avoid double-reduction: check if already in reduce list
             const alreadyReduced = partsToReduce.some(
               (p) => p.partId.toString() === commonPart.partId._id.toString()
             );
-            if (alreadyReduced) continue;
+            if (alreadyReduced) {
+              console.log(`   ⏭️ Part already reduced`);
+              continue;
+            }
 
             try {
               const part = await Part.findById(commonPart.partId._id);
@@ -5474,6 +5518,8 @@ async function reducePartsForCompletedAppointment(appointmentId) {
                   reason: `Common part for ${service.name}`,
                   newStock: part.inventory.currentStock,
                 });
+                
+                console.log(`   ✅ Reduced common part: ${part.partNumber}`);
               }
             } catch (err) {
               console.warn(
@@ -5486,12 +5532,15 @@ async function reducePartsForCompletedAppointment(appointmentId) {
           console.warn(`Error processing recommended service:`, err.message);
         }
       }
+    } else {
+      console.log(`   No recommended services found`);
     }
 
     // ====== METHOD 3: Update Appointment.partsUsed array ======
-    // IMPORTANT: DO NOT overwrite existing parts - preserve prices!
-    // Only verify that parts exist in appointment (they should already be added during staff approval)
+    console.log(`\n📝 [METHOD 3] Updating appointment.partsUsed...`);
     if (partsToReduce.length > 0) {
+      console.log(`   Total parts to reduce: ${partsToReduce.length}`);
+      
       // Check if parts are already in appointment.partsUsed (added during staff approval)
       for (const reducedPart of partsToReduce) {
         const existingPart = appointment.partsUsed.find(
@@ -5515,8 +5564,9 @@ async function reducePartsForCompletedAppointment(appointmentId) {
             unitPrice: unitPrice,
             totalPrice: unitPrice * reducedPart.quantity,
           });
+        } else {
+          console.log(`   ✅ Part ${reducedPart.partNumber} already in appointment.partsUsed`);
         }
-        // If part exists, don't modify it - preserve the price set during staff approval
       }
 
       // IMPORTANT: Recalculate total after adding parts
@@ -5526,7 +5576,13 @@ async function reducePartsForCompletedAppointment(appointmentId) {
       console.log(
         `✅ [reducePartsForCompletedAppointment] Recalculated totalAmount: ${appointment.totalAmount}`
       );
+    } else {
+      console.log(`   No parts to reduce`);
     }
+
+    console.log(`\n✅ [reducePartsForCompletedAppointment] Completed!`);
+    console.log(`   Parts reduced: ${partsToReduce.length}`);
+    console.log(`   Errors: ${errors.length}`);
 
     return {
       success: true,
@@ -5535,7 +5591,7 @@ async function reducePartsForCompletedAppointment(appointmentId) {
       errors: errors,
     };
   } catch (error) {
-    console.error("Error in reducePartsForCompletedAppointment:", error);
+    console.error("❌ [reducePartsForCompletedAppointment] Error:", error);
     return {
       success: false,
       message: error.message,
