@@ -55,14 +55,16 @@ connectDB();
 const app = express();
 const server = createServer(app);
 
-// Enable CORS
+// Enable CORS with dynamic origins based on environment
+const allowedOrigins = process.env.NODE_ENV === "production"
+  ? [process.env.FRONTEND_URL, process.env.CLIENT_URL].filter(Boolean)
+  : ["http://localhost:5173", "http://localhost:3000", "http://localhost:8081"];
+
+console.log("🌐 Allowed CORS Origins:", allowedOrigins);
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:3000",
-      "http://localhost:8081",
-    ],
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
@@ -73,14 +75,13 @@ app.use(
 // Socket.IO setup with authentication
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:3000",
-      "http://localhost:8081",
-    ],
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true,
   },
+  transports: ["websocket", "polling"],
+  pingTimeout: parseInt(process.env.SOCKET_PING_TIMEOUT) || 60000,
+  pingInterval: parseInt(process.env.SOCKET_PING_INTERVAL) || 25000,
 });
 
 // Apply socket authentication middleware
