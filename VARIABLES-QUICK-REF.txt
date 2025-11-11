@@ -1,0 +1,190 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║            📋 RAILWAY VARIABLES - QUICK REFERENCE CARD                    ║
+║              Copy-Paste này vào Railway Variables Tab                     ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════════════
+                            🚀 BACKEND VARIABLES
+═══════════════════════════════════════════════════════════════════════════
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│ STEP 1: Required Variables (BẮT BUỘC)                                     │
+└───────────────────────────────────────────────────────────────────────────┘
+
+Copy these 4 variables first (THAY PLACEHOLDERS!):
+
+NODE_ENV=production
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
+JWT_SECRET=generate_with_openssl_rand_base64_64
+FRONTEND_URL=https://will-update-after-frontend-deploy.railway.app
+CLIENT_URL=https://will-update-after-frontend-deploy.railway.app
+
+⚠️  NOTES:
+• MONGODB_URI: Lấy từ MongoDB Atlas → Connect
+• JWT_SECRET: Generate bằng: openssl rand -base64 64
+• FRONTEND_URL: Update sau khi deploy frontend
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│ STEP 2: Optional Variables (Features)                                     │
+└───────────────────────────────────────────────────────────────────────────┘
+
+Copy if you need these features:
+
+━━━ Email Notifications ━━━
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-gmail-app-password
+
+━━━ Google OAuth Login ━━━
+GOOGLE_CLIENT_ID=your-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-secret
+
+━━━ Image Uploads ━━━
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-key
+CLOUDINARY_API_SECRET=your-secret
+
+━━━ VNPay Payment ━━━
+VNP_TMNCODE=your-vnpay-merchant-code
+VNP_HASH_SECRET=your-vnpay-hash-secret
+VNP_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+
+━━━ AI Chatbot ━━━
+GEMINI_API_KEY=your-gemini-api-key
+
+━━━ Public URL ━━━
+PUBLIC_BASE_URL=https://your-backend-url.railway.app
+
+═══════════════════════════════════════════════════════════════════════════
+                          🎨 FRONTEND VARIABLES
+═══════════════════════════════════════════════════════════════════════════
+
+Only 1 variable needed:
+
+VITE_API_URL=https://your-backend-url.railway.app
+
+⚠️  Replace with actual backend URL from Step 1!
+✅  Must be HTTPS (not HTTP)
+✅  No trailing slash
+
+═══════════════════════════════════════════════════════════════════════════
+                            📝 HOW TO ADD
+═══════════════════════════════════════════════════════════════════════════
+
+Method 1: RAW Editor (Fastest) ⭐
+──────────────────────────────────
+1. Railway → Service → "Variables" tab
+2. Click "RAW Editor" button (top right)
+3. Copy-paste all variables above
+4. Click "Save"
+
+Method 2: One by One
+──────────────────────────────────
+1. Railway → Service → "Variables" tab
+2. Click "New Variable"
+3. Enter name & value
+4. Click "Add"
+5. Repeat for each variable
+
+═══════════════════════════════════════════════════════════════════════════
+                          🔄 UPDATE SEQUENCE
+═══════════════════════════════════════════════════════════════════════════
+
+Step 1: Deploy Backend
+   Add: All required variables
+   Use: FRONTEND_URL=https://will-update-later.railway.app
+
+Step 2: Deploy Frontend
+   Add: VITE_API_URL=https://[backend-url].railway.app
+
+Step 3: Update Backend CORS
+   Update: FRONTEND_URL=https://[frontend-url].railway.app
+   Update: CLIENT_URL=https://[frontend-url].railway.app
+   Update: PUBLIC_BASE_URL=https://[backend-url].railway.app
+
+═══════════════════════════════════════════════════════════════════════════
+                            ✅ VERIFICATION
+═══════════════════════════════════════════════════════════════════════════
+
+After adding variables:
+
+Backend:
+□ Railway → Service → Variables → Check all 4+ variables exist
+□ Visit: https://[backend].railway.app/api/health
+  Should return: {"success": true, ...}
+
+Frontend:
+□ Railway → Service → Variables → Check VITE_API_URL
+□ Visit: https://[frontend].railway.app
+  Should load without errors
+
+Browser Console:
+□ Open DevTools (F12)
+□ Should see: "✅ Socket connected"
+□ Should see: "🚀 Transport: websocket"
+□ No CORS errors
+
+═══════════════════════════════════════════════════════════════════════════
+                          🆘 COMMON ISSUES
+═══════════════════════════════════════════════════════════════════════════
+
+Problem: MongoDB connection failed
+├─ Check: Password encoded? (@ → %40, # → %23)
+├─ Check: MongoDB Atlas IP whitelist → 0.0.0.0/0
+└─ Test: Connection string locally first
+
+Problem: CORS errors
+├─ Check: FRONTEND_URL exact match (no trailing /)
+├─ Check: Using https:// not http://
+└─ Check: Backend redeployed after variable update
+
+Problem: Socket.io not connecting
+├─ Check: VITE_API_URL matches backend URL
+├─ Check: Browser console for connection errors
+└─ Check: Railway logs for Socket.io initialization
+
+═══════════════════════════════════════════════════════════════════════════
+                      🔐 SECURITY BEST PRACTICES
+═══════════════════════════════════════════════════════════════════════════
+
+✅ DO:
+• Generate strong JWT_SECRET (64+ chars)
+• Use Gmail App Password (not regular password)
+• Enable MongoDB authentication
+• Whitelist 0.0.0.0/0 for Railway in MongoDB Atlas
+• Use environment variables for all secrets
+
+❌ DON'T:
+• Commit .env files to Git
+• Use weak secrets like "secret123"
+• Share credentials publicly
+• Use HTTP in production (always HTTPS)
+
+═══════════════════════════════════════════════════════════════════════════
+                          💡 PRO TIPS
+═══════════════════════════════════════════════════════════════════════════
+
+1. Generate Secure Secret:
+   openssl rand -base64 64
+
+2. Test Locally First:
+   cd server && npm run dev
+   (Should connect to MongoDB successfully)
+
+3. Check Railway Logs:
+   Railway → Service → Logs tab
+   Look for: "🌐 Allowed CORS Origins: [...]"
+   Should list your frontend URL
+
+4. MongoDB Atlas Network Access:
+   Add IP: 0.0.0.0/0 (allow from anywhere)
+   Railway uses dynamic IPs
+
+═══════════════════════════════════════════════════════════════════════════
+
+Full Guide: RAILWAY-VARIABLES-GUIDE.md
+Quick Deploy: QUICK-DEPLOY.md
+Troubleshooting: DEPLOYMENT.md
+
+🌿 Branch: khoatq
