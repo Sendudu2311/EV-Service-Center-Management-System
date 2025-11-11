@@ -32,6 +32,14 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const { user, token, isAuthenticated } = useAuth();
 
   useEffect(() => {
+    // Disable Socket.io in production (Vercel deployment)
+    if (import.meta.env.PROD) {
+      console.log("Socket.io disabled in production mode");
+      setSocket(null);
+      setIsConnected(false);
+      return;
+    }
+
     if (isAuthenticated && token && user) {
       const socketInstance = io(
         import.meta.env.VITE_API_URL ??
