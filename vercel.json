@@ -9,14 +9,17 @@
       }
     },
     {
-      "src": "api/index.js",
-      "use": "@vercel/node"
+      "src": "server/serverless.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["server/**"]
+      }
     }
   ],
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/:path*",
-      "destination": "/api/index.js"
+      "src": "/api/(.*)",
+      "dest": "/server/serverless.js"
     }
   ]
 }
