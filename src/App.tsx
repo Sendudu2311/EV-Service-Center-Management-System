@@ -20,7 +20,6 @@ import WorkQueuePage from "./pages/WorkQueuePage";
 import ProfilePage from "./pages/ProfilePage";
 import ServiceCentersPage from "./pages/ServiceCentersPage";
 import UsersPage from "./pages/UsersPage";
-import ServiceReceptionPage from "./pages/ServiceReceptionPage";
 import PartsPage from "./pages/PartsPage";
 import ServicesPage from "./pages/ServicesPage";
 import CustomerServicesPage from "./pages/CustomerServicesPage";
@@ -187,15 +186,6 @@ function App() {
                   }
                 />
 
-                {/* Service Reception routes */}
-                <Route
-                  path="/service-reception/:appointmentId"
-                  element={
-                    <ProtectedRoute roles={["technician", "staff", "admin"]}>
-                      <ServiceReceptionPage />
-                    </ProtectedRoute>
-                  }
-                />
 
                 {/* Services Management routes */}
                 <Route

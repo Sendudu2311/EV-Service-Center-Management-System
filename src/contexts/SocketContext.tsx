@@ -33,9 +33,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
   useEffect(() => {
     if (isAuthenticated && token && user) {
-      const socketInstance = io(
-        import.meta.env.VITE_API_URL || "http://localhost:3000",
-        {
+      // Use separate Socket.io server URL in production
+      const SOCKET_URL = import.meta.env.VITE_SOCKET_URL ??
+        (import.meta.env.PROD ? "" : "http://localhost:3000");
+
+      const socketInstance = io(SOCKET_URL, {
           auth: {
             token,
             userId: user._id,

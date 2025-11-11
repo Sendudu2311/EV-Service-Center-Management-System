@@ -31,7 +31,7 @@ type NavigationProp = StackNavigationProp<TechnicianStackParamList, 'ServiceRece
 const ServiceReceptionCreateScreen: React.FC = () => {
   const route = useRoute<RouteParams>();
   const navigation = useNavigation<NavigationProp>();
-  const { appointmentId } = route.params;
+  const { appointmentId, rejectedReceptionId } = route.params;
 
   // State
   const [appointment, setAppointment] = useState<Appointment | null>(null);
@@ -76,6 +76,64 @@ const ServiceReceptionCreateScreen: React.FC = () => {
     fetchData();
   }, [appointmentId]);
 
+  // Load rejected reception data to pre-fill form
+  useEffect(() => {
+    if (!rejectedReceptionId) return;
+
+    const loadRejectedReception = async () => {
+      try {
+        const response = await api.get(`/api/service-receptions/${rejectedReceptionId}`);
+        const rejectedReception = response.data.data;
+
+        // Pre-fill form with rejected reception data
+        if (rejectedReception.evChecklistItems) {
+          setEvChecklistItems(rejectedReception.evChecklistItems);
+        }
+        if (rejectedReception.customerItems) {
+          setCustomerItems(rejectedReception.customerItems);
+        }
+        if (rejectedReception.recommendedServices) {
+          setRecommendedServices(rejectedReception.recommendedServices.map((s: any) => ({
+            serviceId: s.serviceId._id || s.serviceId,
+            serviceName: s.serviceId.name || s.serviceName,
+            category: s.category,
+            quantity: s.quantity,
+            reason: s.reason,
+            discoveredDuring: s.discoveredDuring,
+            estimatedCost: s.estimatedCost,
+            estimatedDuration: s.estimatedDuration,
+          })));
+        }
+        if (rejectedReception.requestedParts) {
+          setRequestedParts(rejectedReception.requestedParts.map((p: any) => ({
+            partId: p.partId._id || p.partId,
+            partName: p.partId.name || p.partName,
+            partNumber: p.partNumber,
+            quantity: p.quantity,
+            reason: p.reason,
+            estimatedCost: p.estimatedCost,
+          })));
+        }
+        if (rejectedReception.specialInstructions) {
+          setSpecialInstructions(rejectedReception.specialInstructions);
+        }
+        if (rejectedReception.estimatedServiceTime) {
+          setEstimatedServiceTime(rejectedReception.estimatedServiceTime);
+        }
+
+        Alert.alert(
+          'Đã tải dữ liệu từ phiếu bị từ chối',
+          'Bạn có thể chỉnh sửa và gửi lại phiếu mới.'
+        );
+      } catch (error: any) {
+        console.error('Error loading rejected reception:', error);
+        Alert.alert('Cảnh báo', 'Không thể tải dữ liệu từ phiếu bị từ chối');
+      }
+    };
+
+    loadRejectedReception();
+  }, [rejectedReceptionId]);
+
   // Load available services
   useEffect(() => {
     const loadServices = async () => {
@@ -113,26 +171,26 @@ const ServiceReceptionCreateScreen: React.FC = () => {
     if (evChecklistItems.length === 0) {
       const defaultChecklist: EVChecklistItem[] = [
         // Battery items
-        { id: 'b1', label: 'Kiểm tra mức pin', category: 'battery', checked: false },
-        { id: 'b2', label: 'Kiểm tra sức khỏe pin', category: 'battery', checked: false },
-        { id: 'b3', label: 'Kiểm tra nhiệt độ pin', category: 'battery', checked: false },
-        { id: 'b4', label: 'Kiểm tra chu kỳ sạc', category: 'battery', checked: false },
+        { id: 'b1', label: 'Kiểm tra mức pin', category: 'battery', checked: true, status: 'good', notes: '' },
+        { id: 'b2', label: 'Kiểm tra sức khỏe pin', category: 'battery', checked: true, status: 'good', notes: '' },
+        { id: 'b3', label: 'Kiểm tra nhiệt độ pin', category: 'battery', checked: true, status: 'good', notes: '' },
+        { id: 'b4', label: 'Kiểm tra chu kỳ sạc', category: 'battery', checked: true, status: 'good', notes: '' },
         // Charging items
-        { id: 'c1', label: 'Kiểm tra cổng sạc', category: 'charging', checked: false },
-        { id: 'c2', label: 'Kiểm tra dây sạc', category: 'charging', checked: false },
-        { id: 'c3', label: 'Kiểm tra hệ thống sạc nhanh', category: 'charging', checked: false },
+        { id: 'c1', label: 'Kiểm tra cổng sạc', category: 'charging', checked: true, status: 'good', notes: '' },
+        { id: 'c2', label: 'Kiểm tra dây sạc', category: 'charging', checked: true, status: 'good', notes: '' },
+        { id: 'c3', label: 'Kiểm tra hệ thống sạc nhanh', category: 'charging', checked: true, status: 'good', notes: '' },
         // Motor items
-        { id: 'm1', label: 'Kiểm tra động cơ điện', category: 'motor', checked: false },
-        { id: 'm2', label: 'Kiểm tra hệ thống truyền động', category: 'motor', checked: false },
-        { id: 'm3', label: 'Kiểm tra tiếng động bất thường', category: 'motor', checked: false },
+        { id: 'm1', label: 'Kiểm tra động cơ điện', category: 'motor', checked: true, status: 'good', notes: '' },
+        { id: 'm2', label: 'Kiểm tra hệ thống truyền động', category: 'motor', checked: true, status: 'good', notes: '' },
+        { id: 'm3', label: 'Kiểm tra tiếng động bất thường', category: 'motor', checked: true, status: 'good', notes: '' },
         // Safety items
-        { id: 's1', label: 'Kiểm tra hệ thống phanh', category: 'safety', checked: false },
-        { id: 's2', label: 'Kiểm tra đèn báo an toàn', category: 'safety', checked: false },
-        { id: 's3', label: 'Kiểm tra túi khí', category: 'safety', checked: false },
+        { id: 's1', label: 'Kiểm tra hệ thống phanh', category: 'safety', checked: true, status: 'good', notes: '' },
+        { id: 's2', label: 'Kiểm tra đèn báo an toàn', category: 'safety', checked: true, status: 'good', notes: '' },
+        { id: 's3', label: 'Kiểm tra túi khí', category: 'safety', checked: true, status: 'good', notes: '' },
         // General items
-        { id: 'g1', label: 'Kiểm tra hệ thống điều hòa', category: 'general', checked: false },
-        { id: 'g2', label: 'Kiểm tra hệ thống giải trí', category: 'general', checked: false },
-        { id: 'g3', label: 'Kiểm tra màn hình hiển thị', category: 'general', checked: false },
+        { id: 'g1', label: 'Kiểm tra hệ thống điều hòa', category: 'general', checked: true, status: 'good', notes: '' },
+        { id: 'g2', label: 'Kiểm tra hệ thống giải trí', category: 'general', checked: true, status: 'good', notes: '' },
+        { id: 'g3', label: 'Kiểm tra màn hình hiển thị', category: 'general', checked: true, status: 'good', notes: '' },
       ];
       setEvChecklistItems(defaultChecklist);
     }
@@ -162,7 +220,9 @@ const ServiceReceptionCreateScreen: React.FC = () => {
     try {
       setIsSaving(true);
 
-      const completionTime = new Date(Date.now() + totalTime * 60 * 1000).toISOString();
+      // Calculate estimated service time in minutes
+      const serviceTimeMinutes = estimatedServiceTime || totalTime || 120;
+      const completionTime = new Date(Date.now() + serviceTimeMinutes * 60 * 1000).toISOString();
 
       const receptionData = {
         appointmentId,
@@ -170,12 +230,12 @@ const ServiceReceptionCreateScreen: React.FC = () => {
         vehicleCondition: {}, // Simplified for now
         customerItems: customerItems.length > 0 ? customerItems : undefined,
         specialInstructions: Object.keys(specialInstructions).length > 0 ? specialInstructions : undefined,
-        estimatedServiceTime: totalTime || 120,
+        estimatedServiceTime: serviceTimeMinutes,
         estimatedCompletionTime: completionTime,
         recommendedServices: recommendedServices.map(s => ({
           serviceId: s.serviceId,
           serviceName: s.serviceName,
-          category: s.category || '',
+          category: s.category || 'general',
           quantity: s.quantity,
           reason: s.reason,
           discoveredDuring: s.discoveredDuring || 'initial_inspection',
@@ -300,23 +360,81 @@ const ServiceReceptionCreateScreen: React.FC = () => {
               {category === 'general' && '📋 Chung'}
             </Text>
             {categoryItems.map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={styles.checklistItem}
-                onPress={() => {
-                  const updated = [...evChecklistItems];
-                  const itemIndex = updated.findIndex((i) => i.id === item.id);
-                  updated[itemIndex] = { ...updated[itemIndex], checked: !updated[itemIndex].checked };
-                  setEvChecklistItems(updated);
-                }}
-              >
-                <View style={styles.checkbox}>
-                  {item.checked && <Text style={styles.checkmark}>✓</Text>}
+              <View key={item.id} style={styles.checklistItemCard}>
+                <TouchableOpacity
+                  style={styles.checklistItemRow}
+                  onPress={() => {
+                    const updated = [...evChecklistItems];
+                    const itemIndex = updated.findIndex((i) => i.id === item.id);
+                    updated[itemIndex] = { ...updated[itemIndex], checked: !updated[itemIndex].checked };
+                    setEvChecklistItems(updated);
+                  }}
+                >
+                  <View style={styles.checkbox}>
+                    {item.checked && <Text style={styles.checkmark}>✓</Text>}
+                  </View>
+                  <Text style={[styles.checklistLabel, item.checked && styles.checklistLabelChecked]}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Status Selector */}
+                <View style={styles.statusSelector}>
+                  <TouchableOpacity
+                    style={[styles.statusButton, item.status === 'good' && styles.statusButtonGood]}
+                    onPress={() => {
+                      const updated = [...evChecklistItems];
+                      const itemIndex = updated.findIndex((i) => i.id === item.id);
+                      updated[itemIndex] = { ...updated[itemIndex], status: 'good' };
+                      setEvChecklistItems(updated);
+                    }}
+                  >
+                    <Text style={[styles.statusText, item.status === 'good' && styles.statusTextActive]}>
+                      Tốt
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.statusButton, item.status === 'warning' && styles.statusButtonWarning]}
+                    onPress={() => {
+                      const updated = [...evChecklistItems];
+                      const itemIndex = updated.findIndex((i) => i.id === item.id);
+                      updated[itemIndex] = { ...updated[itemIndex], status: 'warning' };
+                      setEvChecklistItems(updated);
+                    }}
+                  >
+                    <Text style={[styles.statusText, item.status === 'warning' && styles.statusTextActive]}>
+                      Cảnh báo
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.statusButton, item.status === 'critical' && styles.statusButtonCritical]}
+                    onPress={() => {
+                      const updated = [...evChecklistItems];
+                      const itemIndex = updated.findIndex((i) => i.id === item.id);
+                      updated[itemIndex] = { ...updated[itemIndex], status: 'critical' };
+                      setEvChecklistItems(updated);
+                    }}
+                  >
+                    <Text style={[styles.statusText, item.status === 'critical' && styles.statusTextActive]}>
+                      Nghiêm trọng
+                    </Text>
+                  </TouchableOpacity>
                 </View>
-                <Text style={[styles.checklistLabel, item.checked && styles.checklistLabelChecked]}>
-                  {item.label}
-                </Text>
-              </TouchableOpacity>
+
+                {/* Notes Input */}
+                <TextInput
+                  style={styles.checklistNotes}
+                  placeholder="Ghi chú (nếu có)..."
+                  placeholderTextColor="#9CA3AF"
+                  value={item.notes || ''}
+                  onChangeText={(text) => {
+                    const updated = [...evChecklistItems];
+                    const itemIndex = updated.findIndex((i) => i.id === item.id);
+                    updated[itemIndex] = { ...updated[itemIndex], notes: text };
+                    setEvChecklistItems(updated);
+                  }}
+                />
+              </View>
             ))}
           </View>
         );
@@ -633,9 +751,20 @@ const ServiceReceptionCreateScreen: React.FC = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backButton}>← Hủy</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Phiếu tiếp nhận</Text>
+        <Text style={styles.headerTitle}>
+          {rejectedReceptionId ? 'Sửa phiếu (Tạo mới)' : 'Phiếu tiếp nhận'}
+        </Text>
         <View style={{ width: 60 }} />
       </View>
+
+      {/* Rejected Reception Notice */}
+      {rejectedReceptionId && (
+        <View style={{ backgroundColor: '#FEF3C7', padding: 12, borderBottomWidth: 1, borderBottomColor: '#F59E0B' }}>
+          <Text style={{ fontSize: 13, color: '#92400E', textAlign: 'center' }}>
+            ⚠️ Đang sửa từ phiếu bị từ chối. Khi gửi sẽ tạo phiếu mới.
+          </Text>
+        </View>
+      )}
 
       {/* Vehicle Info */}
       <View style={styles.vehicleInfo}>
@@ -972,6 +1101,63 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
     marginBottom: 8,
+  },
+  checklistItemCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    marginBottom: 12,
+    padding: 12,
+  },
+  checklistItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statusSelector: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 8,
+    gap: 8,
+  },
+  statusButton: {
+    flex: 1,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    backgroundColor: '#F9FAFB',
+    alignItems: 'center',
+  },
+  statusButtonGood: {
+    backgroundColor: '#D1FAE5',
+    borderColor: '#10B981',
+  },
+  statusButtonWarning: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#F59E0B',
+  },
+  statusButtonCritical: {
+    backgroundColor: '#FEE2E2',
+    borderColor: '#EF4444',
+  },
+  statusText: {
+    fontSize: 11,
+    color: '#6B7280',
+    fontWeight: '600',
+  },
+  statusTextActive: {
+    color: '#111827',
+  },
+  checklistNotes: {
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 6,
+    padding: 8,
+    fontSize: 12,
+    color: '#111827',
+    minHeight: 40,
   },
   checkbox: {
     width: 24,

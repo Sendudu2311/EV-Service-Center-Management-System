@@ -13,10 +13,12 @@ import {
 import { Link } from "react-router-dom";
 import { dashboardAPI, appointmentsAPI } from "../../services/api";
 import toast from "react-hot-toast";
+import ServiceReceptionModal from "../ServiceReception/ServiceReceptionModal";
 import {
   formatVietnameseDateTime,
   appointmentStatusTranslations,
   combineDateTime,
+  formatVND,
 } from "../../utils/vietnamese";
 import { useDebouncedFetch } from "../../hooks/useDebouncedFetch";
 
@@ -77,6 +79,7 @@ interface ServiceReceptionItem {
   receptionNumber: string;
   status: string;
   createdAt: string;
+  appointmentId: string | { _id: string };
   customerId: {
     firstName: string;
     lastName: string;
@@ -105,6 +108,31 @@ interface ServiceReceptionItem {
     status?: "good" | "warning" | "critical";
     notes?: string;
   }>;
+  specialInstructions?: {
+    fromCustomer?: string;
+    fromStaff?: string;
+    safetyPrecautions?: string[];
+    warningNotes?: string[];
+  };
+  externalParts?: Array<{
+    partName: string;
+    partNumber: string;
+    supplier?: {
+      name: string;
+      contact?: string;
+      address?: string;
+    };
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+    warranty?: {
+      period: number;
+      description: string;
+    };
+    estimatedArrival?: string;
+    orderStatus: string;
+    notes?: string;
+  }>;
 }
 
 const EnhancedTechnicianDashboard: React.FC = () => {
@@ -126,6 +154,11 @@ const EnhancedTechnicianDashboard: React.FC = () => {
   // Pagination for work queue
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
+
+  // Service Reception Modal
+  const [showReceptionModal, setShowReceptionModal] = useState(false);
+  const [selectedAppointmentForReception, setSelectedAppointmentForReception] = useState<any>(null);
+  const [creatingReception, setCreatingReception] = useState(false);
 
   useEffect(() => {
     // Fetch data if user is authenticated as technician (boot logic moved to prevent double boot)
@@ -340,30 +373,64 @@ const EnhancedTechnicianDashboard: React.FC = () => {
     }
   };
 
-  const handleResubmitReception = async (receptionId: string) => {
+  const handleOpenReceptionModal = async (appointmentId: string) => {
     try {
+      // Fetch full appointment details
+      const response = await appointmentsAPI.getById(appointmentId);
+      const appointmentData = response.data.data || response.data;
+      setSelectedAppointmentForReception(appointmentData);
+      setShowReceptionModal(true);
+    } catch (error) {
+      console.error("Error fetching appointment:", error);
+      toast.error("Không thể tải thông tin lịch hẹn");
+    }
+  };
+
+  const handleCreateServiceReception = async (receptionData: any) => {
+    if (!selectedAppointmentForReception) return;
+
+    try {
+      setCreatingReception(true);
+
+      const payload = {
+        evChecklistItems: receptionData.evChecklistItems || [],
+        recommendedServices: receptionData.recommendedServices || [],
+        requestedParts: receptionData.requestedParts || [],
+        vehicleCondition: receptionData.vehicleCondition,
+        customerItems: receptionData.customerItems,
+        preServicePhotos: [],
+        diagnosticCodes: [],
+        specialInstructions: receptionData.specialInstructions,
+        estimatedServiceTime: receptionData.estimatedServiceTime,
+      };
+
       const response = await fetch(
-        `/api/service-receptions/${receptionId}/resubmit`,
+        `/api/service-receptions/${selectedAppointmentForReception._id}/create`,
         {
-          method: "PUT",
+          method: "POST",
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
             "Content-Type": "application/json",
           },
+          credentials: "include",
+          body: JSON.stringify(payload),
         }
       );
 
       if (response.ok) {
-        toast.success("Đã gửi lại phiếu tiếp nhận để staff duyệt");
-        setSelectedReception(null);
-        debouncedFetchDashboard();
+        toast.success("Tạo phiếu tiếp nhận thành công!");
+        setShowReceptionModal(false);
+        setSelectedAppointmentForReception(null);
+        immediateFetchDashboard();
       } else {
         const data = await response.json();
-        toast.error(data.message || "Không thể gửi lại phiếu");
+        toast.error(data.message || "Không thể tạo phiếu tiếp nhận");
       }
-    } catch (error) {
-      console.error("Error resubmitting reception:", error);
-      toast.error("Lỗi khi gửi lại phiếu tiếp nhận");
+    } catch (error: any) {
+      console.error("Error creating service reception:", error);
+      toast.error("Không thể tạo phiếu tiếp nhận");
+    } finally {
+      setCreatingReception(false);
     }
   };
 
@@ -568,13 +635,13 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                           Hoàn thành
                         </button>
                       )}
-                      <Link
-                        to={`/service-reception/${currentTask._id}`}
+                      <button
+                        onClick={() => handleOpenReceptionModal(currentTask._id)}
                         className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-dark-300 text-sm text-text-muted rounded-md text-text-secondary bg-dark-300 hover:bg-dark-900"
                       >
                         <ClipboardDocumentListIcon className="h-4 w-4 mr-1" />
                         Chi tiết
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 ) : (
@@ -674,12 +741,12 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                               </div>
                               <div className="flex items-center space-x-2 ml-4">
                                 {item.status === "customer_arrived" && (
-                                  <Link
-                                    to={`/service-reception/${item._id}`}
+                                  <button
+                                    onClick={() => handleOpenReceptionModal(item._id)}
                                     className="inline-flex items-center px-2 py-1 border border-transparent text-xs rounded text-dark-900 bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                                   >
                                     Tạo phiếu
-                                  </Link>
+                                  </button>
                                 )}
                                 {item.status === "reception_approved" &&
                                   !currentTask && (
@@ -884,7 +951,10 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                     </thead>
                     <tbody className="bg-dark-300 divide-y divide-gray-200">
                       {serviceReceptions.map((reception) => (
-                        <tr key={reception._id} className="hover:bg-dark-900">
+                          <tr
+                            key={reception._id}
+                            className={`hover:bg-dark-900 ${reception.status === 'rejected' ? 'opacity-60 bg-red-900/10' : ''}`}
+                          >
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted text-white">
                             {reception.receptionNumber}
                           </td>
@@ -947,8 +1017,8 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                               Xem chi tiết
                             </button>
                           </td>
-                        </tr>
-                      ))}
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 </div>
@@ -1213,6 +1283,88 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                   )}
                 </div>
 
+                {/* External Parts */}
+                {selectedReception.externalParts &&
+                  selectedReception.externalParts.length > 0 && (
+                    <div className="bg-dark-300 border border-dark-200 rounded-lg p-4">
+                      <h4 className="text-sm font-semibold text-text-secondary mb-3">
+                        Phụ tùng đặt ngoài ({selectedReception.externalParts.length})
+                      </h4>
+                      <div className="space-y-3">
+                        {selectedReception.externalParts.map((part: any, index: number) => (
+                          <div key={index} className="bg-dark-900 p-3 rounded space-y-2">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="text-white font-medium">{part.partName}</p>
+                                <p className="text-sm text-text-muted">Mã: {part.partNumber}</p>
+                              </div>
+                              <span className={`px-2 py-1 rounded text-xs ${
+                                part.orderStatus === 'delivered'
+                                  ? 'bg-green-100 text-green-800'
+                                  : part.orderStatus === 'in_transit'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {part.orderStatus === 'delivered'
+                                  ? 'Đã giao'
+                                  : part.orderStatus === 'in_transit'
+                                  ? 'Đang vận chuyển'
+                                  : 'Đang đặt hàng'}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <div>
+                                <span className="text-text-secondary">Nhà cung cấp: </span>
+                                <span className="text-white">{part.supplier?.name || 'N/A'}</span>
+                              </div>
+                              <div>
+                                <span className="text-text-secondary">Số lượng: </span>
+                                <span className="text-white">{part.quantity}</span>
+                              </div>
+                              <div>
+                                <span className="text-text-secondary">Đơn giá: </span>
+                                <span className="text-white">{formatVND(part.unitPrice)}</span>
+                              </div>
+                              <div>
+                                <span className="text-text-secondary">Tổng: </span>
+                                <span className="text-white font-semibold">{formatVND(part.totalPrice)}</span>
+                              </div>
+                            </div>
+                            {part.notes && (
+                              <p className="text-sm text-text-secondary italic">
+                                Ghi chú: {part.notes}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                {/* Special Instructions from Technician (when creating) */}
+                {selectedReception.specialInstructions?.fromStaff && (
+                  <div className="bg-dark-300 border border-dark-200 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-text-secondary mb-2">
+                      📝 Ghi chú của Technician (khi tạo phiếu)
+                    </h4>
+                    <p className="text-white whitespace-pre-wrap">
+                      {selectedReception.specialInstructions.fromStaff}
+                    </p>
+                  </div>
+                )}
+
+                {/* Review Notes from Staff (when approved/rejected) */}
+                {selectedReception.submissionStatus?.reviewNotes && (
+                  <div className="bg-dark-300 border border-dark-200 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-text-secondary mb-2">
+                      💬 Ghi chú của Staff (khi duyệt phiếu)
+                    </h4>
+                    <p className="text-white whitespace-pre-wrap">
+                      {selectedReception.submissionStatus.reviewNotes}
+                    </p>
+                  </div>
+                )}
+
                 {/* Created Date */}
                 <div className="bg-dark-900 p-4 rounded-lg">
                   <h4 className="text-sm font-semibold text-text-secondary mb-2">
@@ -1241,12 +1393,17 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                   {selectedReception.submissionStatus?.staffReviewStatus ===
                     "rejected" && (
                     <button
-                      onClick={() =>
-                        handleResubmitReception(selectedReception._id)
-                      }
+                      onClick={() => {
+                        // Open modal to create new reception for rejected appointment
+                        const appointmentId = typeof selectedReception.appointmentId === 'string'
+                          ? selectedReception.appointmentId
+                          : selectedReception.appointmentId._id;
+                        handleOpenReceptionModal(appointmentId);
+                        setSelectedReception(null);
+                      }}
                       className="px-4 py-2 bg-lime-600 text-dark-900 rounded-md hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
                     >
-                      Gửi lại để duyệt
+                      ✏️ Tạo phiếu mới
                     </button>
                   )}
                   <button
@@ -1261,6 +1418,20 @@ const EnhancedTechnicianDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Service Reception Modal */}
+      {showReceptionModal && selectedAppointmentForReception && (
+        <ServiceReceptionModal
+          appointment={selectedAppointmentForReception}
+          isOpen={showReceptionModal}
+          onClose={() => {
+            setShowReceptionModal(false);
+            setSelectedAppointmentForReception(null);
+          }}
+          onSubmit={handleCreateServiceReception}
+          isLoading={creatingReception}
+        />
+      )}
     </div>
   );
 };

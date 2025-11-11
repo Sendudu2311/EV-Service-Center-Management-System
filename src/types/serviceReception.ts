@@ -289,7 +289,6 @@ export interface ServiceReception {
 
   // EV Checklist Progress
   evChecklistProgress?: {
-    checklistInstanceId?: string;
     totalItems: number;
     completedItems: number;
     progressPercentage: number;
