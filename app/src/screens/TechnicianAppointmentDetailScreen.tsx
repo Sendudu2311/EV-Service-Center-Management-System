@@ -29,6 +29,7 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
   // State
   const [appointment, setAppointment] = useState<any | null>(null);
   const [serviceReception, setServiceReception] = useState<any | null>(null);
+  const [rejectedReception, setRejectedReception] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
@@ -58,6 +59,21 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
               (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             )[0];
             setServiceReception(latestReception);
+          }
+
+          // Check for rejected receptions
+          const rejectedReceptions = receptionResponse.data.filter(
+            (r: any) => r.submissionStatus?.staffReviewStatus === 'rejected'
+          );
+
+          if (rejectedReceptions.length > 0) {
+            // Get the latest rejected reception (sorted by createdAt)
+            const latestRejected = rejectedReceptions.sort(
+              (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            )[0];
+            setRejectedReception(latestRejected);
+          } else {
+            setRejectedReception(null);
           }
         }
       } catch (error: any) {
@@ -127,7 +143,10 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
 
   // Handle create service reception
   const handleCreateReception = () => {
-    navigation.navigate('CreateReception', { appointmentId });
+    navigation.navigate('CreateReception', {
+      appointmentId,
+      rejectedReceptionId: rejectedReception?._id
+    });
   };
 
   // Handle view service reception
@@ -262,12 +281,15 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
           onPress={handleCreateReception}
           disabled={isActionLoading}
         >
-          <Text style={styles.actionButtonText}>📋 Lập phiếu tiếp nhận</Text>
+          <Text style={styles.actionButtonText}>
+            {rejectedReception ? '✏️ Tạo phiếu mới' : '📋 Lập phiếu tiếp nhận'}
+          </Text>
         </TouchableOpacity>
       );
     }
 
-    if (status === 'reception_created' || status === 'reception_approved') {
+    if (status === 'reception_created') {
+      // Reception created but not yet approved by staff
       return (
         <View style={styles.buttonGroup}>
           <TouchableOpacity
@@ -288,6 +310,18 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
             )}
           </TouchableOpacity>
         </View>
+      );
+    }
+
+    if (status === 'reception_approved') {
+      // Reception approved - waiting for customer payment, then auto-start work
+      return (
+        <TouchableOpacity
+          style={[styles.actionButton, styles.secondaryButton]}
+          onPress={handleViewReception}
+        >
+          <Text style={styles.secondaryButtonText}>📄 Xem phiếu</Text>
+        </TouchableOpacity>
       );
     }
 
@@ -348,6 +382,26 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
             <Text style={styles.statusText}>{getStatusText(appointment.status)}</Text>
           </View>
         </View>
+
+        {/* Rejection Notice Banner */}
+        {rejectedReception && appointment.status === 'customer_arrived' && (
+          <View style={styles.rejectionBanner}>
+            <View style={styles.rejectionHeader}>
+              <Text style={styles.rejectionIcon}>❌</Text>
+              <Text style={styles.rejectionTitle}>Phiếu tiếp nhận đã bị từ chối</Text>
+            </View>
+            <Text style={styles.rejectionReason}>
+              <Text style={styles.rejectionLabel}>Lý do: </Text>
+              {rejectedReception.submissionStatus?.reviewNotes || 'Không có ghi chú'}
+            </Text>
+            <Text style={styles.rejectionTime}>
+              Từ chối lúc: {new Date(rejectedReception.submissionStatus?.reviewedAt).toLocaleString('vi-VN')}
+            </Text>
+            <Text style={styles.rejectionHint}>
+              💡 Vui lòng tạo phiếu mới theo yêu cầu của nhân viên
+            </Text>
+          </View>
+        )}
 
         {/* Schedule Info */}
         <View style={styles.card}>
@@ -865,6 +919,58 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 4,
     fontStyle: 'italic',
+  },
+  // Rejection Banner Styles
+  rejectionBanner: {
+    backgroundColor: '#FEF2F2',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  rejectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  rejectionIcon: {
+    fontSize: 24,
+    marginRight: 8,
+  },
+  rejectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#DC2626',
+    flex: 1,
+  },
+  rejectionReason: {
+    fontSize: 14,
+    color: '#991B1B',
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  rejectionLabel: {
+    fontWeight: 'bold',
+    color: '#7F1D1D',
+  },
+  rejectionTime: {
+    fontSize: 12,
+    color: '#B91C1C',
+    marginBottom: 8,
+  },
+  rejectionHint: {
+    fontSize: 13,
+    color: '#DC2626',
+    backgroundColor: '#FEE2E2',
+    padding: 8,
+    borderRadius: 6,
+    marginTop: 4,
   },
 });
 

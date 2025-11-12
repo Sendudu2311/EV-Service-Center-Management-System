@@ -299,9 +299,14 @@ export const getServiceReceptionByAppointment = async (req, res) => {
   try {
     const { appointmentId } = req.params;
 
+    // ⚠️ FIX: Get the LATEST non-rejected reception for this appointment
+    // Sort by createdAt descending to get newest first
+    // Filter out rejected receptions to avoid returning old rejected ones
     const serviceReception = await ServiceReception.findOne({
       appointmentId: appointmentId,
+      "submissionStatus.staffReviewStatus": { $ne: "rejected" }, // Exclude rejected
     })
+      .sort({ createdAt: -1 }) // Get newest first
       .populate("customerId", "firstName lastName email phone")
       .populate("vehicleId", "make model year licensePlate")
       .populate("receivedBy", "firstName lastName email")
