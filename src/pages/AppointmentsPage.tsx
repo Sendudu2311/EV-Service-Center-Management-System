@@ -1261,7 +1261,7 @@ const AppointmentsPage: React.FC = () => {
                               role="status"
                               aria-label="Cần đặt linh kiện ngoài"
                             >
-                              📦 Part ngoài - Để xe lại
+                              📦 Linh kiện đặt ngoài
                             </span>
                           )}
                         </header>
