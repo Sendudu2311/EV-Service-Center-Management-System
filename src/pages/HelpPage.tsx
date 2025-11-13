@@ -8,61 +8,61 @@ const HelpPage: React.FC = () => {
     {
       id: 1,
       category: 'booking',
-      question: 'How do I book a service appointment?',
-      answer: 'To book a service appointment, log in to your account, navigate to the "Appointments" section, and click "New Appointment". Select your vehicle, choose the service type, and pick an available time slot.'
+      question: 'Làm thế nào để đặt lịch hẹn dịch vụ?',
+      answer: 'Để đặt lịch hẹn dịch vụ, đăng nhập vào tài khoản của bạn, điều hướng đến phần "Lịch Hẹn", và nhấp "Đặt Lịch Mới". Chọn xe của bạn, chọn loại dịch vụ, và chọn khung giờ có sẵn.'
     },
     {
       id: 2,
       category: 'booking',
-      question: 'Can I reschedule my appointment?',
-      answer: 'Yes, you can reschedule your appointment up to 24 hours before the scheduled time. Go to your appointments page and click "Reschedule" on the relevant appointment.'
+      question: 'Tôi có thể đổi lịch hẹn không?',
+      answer: 'Có, bạn có thể đổi lịch hẹn trước 24 giờ so với thời gian đã đặt. Vào trang lịch hẹn của bạn và nhấp "Đổi Lịch" trên lịch hẹn tương ứng.'
     },
     {
       id: 3,
       category: 'services',
-      question: 'What services do you offer for electric vehicles?',
-      answer: 'We offer comprehensive EV services including battery diagnostics, charging system maintenance, motor and controller repairs, thermal management, software updates, and general maintenance.'
+      question: 'Bạn cung cấp những dịch vụ gì cho xe điện?',
+      answer: 'Chúng tôi cung cấp dịch vụ xe điện toàn diện bao gồm chẩn đoán pin, bảo trì hệ thống sạc, sửa chữa động cơ và bộ điều khiển, quản lý nhiệt độ, cập nhật phần mềm và bảo trì chung.'
     },
     {
       id: 4,
       category: 'services',
-      question: 'How long does a typical service take?',
-      answer: 'Service duration varies by type: diagnostics (15 minutes), basic maintenance (30 minutes), battery service (1-2 hours), and major repairs (2-4 hours or more).'
+      question: 'Một dịch vụ thông thường mất bao lâu?',
+      answer: 'Thời gian dịch vụ thay đổi theo loại: chẩn đoán (15 phút), bảo trì cơ bản (30 phút), dịch vụ pin (1-2 giờ), và sửa chữa lớn (2-4 giờ hoặc hơn).'
     },
     {
       id: 5,
       category: 'parts',
-      question: 'Do you sell EV parts and accessories?',
-      answer: 'Yes, we maintain an inventory of genuine and compatible EV parts including batteries, chargers, motors, controllers, and accessories. Check our parts catalog for availability.'
+      question: 'Bạn có bán phụ tùng và phụ kiện xe điện không?',
+      answer: 'Có, chúng tôi duy trì kho phụ tùng xe điện chính hãng và tương thích bao gồm pin, bộ sạc, động cơ, bộ điều khiển và phụ kiện. Kiểm tra danh mục phụ tùng để biết tình trạng còn hàng.'
     },
     {
       id: 6,
       category: 'warranty',
-      question: 'What is covered under warranty?',
-      answer: 'Our services come with warranty coverage: 12 months/12,000km for repairs, 6 months/6,000km for parts, and 3 months/3,000km for diagnostics. Warranty terms vary by service type.'
+      question: 'Những gì được bảo hành?',
+      answer: 'Dịch vụ của chúng tôi đi kèm với bảo hành: 12 tháng/12.000km cho sửa chữa, 6 tháng/6.000km cho phụ tùng, và 3 tháng/3.000km cho chẩn đoán. Điều khoản bảo hành thay đổi theo loại dịch vụ.'
     },
     {
       id: 7,
       category: 'payment',
-      question: 'What payment methods do you accept?',
-      answer: 'We accept credit/debit cards, bank transfers, e-wallets (MoMo, ZaloPay), and cash payments. All transactions are processed securely.'
+      question: 'Bạn chấp nhận những phương thức thanh toán nào?',
+      answer: 'Chúng tôi chấp nhận thẻ tín dụng/ghi nợ, chuyển khoản ngân hàng, ví điện tử (MoMo, ZaloPay), và thanh toán tiền mặt. Tất cả giao dịch được xử lý an toàn.'
     },
     {
       id: 8,
       category: 'account',
-      question: 'How do I update my vehicle information?',
-      answer: 'Go to your profile page and select "Vehicles". You can add new vehicles or update existing vehicle information including make, model, year, and VIN.'
+      question: 'Làm thế nào để cập nhật thông tin xe của tôi?',
+      answer: 'Vào trang hồ sơ của bạn và chọn "Xe". Bạn có thể thêm xe mới hoặc cập nhật thông tin xe hiện có bao gồm hãng, mẫu, năm sản xuất và số VIN.'
     }
   ];
 
   const categories = [
-    { id: 'all', name: 'All Topics', icon: '📚' },
-    { id: 'booking', name: 'Booking', icon: '📅' },
-    { id: 'services', name: 'Services', icon: '🔧' },
-    { id: 'parts', name: 'Parts', icon: '⚙️' },
-    { id: 'warranty', name: 'Warranty', icon: '🛡️' },
-    { id: 'payment', name: 'Payment', icon: '💳' },
-    { id: 'account', name: 'Account', icon: '👤' }
+    { id: 'all', name: 'Tất Cả Chủ Đề', icon: '📚' },
+    { id: 'booking', name: 'Đặt Lịch', icon: '📅' },
+    { id: 'services', name: 'Dịch Vụ', icon: '🔧' },
+    { id: 'parts', name: 'Phụ Tùng', icon: '⚙️' },
+    { id: 'warranty', name: 'Bảo Hành', icon: '🛡️' },
+    { id: 'payment', name: 'Thanh Toán', icon: '💳' },
+    { id: 'account', name: 'Tài Khoản', icon: '👤' }
   ];
 
   const filteredFaqs = faqs.filter(faq => {
@@ -77,10 +77,10 @@ const HelpPage: React.FC = () => {
       <div className="max-w-4xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-white mb-4">Help Center</h1>
+          <h1 className="text-4xl font-bold text-white mb-4">Trung Tâm Trợ Giúp</h1>
           <p className="text-xl text-text-secondary max-w-2xl mx-auto">
-            Find answers to common questions about our EV service center.
-            Can't find what you're looking for? Contact our support team.
+            Tìm câu trả lời cho các câu hỏi thường gặp về trung tâm dịch vụ xe điện của chúng tôi.
+            Không tìm thấy câu trả lời? Liên hệ đội ngũ hỗ trợ của chúng tôi.
           </p>
         </div>
 
@@ -94,7 +94,7 @@ const HelpPage: React.FC = () => {
             </div>
             <input
               type="text"
-              placeholder="Search for help..."
+              placeholder="Tìm kiếm trợ giúp..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="block w-full pl-10 pr-3 py-3 border border-dark-200 rounded-lg focus:ring-2 focus:ring-lime-500 focus:border-transparent"
@@ -104,7 +104,7 @@ const HelpPage: React.FC = () => {
 
         {/* Category Filter */}
         <div className="bg-dark-300 rounded-lg shadow-lg p-6 mb-8">
-          <h2 className="text-lg font-semibold text-white mb-4">Browse by Category</h2>
+          <h2 className="text-lg font-semibold text-white mb-4">Duyệt Theo Danh Mục</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             {categories.map(category => (
               <button
@@ -130,8 +130,8 @@ const HelpPage: React.FC = () => {
               <svg className="w-16 h-16 text-text-muted mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.29-1.009-5.203-2.47M12 7v.01" />
               </svg>
-              <h3 className="text-lg text-text-muted text-white mb-2">No results found</h3>
-              <p className="text-text-secondary">Try adjusting your search terms or browse different categories.</p>
+              <h3 className="text-lg text-text-muted text-white mb-2">Không tìm thấy kết quả</h3>
+              <p className="text-text-secondary">Hãy thử điều chỉnh từ khóa tìm kiếm hoặc duyệt các danh mục khác.</p>
             </div>
           ) : (
             filteredFaqs.map(faq => (
@@ -154,29 +154,29 @@ const HelpPage: React.FC = () => {
 
         {/* Contact Support */}
         <div className="mt-12 bg-dark-900 rounded-lg p-8 text-white text-center">
-          <h2 className="text-2xl font-bold mb-4">Still need help?</h2>
+          <h2 className="text-2xl font-bold mb-4">Vẫn cần trợ giúp?</h2>
           <p className="text-lg mb-6 text-lime-100">
-            Our support team is here to assist you with any questions or concerns.
+            Đội ngũ hỗ trợ của chúng tôi sẵn sàng hỗ trợ bạn với bất kỳ câu hỏi hoặc thắc mắc nào.
           </p>
           <div className="space-x-4">
             <a
               href="/contact"
               className="bg-dark-300 text-lime-600 px-6 py-3 rounded-lg text-text-muted hover:bg-dark-900 transition-colors duration-200"
             >
-              Contact Support
+              Liên Hệ Hỗ Trợ
             </a>
             <a
               href="tel:+84123456789"
               className="border-2 border-white text-white px-6 py-3 rounded-lg text-text-muted hover:bg-dark-700 transition-colors duration-200"
             >
-              Call Us: +84 123 456 789
+              Gọi: +84 123 456 789
             </a>
           </div>
         </div>
 
         {/* Quick Links */}
         <div className="mt-12 bg-dark-300 rounded-lg shadow-lg p-8">
-          <h2 className="text-xl font-bold text-white mb-6 text-center">Quick Links</h2>
+          <h2 className="text-xl font-bold text-white mb-6 text-center">Liên Kết Nhanh</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <a href="/customer-services" className="flex items-center p-4 border border-dark-200 rounded-lg hover:bg-dark-900 transition-colors duration-200">
               <div className="w-10 h-10 bg-dark-100 rounded-lg flex items-center justify-center mr-4">
@@ -186,8 +186,8 @@ const HelpPage: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h3 className="text-text-muted text-white">Browse Services</h3>
-                <p className="text-sm text-text-secondary">View available services</p>
+                <h3 className="text-text-muted text-white">Duyệt Dịch Vụ</h3>
+                <p className="text-sm text-text-secondary">Xem các dịch vụ có sẵn</p>
               </div>
             </a>
 
@@ -198,8 +198,8 @@ const HelpPage: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h3 className="text-text-muted text-white">Parts Catalog</h3>
-                <p className="text-sm text-text-secondary">Find replacement parts</p>
+                <h3 className="text-text-muted text-white">Danh Mục Phụ Tùng</h3>
+                <p className="text-sm text-text-secondary">Tìm phụ tùng thay thế</p>
               </div>
             </a>
 
@@ -210,8 +210,8 @@ const HelpPage: React.FC = () => {
                 </svg>
               </div>
               <div>
-                <h3 className="text-text-muted text-white">My Appointments</h3>
-                <p className="text-sm text-text-secondary">Manage your bookings</p>
+                <h3 className="text-text-muted text-white">Lịch Hẹn Của Tôi</h3>
+                <p className="text-sm text-text-secondary">Quản lý lịch đặt của bạn</p>
               </div>
             </a>
           </div>

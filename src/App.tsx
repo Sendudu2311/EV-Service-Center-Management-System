@@ -102,7 +102,7 @@ function App() {
                 <Route
                   path="/customer-services"
                   element={
-                    <ProtectedRoute roles={["customer"]}>
+                    <ProtectedRoute roles={["customer", "staff", "admin", "technician"]}>
                       <CustomerServicesPage />
                     </ProtectedRoute>
                   }
@@ -112,7 +112,7 @@ function App() {
                 <Route
                   path="/customer-parts"
                   element={
-                    <ProtectedRoute roles={["customer"]}>
+                    <ProtectedRoute roles={["customer", "staff", "admin", "technician"]}>
                       <CustomerPartsPage />
                     </ProtectedRoute>
                   }

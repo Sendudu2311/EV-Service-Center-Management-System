@@ -6,72 +6,72 @@ const CareersPage: React.FC = () => {
   const jobs = [
     {
       id: 1,
-      title: 'Senior EV Technician',
+      title: 'Kỹ Thuật Viên Xe Điện Cao Cấp',
       department: 'technical',
-      location: 'Ho Chi Minh City',
-      type: 'Full-time',
-      salary: 'Competitive',
-      description: 'Join our expert team of EV technicians specializing in battery systems, electric motors, and charging infrastructure.',
-      requirements: ['5+ years EV experience', 'ASE certifications', 'Electrical engineering degree']
+      location: 'TP. Hồ Chí Minh',
+      type: 'Toàn thời gian',
+      salary: 'Cạnh tranh',
+      description: 'Tham gia đội ngũ kỹ thuật viên chuyên nghiệp về hệ thống pin, động cơ điện và cơ sở hạ tầng sạc xe điện.',
+      requirements: ['5+ năm kinh nghiệm xe điện', 'Chứng chỉ ASE', 'Bằng kỹ sư điện']
     },
     {
       id: 2,
-      title: 'Service Advisor',
+      title: 'Nhân Viên Tư Vấn Dịch Vụ',
       department: 'customer-service',
-      location: 'Ho Chi Minh City',
-      type: 'Full-time',
-      salary: 'Competitive + Commission',
-      description: 'Provide exceptional customer service and technical guidance for EV owners seeking maintenance and repairs.',
-      requirements: ['2+ years automotive experience', 'Customer service skills', 'Basic EV knowledge']
+      location: 'TP. Hồ Chí Minh',
+      type: 'Toàn thời gian',
+      salary: 'Cạnh tranh + Hoa hồng',
+      description: 'Cung cấp dịch vụ khách hàng xuất sắc và hướng dẫn kỹ thuật cho chủ xe điện cần bảo trì và sửa chữa.',
+      requirements: ['2+ năm kinh nghiệm ô tô', 'Kỹ năng dịch vụ khách hàng', 'Kiến thức cơ bản về xe điện']
     },
     {
       id: 3,
-      title: 'Parts Manager',
+      title: 'Quản Lý Phụ Tùng',
       department: 'operations',
-      location: 'Ho Chi Minh City',
-      type: 'Full-time',
-      salary: 'Competitive',
-      description: 'Manage inventory of EV parts and accessories, ensuring optimal stock levels and supplier relationships.',
-      requirements: ['3+ years parts management', 'Inventory software experience', 'Supply chain knowledge']
+      location: 'TP. Hồ Chí Minh',
+      type: 'Toàn thời gian',
+      salary: 'Cạnh tranh',
+      description: 'Quản lý tồn kho phụ tùng và phụ kiện xe điện, đảm bảo mức tồn kho tối ưu và mối quan hệ nhà cung cấp.',
+      requirements: ['3+ năm quản lý phụ tùng', 'Kinh nghiệm phần mềm tồn kho', 'Kiến thức chuỗi cung ứng']
     },
     {
       id: 4,
-      title: 'Software Developer',
+      title: 'Lập Trình Viên',
       department: 'technology',
-      location: 'Ho Chi Minh City',
-      type: 'Full-time',
-      salary: 'Competitive',
-      description: 'Develop and maintain our EV service management platform, focusing on user experience and system reliability.',
-      requirements: ['React/TypeScript experience', 'Node.js backend', 'MongoDB knowledge']
+      location: 'TP. Hồ Chí Minh',
+      type: 'Toàn thời gian',
+      salary: 'Cạnh tranh',
+      description: 'Phát triển và duy trì nền tảng quản lý dịch vụ xe điện, tập trung vào trải nghiệm người dùng và độ tin cậy hệ thống.',
+      requirements: ['Kinh nghiệm React/TypeScript', 'Backend Node.js', 'Kiến thức MongoDB']
     },
     {
       id: 5,
-      title: 'Marketing Specialist',
+      title: 'Chuyên Viên Marketing',
       department: 'marketing',
-      location: 'Ho Chi Minh City',
-      type: 'Full-time',
-      salary: 'Competitive',
-      description: 'Promote our EV services and build brand awareness in the growing electric vehicle market.',
-      requirements: ['Digital marketing experience', 'Social media expertise', 'Content creation skills']
+      location: 'TP. Hồ Chí Minh',
+      type: 'Toàn thời gian',
+      salary: 'Cạnh tranh',
+      description: 'Quảng bá dịch vụ xe điện của chúng tôi và xây dựng nhận thức thương hiệu trong thị trường xe điện đang phát triển.',
+      requirements: ['Kinh nghiệm marketing kỹ thuật số', 'Chuyên môn mạng xã hội', 'Kỹ năng sáng tạo nội dung']
     },
     {
       id: 6,
-      title: 'Quality Assurance Inspector',
+      title: 'Thanh Tra Kiểm Soát Chất Lượng',
       department: 'technical',
-      location: 'Ho Chi Minh City',
-      type: 'Full-time',
-      salary: 'Competitive',
-      description: 'Ensure all EV services meet our high quality standards and regulatory requirements.',
-      requirements: ['Quality control experience', 'Technical background', 'Attention to detail']
+      location: 'TP. Hồ Chí Minh',
+      type: 'Toàn thời gian',
+      salary: 'Cạnh tranh',
+      description: 'Đảm bảo tất cả dịch vụ xe điện đáp ứng tiêu chuẩn chất lượng cao và yêu cầu quy định của chúng tôi.',
+      requirements: ['Kinh nghiệm kiểm soát chất lượng', 'Nền tảng kỹ thuật', 'Chú ý đến chi tiết']
     }
   ];
 
   const departments = [
-    { id: 'all', name: 'All Departments', count: jobs.length },
-    { id: 'technical', name: 'Technical', count: jobs.filter(j => j.department === 'technical').length },
-    { id: 'customer-service', name: 'Customer Service', count: jobs.filter(j => j.department === 'customer-service').length },
-    { id: 'operations', name: 'Operations', count: jobs.filter(j => j.department === 'operations').length },
-    { id: 'technology', name: 'Technology', count: jobs.filter(j => j.department === 'technology').length },
+    { id: 'all', name: 'Tất Cả Phòng Ban', count: jobs.length },
+    { id: 'technical', name: 'Kỹ Thuật', count: jobs.filter(j => j.department === 'technical').length },
+    { id: 'customer-service', name: 'Dịch Vụ Khách Hàng', count: jobs.filter(j => j.department === 'customer-service').length },
+    { id: 'operations', name: 'Vận Hành', count: jobs.filter(j => j.department === 'operations').length },
+    { id: 'technology', name: 'Công Nghệ', count: jobs.filter(j => j.department === 'technology').length },
     { id: 'marketing', name: 'Marketing', count: jobs.filter(j => j.department === 'marketing').length }
   ];
 
@@ -84,16 +84,16 @@ const CareersPage: React.FC = () => {
       <div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
         {/* Hero Section */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-white mb-4">Join Our Team</h1>
+          <h1 className="text-4xl font-bold text-white mb-4">Tham Gia Đội Ngũ Của Chúng Tôi</h1>
           <p className="text-xl text-text-secondary max-w-3xl mx-auto">
-            Be part of the future of electric vehicle service. We're looking for passionate
-            professionals to help shape the EV industry and deliver exceptional service experiences.
+            Trở thành một phần của tương lai dịch vụ xe điện. Chúng tôi đang tìm kiếm các chuyên gia
+            đam mê để giúp định hình ngành công nghiệp xe điện và mang lại trải nghiệm dịch vụ xuất sắc.
           </p>
         </div>
 
         {/* Why Join Us */}
         <div className="bg-dark-300 rounded-lg shadow-lg p-8 mb-12">
-          <h2 className="text-2xl font-bold text-white mb-8 text-center">Why Choose EV Service Center?</h2>
+          <h2 className="text-2xl font-bold text-white mb-8 text-center">Tại Sao Chọn Trung Tâm Dịch Vụ Xe Điện?</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="text-center">
@@ -102,8 +102,8 @@ const CareersPage: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Innovation</h3>
-              <p className="text-text-secondary">Work with cutting-edge EV technology and modern service equipment</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Đổi Mới</h3>
+              <p className="text-text-secondary">Làm việc với công nghệ xe điện tiên tiến và thiết bị dịch vụ hiện đại</p>
             </div>
 
             <div className="text-center">
@@ -112,8 +112,8 @@ const CareersPage: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Growth</h3>
-              <p className="text-text-secondary">Continuous learning opportunities and career advancement paths</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Phát Triển</h3>
+              <p className="text-text-secondary">Cơ hội học tập liên tục và con đường thăng tiến nghề nghiệp</p>
             </div>
 
             <div className="text-center">
@@ -122,8 +122,8 @@ const CareersPage: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Impact</h3>
-              <p className="text-text-secondary">Contribute to sustainable transportation and environmental protection</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Tác Động</h3>
+              <p className="text-text-secondary">Đóng góp cho giao thông bền vững và bảo vệ môi trường</p>
             </div>
 
             <div className="text-center">
@@ -132,15 +132,15 @@ const CareersPage: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Team</h3>
-              <p className="text-text-secondary">Collaborate with passionate professionals in a supportive environment</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Đội Ngũ</h3>
+              <p className="text-text-secondary">Hợp tác với các chuyên gia đam mê trong môi trường hỗ trợ</p>
             </div>
           </div>
         </div>
 
         {/* Department Filter */}
         <div className="bg-dark-300 rounded-lg shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-bold text-white mb-4">Filter by Department</h2>
+          <h2 className="text-xl font-bold text-white mb-4">Lọc Theo Phòng Ban</h2>
           <div className="flex flex-wrap gap-3">
             {departments.map(dept => (
               <button
@@ -165,8 +165,8 @@ const CareersPage: React.FC = () => {
               <svg className="w-16 h-16 text-text-muted mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0V8a2 2 0 01-2 2H8a2 2 0 01-2-2V6m8 0H8m0 0V4" />
               </svg>
-              <h3 className="text-lg text-text-muted text-white mb-2">No positions available</h3>
-              <p className="text-text-secondary">Check back later for new opportunities in this department.</p>
+              <h3 className="text-lg text-text-muted text-white mb-2">Không có vị trí nào</h3>
+              <p className="text-text-secondary">Kiểm tra lại sau để xem cơ hội mới trong phòng ban này.</p>
             </div>
           ) : (
             filteredJobs.map(job => (
@@ -197,14 +197,14 @@ const CareersPage: React.FC = () => {
                     </div>
                   </div>
                   <button className="mt-4 lg:mt-0 bg-lime-600 hover:bg-lime-100 transition-all duration-200 transform hover:scale-105 text-black font-semibold px-6 py-2 rounded-lg transition-colors duration-200">
-                    Apply Now
+                    Ứng Tuyển Ngay
                   </button>
                 </div>
 
                 <p className="text-text-secondary mb-4">{job.description}</p>
 
                 <div>
-                  <h4 className="font-semibold text-white mb-2">Requirements:</h4>
+                  <h4 className="font-semibold text-white mb-2">Yêu Cầu:</h4>
                   <ul className="list-disc list-inside text-text-secondary space-y-1">
                     {job.requirements.map((req, index) => (
                       <li key={index}>{req}</li>
@@ -218,44 +218,43 @@ const CareersPage: React.FC = () => {
 
         {/* Application Process */}
         <div className="bg-dark-900 rounded-lg p-8 text-white">
-          <h2 className="text-2xl font-bold mb-6 text-center">How to Apply</h2>
+          <h2 className="text-2xl font-bold mb-6 text-center">Cách Ứng Tuyển</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="w-12 h-12 bg-dark-300 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold">1</span>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Submit Application</h3>
-              <p className="text-lime-100">Send your resume and cover letter to careers@evservicecenter.com</p>
+              <h3 className="text-lg font-semibold mb-2">Gửi Hồ Sơ</h3>
+              <p className="text-lime-100">Gửi CV và thư xin việc của bạn đến careers@evservicecenter.com</p>
             </div>
 
             <div className="text-center">
               <div className="w-12 h-12 bg-dark-300 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold">2</span>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Interview Process</h3>
-              <p className="text-lime-100">Technical and behavioral interviews with our hiring team</p>
+              <h3 className="text-lg font-semibold mb-2">Quy Trình Phỏng Vấn</h3>
+              <p className="text-lime-100">Phỏng vấn kỹ thuật và hành vi với đội ngũ tuyển dụng của chúng tôi</p>
             </div>
 
             <div className="text-center">
               <div className="w-12 h-12 bg-dark-300 bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold">3</span>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Join the Team</h3>
-              <p className="text-lime-100">Start your career in the exciting world of EV technology</p>
+              <h3 className="text-lg font-semibold mb-2">Tham Gia Đội Ngũ</h3>
+              <p className="text-lime-100">Bắt đầu sự nghiệp của bạn trong thế giới công nghệ xe điện thú vị</p>
             </div>
           </div>
 
           <div className="text-center mt-8">
             <p className="text-lg text-lime-100 mb-4">
-              Ready to join our team? We look forward to hearing from you!
+              Sẵn sàng tham gia đội ngũ của chúng tôi? Chúng tôi mong được gặp bạn!
             </p>
-            <a
-              href="mailto:careers@evservicecenter.com"
-              className="bg-dark-300 text-lime-600 px-8 py-3 rounded-lg text-text-muted hover:bg-dark-900 transition-colors duration-200"
-            >
-              careers@evservicecenter.com
-            </a>
+            <div className="bg-dark-300 rounded-lg p-6 max-w-2xl mx-auto">
+              <p className="text-white mb-2">📧 <strong>Email:</strong> careers@evservicecenter.com</p>
+              <p className="text-white mb-2">📍 <strong>Địa chỉ:</strong> Lô E2a-7, Đường D1, Long Thạnh Mỹ, Thành Phố Thủ Đức, Hồ Chí Minh</p>
+              <p className="text-white">🏫 <strong>Trường:</strong> Đại học FPT TP. Hồ Chí Minh</p>
+            </div>
           </div>
         </div>
       </div>
