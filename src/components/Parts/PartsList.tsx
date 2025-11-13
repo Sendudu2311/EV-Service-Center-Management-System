@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  PhotoIcon, 
-  MagnifyingGlassIcon 
+import {
+  PhotoIcon,
+  MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
@@ -97,14 +97,15 @@ interface PartsListProps {
   };
 }
 
-const PartsList: React.FC<PartsListProps> = ({ 
-  onEditPart, 
+const PartsList: React.FC<PartsListProps> = ({
+  onEditPart,
   viewMode = 'management',
   showFilters = true,
   showActions = true,
   filterDefaults = {}
 }) => {
-  const [parts, setParts] = useState<Part[]>([]);
+  const [allParts, setAllParts] = useState<Part[]>([]); // Store all parts
+  const [filteredParts, setFilteredParts] = useState<Part[]>([]); // Filtered results
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
@@ -114,25 +115,19 @@ const PartsList: React.FC<PartsListProps> = ({
     isActive: 'true',
     ...filterDefaults
   });
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalParts, setTotalParts] = useState(0);
   const itemsPerPage = 12;
 
-  const fetchParts = async () => {
+  // Fetch all parts once on mount
+  const fetchAllParts = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const queryParams = new URLSearchParams({
-        ...filters,
-        search: searchTerm,
-        page: currentPage.toString(),
-        limit: itemsPerPage.toString()
-      }).toString();
 
-      const response = await fetch(`/api/parts?${queryParams}`, {
+      // Fetch all parts without pagination
+      const response = await fetch(`/api/parts?limit=1000`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -140,9 +135,7 @@ const PartsList: React.FC<PartsListProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        setParts(data.data || []);
-        setTotalPages(data.totalPages || 1);
-        setTotalParts(data.totalParts || data.total || 0);
+        setAllParts(data.data || []);
       } else {
         toast.error('Failed to fetch parts');
       }
@@ -154,17 +147,69 @@ const PartsList: React.FC<PartsListProps> = ({
     }
   };
 
+  // Filter and search parts on frontend
   useEffect(() => {
-    setCurrentPage(1); // Reset to first page when filters change
-  }, [searchTerm, filters]);
+    let results = [...allParts];
 
+    // Apply search filter (search in name, partNumber, description, brand)
+    if (searchTerm.trim()) {
+      const searchLower = searchTerm.toLowerCase();
+      results = results.filter(part =>
+        part.name.toLowerCase().includes(searchLower) ||
+        part.partNumber.toLowerCase().includes(searchLower) ||
+        part.brand.toLowerCase().includes(searchLower) ||
+        (part.description && part.description.toLowerCase().includes(searchLower)) ||
+        part.tags.some(tag => tag.toLowerCase().includes(searchLower))
+      );
+    }
+
+    // Apply category filter
+    if (filters.category) {
+      results = results.filter(part => part.category === filters.category);
+    }
+
+    // Apply brand filter
+    if (filters.brand) {
+      results = results.filter(part => part.brand.toLowerCase() === filters.brand.toLowerCase());
+    }
+
+    // Apply stock status filter
+    if (filters.stockStatus) {
+      results = results.filter(part => {
+        const { currentStock, reorderPoint } = part.inventory;
+        if (filters.stockStatus === 'out-of-stock') return currentStock === 0;
+        if (filters.stockStatus === 'low-stock') return currentStock > 0 && currentStock <= reorderPoint;
+        if (filters.stockStatus === 'in-stock') return currentStock > reorderPoint;
+        return true;
+      });
+    }
+
+    // Apply active status filter
+    if (filters.isActive !== '') {
+      results = results.filter(part =>
+        part.isActive === (filters.isActive === 'true')
+      );
+    }
+
+    setFilteredParts(results);
+    setCurrentPage(1); // Reset to first page when filters change
+  }, [searchTerm, filters, allParts]);
+
+  // Fetch parts on mount only
   useEffect(() => {
-    fetchParts();
-  }, [searchTerm, filters, currentPage]);
+    fetchAllParts();
+  }, []);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredParts.length / itemsPerPage);
+  const totalParts = filteredParts.length;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentParts = filteredParts.slice(startIndex, endIndex);
 
   const getStockStatus = (part: Part) => {
     const { currentStock, minStockLevel, reorderPoint } = part.inventory;
-    
+
     if (currentStock === 0) {
       return { status: 'out-of-stock', label: 'Out of Stock', color: 'text-white bg-red-600' };
     } else if (currentStock <= reorderPoint) {
@@ -205,7 +250,7 @@ const PartsList: React.FC<PartsListProps> = ({
               </div>
               <input
                 type="text"
-                placeholder="Search parts..."
+                placeholder="Search parts by name, part number, brand, or tags..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="block w-full pl-10 pr-3 py-2 bg-dark-300 text-white border border-dark-200 rounded-md leading-5 placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-lime-400"
@@ -220,14 +265,14 @@ const PartsList: React.FC<PartsListProps> = ({
                 className="border bg-dark-300 text-white border-dark-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-lime-400 focus:border-lime-400"
               >
                 <option value="">All Categories</option>
-                <option value="Battery">Battery</option>
-                <option value="Motor">Motor</option>
-                <option value="Electronics">Electronics</option>
-                <option value="Charging">Charging</option>
-                <option value="Body">Body</option>
-                <option value="Interior">Interior</option>
-                <option value="Tires">Tires</option>
-                <option value="Fluids">Fluids</option>
+                <option value="battery">Battery</option>
+                <option value="motor">Motor</option>
+                <option value="electronics">Electronics</option>
+                <option value="charging">Charging</option>
+                <option value="body">Body</option>
+                <option value="interior">Interior</option>
+                <option value="tires">Tires & Wheels</option>
+                <option value="fluids">Fluids & Lubricants</option>
               </select>
 
               <select
@@ -248,175 +293,151 @@ const PartsList: React.FC<PartsListProps> = ({
                   className="border bg-dark-300 text-white border-dark-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-lime-400 focus:border-lime-400"
                 >
                   <option value="">All Status</option>
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
+                  <option value="true">Active Only</option>
+                  <option value="false">Inactive Only</option>
                 </select>
               )}
             </div>
+          </div>
+
+          {/* Results count */}
+          <div className="mt-4 text-sm text-text-muted">
+            Showing {startIndex + 1}-{Math.min(endIndex, totalParts)} of {totalParts} parts
+            {searchTerm && <span className="ml-2 text-lime-400">• Search: "{searchTerm}"</span>}
           </div>
         </div>
       )}
 
       {/* Parts Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {parts.map((part) => {
-          const stockStatus = getStockStatus(part);
-          
-          return (
-            <div key={part._id} className="bg-dark-300 rounded-lg shadow hover:shadow-md transition-shadow">
-              <div className="p-6">
+      {currentParts.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-text-muted">No parts found matching your criteria.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {currentParts.map((part) => {
+            const stockInfo = getStockStatus(part);
+
+            return (
+              <div key={part._id} className="bg-dark-300 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
                 {/* Part Image */}
-                <div className="w-full h-32 bg-dark-100 rounded-lg mb-4 flex items-center justify-center">
+                <div className="h-48 bg-dark-200 relative">
                   {part.images && part.images.length > 0 ? (
                     <img
                       src={part.images[0].url}
                       alt={part.name}
-                      className="w-full h-full object-cover rounded-lg"
+                      className="w-full h-full object-cover"
                     />
                   ) : (
-                    <PhotoIcon className="h-12 w-12 text-text-muted" />
+                    <div className="w-full h-full flex items-center justify-center">
+                      <PhotoIcon className="w-16 h-16 text-text-muted" />
+                    </div>
+                  )}
+                  {/* Stock Status Badge */}
+                  <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-semibold ${stockInfo.color}`}>
+                    {stockInfo.label}
+                  </div>
+                  {/* Recommended Badge */}
+                  {part.isRecommended && (
+                    <div className="absolute top-2 left-2 px-2 py-1 rounded text-xs font-semibold bg-lime-500 text-dark-400">
+                      Recommended
+                    </div>
                   )}
                 </div>
 
                 {/* Part Info */}
-                <div className="space-y-2">
-                  {/* Part Name and Stock Status in same line */}
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-white flex-1">{part.name}</h3>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs text-text-muted ${stockStatus.color} ml-2`}>
-                      {stockStatus.label}
-                    </span>
-                  </div>
-                  
-                  <p className="text-sm text-text-muted">#{part.partNumber}</p>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-text-muted">Category:</span>
-                    <span className="text-sm text-text-muted">{part.category}</span>
+                <div className="p-4">
+                  <div className="mb-2">
+                    <h3 className="text-lg font-semibold text-white truncate">{part.name}</h3>
+                    <p className="text-sm text-text-muted">{part.partNumber}</p>
                   </div>
 
-                  {part.brand && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-text-muted">Brand:</span>
-                      <span className="text-sm text-text-muted">{part.brand}</span>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-text-muted">Brand:</span>
+                      <span className="text-white font-medium">{part.brand}</span>
                     </div>
-                  )}
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-text-muted">Stock:</span>
-                    <span className="text-sm text-text-muted">{part.inventory.currentStock}</span>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-text-muted">Category:</span>
+                      <span className="text-white font-medium capitalize">{part.category}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-text-muted">Stock:</span>
+                      <span className="text-white font-medium">
+                        {part.inventory.currentStock} units
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-text-muted">Price:</span>
+                      <span className="text-lime-400 font-semibold">
+                        {formatCurrency(part.pricing.retail)}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-text-muted">Price:</span>
-                    <span className="text-sm text-text-muted">
-                      {formatCurrency(part.pricing.retail)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                {showActions && onEditPart && (
-                  <div className="flex justify-end space-x-2 pt-4 border-t border-dark-200 mt-4">
+                  {/* Actions */}
+                  {showActions && onEditPart && (
                     <button
                       onClick={() => onEditPart(part)}
-                      className="text-sm text-lime-600 hover:text-lime-800 text-text-muted"
+                      className="w-full px-4 py-2 bg-lime-500 hover:bg-lime-600 text-dark-400 rounded-md font-medium transition-colors"
                     >
-                      {viewMode === 'catalog' ? 'View Details' : 'Edit'}
+                      View Details
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Pagination */}
-      {!loading && totalPages > 1 && (
-        <div className="bg-dark-300 px-4 py-3 flex items-center justify-between border-t border-dark-200 sm:px-6 mt-6 rounded-lg shadow">
-          <div className="flex-1 flex justify-between sm:hidden">
-            <button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="relative inline-flex items-center px-4 py-2 border border-dark-300 text-sm text-text-muted rounded-md text-text-secondary bg-dark-300 hover:bg-dark-900 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-              className="ml-3 relative inline-flex items-center px-4 py-2 border border-dark-300 text-sm text-text-muted rounded-md text-text-secondary bg-dark-300 hover:bg-dark-900 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Next
-            </button>
-          </div>
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-text-secondary">
-                Showing{' '}
-                <span className="text-text-muted">{((currentPage - 1) * itemsPerPage) + 1}</span>
-                {' '}to{' '}
-                <span className="text-text-muted">
-                  {Math.min(currentPage * itemsPerPage, totalParts)}
-                </span>
-                {' '}of{' '}
-                <span className="text-text-muted">{totalParts}</span>
-                {' '}results
-              </p>
-            </div>
-            <div>
-              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-dark-300 bg-dark-300 text-sm text-text-muted text-text-muted hover:bg-dark-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-                  
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm text-text-muted ${
-                        currentPage === pageNum
-                          ? 'z-10 bg-dark-900 border-blue-500 text-lime-600'
-                          : 'bg-dark-300 border-dark-300 text-text-muted hover:bg-dark-900'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-                <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-dark-300 bg-dark-300 text-sm text-text-muted text-text-muted hover:bg-dark-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </nav>
-            </div>
-          </div>
+            );
+          })}
         </div>
       )}
 
-      {parts.length === 0 && !loading && (
-        <div className="text-center py-12">
-          <div className="text-text-muted text-lg">No parts found</div>
-          <p className="text-text-muted mt-2">Try adjusting your search or filters</p>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center space-x-2 mt-8">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-dark-300 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-dark-200 transition-colors"
+          >
+            Previous
+          </button>
+
+          <div className="flex space-x-1">
+            {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+              let pageNum;
+              if (totalPages <= 7) {
+                pageNum = i + 1;
+              } else if (currentPage <= 4) {
+                pageNum = i + 1;
+              } else if (currentPage >= totalPages - 3) {
+                pageNum = totalPages - 6 + i;
+              } else {
+                pageNum = currentPage - 3 + i;
+              }
+
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    currentPage === pageNum
+                      ? 'bg-lime-500 text-dark-400 font-bold'
+                      : 'bg-dark-300 text-white hover:bg-dark-200'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-dark-300 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-dark-200 transition-colors"
+          >
+            Next
+          </button>
         </div>
       )}
     </div>

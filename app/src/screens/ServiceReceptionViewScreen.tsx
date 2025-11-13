@@ -13,8 +13,6 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TechnicianStackParamList } from '../types/navigation.types';
 import { getAppointmentDetail } from '../services/technician.api';
-import { createAdditionalPartRequest } from '../services/partRequest.api';
-import AdditionalPartRequestModal from '../components/AdditionalPartRequestModal';
 import api from '../services/api';
 
 type Props = NativeStackScreenProps<TechnicianStackParamList, 'ViewReception'>;
@@ -113,25 +111,9 @@ const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
   const [loading, setLoading] = useState(true);
   const [reception, setReception] = useState<ServiceReception | null>(null);
 
-  // Part request states
-  const [availableParts, setAvailableParts] = useState<any[]>([]);
-  const [partPickerVisible, setPartPickerVisible] = useState(false);
-  const [partRequestModalVisible, setPartRequestModalVisible] = useState(false);
-  const [selectedPart, setSelectedPart] = useState<any>(null);
-
   useEffect(() => {
     loadReception();
-    loadParts();
   }, [appointmentId]);
-
-  const loadParts = async () => {
-    try {
-      const response = await api.get('/api/parts');
-      setAvailableParts(response.data.data || []);
-    } catch (error) {
-      console.error('Error loading parts:', error);
-    }
-  };
 
   const loadReception = async () => {
     try {
@@ -213,19 +195,6 @@ const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
     );
   };
 
-  const handlePartRequestSubmit = async (data: any) => {
-    if (!reception) return;
-
-    try {
-      await createAdditionalPartRequest(reception._id, data);
-      setPartRequestModalVisible(false);
-      setSelectedPart(null);
-      // Reload reception to show new part request
-      await loadReception();
-    } catch (error: any) {
-      throw error; // Let modal handle the error
-    }
-  };
 
   const formatVND = (amount: number): string => {
     return new Intl.NumberFormat('vi-VN', {
@@ -593,77 +562,6 @@ const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
           </TouchableOpacity>
         </View>
       )}
-
-      {/* Request Additional Parts Button - Show when approved */}
-      {reception.submissionStatus.staffReviewStatus === 'approved' && (
-        <View style={styles.bottomBar}>
-          <TouchableOpacity
-            style={styles.requestPartButton}
-            onPress={() => setPartPickerVisible(true)}
-          >
-            <Text style={styles.requestPartButtonText}>🔩 Yêu cầu phụ tùng thêm</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Part Picker Modal */}
-      <Modal
-        visible={partPickerVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setPartPickerVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Chọn phụ tùng</Text>
-              <TouchableOpacity onPress={() => setPartPickerVisible(false)}>
-                <Text style={styles.modalCloseButton}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <FlatList
-              data={availableParts}
-              keyExtractor={(item) => item._id}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.modalItem}
-                  onPress={() => {
-                    setSelectedPart(item);
-                    setPartPickerVisible(false);
-                    setPartRequestModalVisible(true);
-                  }}
-                >
-                  <View>
-                    <Text style={styles.modalItemName}>{item.name}</Text>
-                    <Text style={styles.modalItemDetail}>
-                      Mã: {item.partNumber} • {item.pricing?.retail?.toLocaleString('vi-VN')} VND •
-                      Tồn kho: {item.inventory?.currentStock || 0}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              )}
-              ListEmptyComponent={
-                <Text style={styles.emptyText}>Không có phụ tùng nào</Text>
-              }
-            />
-          </View>
-        </View>
-      </Modal>
-
-      {/* Additional Part Request Modal */}
-      {selectedPart && (
-        <AdditionalPartRequestModal
-          visible={partRequestModalVisible}
-          onClose={() => {
-            setPartRequestModalVisible(false);
-            setSelectedPart(null);
-          }}
-          onSubmit={handlePartRequestSubmit}
-          part={selectedPart}
-          serviceReceptionId={reception._id}
-        />
-      )}
     </View>
   );
 };
@@ -975,69 +873,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#ffffff',
-  },
-  requestPartButton: {
-    backgroundColor: '#10b981',
-    paddingVertical: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  requestPartButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContainer: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '80%',
-    paddingBottom: 20,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  modalCloseButton: {
-    fontSize: 24,
-    color: '#6B7280',
-    fontWeight: '300',
-  },
-  modalItem: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  modalItemName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  modalItemDetail: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    textAlign: 'center',
-    padding: 32,
   },
 });
 

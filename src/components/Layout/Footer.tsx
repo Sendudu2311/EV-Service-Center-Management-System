@@ -12,11 +12,11 @@ const Footer: React.FC = () => {
               <div className="w-8 h-8 bg-gradient-to-r from-lime-200 to-lime-300 rounded-lg flex items-center justify-center shadow-glow group-hover:shadow-lg transition-all duration-200 transform group-hover:scale-110">
                 <span className="text-dark-900 font-bold text-sm">EV</span>
               </div>
-              <span className="text-xl font-bold text-white group-hover:text-lime-200 transition-colors duration-200">Service Center</span>
+              <span className="text-xl font-bold text-white group-hover:text-lime-200 transition-colors duration-200">Trung Tâm Dịch Vụ</span>
             </div>
             <p className="text-text-secondary mb-4 max-w-md">
-              Comprehensive maintenance management system for electric vehicle service centers. 
-              Streamline operations, enhance customer experience, and optimize service delivery.
+              Hệ thống quản lý bảo trì toàn diện cho trung tâm dịch vụ xe điện.
+              Tối ưu hóa vận hành, nâng cao trải nghiệm khách hàng và cải thiện chất lượng dịch vụ.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-text-secondary hover:text-white transition-colors duration-200">
@@ -43,27 +43,27 @@ const Footer: React.FC = () => {
           {/* Quick Links */}
           <div>
             <h3 className="text-sm font-semibold text-text-muted tracking-wider uppercase mb-4">
-              Quick Links
+              Liên Kết
             </h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/about" className="text-text-secondary hover:text-white transition-colors duration-200">
-                  About Us
+                  Về Chúng Tôi
                 </Link>
               </li>
               <li>
-                <Link to="/services" className="text-text-secondary hover:text-white transition-colors duration-200">
-                  Services
+                <Link to="/customer-services" className="text-text-secondary hover:text-white transition-colors duration-200">
+                  Dịch Vụ
                 </Link>
               </li>
               <li>
                 <Link to="/contact" className="text-text-secondary hover:text-white transition-colors duration-200">
-                  Contact
+                  Liên Hệ
                 </Link>
               </li>
               <li>
                 <Link to="/careers" className="text-text-secondary hover:text-white transition-colors duration-200">
-                  Careers
+                  Tuyển Dụng
                 </Link>
               </li>
             </ul>
@@ -72,27 +72,27 @@ const Footer: React.FC = () => {
           {/* Support */}
           <div>
             <h3 className="text-sm font-semibold text-text-muted tracking-wider uppercase mb-4">
-              Support
+              Hỗ Trợ
             </h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/help" className="text-text-secondary hover:text-white transition-colors duration-200">
-                  Help Center
+                  Trung Tâm Trợ Giúp
                 </Link>
               </li>
               <li>
                 <Link to="/privacy" className="text-text-secondary hover:text-white transition-colors duration-200">
-                  Privacy Policy
+                  Chính Sách Bảo Mật
                 </Link>
               </li>
               <li>
                 <Link to="/terms" className="text-text-secondary hover:text-white transition-colors duration-200">
-                  Terms of Service
+                  Điều Khoản Dịch Vụ
                 </Link>
               </li>
               <li>
                 <Link to="/security" className="text-text-secondary hover:text-white transition-colors duration-200">
-                  Security
+                  Bảo Mật
                 </Link>
               </li>
             </ul>
@@ -102,11 +102,11 @@ const Footer: React.FC = () => {
         <div className="mt-8 pt-8 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-text-muted text-sm">
-              © {new Date().getFullYear()} EV Service Center Management System. All rights reserved.
+              © {new Date().getFullYear()} Hệ Thống Quản Lý Trung Tâm Dịch Vụ Xe Điện. Bảo lưu mọi quyền.
             </p>
             <div className="mt-4 md:mt-0 flex space-x-6">
               <span className="text-text-muted text-sm">
-                Built with ⚡ for the future of EV service
+                Xây dựng với ⚡ cho tương lai của dịch vụ xe điện
               </span>
             </div>
           </div>
