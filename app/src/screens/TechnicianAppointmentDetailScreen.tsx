@@ -16,7 +16,6 @@ import {
   getAllServiceReceptionsByAppointment,
 } from '../services/technician.api';
 import { TechnicianStackParamList } from '../types/navigation.types';
-import api from '../services/api';
 
 type RouteParams = RouteProp<TechnicianStackParamList, 'AppointmentDetail'>;
 type NavigationProp = NativeStackNavigationProp<TechnicianStackParamList, 'AppointmentDetail'>;
@@ -58,6 +57,8 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
             const latestReception = activeReceptions.sort(
               (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             )[0];
+            console.log('📋 ServiceReception status:', latestReception.submissionStatus?.staffReviewStatus);
+            console.log('📋 Reception ID:', latestReception._id);
             setServiceReception(latestReception);
           }
 
@@ -120,26 +121,6 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
     );
   };
 
-  // Handle customer arrival
-  const handleCustomerArrival = async () => {
-    try {
-      setIsActionLoading(true);
-      const response = await api.put(`/api/appointments/${appointmentId}/customer-arrived`, {
-        vehicleConditionNotes: '',
-        customerItems: [],
-      });
-
-      if (response.data.success) {
-        Alert.alert('Thành công', 'Đã xác nhận khách hàng đã đến');
-        await fetchAppointmentData(); // Reload to show new status
-      }
-    } catch (error: any) {
-      console.error('Error marking customer arrival:', error);
-      Alert.alert('Lỗi', error.response?.data?.message || 'Không thể xác nhận khách đến');
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
 
   // Handle create service reception
   const handleCreateReception = () => {
@@ -259,19 +240,8 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
     const status = appointment.status;
 
     if (status === 'confirmed') {
-      return (
-        <TouchableOpacity
-          style={[styles.actionButton, styles.primaryButton]}
-          onPress={handleCustomerArrival}
-          disabled={isActionLoading}
-        >
-          {isActionLoading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.actionButtonText}>✅ Xác nhận khách đã đến</Text>
-          )}
-        </TouchableOpacity>
-      );
+      // Không hiển thị nút gì, chờ staff xác nhận khách đã đến
+      return null;
     }
 
     if (status === 'customer_arrived') {
@@ -474,27 +444,6 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Services */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>🔧 Dịch vụ đã đặt</Text>
-          {appointment.services.map((service: any, index: number) => (
-            <View key={index} style={styles.serviceItem}>
-              <View style={styles.serviceInfo}>
-                <Text style={styles.serviceName}>{service.serviceId.name}</Text>
-                <Text style={styles.serviceCategory}>({service.serviceId.category})</Text>
-              </View>
-              <View style={styles.serviceDetails}>
-                <Text style={styles.serviceQuantity}>x{service.quantity}</Text>
-                <Text style={styles.servicePrice}>{formatCurrency(service.price)}</Text>
-              </View>
-            </View>
-          ))}
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Tổng cộng:</Text>
-            <Text style={styles.totalAmount}>{formatCurrency(appointment.totalAmount)}</Text>
-          </View>
-        </View>
-
         {/* Notes */}
         {appointment.notes && (
           <View style={styles.card}>
@@ -530,8 +479,11 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Recommended Services from Reception */}
-        {serviceReception && serviceReception.recommendedServices && serviceReception.recommendedServices.length > 0 && (
+        {/* Recommended Services from Reception - Only show if not approved yet */}
+        {serviceReception &&
+         serviceReception.submissionStatus?.staffReviewStatus !== 'approved' &&
+         serviceReception.recommendedServices &&
+         serviceReception.recommendedServices.length > 0 && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>🔧 Dịch vụ đề xuất từ phiếu tiếp nhận</Text>
             {serviceReception.recommendedServices.map((service: any, index: number) => (
@@ -559,7 +511,7 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
                 <View style={{ marginTop: 4 }}>
                   <Text style={styles.serviceCategory}>{service.category}</Text>
                   <Text style={styles.serviceDetail}>
-                    {formatCurrency(service.estimatedCost)} • {service.estimatedDuration} phút
+                    x{service.quantity} • {formatCurrency(service.estimatedCost * service.quantity)} • {service.estimatedDuration} phút
                   </Text>
                   {service.reason && (
                     <Text style={styles.serviceReason}>Lý do: {service.reason}</Text>
@@ -567,6 +519,17 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
                 </View>
               </View>
             ))}
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Tổng cộng dịch vụ:</Text>
+              <Text style={styles.totalAmount}>
+                {formatCurrency(
+                  serviceReception.recommendedServices.reduce(
+                    (sum: number, s: any) => sum + (s.estimatedCost * s.quantity),
+                    0
+                  )
+                )}
+              </Text>
+            </View>
           </View>
         )}
 
@@ -605,15 +568,52 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Requested Parts from Reception */}
-        {serviceReception && serviceReception.requestedParts && serviceReception.requestedParts.length > 0 && (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>🔩 Phụ tùng yêu cầu (Technician)</Text>
-            {serviceReception.requestedParts.map((part: any, index: number) => (
-              <View key={index} style={styles.serviceItem}>
-                <View style={styles.serviceHeader}>
-                  <Text style={styles.serviceName}>{part.partName}</Text>
-                  <View style={styles.badgeContainer}>
+        {/* Services, Parts, and Total - Combined in one card if approved */}
+        {(!serviceReception || serviceReception.submissionStatus?.staffReviewStatus === 'approved') && (
+          appointment.services.length > 0 ||
+          (serviceReception && serviceReception.requestedParts && serviceReception.requestedParts.length > 0) ||
+          appointment.totalAmount > 0
+        ) && (
+        <View style={styles.card}>
+          {/* Services Section */}
+          {appointment.services.length > 0 && (
+            <>
+              <Text style={styles.cardTitle}>🔧 Dịch vụ</Text>
+              {appointment.services.map((service: any, index: number) => (
+                <View key={index} style={styles.serviceItem}>
+                  <View style={styles.serviceInfo}>
+                    <Text style={styles.serviceName}>{service.serviceId.name}</Text>
+                    <Text style={styles.serviceCategory}>({service.serviceId.category})</Text>
+                  </View>
+                  <View style={styles.serviceDetails}>
+                    <Text style={styles.serviceQuantity}>x{service.quantity}</Text>
+                    <Text style={styles.servicePrice}>{formatCurrency(service.price)}</Text>
+                  </View>
+                </View>
+              ))}
+            </>
+          )}
+
+          {/* Parts Section */}
+          {serviceReception && serviceReception.requestedParts && serviceReception.requestedParts.length > 0 && (
+            <>
+              <Text style={[styles.cardTitle, appointment.services.length > 0 && { marginTop: 16 }]}>🔩 Phụ tùng yêu cầu</Text>
+              {serviceReception.requestedParts.map((part: any, index: number) => {
+                console.log('🔍 Part debug:', {
+                  partName: part.partName,
+                  isApproved: part.isApproved,
+                  isAvailable: part.isAvailable,
+                  availableQuantity: part.availableQuantity,
+                  shortfall: part.shortfall
+                });
+                return (
+                <View key={index} style={styles.serviceItem}>
+                  {/* Part name on its own line */}
+                  <View>
+                    <Text style={styles.serviceName} numberOfLines={2}>{part.partName}</Text>
+                  </View>
+                  {/* Badges below with flex wrap */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
                     {part.isApproved && (
                       <View style={[styles.badge, styles.badgeApproved]}>
                         <Text style={[styles.badgeText, { color: '#065F46' }]}>✓ Đã duyệt</Text>
@@ -633,23 +633,71 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
                       </View>
                     )}
                   </View>
-                </View>
-                <View style={{ marginTop: 4 }}>
-                  <Text style={styles.serviceDetail}>
-                    Số lượng: {part.quantity} • {formatCurrency(part.estimatedCost)}
-                  </Text>
-                  {part.reason && (
-                    <Text style={styles.serviceReason}>Lý do: {part.reason}</Text>
-                  )}
-                  {part.alternatives && part.alternatives.length > 0 && (
-                    <Text style={styles.serviceReason}>
-                      Có {part.alternatives.length} phụ tùng thay thế
+                  <View style={{ marginTop: 4 }}>
+                    <Text style={styles.serviceDetail}>
+                      Số lượng: {part.quantity} • {formatCurrency(part.estimatedCost)}
                     </Text>
-                  )}
+                    {part.reason && (
+                      <Text style={styles.serviceReason}>Lý do: {part.reason}</Text>
+                    )}
+                    {part.alternatives && part.alternatives.length > 0 && (
+                      <Text style={styles.serviceReason}>
+                        Có {part.alternatives.length} phụ tùng thay thế
+                      </Text>
+                    )}
+                  </View>
+                </View>
+                );
+              })}
+            </>
+          )}
+
+          {/* Total at bottom of card */}
+          {(() => {
+            // Calculate total from displayed services and approved+available parts only
+            let total = 0;
+
+            // Add services cost
+            if (appointment.services && appointment.services.length > 0) {
+              total += appointment.services.reduce((sum: number, service: any) => {
+                return sum + (service.price || 0) * (service.quantity || 1);
+              }, 0);
+            }
+
+            // Add ONLY approved and available parts cost
+            if (serviceReception && serviceReception.requestedParts && serviceReception.requestedParts.length > 0) {
+              total += serviceReception.requestedParts
+                .filter((part: any) => part.isApproved && part.isAvailable)
+                .reduce((sum: number, part: any) => {
+                  return sum + (part.estimatedCost || 0) * (part.quantity || 1);
+                }, 0);
+            }
+
+            // Add 10% VAT
+            const subtotal = total;
+            const tax = subtotal * 0.1;
+            const grandTotal = subtotal + tax;
+
+            if (grandTotal <= 0) return null;
+
+            return (
+              <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#374151' }}>
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>Tạm tính:</Text>
+                  <Text style={styles.totalAmount}>{formatCurrency(subtotal)}</Text>
+                </View>
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>VAT (10%):</Text>
+                  <Text style={styles.totalAmount}>{formatCurrency(tax)}</Text>
+                </View>
+                <View style={[styles.totalRow, { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#374151' }]}>
+                  <Text style={[styles.totalLabel, { fontSize: 18, fontWeight: '700' }]}>Tổng cộng:</Text>
+                  <Text style={[styles.totalAmount, { fontSize: 20, fontWeight: '700' }]}>{formatCurrency(grandTotal)}</Text>
                 </View>
               </View>
-            ))}
-          </View>
+            );
+          })()}
+        </View>
         )}
       </ScrollView>
 

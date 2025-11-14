@@ -103,6 +103,23 @@ interface ServiceReception {
     notes?: string;
   }>;
   estimatedServiceTime: number;
+  workflowHistory?: Array<{
+    action: string;
+    performedBy?: {
+      firstName: string;
+      lastName: string;
+    };
+    timestamp: string;
+    changes?: {
+      servicesAdded?: any[];
+      servicesRemoved?: any[];
+      servicesModified?: any[];
+      partsAdded?: any[];
+      partsRemoved?: any[];
+      partsModified?: any[];
+    };
+    notes?: string;
+  }>;
 }
 
 const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
@@ -359,28 +376,28 @@ const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
             {reception.requestedParts.map((part) => (
               <View key={part._id} style={styles.partItem}>
                 <View style={styles.partHeader}>
-                  <Text style={styles.partName}>{part.partName}</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    {part.isApproved && (
-                      <View style={{ backgroundColor: '#d1fae5', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
-                        <Text style={{ fontSize: 10, fontWeight: '600', color: '#065f46' }}>✓ Đã duyệt</Text>
-                      </View>
-                    )}
-                    {part.isAvailable ? (
-                      <View style={{ backgroundColor: '#dbeafe', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
-                        <Text style={{ fontSize: 10, fontWeight: '600', color: '#1e40af' }}>
-                          ✓ Có sẵn ({part.availableQuantity || 0})
-                        </Text>
-                      </View>
-                    ) : (
-                      <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
-                        <Text style={{ fontSize: 10, fontWeight: '600', color: '#92400e' }}>
-                          ⚠ {part.shortfall ? `Thiếu ${part.shortfall}` : 'Chưa có'}
-                        </Text>
-                      </View>
-                    )}
-                    <Text style={styles.partQuantity}>x{part.quantity}</Text>
-                  </View>
+                  <Text style={styles.partName} numberOfLines={2}>{part.partName}</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                  {part.isApproved && (
+                    <View style={{ backgroundColor: '#d1fae5', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '600', color: '#065f46' }}>✓ Đã duyệt</Text>
+                    </View>
+                  )}
+                  {part.isAvailable ? (
+                    <View style={{ backgroundColor: '#dbeafe', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '600', color: '#1e40af' }}>
+                        ✓ Có sẵn ({part.availableQuantity || 0})
+                      </Text>
+                    </View>
+                  ) : (
+                    <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '600', color: '#92400e' }}>
+                        ⚠ {part.shortfall ? `Thiếu ${part.shortfall}` : 'Chưa có'}
+                      </Text>
+                    </View>
+                  )}
+                  <Text style={styles.partQuantity}>x{part.quantity}</Text>
                 </View>
                 <Text style={styles.partNumber}>Mã: {part.partNumber}</Text>
                 <Text style={styles.partReason}>Lý do: {part.reason}</Text>
@@ -537,6 +554,117 @@ const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
             </Text>
           </View>
         </View>
+
+        {/* Workflow History - Staff Modifications */}
+        {reception.workflowHistory && reception.workflowHistory.length > 0 && (() => {
+          const staffModifications = reception.workflowHistory.filter(
+            (entry) => entry.action === 'staff_modified_services_parts'
+          );
+          console.log('WorkflowHistory exists:', reception.workflowHistory.length);
+          console.log('Staff modifications count:', staffModifications.length);
+
+          if (staffModifications.length === 0) return null;
+
+          return (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🕒 Lịch sử thay đổi</Text>
+            {staffModifications.map((entry, index) => (
+                <View key={index} style={styles.workflowEntry}>
+                  <View style={styles.workflowHeader}>
+                    <Text style={styles.workflowAction}>✏️ Staff đã chỉnh sửa Services/Parts</Text>
+                  </View>
+
+                  {/* Staff info and timestamp */}
+                  <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                    {entry.performedBy && (
+                      <Text style={styles.workflowInfo}>
+                        👤 {entry.performedBy.firstName} {entry.performedBy.lastName}
+                      </Text>
+                    )}
+                    <Text style={styles.workflowInfo}>
+                      🕐 {new Date(entry.timestamp).toLocaleString('vi-VN')}
+                    </Text>
+                  </View>
+
+                  {/* Changes Details */}
+                  {entry.changes && (
+                    <View style={{ marginTop: 12 }}>
+                      {/* Services Changes */}
+                      {((entry.changes.servicesAdded && entry.changes.servicesAdded.length > 0) ||
+                        (entry.changes.servicesRemoved && entry.changes.servicesRemoved.length > 0) ||
+                        (entry.changes.servicesModified && entry.changes.servicesModified.length > 0)) && (
+                        <View style={{ marginBottom: 12 }}>
+                          <Text style={styles.changesSubtitle}>Dịch vụ:</Text>
+                          {entry.changes.servicesAdded?.map((service: any, i: number) => (
+                            <View key={i} style={styles.changeItem}>
+                              <Text style={styles.changeIcon}>🟢</Text>
+                              <Text style={styles.changeText}>
+                                Đã thêm: {service.serviceName} (x{service.quantity})
+                              </Text>
+                            </View>
+                          ))}
+                          {entry.changes.servicesModified?.map((mod: any, i: number) => (
+                            <View key={i} style={styles.changeItem}>
+                              <Text style={styles.changeIcon}>🟡</Text>
+                              <Text style={styles.changeText}>
+                                Đã sửa: {mod.after.serviceName} ({mod.before.quantity} → {mod.after.quantity})
+                              </Text>
+                            </View>
+                          ))}
+                          {entry.changes.servicesRemoved?.map((service: any, i: number) => (
+                            <View key={i} style={styles.changeItem}>
+                              <Text style={styles.changeIcon}>🔴</Text>
+                              <Text style={styles.changeText}>Đã xóa: {service.serviceName}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+
+                      {/* Parts Changes */}
+                      {((entry.changes.partsAdded && entry.changes.partsAdded.length > 0) ||
+                        (entry.changes.partsRemoved && entry.changes.partsRemoved.length > 0) ||
+                        (entry.changes.partsModified && entry.changes.partsModified.length > 0)) && (
+                        <View>
+                          <Text style={styles.changesSubtitle}>Phụ tùng:</Text>
+                          {entry.changes.partsAdded?.map((part: any, i: number) => (
+                            <View key={i} style={styles.changeItem}>
+                              <Text style={styles.changeIcon}>🟢</Text>
+                              <Text style={styles.changeText}>
+                                Đã thêm: {part.partName} (x{part.quantity})
+                              </Text>
+                            </View>
+                          ))}
+                          {entry.changes.partsModified?.map((mod: any, i: number) => (
+                            <View key={i} style={styles.changeItem}>
+                              <Text style={styles.changeIcon}>🟡</Text>
+                              <Text style={styles.changeText}>
+                                Đã sửa: {mod.after.partName} ({mod.before.quantity} → {mod.after.quantity})
+                              </Text>
+                            </View>
+                          ))}
+                          {entry.changes.partsRemoved?.map((part: any, i: number) => (
+                            <View key={i} style={styles.changeItem}>
+                              <Text style={styles.changeIcon}>🔴</Text>
+                              <Text style={styles.changeText}>Đã xóa: {part.partName}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+                  )}
+
+                  {/* Reason */}
+                  {entry.notes && (
+                    <View style={styles.workflowReason}>
+                      <Text style={styles.workflowReasonLabel}>📝 Lý do:</Text>
+                      <Text style={styles.workflowReasonText}>{entry.notes}</Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          );
+        })()}
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -873,6 +1001,65 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#ffffff',
+  },
+  workflowEntry: {
+    backgroundColor: '#fef3c7',
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#f59e0b',
+    marginBottom: 12,
+  },
+  workflowHeader: {
+    marginBottom: 4,
+  },
+  workflowAction: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#92400e',
+  },
+  workflowInfo: {
+    fontSize: 12,
+    color: '#78350f',
+  },
+  changesSubtitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  changeItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
+  changeIcon: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  changeText: {
+    fontSize: 13,
+    color: '#4b5563',
+    flex: 1,
+  },
+  workflowReason: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#fbbf24',
+    borderRadius: 6,
+    padding: 10,
+    marginTop: 12,
+  },
+  workflowReasonLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#92400e',
+    marginBottom: 4,
+  },
+  workflowReasonText: {
+    fontSize: 12,
+    color: '#78350f',
+    fontStyle: 'italic',
   },
 });
 

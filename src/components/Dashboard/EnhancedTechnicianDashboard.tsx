@@ -14,6 +14,7 @@ import { Link } from "react-router-dom";
 import { dashboardAPI, appointmentsAPI } from "../../services/api";
 import toast from "react-hot-toast";
 import ServiceReceptionModal from "../ServiceReception/ServiceReceptionModal";
+import WorkflowHistoryViewer from "../ServiceReception/WorkflowHistoryViewer";
 import {
   formatVietnameseDateTime,
   appointmentStatusTranslations,
@@ -131,6 +132,13 @@ interface ServiceReceptionItem {
     };
     estimatedArrival?: string;
     orderStatus: string;
+    notes?: string;
+  }>;
+  workflowHistory?: Array<{
+    action: string;
+    performedBy: any;
+    timestamp: string | Date;
+    changes?: any;
     notes?: string;
   }>;
 }
@@ -271,6 +279,11 @@ const EnhancedTechnicianDashboard: React.FC = () => {
         );
         if (receptionsResponse.ok) {
           const receptionsData = await receptionsResponse.json();
+          console.log('=== SERVICE RECEPTIONS DATA ===');
+          console.log('Receptions:', receptionsData.data);
+          if (receptionsData.data && receptionsData.data.length > 0) {
+            console.log('First reception workflowHistory:', receptionsData.data[0].workflowHistory);
+          }
           setServiceReceptions(receptionsData.data || []);
         }
       } catch (error) {
@@ -1011,7 +1024,12 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted">
                             <button
-                              onClick={() => setSelectedReception(reception)}
+                              onClick={() => {
+                                console.log('=== SELECTED RECEPTION ===');
+                                console.log('Reception:', reception);
+                                console.log('workflowHistory:', reception.workflowHistory);
+                                setSelectedReception(reception);
+                              }}
                               className="text-lime-600 hover:text-lime-900"
                             >
                               Xem chi tiết
@@ -1364,6 +1382,14 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                     </p>
                   </div>
                 )}
+
+                {/* Workflow History - Staff modifications */}
+                {selectedReception.workflowHistory &&
+                  selectedReception.workflowHistory.length > 0 && (
+                    <WorkflowHistoryViewer
+                      history={selectedReception.workflowHistory}
+                    />
+                  )}
 
                 {/* Created Date */}
                 <div className="bg-dark-900 p-4 rounded-lg">

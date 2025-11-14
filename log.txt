@@ -1,29 +1,4 @@
-Error retrieving service reception: CastError: Cast to ObjectId failed for value "[object Object]" (type string) at path "_id" for model "ServiceReception"
-    at SchemaObjectId.cast (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/schema/objectId.js:251:11)
-    at SchemaType.applySetters (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/schemaType.js:1258:12)
-    at SchemaType.castForQuery (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/schemaType.js:1694:17)
-    at cast (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/cast.js:390:32)
-    at Query.cast (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/query.js:5060:12)
-    at Query._castConditions (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/query.js:2374:10)
-    at model.Query._findOne (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/query.js:2697:8)
-    at model.Query.exec (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/query.js:4627:80)
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async getServiceReception (file:///Users/tranduy/Downloads/project/server/controllers/serviceReceptionController.js:258:30) {
-  stringValue: '"[object Object]"',
-  messageFormat: undefined,
-  kind: 'ObjectId',
-  value: '[object Object]',
-  path: '_id',
-  reason: BSONError: input must be a 24 character hex string, 12 byte Uint8Array, or an integer
-      at new ObjectId (/Users/tranduy/Downloads/project/server/node_modules/bson/lib/bson.cjs:2538:23)
-      at castObjectId (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/cast/objectid.js:25:12)
-      at SchemaObjectId.cast (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/schema/objectId.js:249:12)
-      at SchemaType.applySetters (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/schemaType.js:1258:12)
-      at SchemaType.castForQuery (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/schemaType.js:1694:17)
-      at cast (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/cast.js:390:32)
-      at Query.cast (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/query.js:5060:12)
-      at Query._castConditions (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/query.js:2374:10)
-      at model.Query._findOne (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/query.js:2697:8)
-      at model.Query.exec (/Users/tranduy/Downloads/project/server/node_modules/mongoose/lib/query.js:4627:80),
-  valueType: 'string'
-}
+ServiceReception status: approved
+ (NOBRIDGE) LOG  📋 Reception ID: 6916ec138c00a7cdb82a0739
+ (NOBRIDGE) LOG  🔍 Part debug: {"availableQuantity": undefined, "isApproved": false, "isAvailable": false, "partName": "22kW Onboard Charger (Excel Test)", "shortfall": undefined}
+ (NOBRIDGE) LOG  🔍 Part debug: {"availableQuantity": 45, "isApproved": true, "isAvailable": true, "partName": "EV Brake Fluid DOT 4", "shortfall": undefined}
