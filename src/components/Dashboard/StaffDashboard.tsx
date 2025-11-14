@@ -257,7 +257,14 @@ const StaffDashboard: React.FC = () => {
     decision: "approve" | "reject",
     notes: string,
     externalParts?: any[],
-    extendedCompletionDate?: string
+    extendedCompletionDate?: string,
+    modifications?: {
+      servicesChanges: any;
+      partsChanges: any;
+      modificationReason: string;
+      modifiedServices: any[];
+      modifiedParts: any[];
+    } | null
   ) => {
     try {
       // receptionId is now the actual ServiceReception _id, not appointment ID
@@ -274,6 +281,7 @@ const StaffDashboard: React.FC = () => {
             reviewNotes: notes,
             externalParts: externalParts || [],
             extendedCompletionDate: extendedCompletionDate || null,
+            modifications: modifications || null,
           }),
         }
       );
@@ -942,6 +950,7 @@ const StaffDashboard: React.FC = () => {
               loading={receptionLoading}
               onReview={handleReceptionReview}
               onReceptionUpdated={fetchConflictStats}
+              currentUser={user}
             />
           </>
         )}
