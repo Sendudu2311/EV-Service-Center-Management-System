@@ -18,6 +18,7 @@ interface UserProfile {
   phone: string;
   role: string;
   avatar?: string;
+  authProvider?: string; // "local" or "google"
   // serviceCenterId removed - single center architecture
   code: string;
   specializations?: string[];
@@ -386,24 +387,25 @@ const ProfilePage: React.FC = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Password Change */}
-            <div className="bg-dark-300 shadow rounded-lg">
-              <div className="px-6 py-5 border-b border-dark-200">
-                <h3 className="text-lg font-semibold text-white">
-                  Security
-                </h3>
-              </div>
-              <div className="px-6 py-5">
-                {!changingPassword ? (
-                  <button
-                    onClick={() => setChangingPassword(true)}
-                    className="inline-flex items-center px-4 py-2 border border-dark-300 shadow-sm text-sm text-text-muted rounded-md text-text-secondary bg-dark-300 hover:bg-dark-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400 focus:ring-offset-dark-900"
-                  >
-                    <KeyIcon className="h-4 w-4 mr-2" />
-                    Change Password
-                  </button>
-                ) : (
-                  <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            {/* Password Change - Only show for local auth users */}
+            {profile.authProvider !== "google" && (
+              <div className="bg-dark-300 shadow rounded-lg">
+                <div className="px-6 py-5 border-b border-dark-200">
+                  <h3 className="text-lg font-semibold text-white">
+                    Security
+                  </h3>
+                </div>
+                <div className="px-6 py-5">
+                  {!changingPassword ? (
+                    <button
+                      onClick={() => setChangingPassword(true)}
+                      className="inline-flex items-center px-4 py-2 border border-dark-300 shadow-sm text-sm text-text-muted rounded-md text-text-secondary bg-dark-300 hover:bg-dark-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400 focus:ring-offset-dark-900"
+                    >
+                      <KeyIcon className="h-4 w-4 mr-2" />
+                      Change Password
+                    </button>
+                  ) : (
+                    <form onSubmit={handlePasswordSubmit} className="space-y-4">
                     <div>
                       <label
                         htmlFor="currentPassword"
@@ -495,6 +497,7 @@ const ProfilePage: React.FC = () => {
                 )}
               </div>
             </div>
+            )}
 
             {/* Certifications */}
             {profile.certifications && profile.certifications.length > 0 && (

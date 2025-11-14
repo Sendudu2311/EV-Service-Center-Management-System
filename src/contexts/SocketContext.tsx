@@ -34,7 +34,8 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   useEffect(() => {
     // Disable Socket.io in production (Vercel deployment)
     // Check both env and hostname to be absolutely sure
-    const isProd = import.meta.env.PROD || window.location.hostname.includes("vercel.app");
+    const isProd =
+      import.meta.env.PROD || window.location.hostname.includes("vercel.app");
 
     console.log("[SocketContext] Environment check:", {
       envProd: import.meta.env.PROD,
@@ -44,7 +45,9 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     });
 
     if (isProd) {
-      console.log("[SocketContext] Socket.io DISABLED - Production mode detected");
+      console.log(
+        "[SocketContext] Socket.io DISABLED - Production mode detected"
+      );
       setSocket(null);
       setIsConnected(false);
       return;

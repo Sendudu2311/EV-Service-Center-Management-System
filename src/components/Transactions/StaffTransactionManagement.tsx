@@ -502,12 +502,20 @@ const StaffTransactionManagement: React.FC = () => {
 
   const handleUpdateStatus = async (
     transactionId: string,
-    newStatus: string
+    newStatus: string,
+    transactionAmount?: number
   ) => {
     try {
+      const additionalData: any = { updatedBy: user?._id };
+
+      // If status is being changed to 'completed', include paidAmount
+      if (newStatus === "completed" && transactionAmount) {
+        additionalData.paidAmount = transactionAmount;
+      }
+
       await transactionApi.updateTransactionStatus(transactionId, {
         status: newStatus,
-        additionalData: { updatedBy: user?._id },
+        additionalData,
       });
 
       toast.success("Cập nhật trạng thái thành công");
@@ -935,7 +943,7 @@ const StaffTransactionManagement: React.FC = () => {
                             )}
 
                             <select
-                              onChange={(e) => handleUpdateStatus(transaction._id, e.target.value)}
+                              onChange={(e) => handleUpdateStatus(transaction._id, e.target.value, transaction.amount)}
                               value={transaction.status}
                               className="inline-flex items-center px-3 py-1 border border-dark-300 rounded text-xs text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900"
                             >

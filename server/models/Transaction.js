@@ -223,6 +223,13 @@ transactionSchema.methods.updateStatus = function (
     }
   });
 
+  // Auto-set paidAmount when transaction is completed
+  // If paidAmount is not explicitly provided and status is completed, set it to the transaction amount
+  if (newStatus === "completed" && !additionalData.paidAmount && (this.paidAmount === 0 || this.paidAmount === undefined || this.paidAmount === null)) {
+    this.paidAmount = this.amount;
+    console.log(`🔄 [Transaction.updateStatus] Auto-setting paidAmount to ${this.amount} for transaction ${this.transactionRef}`);
+  }
+
   return this.save();
 };
 
