@@ -202,8 +202,8 @@ const PartsPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">Parts Management</h1>
-          <p className="text-text-secondary mt-2">Manage EV parts inventory and requests</p>
+          <h1 className="text-3xl font-bold text-white">Quản lý linh kiện</h1>
+          <p className="text-text-secondary mt-2">Quản lý kho linh kiện EV</p>
         </div>
 
         {/* Tabs */}
@@ -220,10 +220,10 @@ const PartsPage: React.FC = () => {
               >
                 <div className="flex items-center space-x-2">
                   <CogIcon className="h-4 w-4" />
-                  <span>Parts Management</span>
+                  <span>Quản lý linh kiện</span>
                 </div>
               </button>
-              
+
               <button
                 onClick={() => setActiveTab('requests')}
                 className={`py-2 px-1 border-b-2 text-text-muted text-sm hidden ${
@@ -234,7 +234,7 @@ const PartsPage: React.FC = () => {
               >
                 <div className="flex items-center space-x-2">
                   <ClockIcon className="h-4 w-4" />
-                  <span>Part Requests</span>
+                  <span>Yêu cầu linh kiện</span>
                 </div>
               </button>
 
@@ -248,7 +248,7 @@ const PartsPage: React.FC = () => {
               >
                 <div className="flex items-center space-x-2">
                   <ChartBarIcon className="h-4 w-4" />
-                  <span>Analytics & Reports</span>
+                  <span>Phân tích & Báo cáo</span>
                 </div>
               </button>
             </nav>
@@ -271,14 +271,14 @@ const PartsPage: React.FC = () => {
                   className="inline-flex items-center px-4 py-2 border border-dark-300 rounded-md shadow-sm text-sm text-text-muted text-text-secondary bg-dark-300 hover:bg-dark-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400"
                 >
                   <DocumentArrowUpIcon className="h-4 w-4 mr-2" />
-                  Import Excel
+                  Nhập Excel
                 </button>
                 <button
                   onClick={() => setShowPartForm(true)}
                   className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm text-dark-900 bg-lime-500 hover:bg-lime-400 transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-400"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
-                  Add Part
+                  Thêm linh kiện
                 </button>
               </div>
             )}
@@ -384,26 +384,26 @@ const PartRequestsTab: React.FC<{
       <div className="p-4 border-b border-dark-200">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
-            <label className="block text-sm text-text-muted text-text-secondary mb-1">Status</label>
+            <label className="block text-sm text-text-muted text-text-secondary mb-1">Trạng thái</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="block w-full bg-dark-300 text-white border border-dark-300 rounded-md shadow-sm focus:border-lime-400 focus:ring-lime-400 focus:ring-2 sm:text-sm"
             >
-              <option value="">All statuses</option>
+              <option value="">Tất cả trạng thái</option>
               {Object.entries(partRequestStatusTranslations).map(([key, value]) => (
                 <option key={key} value={key}>{value}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-sm text-text-muted text-text-secondary mb-1">Priority</label>
+            <label className="block text-sm text-text-muted text-text-secondary mb-1">Độ ưu tiên</label>
             <select
               value={urgencyFilter}
               onChange={(e) => setUrgencyFilter(e.target.value)}
               className="block w-full bg-dark-300 text-white border border-dark-300 rounded-md shadow-sm focus:border-lime-400 focus:ring-lime-400 focus:ring-2 sm:text-sm"
             >
-              <option value="">All priorities</option>
+              <option value="">Tất cả mức độ</option>
               {Object.entries(urgencyTranslations).map(([key, value]) => (
                 <option key={key} value={key}>{value}</option>
               ))}
@@ -417,7 +417,7 @@ const PartRequestsTab: React.FC<{
               }}
               className="w-full bg-dark-200 hover:bg-dark-300 text-text-secondary px-4 py-2 rounded-md text-sm"
             >
-              Clear filters
+              Xóa bộ lọc
             </button>
           </div>
         </div>
@@ -431,9 +431,9 @@ const PartRequestsTab: React.FC<{
         ) : requests.length === 0 ? (
           <div className="text-center py-12">
             <ClockIcon className="mx-auto h-12 w-12 text-text-muted" />
-            <h3 className="mt-2 text-sm font-semibold text-white">No part requests</h3>
+            <h3 className="mt-2 text-sm font-semibold text-white">Không có yêu cầu linh kiện</h3>
             <p className="mt-1 text-sm text-text-muted">
-              No part requests found.
+              Không tìm thấy yêu cầu linh kiện nào.
             </p>
           </div>
         ) : (

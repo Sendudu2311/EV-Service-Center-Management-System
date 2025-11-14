@@ -12,6 +12,13 @@ const router = express.Router();
 router.post("/create-payment", protect, vnpayController.createPayment);
 
 /**
+ * @route   GET /api/vnpay/demo-payment
+ * @desc    DEMO MODE: Simulate successful VNPay payment
+ * @access  Public
+ */
+router.get("/demo-payment", vnpayController.handleDemoPayment);
+
+/**
  * @route   GET /api/vnpay/return
  * @desc    VNPay return URL handler - just verify and redirect
  * @access  Public

@@ -55,9 +55,88 @@ const getServerUrl = (req) => {
 
 /**
  * Create VNPay payment URL for appointment booking
+ * DEMO MODE: VNPay service is down - bypass to always succeed
  */
 export const createPayment = async (req, res, next) => {
   try {
+    const {
+      amount,
+      bankCode,
+      language,
+      orderInfo,
+      appointmentData,
+      paymentType = "appointment",
+      isMobileApp: requestIsMobileApp = false, // Explicit flag from mobile app
+    } = req.body;
+
+    // ========== DEMO MODE: BYPASS VNPAY - ALWAYS SUCCESS ==========
+    // VNPay service is down, create fake successful transaction for demo
+    console.log("🎭 DEMO MODE: Bypassing VNPay - Creating fake successful transaction");
+
+    const transactionRef = `DEMO${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
+    const user = req.user;
+
+    // Create fake successful transaction
+    const fakeTransaction = await TransactionService.createTransaction("vnpay", {
+      transactionRef: transactionRef,
+      userId: user._id,
+      appointmentId: appointmentData?.appointmentId || null,
+      amount: amount,
+      paymentPurpose: paymentType === "appointment" ? "deposit_booking" : "other",
+      billingInfo: {
+        mobile: user.phone || null,
+        email: user.email || null,
+        fullName: `${user.firstName} ${user.lastName}`,
+      },
+      notes: `DEMO: Fake VNPay payment for ${paymentType}`,
+      vnpayData: {
+        bankCode: bankCode || "DEMO_BANK",
+        ipAddr: req.ip || "127.0.0.1",
+        locale: language || "vn",
+        version: "2.1.0",
+        command: "pay",
+        payDate: Date.now(),
+      },
+      metadata: {
+        appointmentData: appointmentData,
+        isDemoMode: true,
+        isMobileApp: requestIsMobileApp || req.get("User-Agent")?.includes("Expo") || req.get("User-Agent")?.includes("ReactNative"),
+      },
+    });
+
+    // Store in pending payments
+    if (!global.pendingPayments) {
+      global.pendingPayments = {};
+    }
+
+    global.pendingPayments[transactionRef] = {
+      amount: amount,
+      userId: user._id,
+      createdAt: new Date(),
+      appointmentData: appointmentData,
+      transactionId: fakeTransaction._id,
+      metadata: fakeTransaction.metadata,
+      status: "pending", // Will be updated in handleReturn
+      vnp_TxnRef: transactionRef,
+    };
+
+    // Create fake payment URL that redirects directly to return handler
+    const serverUrl = getServerUrl(req);
+    const fakePaymentUrl = `${serverUrl}/api/vnpay/demo-payment?transactionRef=${transactionRef}&amount=${amount}`;
+
+    console.log("✅ DEMO: Created fake transaction", transactionRef);
+
+    return res.json({
+      success: true,
+      paymentUrl: fakePaymentUrl,
+      transactionRef: transactionRef,
+      amount: Math.round(amount),
+      transactionId: fakeTransaction._id,
+      isDemoMode: true,
+    });
+    // ========== END DEMO MODE ==========
+
+    /* ========== ORIGINAL VNPAY CODE - COMMENTED FOR DEMO ==========
     const {
       amount,
       bankCode,
@@ -267,6 +346,7 @@ export const createPayment = async (req, res, next) => {
       amount: Math.round(amount),
       transactionId: transaction._id,
     });
+    ========== END ORIGINAL VNPAY CODE ========== */
   } catch (error) {
     next(error);
   }
@@ -631,6 +711,140 @@ export const handleReturn = async (req, res, next) => {
   } catch (error) {
     console.error("Error in handleReturn:", error);
     next(error);
+  }
+};
+
+/**
+ * DEMO MODE: Handle fake VNPay payment - always succeeds
+ * Simulates successful payment and redirects to return handler
+ */
+export const handleDemoPayment = async (req, res, next) => {
+  try {
+    const { transactionRef, amount } = req.query;
+
+    console.log("🎭 DEMO: Simulating successful VNPay payment for", transactionRef);
+
+    // Simulate payment processing delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Find pending payment
+    const pendingPayment = global.pendingPayments?.[transactionRef];
+
+    if (!pendingPayment) {
+      console.error("❌ DEMO: Payment record not found");
+      return res.redirect(`${getClientUrl()}/payment/vnpay-return?success=false&error=Payment record not found`);
+    }
+
+    // Find and update transaction to completed
+    const transaction = await Transaction.findById(pendingPayment.transactionId);
+
+    if (transaction) {
+      // Simulate VNPay response
+      const fakeVnpParams = {
+        vnp_Amount: amount * 100, // VNPay uses smallest unit
+        vnp_BankCode: "DEMO_BANK",
+        vnp_CardType: "DEMO_CARD",
+        vnp_PayDate: Date.now().toString(),
+        vnp_ResponseCode: "00", // Success code
+        vnp_TransactionNo: `DEMO_TXN_${Date.now()}`,
+        vnp_TxnRef: transactionRef,
+      };
+
+      // Update transaction status
+      await transaction.updateStatus("completed", {
+        responseCode: "00",
+        transactionNo: fakeVnpParams.vnp_TransactionNo,
+        paidAmount: parseFloat(amount),
+        "vnpayData.bankCode": fakeVnpParams.vnp_BankCode,
+        "vnpayData.cardType": fakeVnpParams.vnp_CardType,
+        "vnpayData.payDate": fakeVnpParams.vnp_PayDate,
+      });
+
+      // Update pending payment
+      pendingPayment.status = "completed";
+      pendingPayment.responseCode = "00";
+      pendingPayment.transactionNo = fakeVnpParams.vnp_TransactionNo;
+      pendingPayment.completedAt = new Date();
+      pendingPayment.paidAmount = parseFloat(amount);
+      pendingPayment.vnpayTransaction = {
+        transactionNo: fakeVnpParams.vnp_TransactionNo,
+        responseCode: "00",
+        bankCode: fakeVnpParams.vnp_BankCode,
+        cardType: fakeVnpParams.vnp_CardType,
+        payDate: fakeVnpParams.vnp_PayDate,
+        amount: parseFloat(amount),
+      };
+
+      // Update appointment with payment information if exists
+      if (pendingPayment.appointmentData?.appointmentId) {
+        try {
+          const isDepositPayment = pendingPayment.appointmentData?.bookingType === "deposit_booking" ||
+            transaction.metadata?.paymentType === "deposit";
+
+          if (isDepositPayment) {
+            await Appointment.findByIdAndUpdate(
+              pendingPayment.appointmentData.appointmentId,
+              {
+                "depositInfo.paid": true,
+                "depositInfo.paidAt": new Date(),
+                "depositInfo.transactionId": transaction._id,
+                paymentInfo: {
+                  transactionRef: transactionRef,
+                  paymentMethod: "vnpay",
+                  depositAmount: parseFloat(amount),
+                  paidAmount: parseFloat(amount),
+                  paymentDate: new Date(),
+                  depositTransactionId: transaction._id,
+                },
+                paymentStatus: "partial",
+                status: "confirmed",
+              }
+            );
+            console.log(`✅ DEMO: Updated appointment with deposit payment`);
+          } else {
+            await Appointment.findByIdAndUpdate(
+              pendingPayment.appointmentData.appointmentId,
+              {
+                paymentInfo: {
+                  transactionRef: transactionRef,
+                  paymentMethod: "vnpay",
+                  paidAmount: parseFloat(amount),
+                  paymentDate: new Date(),
+                  vnpayTransactionId: transaction._id,
+                },
+                paymentStatus: "paid",
+              }
+            );
+            console.log(`✅ DEMO: Updated appointment with full payment`);
+          }
+        } catch (error) {
+          console.error("❌ DEMO: Failed to update appointment:", error);
+        }
+      }
+
+      console.log("✅ DEMO: Payment processed successfully");
+
+      // Check if mobile app
+      const isMobileApp = transaction.metadata?.isMobileApp || pendingPayment.metadata?.isMobileApp;
+
+      // Redirect based on platform
+      if (isMobileApp) {
+        const htmlRedirectUrl = `/vnpay-redirect.html?success=true&transactionRef=${transactionRef}&amount=${amount}`;
+        console.log("📱 DEMO: Redirecting mobile to HTML page:", htmlRedirectUrl);
+        return res.redirect(htmlRedirectUrl);
+      }
+
+      // Web redirect
+      const webRedirectUrl = `${getClientUrl()}/payment/vnpay-return?success=true&transactionRef=${transactionRef}&amount=${amount}`;
+      console.log("🌐 DEMO: Redirecting web to:", webRedirectUrl);
+      return res.redirect(webRedirectUrl);
+    } else {
+      console.error("❌ DEMO: Transaction not found");
+      return res.redirect(`${getClientUrl()}/payment/vnpay-return?success=false&error=Transaction not found`);
+    }
+  } catch (error) {
+    console.error("❌ DEMO: Error in handleDemoPayment:", error);
+    return res.redirect(`${getClientUrl()}/payment/vnpay-return?success=false&error=${encodeURIComponent(error.message)}`);
   }
 };
 

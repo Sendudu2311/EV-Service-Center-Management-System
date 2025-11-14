@@ -56,7 +56,7 @@ const AllVehiclesPage: React.FC = () => {
       setVehicles(Array.isArray(vehicleData) ? vehicleData : []);
     } catch (error) {
       console.error('Error fetching vehicles:', error);
-      toast.error('Failed to load vehicles');
+      toast.error('Tải danh sách phương tiện thất bại');
       // Ensure vehicles is always an array even on error
       setVehicles([]);
     } finally {
@@ -73,13 +73,13 @@ const AllVehiclesPage: React.FC = () => {
     if (vehicle.isMaintenanceDue) {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white bg-red-600">
-          Maintenance Due
+          Cần bảo dưỡng
         </span>
       );
     }
     return (
       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white bg-green-600">
-        Up to Date
+        Đã cập nhật
       </span>
     );
   };
