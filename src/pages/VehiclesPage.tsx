@@ -48,7 +48,7 @@ const VehiclesPage: React.FC = () => {
       setVehicles(Array.isArray(vehicleData) ? vehicleData : []);
     } catch (error) {
       console.error('Error fetching vehicles:', error);
-      toast.error('Failed to load vehicles');
+      toast.error('Tải danh sách phương tiện thất bại');
       // Ensure vehicles is always an array even on error
       setVehicles([]);
     } finally {
@@ -74,17 +74,17 @@ const VehiclesPage: React.FC = () => {
   };
 
   const handleDeleteVehicle = async (vehicleId: string) => {
-    if (!window.confirm('Are you sure you want to remove this vehicle?')) {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa phương tiện này?')) {
       return;
     }
 
     try {
       await api.delete(`/api/vehicles/${vehicleId}`);
-      toast.success('Vehicle removed successfully');
+      toast.success('Đã xóa phương tiện thành công');
       fetchVehicles();
     } catch (error) {
       console.error('Error deleting vehicle:', error);
-      toast.error('Failed to remove vehicle');
+      toast.error('Xóa phương tiện thất bại');
     }
   };
 
@@ -98,13 +98,13 @@ const VehiclesPage: React.FC = () => {
     if (vehicle.isMaintenanceDue) {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-dark-300 text-red-600">
-          Maintenance Due
+          Cần bảo dưỡng
         </span>
       );
     }
     return (
       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-dark-300 text-green-600">
-        Up to Date
+        Đã cập nhật
       </span>
     );
   };
@@ -136,10 +136,10 @@ const VehiclesPage: React.FC = () => {
         <div className="md:flex md:items-center md:justify-between">
           <div className="min-w-0 flex-1">
             <h2 className="text-2xl font-bold leading-7 text-white sm:truncate sm:text-3xl sm:tracking-tight">
-              My Vehicles
+              Phương tiện của tôi
             </h2>
             <p className="mt-1 text-sm text-text-muted">
-              Manage your electric vehicle fleet and maintenance schedules
+              Quản lý xe điện và lịch bảo dưỡng của bạn
             </p>
           </div>
           <div className="mt-4 flex md:ml-4 md:mt-0">
@@ -149,7 +149,7 @@ const VehiclesPage: React.FC = () => {
               className="inline-flex items-center gap-x-1.5 rounded-md bg-lime-200 px text-dark-900 shadow-sm hover:bg-lime-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400"
             >
               <PlusIcon className="-ml-0.5 h-5 w-5" aria-hidden="true" />
-              Add Vehicle
+              Thêm phương tiện
             </button>
           </div>
         </div>
@@ -171,8 +171,8 @@ const VehiclesPage: React.FC = () => {
                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
               />
             </svg>
-            <h3 className="mt-2 text-sm font-semibold text-white">No vehicles</h3>
-            <p className="mt-1 text-sm text-text-muted">Get started by adding your first electric vehicle.</p>
+            <h3 className="mt-2 text-sm font-semibold text-white">Chưa có phương tiện</h3>
+            <p className="mt-1 text-sm text-text-muted">Bắt đầu bằng cách thêm xe điện đầu tiên của bạn.</p>
             <div className="mt-6">
               <button
                 type="button"
@@ -180,7 +180,7 @@ const VehiclesPage: React.FC = () => {
                 className="inline-flex items-center gap-x-1.5 rounded-md bg-lime-200 px text-dark-900 shadow-sm hover:bg-lime-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-400"
               >
                 <PlusIcon className="-ml-0.5 h-5 w-5" aria-hidden="true" />
-                Add Vehicle
+                Thêm phương tiện
               </button>
             </div>
           </div>
@@ -207,7 +207,7 @@ const VehiclesPage: React.FC = () => {
                   <div className="mt-4 grid grid-cols-2 gap-4">
                     <div>
                       <dt className="text-xs text-text-muted text-text-muted uppercase tracking-wide">
-                        Battery
+                        Pin
                       </dt>
                       <dd className="mt-1 text-sm text-white">
                         {vehicle.batteryCapacity} kWh
@@ -215,7 +215,7 @@ const VehiclesPage: React.FC = () => {
                     </div>
                     <div>
                       <dt className="text-xs text-text-muted text-text-muted uppercase tracking-wide">
-                        Range
+                        Phạm vi
                       </dt>
                       <dd className="mt-1 text-sm text-white">
                         {vehicle.range} km
@@ -223,7 +223,7 @@ const VehiclesPage: React.FC = () => {
                     </div>
                     <div>
                       <dt className="text-xs text-text-muted text-text-muted uppercase tracking-wide">
-                        Mileage
+                        Số km
                       </dt>
                       <dd className="mt-1 text-sm text-white">
                         {formatMileage(vehicle.mileage)}
@@ -231,7 +231,7 @@ const VehiclesPage: React.FC = () => {
                     </div>
                     <div>
                       <dt className="text-xs text-text-muted text-text-muted uppercase tracking-wide">
-                        Max Charging
+                        Sạc tối đa
                       </dt>
                       <dd className="mt-1 text-sm text-white">
                         {vehicle.maxChargingPower} kW
@@ -242,7 +242,7 @@ const VehiclesPage: React.FC = () => {
                   {vehicle.nextMaintenanceDate && (
                     <div className="mt-4">
                       <dt className="text-xs text-text-muted text-text-muted uppercase tracking-wide">
-                        Next Maintenance
+                        Bảo dưỡng tiếp theo
                       </dt>
                       <dd className="mt-1 text-sm text-white">
                         {formatDate(vehicle.nextMaintenanceDate)}
@@ -259,7 +259,7 @@ const VehiclesPage: React.FC = () => {
                       className="inline-flex items-center gap-x-1.5 text-sm font-semibold text-lime-600 hover:text-lime-500"
                     >
                       <EyeIcon className="h-4 w-4" />
-                      View Details
+                      Xem chi tiết
                     </button>
                     <div className="flex space-x-2">
                       <button
@@ -268,7 +268,7 @@ const VehiclesPage: React.FC = () => {
                         className="inline-flex items-center gap-x-1.5 text-sm font-semibold text-text-secondary hover:text-text-muted"
                       >
                         <PencilIcon className="h-4 w-4" />
-                        Edit
+                        Sửa
                       </button>
                       <button
                         type="button"
@@ -276,7 +276,7 @@ const VehiclesPage: React.FC = () => {
                         className="inline-flex items-center gap-x-1.5 text-sm font-semibold text-red-600 hover:text-red-600"
                       >
                         <TrashIcon className="h-4 w-4" />
-                        Remove
+                        Xóa
                       </button>
                     </div>
                   </div>
