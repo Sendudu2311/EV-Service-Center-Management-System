@@ -216,7 +216,18 @@ export const getAppointments = async (req, res) => {
       )
       .populate("partsUsed.partId", "name partNumber pricing warranty")
       .populate("assignedTechnician", "firstName lastName specializations")
-      .populate("serviceReceptionId", "externalParts hasExternalParts")
+      .populate({
+        path: "serviceReceptionId",
+        select: "externalParts hasExternalParts requestedParts",
+        populate: {
+          path: "requestedParts.partId",
+          select: "name partNumber inventory"
+        }
+      })
+      .populate(
+        "baseAppointmentId",
+        "appointmentNumber scheduledDate scheduledTime status"
+      )
       .skip(skip)
       .limit(parseInt(limit));
 
@@ -276,7 +287,18 @@ export const getAppointment = async (req, res) => {
       .populate("checklistItems.completedBy", "firstName lastName")
       .populate("cancelRequest.approvedBy", "firstName lastName")
       .populate("cancelRequest.refundProcessedBy", "firstName lastName")
-      .populate("serviceReceptionId", "externalParts hasExternalParts");
+      .populate({
+        path: "serviceReceptionId",
+        select: "externalParts hasExternalParts requestedParts",
+        populate: {
+          path: "requestedParts.partId",
+          select: "name partNumber inventory"
+        }
+      })
+      .populate(
+        "baseAppointmentId",
+        "appointmentNumber scheduledDate scheduledTime status services"
+      );
 
     if (!appointment) {
       return res.status(404).json({
@@ -337,11 +359,60 @@ export const createAppointment = async (req, res) => {
       priority = "normal",
       technicianId, // optional technician selection by customer
       slotId, // optional slot reservation id
+      // NEW: Follow-up appointment fields
+      baseAppointmentId, // optional - if this is a follow-up appointment
+      followUpReason, // optional - reason for follow-up
+      followUpNotes, // optional - notes about follow-up
+      // NEW: Pre-booking fields
+      isPreBooked = false, // optional - if booking far-future date without slot
+      requestedTimeRange, // optional - "morning", "afternoon"
     } = req.body;
 
-    // Validate vehicle belongs to customer
+    // DEBUG: Log pre-booking data
+    if (isPreBooked) {
+      console.log("[Pre-booking Debug]", {
+        isPreBooked,
+        scheduledDate,
+        scheduledTime,
+        requestedTimeRange,
+      });
+    }
+
+    // NEW: Validate follow-up appointment if baseAppointmentId is provided
+    let baseAppointment = null;
+    if (baseAppointmentId) {
+      baseAppointment = await Appointment.findOne({
+        _id: baseAppointmentId,
+        customerId: req.user._id,
+        status: { $in: ["completed", "invoiced"] }, // Only allow follow-up from completed appointments
+      });
+
+      if (!baseAppointment) {
+        return res.status(404).json({
+          success: false,
+          message: "Base appointment not found or not eligible for follow-up",
+        });
+      }
+
+      // If baseAppointmentId provided but no followUpReason, return error
+      if (!followUpReason) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Follow-up reason is required when creating a follow-up appointment",
+        });
+      }
+    }
+
+    // Validate vehicle belongs to customer (or use vehicle from base appointment if follow-up)
+    let actualVehicleId = vehicleId;
+    if (baseAppointment && !vehicleId) {
+      // If follow-up and no vehicleId provided, use vehicle from base appointment
+      actualVehicleId = baseAppointment.vehicleId;
+    }
+
     const vehicle = await Vehicle.findOne({
-      _id: vehicleId,
+      _id: actualVehicleId,
       customerId: req.user._id,
       isActive: true,
     });
@@ -415,133 +486,140 @@ export const createAppointment = async (req, res) => {
         });
       }
 
-      // Check technician availability for the scheduled time
-      const appointmentDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
-      const totalDuration =
-        services.length > 0
-          ? services.reduce((total, service) => {
-              const serviceData = validServices.find(
-                (s) => s._id.toString() === service.serviceId
-              );
-              // Add safety check for serviceData and estimatedDuration
-              const estimatedDuration = serviceData?.estimatedDuration || 60; // Default to 60 minutes
-              return total + estimatedDuration * (service.quantity || 1);
-            }, 0)
-          : 60; // Default 60 minutes for deposit booking
-      const estimatedCompletion = new Date(
-        appointmentDateTime.getTime() + totalDuration * 60000
-      );
-
-      // Check for time slot conflicts - proper time overlap check
-      console.log("- Technician ID:", technicianId);
-      console.log("- Appointment time:", appointmentDateTime);
-      console.log("- Estimated completion:", estimatedCompletion);
-
-      const conflictingAppointments = await Appointment.find({
-        assignedTechnician: technicianId,
-        scheduledDate: {
-          $gte: new Date(appointmentDateTime.toDateString()),
-          $lt: new Date(appointmentDateTime.getTime() + 24 * 60 * 60 * 1000), // Next day
-        },
-        status: { $in: ["confirmed", "in_progress"] },
-      });
-
-      conflictingAppointments.forEach((appointment, index) => {
-        console.log(
-          `  ${index + 1}. ${appointment.scheduledDate} ${
-            appointment.scheduledTime
-          } (${appointment.status})`
+      // Skip technician availability check for pre-booked appointments
+      // (they don't have specific time yet)
+      if (!isPreBooked) {
+        // Check technician availability for the scheduled time
+        const appointmentDateTime = new Date(
+          `${scheduledDate}T${scheduledTime}`
         );
-      });
-
-      // Filter for actual time conflicts
-      const actualConflicts = conflictingAppointments.filter((existing) => {
-        const existingStart = new Date(
-          `${existing.scheduledDate}T${existing.scheduledTime}`
-        );
-        const existingEnd = existing.estimatedCompletion
-          ? new Date(existing.estimatedCompletion)
-          : new Date(existingStart.getTime() + 60 * 60 * 1000); // Default 1 hour if no estimatedCompletion
-
-        console.log(`  Existing: ${existingStart} to ${existingEnd}`);
-        console.log(
-          `  Requested: ${appointmentDateTime} to ${estimatedCompletion}`
+        const totalDuration =
+          services.length > 0
+            ? services.reduce((total, service) => {
+                const serviceData = validServices.find(
+                  (s) => s._id.toString() === service.serviceId
+                );
+                // Add safety check for serviceData and estimatedDuration
+                const estimatedDuration = serviceData?.estimatedDuration || 60; // Default to 60 minutes
+                return total + estimatedDuration * (service.quantity || 1);
+              }, 0)
+            : 60; // Default 60 minutes for deposit booking
+        const estimatedCompletion = new Date(
+          appointmentDateTime.getTime() + totalDuration * 60000
         );
 
-        // Check for time overlap
-        const hasOverlap =
-          appointmentDateTime < existingEnd &&
-          estimatedCompletion > existingStart;
+        // Check for time slot conflicts - proper time overlap check
+        console.log("- Technician ID:", technicianId);
+        console.log("- Appointment time:", appointmentDateTime);
+        console.log("- Estimated completion:", estimatedCompletion);
 
-        console.log(`  Has overlap: ${hasOverlap}`);
-        return hasOverlap;
-      });
+        const conflictingAppointments = await Appointment.find({
+          assignedTechnician: technicianId,
+          scheduledDate: {
+            $gte: new Date(appointmentDateTime.toDateString()),
+            $lt: new Date(appointmentDateTime.getTime() + 24 * 60 * 60 * 1000), // Next day
+          },
+          status: { $in: ["confirmed", "in_progress"] },
+        });
 
-      if (actualConflicts.length > 0) {
-        console.log(
-          "- Requested time:",
-          appointmentDateTime,
-          "to",
-          estimatedCompletion
-        );
-        console.log("- Conflicting appointments:", actualConflicts.length);
-        actualConflicts.forEach((conflict, index) => {
+        conflictingAppointments.forEach((appointment, index) => {
           console.log(
-            `  ${index + 1}. ${conflict.scheduledDate} ${
-              conflict.scheduledTime
-            } (${conflict.status})`
+            `  ${index + 1}. ${appointment.scheduledDate} ${
+              appointment.scheduledTime
+            } (${appointment.status})`
           );
         });
 
-        return res.status(400).json({
-          success: false,
-          message: "Selected technician is not available during this time slot",
-          conflictingAppointments: actualConflicts.length,
+        // Filter for actual time conflicts
+        const actualConflicts = conflictingAppointments.filter((existing) => {
+          const existingStart = new Date(
+            `${existing.scheduledDate}T${existing.scheduledTime}`
+          );
+          const existingEnd = existing.estimatedCompletion
+            ? new Date(existing.estimatedCompletion)
+            : new Date(existingStart.getTime() + 60 * 60 * 1000); // Default 1 hour if no estimatedCompletion
+
+          console.log(`  Existing: ${existingStart} to ${existingEnd}`);
+          console.log(
+            `  Requested: ${appointmentDateTime} to ${estimatedCompletion}`
+          );
+
+          // Check for time overlap
+          const hasOverlap =
+            appointmentDateTime < existingEnd &&
+            estimatedCompletion > existingStart;
+
+          console.log(`  Has overlap: ${hasOverlap}`);
+          return hasOverlap;
         });
-      }
 
-      // ==============================================================================
-      // WORKLOAD CHECK FOR TECHNICIAN ASSIGNMENT - DISABLED
-      // ==============================================================================
-      // This section checks if the selected technician has available capacity
-      // to handle the new appointment based on their current workload
-      // COMMENTED OUT TO DISABLE WORKLOAD CHECKING
+        if (actualConflicts.length > 0) {
+          console.log(
+            "- Requested time:",
+            appointmentDateTime,
+            "to",
+            estimatedCompletion
+          );
+          console.log("- Conflicting appointments:", actualConflicts.length);
+          actualConflicts.forEach((conflict, index) => {
+            console.log(
+              `  ${index + 1}. ${conflict.scheduledDate} ${
+                conflict.scheduledTime
+              } (${conflict.status})`
+            );
+          });
 
-      // Check technician workload capacity
-      // try {
-      //   // Find the technician's profile to get their current workload status
-      //   const technicianProfile = await TechnicianProfile.findOne({
-      //     technicianId,
-      //   });
+          return res.status(400).json({
+            success: false,
+            message:
+              "Selected technician is not available during this time slot",
+            conflictingAppointments: actualConflicts.length,
+          });
+        }
 
-      //   if (technicianProfile) {
-      //     // Check if technician is available for appointment duration
-      //     // This method checks:
-      //     // 1. Basic availability status (available/busy)
-      //     // 2. Current workload vs capacity
-      //     // 3. Working hours/days
-      //     if (
-      //       !technicianProfile.isAvailableForAppointment(
-      //         appointmentDateTime,
-      //         totalDuration
-      //       )
-      //     ) {
-      //       // Return error with detailed workload information
-      //       return res.status(400).json({
-      //         success: false,
-      //         message:
-      //           "Selected technician is not available due to workload or schedule constraints",
-      //         workloadPercentage: technicianProfile.workloadPercentage,
-      //         currentWorkload: technicianProfile.workload.current,
-      //         capacity: technicianProfile.workload.capacity,
-      //       });
-      //     }
-      //   }
-      // } catch (error) {
-      //   console.error("Error checking technician availability:", error);
-      //   // Continue without failing - basic conflict check was already done
-      //   // This ensures appointment creation doesn't fail if workload check fails
-      // }
+        // ==============================================================================
+        // WORKLOAD CHECK FOR TECHNICIAN ASSIGNMENT - DISABLED
+        // ==============================================================================
+        // This section checks if the selected technician has available capacity
+        // to handle the new appointment based on their current workload
+        // COMMENTED OUT TO DISABLE WORKLOAD CHECKING
+
+        // Check technician workload capacity
+        // try {
+        //   // Find the technician's profile to get their current workload status
+        //   const technicianProfile = await TechnicianProfile.findOne({
+        //     technicianId,
+        //   });
+
+        //   if (technicianProfile) {
+        //     // Check if technician is available for appointment duration
+        //     // This method checks:
+        //     // 1. Basic availability status (available/busy)
+        //     // 2. Current workload vs capacity
+        //     // 3. Working hours/days
+        //     if (
+        //       !technicianProfile.isAvailableForAppointment(
+        //         appointmentDateTime,
+        //         totalDuration
+        //       )
+        //     ) {
+        //       // Return error with detailed workload information
+        //       return res.status(400).json({
+        //         success: false,
+        //         message:
+        //           "Selected technician is not available due to workload or schedule constraints",
+        //         workloadPercentage: technicianProfile.workloadPercentage,
+        //         currentWorkload: technicianProfile.workload.current,
+        //         capacity: technicianProfile.workload.capacity,
+        //       });
+        //     }
+        //   }
+        // } catch (error) {
+        //   console.error("Error checking technician availability:", error);
+        //   // Continue without failing - basic conflict check was already done
+        //   // This ensures appointment creation doesn't fail if workload check fails
+        // }
+      } // End of !isPreBooked check
 
       assignedTechnician = technicianId;
     }
@@ -577,10 +655,22 @@ export const createAppointment = async (req, res) => {
           }, 0)
         : 60; // Default 60 minutes for deposit booking
 
-    const appointmentDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
-    const estimatedCompletion = new Date(
-      appointmentDateTime.getTime() + totalDuration * 60000
-    );
+    // Handle date/time differently for pre-booking vs normal appointments
+    let appointmentDateTime;
+    let estimatedCompletion;
+
+    if (isPreBooked) {
+      // For pre-booking: use scheduledDate only (no specific time yet)
+      appointmentDateTime = new Date(scheduledDate);
+      appointmentDateTime.setHours(0, 0, 0, 0); // Set to midnight
+      estimatedCompletion = null; // Will be set when slot is assigned
+    } else {
+      // For normal appointments: use both date and time
+      appointmentDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
+      estimatedCompletion = new Date(
+        appointmentDateTime.getTime() + totalDuration * 60000
+      );
+    }
 
     // Generate appointment number
     const today = new Date();
@@ -592,7 +682,7 @@ export const createAppointment = async (req, res) => {
     const appointmentPayload = {
       appointmentNumber,
       customerId: req.user._id,
-      vehicleId,
+      vehicleId: actualVehicleId, // Use actualVehicleId (might be from base appointment)
       services: appointmentServices,
       bookingType: bookingType,
       depositInfo: {
@@ -602,13 +692,18 @@ export const createAppointment = async (req, res) => {
         transactionId: req.body.paymentInfo?.transactionId,
       },
       scheduledDate: appointmentDateTime,
-      scheduledTime,
+      scheduledTime: isPreBooked ? "" : scheduledTime,
       customerNotes,
       priority,
-      estimatedCompletion,
+      estimatedCompletion: estimatedCompletion,
       assignedTechnician: assignedTechnician,
-      status: req.body.paymentInfo ? "confirmed" : "pending", // Auto-confirm if payment completed
-      coreStatus: req.body.paymentInfo ? "Scheduled" : "Scheduled", // Both are Scheduled but status differs
+      // NEW: Set status based on pre-booking or normal flow
+      status: isPreBooked
+        ? "pending_slot_assignment"
+        : req.body.paymentInfo
+          ? "confirmed"
+          : "pending",
+      coreStatus: "Scheduled", // All start as Scheduled
       totalAmount: 0, // Will be calculated below
       paymentStatus: req.body.paymentInfo ? "partial" : "pending",
       remindersSent: 0,
@@ -626,12 +721,29 @@ export const createAppointment = async (req, res) => {
       partsUsed: [],
       images: [],
       workflowHistory: [],
+      // NEW: Follow-up appointment fields
+      ...(baseAppointmentId && {
+        baseAppointmentId,
+        isFollowUp: true,
+        followUpReason,
+        followUpNotes,
+      }),
+      // NEW: Pre-booking fields
+      ...(isPreBooked && {
+        isPreBooked: true,
+        preBookingDetails: {
+          requestedDate: new Date(scheduledDate),
+          requestedTimeRange: requestedTimeRange || "morning",
+          preBookingNotes: customerNotes,
+        },
+      }),
     };
 
     // If slotId provided, attempt to reserve it and attach
     // NOTE: frontend may reserve the slot first (to hold it during payment). In that case
     // it should send skipSlotReservation=true to avoid double-incrementing bookedCount.
-    if (slotId) {
+    // SKIP slot reservation for pre-booked appointments (they don't have slots yet)
+    if (slotId && !isPreBooked) {
       const slot = await Slot.findById(slotId);
       if (!slot) {
         return res
@@ -681,6 +793,21 @@ export const createAppointment = async (req, res) => {
     // Calculate total
     appointment.calculateTotal();
     await appointment.save();
+
+    // NEW: Update base appointment if this is a follow-up
+    if (baseAppointmentId && baseAppointment) {
+      try {
+        await Appointment.findByIdAndUpdate(baseAppointmentId, {
+          $push: { followUpAppointments: appointment._id },
+        });
+        console.log(
+          `Updated base appointment ${baseAppointmentId} with follow-up ${appointment._id}`
+        );
+      } catch (error) {
+        console.error("Error updating base appointment with follow-up:", error);
+        // Don't fail the appointment creation, just log the error
+      }
+    }
 
     // Update transaction with appointment ID if it exists
     try {
@@ -1776,9 +1903,8 @@ export const getAvailableTechniciansOptimized = async (req, res) => {
             preferredSlotId && slot._id.toString() === preferredSlotId;
 
           // Get detailed workload info for this slot
-          const workloadInfo = await slot.getTechnicianWorkloadInSlot(
-            technicianId
-          );
+          const workloadInfo =
+            await slot.getTechnicianWorkloadInSlot(technicianId);
 
           availableTechnicians.push({
             // Frontend-compatible format
@@ -4213,9 +4339,8 @@ export const completeAppointment = async (req, res) => {
     }
 
     // ✅ NEW: Automatically reduce parts when appointment is completed
-    const partsReductionResult = await reducePartsForCompletedAppointment(
-      appointmentId
-    );
+    const partsReductionResult =
+      await reducePartsForCompletedAppointment(appointmentId);
 
     // Update appointment status with correct parameters
     await appointment.updateStatus(
@@ -4899,14 +5024,15 @@ export const confirmPaymentAfterReception = async (req, res) => {
     if (appointment.status !== "reception_approved") {
       return res.status(400).json({
         success: false,
-        message: "Appointment must have approved service reception to confirm payment",
+        message:
+          "Appointment must have approved service reception to confirm payment",
       });
     }
 
     // Get service reception data
     const { ServiceReception, Service } = await import("../models/index.js");
     const serviceReception = await ServiceReception.findOne({
-      appointmentId: id
+      appointmentId: id,
     })
       .populate("recommendedServices.serviceId", "name category basePrice")
       .populate("requestedParts.partId", "name partNumber pricing");
@@ -4943,17 +5069,21 @@ export const confirmPaymentAfterReception = async (req, res) => {
             category: serviceDoc.category,
             quantity: service.quantity || 1,
             unitPrice: service.price || serviceDoc.price,
-            totalPrice: (service.price || serviceDoc.price) * (service.quantity || 1),
+            totalPrice:
+              (service.price || serviceDoc.price) * (service.quantity || 1),
           });
-          subtotalServices += (service.price || serviceDoc.price) * (service.quantity || 1);
+          subtotalServices +=
+            (service.price || serviceDoc.price) * (service.quantity || 1);
         }
       }
     }
 
     // Recommended services (additional)
-    for (const recommendedService of serviceReception.recommendedServices || []) {
+    for (const recommendedService of serviceReception.recommendedServices ||
+      []) {
       if (recommendedService.customerApproved) {
-        const serviceTotal = recommendedService.serviceId.basePrice * recommendedService.quantity;
+        const serviceTotal =
+          recommendedService.serviceId.basePrice * recommendedService.quantity;
         serviceItems.push({
           serviceId: recommendedService.serviceId._id,
           serviceName: recommendedService.serviceId.name,
@@ -4972,7 +5102,10 @@ export const confirmPaymentAfterReception = async (req, res) => {
     const partItems = [];
     for (const requestedPart of serviceReception.requestedParts || []) {
       if (requestedPart.isAvailable && requestedPart.isApproved) {
-        const unitPrice = requestedPart.partId.pricing?.retail || requestedPart.estimatedCost || 0;
+        const unitPrice =
+          requestedPart.partId.pricing?.retail ||
+          requestedPart.estimatedCost ||
+          0;
         const partTotal = unitPrice * requestedPart.quantity;
         partItems.push({
           partId: requestedPart.partId._id,
@@ -5004,7 +5137,9 @@ export const confirmPaymentAfterReception = async (req, res) => {
     const subtotal = subtotalServices + subtotalParts + subtotalLabor;
     const taxAmount = subtotal * 0.1; // 10% VAT
     const totalAmount = subtotal + taxAmount;
-    const depositAmount = appointment.depositInfo?.paid ? appointment.depositInfo.amount : 0;
+    const depositAmount = appointment.depositInfo?.paid
+      ? appointment.depositInfo.amount
+      : 0;
     const remainingAmount = totalAmount - depositAmount;
 
     // Validate payment amount
@@ -5129,7 +5264,9 @@ export const confirmPaymentAfterReception = async (req, res) => {
         cashData: {
           receivedBy: req.user._id,
           receivedAt: new Date(paymentDate),
-          notes: notes || `Cash payment for appointment ${appointment.appointmentNumber}`,
+          notes:
+            notes ||
+            `Cash payment for appointment ${appointment.appointmentNumber}`,
           receiptImage: proofImage,
         },
       });
@@ -5346,8 +5483,10 @@ export const staffFinalConfirmation = async (req, res) => {
 // @logic   Reduces both requestedParts (from ServiceReception) and commonParts (from Service)
 async function reducePartsForCompletedAppointment(appointmentId) {
   try {
-    console.log(`\n🔧 [reducePartsForCompletedAppointment] Starting for appointment: ${appointmentId}`);
-    
+    console.log(
+      `\n🔧 [reducePartsForCompletedAppointment] Starting for appointment: ${appointmentId}`
+    );
+
     const { ServiceReception, Service, Part } = await import(
       "../models/index.js"
     );
@@ -5361,18 +5500,26 @@ async function reducePartsForCompletedAppointment(appointmentId) {
     });
 
     if (!appointment) {
-      console.log(`❌ [reducePartsForCompletedAppointment] Appointment not found`);
+      console.log(
+        `❌ [reducePartsForCompletedAppointment] Appointment not found`
+      );
       return { success: false, message: "No service reception found" };
     }
 
-    console.log(`✅ [reducePartsForCompletedAppointment] Appointment found: ${appointment.appointmentNumber}`);
+    console.log(
+      `✅ [reducePartsForCompletedAppointment] Appointment found: ${appointment.appointmentNumber}`
+    );
 
     if (!appointment.serviceReceptionId) {
-      console.log(`⚠️ [reducePartsForCompletedAppointment] No service reception found for appointment`);
+      console.log(
+        `⚠️ [reducePartsForCompletedAppointment] No service reception found for appointment`
+      );
       return { success: false, message: "No service reception found" };
     }
 
-    console.log(`✅ [reducePartsForCompletedAppointment] Service reception found: ${appointment.serviceReceptionId._id}`);
+    console.log(
+      `✅ [reducePartsForCompletedAppointment] Service reception found: ${appointment.serviceReceptionId._id}`
+    );
 
     const serviceReception = appointment.serviceReceptionId;
     const partsToReduce = [];
@@ -5384,10 +5531,14 @@ async function reducePartsForCompletedAppointment(appointmentId) {
       serviceReception.requestedParts &&
       serviceReception.requestedParts.length > 0
     ) {
-      console.log(`   Found ${serviceReception.requestedParts.length} requested parts`);
-      
+      console.log(
+        `   Found ${serviceReception.requestedParts.length} requested parts`
+      );
+
       for (const requestedPart of serviceReception.requestedParts) {
-        console.log(`   Processing part: ${requestedPart.partNumber} (${requestedPart.partName})`);
+        console.log(
+          `   Processing part: ${requestedPart.partNumber} (${requestedPart.partName})`
+        );
         console.log(`   - Quantity: ${requestedPart.quantity}`);
         console.log(`   - Approved: ${requestedPart.isApproved}`);
 
@@ -5402,7 +5553,9 @@ async function reducePartsForCompletedAppointment(appointmentId) {
             continue;
           }
 
-          console.log(`   Current stock: ${part.inventory.currentStock}, Used stock: ${part.inventory.usedStock}`);
+          console.log(
+            `   Current stock: ${part.inventory.currentStock}, Used stock: ${part.inventory.usedStock}`
+          );
 
           // Check if sufficient stock available
           if (part.inventory.currentStock >= requestedPart.quantity) {
@@ -5419,7 +5572,9 @@ async function reducePartsForCompletedAppointment(appointmentId) {
 
             await part.save();
 
-            console.log(`   ✅ Reduced stock! New currentStock: ${part.inventory.currentStock}, New usedStock: ${part.inventory.usedStock}`);
+            console.log(
+              `   ✅ Reduced stock! New currentStock: ${part.inventory.currentStock}, New usedStock: ${part.inventory.usedStock}`
+            );
 
             partsToReduce.push({
               partId: part._id,
@@ -5431,7 +5586,9 @@ async function reducePartsForCompletedAppointment(appointmentId) {
               newStock: part.inventory.currentStock,
             });
           } else {
-            console.log(`   ❌ Insufficient stock! Available: ${part.inventory.currentStock}, Requested: ${requestedPart.quantity}`);
+            console.log(
+              `   ❌ Insufficient stock! Available: ${part.inventory.currentStock}, Requested: ${requestedPart.quantity}`
+            );
             errors.push({
               partNumber: requestedPart.partNumber,
               reason: `Insufficient stock. Available: ${part.inventory.currentStock}, Requested: ${requestedPart.quantity}`,
@@ -5455,11 +5612,15 @@ async function reducePartsForCompletedAppointment(appointmentId) {
       serviceReception.recommendedServices &&
       serviceReception.recommendedServices.length > 0
     ) {
-      console.log(`   Found ${serviceReception.recommendedServices.length} recommended services`);
-      
+      console.log(
+        `   Found ${serviceReception.recommendedServices.length} recommended services`
+      );
+
       for (const recommendedService of serviceReception.recommendedServices) {
-        console.log(`   Service: ${recommendedService.serviceName}, Completed: ${recommendedService.isCompleted}`);
-        
+        console.log(
+          `   Service: ${recommendedService.serviceName}, Completed: ${recommendedService.isCompleted}`
+        );
+
         // Only process completed services
         if (!recommendedService.isCompleted) {
           console.log(`   ⏭️ Skipping - service not completed`);
@@ -5476,7 +5637,9 @@ async function reducePartsForCompletedAppointment(appointmentId) {
             continue;
           }
 
-          console.log(`   Found ${service.commonParts.length} common parts for service ${service.name}`);
+          console.log(
+            `   Found ${service.commonParts.length} common parts for service ${service.name}`
+          );
 
           // Process each common part associated with the service
           for (const commonPart of service.commonParts) {
@@ -5518,7 +5681,7 @@ async function reducePartsForCompletedAppointment(appointmentId) {
                   reason: `Common part for ${service.name}`,
                   newStock: part.inventory.currentStock,
                 });
-                
+
                 console.log(`   ✅ Reduced common part: ${part.partNumber}`);
               }
             } catch (err) {
@@ -5540,7 +5703,7 @@ async function reducePartsForCompletedAppointment(appointmentId) {
     console.log(`\n📝 [METHOD 3] Updating appointment.partsUsed...`);
     if (partsToReduce.length > 0) {
       console.log(`   Total parts to reduce: ${partsToReduce.length}`);
-      
+
       // Check if parts are already in appointment.partsUsed (added during staff approval)
       for (const reducedPart of partsToReduce) {
         const existingPart = appointment.partsUsed.find(
@@ -5565,7 +5728,9 @@ async function reducePartsForCompletedAppointment(appointmentId) {
             totalPrice: unitPrice * reducedPart.quantity,
           });
         } else {
-          console.log(`   ✅ Part ${reducedPart.partNumber} already in appointment.partsUsed`);
+          console.log(
+            `   ✅ Part ${reducedPart.partNumber} already in appointment.partsUsed`
+          );
         }
       }
 
@@ -5599,3 +5764,304 @@ async function reducePartsForCompletedAppointment(appointmentId) {
     };
   }
 }
+
+// ============================================================================
+// NEW: FOLLOW-UP AND PRE-BOOKING CONTROLLERS
+// ============================================================================
+
+// @desc    Get pre-booked appointments (pending slot assignment)
+// @route   GET /api/appointments/pre-bookings
+// @access  Private (Staff/Admin)
+export const getPreBookedAppointments = async (req, res) => {
+  try {
+    const { date, status } = req.query;
+
+    const query = {
+      isPreBooked: true,
+      status: status || "pending_slot_assignment",
+    };
+
+    // Filter by requested date if provided
+    if (date) {
+      const startDate = new Date(date);
+      const endDate = new Date(date);
+      endDate.setDate(endDate.getDate() + 1);
+
+      query["preBookingDetails.requestedDate"] = {
+        $gte: startDate,
+        $lt: endDate,
+      };
+    }
+
+    const appointments = await Appointment.find(query)
+      .populate("customerId", "firstName lastName email phone")
+      .populate("vehicleId", "make model year licensePlate")
+      .populate("services.serviceId", "name category estimatedDuration")
+      .sort({ "preBookingDetails.requestedDate": 1 })
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      count: appointments.length,
+      data: appointments,
+    });
+  } catch (error) {
+    console.error("Error fetching pre-booked appointments:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching pre-booked appointments",
+    });
+  }
+};
+
+// @desc    Assign slot to pre-booked appointment
+// @route   PUT /api/appointments/:id/assign-slot
+// @access  Private (Staff/Admin)
+export const assignSlotToPreBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { slotId } = req.body;
+
+    // Find the pre-booked appointment
+    const appointment = await Appointment.findOne({
+      _id: id,
+      isPreBooked: true,
+      status: "pending_slot_assignment",
+    });
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Pre-booked appointment not found or already assigned",
+      });
+    }
+
+    // Validate and reserve the slot
+    const slot = await Slot.findById(slotId);
+    if (!slot) {
+      return res.status(404).json({
+        success: false,
+        message: "Slot not found",
+      });
+    }
+
+    if (!slot.canBook()) {
+      return res.status(400).json({
+        success: false,
+        message: "Selected slot is not available",
+      });
+    }
+
+    // Reserve slot
+    slot.bookedCount += 1;
+    if (slot.bookedCount >= slot.capacity) {
+      slot.status = "full";
+    } else {
+      slot.status = "partially_booked";
+    }
+    await slot.save();
+
+    // Update appointment
+    appointment.slotId = slot._id;
+    appointment.status = "confirmed"; // Move from pending_slot_assignment to confirmed (auto-confirm when staff assigns)
+    appointment.scheduledDate = slot.start;
+    appointment.scheduledTime = `${String(new Date(slot.start).getHours()).padStart(2, "0")}:${String(new Date(slot.start).getMinutes()).padStart(2, "0")}`;
+    appointment.preBookingDetails.slotAssignedAt = new Date();
+    appointment.preBookingDetails.assignedBy = req.user._id;
+
+    // Assign technician from slot if not already assigned
+    // Strategy: Pick a random technician from available technicians in the slot
+    if (
+      !appointment.assignedTechnician &&
+      slot.technicianIds &&
+      slot.technicianIds.length > 0
+    ) {
+      // Random selection for better workload distribution
+      const randomIndex = Math.floor(Math.random() * slot.technicianIds.length);
+      appointment.assignedTechnician = slot.technicianIds[randomIndex];
+
+      console.log(
+        `🎲 Randomly assigned technician ${appointment.assignedTechnician} (${randomIndex + 1}/${slot.technicianIds.length} available)`
+      );
+    }
+
+    await appointment.save();
+
+    // TODO: Send notification to customer about slot assignment
+    console.log(`✅ Assigned slot ${slotId} to pre-booked appointment ${id}`);
+
+    const populatedAppointment = await Appointment.findById(appointment._id)
+      .populate("customerId", "firstName lastName email phone")
+      .populate("vehicleId", "make model year licensePlate")
+      .populate("slotId")
+      .populate("assignedTechnician", "firstName lastName");
+
+    res.status(200).json({
+      success: true,
+      message: "Slot assigned successfully to pre-booked appointment",
+      data: populatedAppointment,
+    });
+  } catch (error) {
+    console.error("Error assigning slot to pre-booking:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error assigning slot to pre-booking",
+    });
+  }
+};
+
+
+// @desc    Approve parts-insufficient appointment back to reception_created
+// @route   PUT /api/appointments/:id/approve-parts-available
+// @access  Private (Staff/Admin)
+export const approvePartsAvailable = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { notes } = req.body;
+
+    // Only staff or admin can approve
+    if (!["staff", "admin"].includes(req.user.role)) {
+      return sendError(
+        res,
+        403,
+        "Only staff can approve parts availability",
+        null,
+        "UNAUTHORIZED_ROLE"
+      );
+    }
+
+    const appointment = await Appointment.findById(id);
+
+    if (!appointment) {
+      return sendError(
+        res,
+        404,
+        "Appointment not found",
+        null,
+        "APPOINTMENT_NOT_FOUND"
+      );
+    }
+
+    // Only allow if appointment is in parts_insufficient status
+    if (appointment.status !== "parts_insufficient") {
+      return sendError(
+        res,
+        400,
+        `Cannot approve parts. Current status: ${appointment.status}. Must be parts_insufficient.`,
+        null,
+        "INVALID_STATUS"
+      );
+    }
+
+    // Change status back to reception_created so technician can continue
+    appointment.status = "reception_created";
+
+    // Clear rejection info
+    appointment.staffRejectionReason = undefined;
+    appointment.rejectedAt = undefined;
+    appointment.rejectedBy = undefined;
+
+    appointment.workflowHistory.push({
+      status: "reception_created",
+      changedBy: req.user._id,
+      changedAt: new Date(),
+      notes: `Parts now available. Staff approved to continue service. ${notes || ""}`,
+    });
+
+    await appointment.save();
+
+    // Update ServiceReception status if exists
+    const ServiceReception = mongoose.model("ServiceReception");
+    const reception = await ServiceReception.findOne({ appointmentId: id });
+
+    if (reception && reception.submissionStatus.staffReviewStatus === "rejected") {
+      reception.submissionStatus.staffReviewStatus = "pending";
+      reception.submissionStatus.reviewNotes = `Parts now available. ${notes || "Technician can resubmit or create new reception."}`;
+      await reception.save();
+
+      console.log(`✅ Updated ServiceReception ${reception.receptionNumber} status to pending`);
+    }
+
+    return sendSuccess(
+      res,
+      200,
+      "Parts availability approved. Appointment returned to reception_created status.",
+      {
+        appointmentId: appointment._id,
+        status: appointment.status,
+        previousStatus: "parts_insufficient",
+      }
+    );
+  } catch (error) {
+    console.error("Error approving parts availability:", error);
+    return sendError(
+      res,
+      500,
+      "Error approving parts availability",
+      error,
+      "INTERNAL_ERROR"
+    );
+  }
+};
+
+
+// @desc    Get appointments with parts_insufficient status (for Staff tab)
+// @route   GET /api/appointments/parts-insufficient/list
+// @access  Private (Staff/Admin)
+export const getPartsInsufficientAppointments = async (req, res) => {
+  try {
+    // Only staff or admin can view
+    if (!["staff", "admin"].includes(req.user.role)) {
+      return sendError(
+        res,
+        403,
+        "Only staff can view parts insufficient appointments",
+        null,
+        "UNAUTHORIZED_ROLE"
+      );
+    }
+
+    const appointments = await Appointment.find({ 
+      status: "parts_insufficient" 
+    })
+      .populate("customerId", "name email phone")
+      .populate("vehicleId", "make model year licensePlate")
+      .populate("assignedTechnician", "name email")
+      .populate("rejectedBy", "name email")
+      .sort({ rejectedAt: -1 }); // Most recent rejections first
+
+    const formattedAppointments = appointments.map(apt => ({
+      _id: apt._id,
+      scheduledDate: apt.scheduledDate,
+      scheduledTime: apt.scheduledTime,
+      status: apt.status,
+      customer: apt.customerId,
+      vehicle: apt.vehicleId,
+      assignedTechnician: apt.assignedTechnician,
+      staffRejectionReason: apt.staffRejectionReason,
+      rejectedAt: apt.rejectedAt,
+      rejectedBy: apt.rejectedBy,
+      services: apt.services,
+      estimatedCompletion: apt.estimatedCompletion,
+    }));
+
+    return sendSuccess(
+      res,
+      200,
+      "Parts insufficient appointments retrieved successfully",
+      {
+        count: formattedAppointments.length,
+        appointments: formattedAppointments,
+      }
+    );
+  } catch (error) {
+    console.error("Error getting parts insufficient appointments:", error);
+    return sendError(
+      res,
+      500,
+      "Error getting parts insufficient appointments",
+      error,
+      "INTERNAL_ERROR"
+    );
+  }
+};

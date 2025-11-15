@@ -9,6 +9,7 @@ import {
   ClockIcon,
   DocumentTextIcon,
 } from "@heroicons/react/24/outline";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useSocket, useCustomEvent } from "../contexts/SocketContext";
 import {
@@ -75,6 +76,7 @@ interface FiltersState {
 const AppointmentsPage: React.FC = () => {
   const { user } = useAuth();
   const { emitStatusUpdate } = useSocket();
+  const location = useLocation();
 
   // Main component state
   const [state, setState] = useState<AppointmentState>({
@@ -101,7 +103,8 @@ const AppointmentsPage: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedAppointmentForInvoice, setSelectedAppointmentForInvoice] =
     useState<Appointment | null>(null);
-  const [invoiceModalServiceReception, setInvoiceModalServiceReception] = useState<any>(null);
+  const [invoiceModalServiceReception, setInvoiceModalServiceReception] =
+    useState<any>(null);
   // const [generatingInvoice, setGeneratingInvoice] = useState(false);
 
   // Payment confirmation modal state
@@ -110,7 +113,8 @@ const AppointmentsPage: React.FC = () => {
   const [selectedAppointmentForPayment, setSelectedAppointmentForPayment] =
     useState<Appointment | null>(null);
   const [paymentModalInvoice, setPaymentModalInvoice] = useState<any>(null);
-  const [paymentModalServiceReception, setPaymentModalServiceReception] = useState<any>(null);
+  const [paymentModalServiceReception, setPaymentModalServiceReception] =
+    useState<any>(null);
 
   // Invoice display modal state
   const [showInvoiceDisplayModal, setShowInvoiceDisplayModal] = useState(false);
@@ -118,6 +122,16 @@ const AppointmentsPage: React.FC = () => {
     selectedAppointmentForInvoiceDisplay,
     setSelectedAppointmentForInvoiceDisplay,
   ] = useState<Appointment | null>(null);
+
+  // Follow-up state to pass to AppointmentForm
+  const [followUpData, setFollowUpData] = useState<{
+    isFollowUp?: boolean;
+    baseAppointmentId?: string;
+    baseAppointmentNumber?: string;
+    followUpReason?: string;
+    followUpNotes?: string;
+    vehicleId?: string;
+  } | null>(null);
 
   // Filters state
   const [filters, setFilters] = useState<FiltersState>({
@@ -231,6 +245,57 @@ const AppointmentsPage: React.FC = () => {
       checkUserVehicles();
     }
   }, [user, checkUserVehicles]);
+
+  /**
+   * Effect to check navigation state for follow-up appointments
+   * This runs ONCE on mount to check if we need to open the form
+   */
+  useEffect(() => {
+    const navState = location.state as {
+      showForm?: boolean;
+      isFollowUp?: boolean;
+      baseAppointmentId?: string;
+      baseAppointmentNumber?: string;
+      followUpReason?: string;
+      followUpNotes?: string;
+      vehicleId?: string;
+    } | null;
+
+    if (navState?.showForm) {
+      console.log(
+        "📋 [AppointmentsPage] Opening form from navigation state:",
+        navState
+      );
+
+      // Save follow-up data to state if it's a follow-up appointment
+      if (navState.isFollowUp) {
+        setFollowUpData({
+          isFollowUp: navState.isFollowUp,
+          baseAppointmentId: navState.baseAppointmentId,
+          baseAppointmentNumber: navState.baseAppointmentNumber,
+          followUpReason: navState.followUpReason,
+          followUpNotes: navState.followUpNotes,
+          vehicleId: navState.vehicleId,
+        });
+        console.log("✅ [AppointmentsPage] Follow-up data saved to state:", {
+          baseAppointmentNumber: navState.baseAppointmentNumber,
+          vehicleId: navState.vehicleId,
+        });
+      }
+
+      setShowForm(true);
+
+      // Clear the navigation state to prevent reopening on page refresh
+      // Use a small timeout to ensure state is set before clearing
+      setTimeout(() => {
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+      }, 100);
+    }
+  }, [location.state]); // Only depend on location.state, not entire location
 
   /**
    * Effect to fetch appointments when filters change
@@ -755,7 +820,9 @@ const AppointmentsPage: React.FC = () => {
       // Add invoice display button for in_progress appointments (after payment confirmed)
       if (
         appointment.status === "in_progress" &&
-        (user.role === "staff" || user.role === "admin" || user.role === "customer")
+        (user.role === "staff" ||
+          user.role === "admin" ||
+          user.role === "customer")
       ) {
         return (
           <div className="flex items-center space-x-2 mt-2">
@@ -794,23 +861,27 @@ const AppointmentsPage: React.FC = () => {
 
                 // Fetch service reception (most complete data source)
                 try {
-                  const srResponse = await serviceReceptionAPI.getByAppointment(appointment._id);
+                  const srResponse = await serviceReceptionAPI.getByAppointment(
+                    appointment._id
+                  );
                   if (srResponse.data.success) {
                     setPaymentModalServiceReception(srResponse.data.data);
                   }
                 } catch (error) {
-                  console.error('Error fetching service reception:', error);
+                  console.error("Error fetching service reception:", error);
                   setPaymentModalServiceReception(null);
                 }
 
                 // Also fetch invoice if available (for pre-calculated totals)
                 try {
-                  const invoiceResponse = await invoicesAPI.getByAppointment(appointment._id);
+                  const invoiceResponse = await invoicesAPI.getByAppointment(
+                    appointment._id
+                  );
                   if (invoiceResponse.data.success) {
                     setPaymentModalInvoice(invoiceResponse.data.data);
                   }
                 } catch (error) {
-                  console.error('Error fetching invoice:', error);
+                  console.error("Error fetching invoice:", error);
                   setPaymentModalInvoice(null);
                 }
 
@@ -986,7 +1057,8 @@ const AppointmentsPage: React.FC = () => {
                 {Math.min(filters.page * filters.limit, pagination.total)}
               </span>{" "}
               trong tổng số{" "}
-              <span className="text-text-muted">{pagination.total}</span> kết quả
+              <span className="text-text-muted">{pagination.total}</span> kết
+              quả
             </p>
           </div>
           <div>
@@ -1254,6 +1326,16 @@ const AppointmentsPage: React.FC = () => {
                             #{appointment.appointmentNumber}
                           </h2>
                           {getStatusBadge(appointment.status)}
+                          {appointment.isFollowUp && (
+                            <span
+                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-purple-600 text-white border-purple-700"
+                              title={`Follow-up từ lịch hẹn #${appointment.baseAppointmentId?.appointmentNumber || "N/A"}`}
+                              role="status"
+                              aria-label="Lịch hẹn Follow-up"
+                            >
+                              ⚡ Follow-up
+                            </span>
+                          )}
                           {appointment.hasExternalParts && (
                             <span
                               className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-yellow-600 text-white border-yellow-700"
@@ -1340,10 +1422,14 @@ const AppointmentsPage: React.FC = () => {
 
                       <div className="flex items-center space-x-2 ml-4">
                         {/* Show invoice button for in_progress, completed, and invoiced statuses */}
-                        {["in_progress", "completed", "invoiced"].includes(appointment.status) && (
+                        {["in_progress", "completed", "invoiced"].includes(
+                          appointment.status
+                        ) && (
                           <button
                             onClick={() => {
-                              setSelectedAppointmentForInvoiceDisplay(appointment);
+                              setSelectedAppointmentForInvoiceDisplay(
+                                appointment
+                              );
                               setShowInvoiceDisplayModal(true);
                             }}
                             className="inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition-all duration-200 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-dark-900"
@@ -1373,7 +1459,14 @@ const AppointmentsPage: React.FC = () => {
       {/* Modals */}
       {showForm && (
         <PaymentRestorationHandler>
-          <AppointmentFormClean onCancel={() => setShowForm(false)} />
+          <AppointmentFormClean
+            onCancel={() => {
+              setShowForm(false);
+              // Clear follow-up data when closing
+              setFollowUpData(null);
+            }}
+            followUpData={followUpData}
+          />
         </PaymentRestorationHandler>
       )}
 

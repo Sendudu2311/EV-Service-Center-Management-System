@@ -267,6 +267,17 @@ export const appointmentsAPI = {
       })
       .catch(handleApiError),
 
+  // NEW: Pre-booking management
+  getPreBookings: (params?: any) =>
+    api
+      .get<ApiResponse<any[]>>("/api/appointments/pre-bookings/list", { params })
+      .catch(handleApiError),
+
+  assignSlot: (id: string, data: { slotId: string }) =>
+    api
+      .put<ApiResponse<any>>(`/api/appointments/${id}/assign-slot`, data)
+      .catch(handleApiError),
+
   // New: Smart status mapping to specific workflow endpoints
   updateStatus: (id: string, status: string, notes?: string) => {
     const request = (() => {
@@ -386,6 +397,13 @@ export const appointmentsAPI = {
   staffFinalConfirm: (appointmentId: string) =>
     api.post<ApiResponse<any>>(
       `/api/appointments/${appointmentId}/staff-final-confirm`
+    ),
+
+  // Approve parts available after restock
+  approvePartsAvailable: (appointmentId: string, notes?: string) =>
+    api.put<ApiResponse<any>>(
+      `/api/appointments/${appointmentId}/approve-parts-available`,
+      { notes }
     ),
 
   // Get invoice by appointment
