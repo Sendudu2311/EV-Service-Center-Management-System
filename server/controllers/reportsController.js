@@ -52,9 +52,21 @@ const getDateRange = (period = "6months") => {
 // @route   GET /api/reports/analytics
 // @access  Private (Admin only)
 export const getAnalytics = asyncHandler(async (req, res) => {
-  const { period = "6months", serviceId, technicianId } = req.query;
+  const { startDate: startDateParam, endDate: endDateParam, serviceId, technicianId } = req.query;
 
-  const { startDate, endDate } = getDateRange(period);
+  // Use provided dates or default to last 30 days
+  let startDate, endDate;
+  if (startDateParam && endDateParam) {
+    startDate = new Date(startDateParam);
+    endDate = new Date(endDateParam);
+    // Set endDate to end of day
+    endDate.setHours(23, 59, 59, 999);
+  } else {
+    // Default to last 30 days if no dates provided
+    endDate = new Date();
+    startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+  }
 
   // Build filter for appointments
   let appointmentFilter = {
@@ -302,7 +314,6 @@ export const getAnalytics = asyncHandler(async (req, res) => {
       appointmentStatus: appointmentStatusData,
       technicianPerformance: technicianPerformanceData,
     },
-    period,
     dateRange: {
       startDate,
       endDate,
@@ -314,9 +325,21 @@ export const getAnalytics = asyncHandler(async (req, res) => {
 // @route   GET /api/reports/detailed
 // @access  Private (Admin only)
 export const getDetailedReport = asyncHandler(async (req, res) => {
-  const { period = "6months", format = "json" } = req.query;
+  const { startDate: startDateParam, endDate: endDateParam, format = "json" } = req.query;
 
-  const { startDate, endDate } = getDateRange(period);
+  // Use provided dates or default to last 30 days
+  let startDate, endDate;
+  if (startDateParam && endDateParam) {
+    startDate = new Date(startDateParam);
+    endDate = new Date(endDateParam);
+    // Set endDate to end of day
+    endDate.setHours(23, 59, 59, 999);
+  } else {
+    // Default to last 30 days if no dates provided
+    endDate = new Date();
+    startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+  }
 
   // Fetch all relevant data
   const appointments = await Appointment.find({
@@ -332,7 +355,6 @@ export const getDetailedReport = asyncHandler(async (req, res) => {
   }).sort({ createdAt: -1 });
 
   const report = {
-    period,
     dateRange: { startDate, endDate },
     generatedAt: new Date(),
     appointments: appointments.map((appt) => ({

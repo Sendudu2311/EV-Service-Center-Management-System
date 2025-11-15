@@ -210,7 +210,20 @@ const EnhancedAdminDashboard: React.FC = () => {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [kpis, setKpis] = useState<KPIData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<'1month' | '3months' | '6months' | '1year'>('1month');
+  // Date range state - default to last 30 days
+  const getDefaultDateRange = () => {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+    return {
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0]
+    };
+  };
+
+  const defaultRange = getDefaultDateRange();
+  const [startDate, setStartDate] = useState(defaultRange.startDate);
+  const [endDate, setEndDate] = useState(defaultRange.endDate);
   const [modalType, setModalType] = useState<DetailModalType>(null);
   const [modalData, setModalData] = useState<DetailModalData>({});
   const [modalLoading, setModalLoading] = useState(false);
@@ -222,7 +235,7 @@ const EnhancedAdminDashboard: React.FC = () => {
     } else {
       fetchAnalyticsData();
     }
-  }, [activeTab, period]);
+  }, [activeTab, startDate, endDate]);
 
   const fetchDashboardData = async () => {
     try {
@@ -241,7 +254,7 @@ const EnhancedAdminDashboard: React.FC = () => {
     try {
       setLoading(true);
       const [analyticsRes, kpisRes] = await Promise.all([
-        reportsAPI.getAnalytics({ period }),
+        reportsAPI.getAnalytics({ startDate, endDate }),
         reportsAPI.getKPI(),
       ]);
 
@@ -352,8 +365,10 @@ const EnhancedAdminDashboard: React.FC = () => {
           <AnalyticsTab
             analyticsData={analyticsData}
             kpis={kpis}
-            period={period}
-            setPeriod={setPeriod}
+            startDate={startDate}
+            endDate={endDate}
+            setStartDate={setStartDate}
+            setEndDate={setEndDate}
             formatNumber={formatNumber}
             onCardClick={openDetailModal}
           />
@@ -615,31 +630,56 @@ const OverviewTab: React.FC<{
 const AnalyticsTab: React.FC<{
   analyticsData: AnalyticsData;
   kpis: KPIData;
-  period: string;
-  setPeriod: (period: '1month' | '3months' | '6months' | '1year') => void;
+  startDate: string;
+  endDate: string;
+  setStartDate: (date: string) => void;
+  setEndDate: (date: string) => void;
   formatNumber: (num: number) => string;
   onCardClick: (type: Exclude<DetailModalType, null>) => void;
-}> = ({ analyticsData, kpis, period, setPeriod, formatNumber, onCardClick }) => {
+}> = ({ analyticsData, kpis, startDate, endDate, setStartDate, setEndDate, formatNumber, onCardClick }) => {
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newStartDate = e.target.value;
+    if (newStartDate && endDate && newStartDate > endDate) {
+      toast.error('Ngày bắt đầu không được lớn hơn ngày kết thúc');
+      return;
+    }
+    setStartDate(newStartDate);
+  };
+
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEndDate = e.target.value;
+    if (newEndDate && startDate && newEndDate < startDate) {
+      toast.error('Ngày kết thúc không được nhỏ hơn ngày bắt đầu');
+      return;
+    }
+    setEndDate(newEndDate);
+  };
+
   return (
     <div className="space-y-6">
-      {/* Period Selector */}
-      <div className="flex justify-end gap-2">
-        {(['1month', '3months', '6months', '1year'] as const).map((p) => (
-          <button
-            key={p}
-            onClick={() => setPeriod(p)}
-            className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-              period === p
-                ? 'bg-lime-200 text-dark-900 font-medium'
-                : 'bg-dark-300 text-text-secondary border border-dark-200 hover:border-lime-400'
-            }`}
-          >
-            {p === '1month' && '1 Month'}
-            {p === '3months' && '3 Months'}
-            {p === '6months' && '6 Months'}
-            {p === '1year' && '1 Year'}
-          </button>
-        ))}
+      {/* Date Range Selector */}
+      <div className="flex justify-end gap-4 items-center">
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-text-secondary font-medium">Từ ngày:</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={handleStartDateChange}
+            max={endDate}
+            className="px-3 py-2 bg-dark-300 text-white border border-dark-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-text-secondary font-medium">Đến ngày:</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={handleEndDateChange}
+            min={startDate}
+            max={new Date().toISOString().split('T')[0]}
+            className="px-3 py-2 bg-dark-300 text-white border border-dark-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent"
+          />
+        </div>
       </div>
 
       {/* Stats Summary - Main KPI Cards - 2 Rows x 4 Columns */}

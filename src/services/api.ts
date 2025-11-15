@@ -1138,7 +1138,8 @@ export const contactsAPI = {
 // Reports API
 export const reportsAPI = {
   getAnalytics: (params?: {
-    period?: "1month" | "3months" | "6months" | "1year";
+    startDate?: string;
+    endDate?: string;
     serviceId?: string;
     technicianId?: string;
   }) =>
@@ -1147,7 +1148,8 @@ export const reportsAPI = {
       .catch(handleApiError),
 
   getDetailedReport: (params?: {
-    period?: "1month" | "3months" | "6months" | "1year";
+    startDate?: string;
+    endDate?: string;
     format?: "json" | "csv";
   }) =>
     api
