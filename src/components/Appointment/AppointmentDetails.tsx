@@ -3,6 +3,7 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import CancelRequestManagement from "./CancelRequestManagement";
 import CancelRequestModal from "./CancelRequestModal";
 import PaymentPreviewModal from "../Payment/PaymentPreviewModal";
+import FollowUpModal from "./FollowUpModal";
 import { useAuth } from "../../contexts/AuthContext";
 
 interface AppointmentDetailsProps {
@@ -24,6 +25,7 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
   );
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showPaymentPreview, setShowPaymentPreview] = useState(false);
+  const [showFollowUpModal, setShowFollowUpModal] = useState(false);
   const { user } = useAuth();
 
   const getStatusBadge = (status: string) => {
@@ -109,6 +111,74 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                 {appointment.status === "cancel_refunded" && "Đã hoàn tiền"}
               </span>
             </div>
+
+            {/* Follow-up Banner */}
+            {appointment.isFollowUp && appointment.baseAppointmentId && (
+              <div className="mb-6 bg-purple-900 bg-opacity-20 border-2 border-purple-500 rounded-xl p-4 shadow-lg">
+                <div className="flex items-start space-x-3">
+                  <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg
+                      className="w-6 h-6 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 10V3L4 14h7v7l9-11h-7z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-bold text-white">
+                      Lịch hẹn Follow-up
+                    </h4>
+                    <p className="text-sm text-purple-200 mt-1">
+                      Lịch hẹn gốc:{" "}
+                      <span className="font-semibold text-purple-100">
+                        #{appointment.baseAppointmentId.appointmentNumber}
+                      </span>
+                      {" - "}
+                      {formatVietnameseDateTime(
+                        appointment.baseAppointmentId.scheduledDate,
+                        appointment.baseAppointmentId.scheduledTime
+                      )}
+                    </p>
+                    {appointment.followUpReason && (
+                      <p className="text-sm text-purple-200 mt-1">
+                        Lý do:{" "}
+                        <span className="font-semibold text-purple-100">
+                          {appointment.followUpReason === "warranty_issue"
+                            ? "Vấn đề bảo hành"
+                            : appointment.followUpReason ===
+                                "additional_service"
+                              ? "Dịch vụ bổ sung"
+                              : appointment.followUpReason ===
+                                  "periodic_maintenance"
+                                ? "Bảo dưỡng định kỳ"
+                                : appointment.followUpReason ===
+                                    "unsatisfied_result"
+                                  ? "Không hài lòng kết quả"
+                                  : "Lý do khác"}
+                        </span>
+                      </p>
+                    )}
+                    {appointment.followUpNotes && (
+                      <div className="mt-2 bg-purple-800 bg-opacity-30 rounded-lg p-3">
+                        <p className="text-xs text-purple-300 font-semibold mb-1">
+                          Ghi chú từ khách hàng:
+                        </p>
+                        <p className="text-sm text-purple-100">
+                          {appointment.followUpNotes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Cancel Request Management */}
             {(appointment.status === "cancel_requested" ||
@@ -309,7 +379,8 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
 
                     {/* External Parts Section */}
                     {appointment.serviceReceptionId?.externalParts &&
-                      appointment.serviceReceptionId.externalParts.length > 0 && (
+                      appointment.serviceReceptionId.externalParts.length >
+                        0 && (
                         <>
                           <div className="pt-3 border-t border-amber-400">
                             <h5 className="text-sm font-semibold text-amber-500 mb-2 flex items-center gap-2">
@@ -317,38 +388,40 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                               Linh kiện đặt từ bên ngoài
                             </h5>
                           </div>
-                          {appointment.serviceReceptionId.externalParts.map((part: any, index: number) => (
-                            <div
-                              key={index}
-                              className="border-b border-amber-200 pb-3 last:border-0 bg-amber-50 -mx-3 px-3 py-2"
-                            >
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <p className="text-sm text-amber-900 font-semibold">
-                                    {part.partName}
-                                  </p>
-                                  {part.partNumber && (
-                                    <p className="text-xs text-amber-700">
-                                      Mã: {part.partNumber}
+                          {appointment.serviceReceptionId.externalParts.map(
+                            (part: any, index: number) => (
+                              <div
+                                key={index}
+                                className="border-b border-amber-200 pb-3 last:border-0 bg-amber-50 -mx-3 px-3 py-2"
+                              >
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <p className="text-sm text-amber-900 font-semibold">
+                                      {part.partName}
                                     </p>
-                                  )}
-                                  {part.supplier?.name && (
+                                    {part.partNumber && (
+                                      <p className="text-xs text-amber-700">
+                                        Mã: {part.partNumber}
+                                      </p>
+                                    )}
+                                    {part.supplier?.name && (
+                                      <p className="text-xs text-amber-600">
+                                        NCC: {part.supplier.name}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="text-sm text-amber-700 font-semibold">
+                                      {formatVND(part.totalPrice)}
+                                    </p>
                                     <p className="text-xs text-amber-600">
-                                      NCC: {part.supplier.name}
+                                      SL: {part.quantity}
                                     </p>
-                                  )}
-                                </div>
-                                <div className="text-right">
-                                  <p className="text-sm text-amber-700 font-semibold">
-                                    {formatVND(part.totalPrice)}
-                                  </p>
-                                  <p className="text-xs text-amber-600">
-                                    SL: {part.quantity}
-                                  </p>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            )
+                          )}
                         </>
                       )}
 
@@ -375,7 +448,8 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                               sum + (part.totalPrice || 0),
                             0
                           ) || 0;
-                        const subtotal = servicesTotal + partsTotal + externalPartsTotal;
+                        const subtotal =
+                          servicesTotal + partsTotal + externalPartsTotal;
                         const vatAmount = subtotal * 0.1;
                         const totalWithVAT = subtotal + vatAmount;
 
@@ -406,7 +480,8 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
 
                             {/* External Parts Subtotal */}
                             {appointment.serviceReceptionId?.externalParts &&
-                              appointment.serviceReceptionId.externalParts.length > 0 && (
+                              appointment.serviceReceptionId.externalParts
+                                .length > 0 && (
                                 <div className="flex justify-between items-center text-sm">
                                   <span className="text-amber-600 flex items-center gap-1">
                                     <span>🛒</span>
@@ -546,6 +621,20 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
           {/* Footer */}
           <div className="bg-dark-900 px-6 py-4 sm:flex sm:flex-row-reverse">
             <div className="flex space-x-3">
+              {/* NEW: Follow-up Button for Customers - show when completed or invoiced */}
+              {user?.role === "customer" &&
+                (appointment.customerId === user._id ||
+                  appointment.customerId?._id === user._id) &&
+                ["completed", "invoiced"].includes(appointment.status) && (
+                  <button
+                    type="button"
+                    onClick={() => setShowFollowUpModal(true)}
+                    className="inline-flex w-full justify-center rounded-md bg-purple-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500 sm:w-auto"
+                  >
+                    📅 Đặt lịch Follow-up
+                  </button>
+                )}
+
               {/* Payment Preview Button for Customers - show when reception is approved */}
               {user?.role === "customer" &&
                 (appointment.customerId === user._id ||
@@ -602,6 +691,17 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
         appointment={appointment}
         isOpen={showPaymentPreview}
         onClose={() => setShowPaymentPreview(false)}
+      />
+
+      {/* NEW: Follow-up Modal */}
+      <FollowUpModal
+        isOpen={showFollowUpModal}
+        onClose={() => setShowFollowUpModal(false)}
+        baseAppointment={{
+          _id: appointment._id,
+          appointmentNumber: appointment.appointmentNumber,
+          vehicleId: appointment.vehicleId,
+        }}
       />
     </div>
   );

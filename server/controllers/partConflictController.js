@@ -197,8 +197,8 @@ export const resolveConflict = async (req, res) => {
       });
     }
 
-    const availableStock =
-      part.inventory.currentStock - part.inventory.reservedStock;
+    // Simplified: Only check currentStock (no reservedStock)
+    const availableStock = part.inventory.currentStock;
 
     // Process approved requests
     const approvedRequests = [];
@@ -248,11 +248,11 @@ export const resolveConflict = async (req, res) => {
             }
           }
 
-          // Reserve part stock
-          const quantityToReserve = request.requestedQuantity;
-          if (part.inventory.currentStock >= quantityToReserve) {
-            part.inventory.currentStock -= quantityToReserve;
-            part.inventory.reservedStock += quantityToReserve;
+          // Decrease currentStock and increase usedStock immediately
+          const quantityToUse = request.requestedQuantity;
+          if (part.inventory.currentStock >= quantityToUse) {
+            part.inventory.currentStock -= quantityToUse;
+            part.inventory.usedStock += quantityToUse;
             await part.save({ session });
           }
         } else {
@@ -612,8 +612,7 @@ export const approveConflictRequest = async (req, res) => {
       });
     }
 
-    const availableStock =
-      part.inventory.currentStock - part.inventory.reservedStock;
+    const availableStock = part.inventory.currentStock;
 
     // Check if enough stock
     if (request.requestedQuantity > availableStock) {
@@ -630,9 +629,8 @@ export const approveConflictRequest = async (req, res) => {
     request.resolutionNotes = notes || "Approved via conflict resolution";
 
     // Update ServiceReception
-    const reception = await ServiceReception.findById(requestId).session(
-      session
-    );
+    const reception =
+      await ServiceReception.findById(requestId).session(session);
     if (!reception) {
       await session.abortTransaction();
       return res.status(404).json({
@@ -650,6 +648,7 @@ export const approveConflictRequest = async (req, res) => {
     }
 
     // Set reception status to APPROVED directly (skip dashboard approval)
+    reception.status = "approved";
     reception.submissionStatus.staffReviewStatus = "approved";
     reception.submissionStatus.reviewedBy = staffId;
     reception.submissionStatus.reviewedAt = new Date();
@@ -658,9 +657,9 @@ export const approveConflictRequest = async (req, res) => {
 
     await reception.save({ session });
 
-    // Reserve part stock
+    // Decrease currentStock and increase usedStock
     part.inventory.currentStock -= request.requestedQuantity;
-    part.inventory.reservedStock += request.requestedQuantity;
+    part.inventory.usedStock += request.requestedQuantity;
     await part.save({ session });
 
     // Check if all parts in reception are approved, then update appointment status
@@ -718,8 +717,7 @@ export const approveConflictRequest = async (req, res) => {
     await conflict.save({ session });
 
     // Recalculate available stock for response
-    const newAvailableStock =
-      part.inventory.currentStock - part.inventory.reservedStock;
+    const newAvailableStock = part.inventory.currentStock;
 
     await session.commitTransaction();
 
@@ -810,9 +808,8 @@ export const rejectConflictRequest = async (req, res) => {
     request.resolutionNotes = reason;
 
     // Update ServiceReception status to pending_parts_restock
-    const reception = await ServiceReception.findById(requestId).session(
-      session
-    );
+    const reception =
+      await ServiceReception.findById(requestId).session(session);
     if (!reception) {
       await session.abortTransaction();
       return res.status(404).json({
@@ -821,73 +818,41 @@ export const rejectConflictRequest = async (req, res) => {
       });
     }
 
-    reception.submissionStatus.staffReviewStatus = "pending_parts_restock";
+    reception.status = "rejected";
+    reception.submissionStatus.staffReviewStatus = "rejected";
     reception.submissionStatus.reviewedBy = staffId;
     reception.submissionStatus.reviewedAt = new Date();
     reception.submissionStatus.reviewNotes = reason;
 
     await reception.save({ session });
 
-    // Update appointment status if reason indicates insufficient stock
-    // Check if reason contains keywords related to stock issues
-    const stockIssueKeywords = [
-      "không đủ tồn kho",
-      "insufficient stock",
-      "thiếu parts",
-      "thiếu phụ tùng",
-      "không đủ parts",
-      "không đủ phụ tùng",
-      "chờ nhập hàng",
-      "waiting for restock",
-    ];
-
-    const reasonLower = reason.toLowerCase();
-    const isStockIssue = stockIssueKeywords.some((keyword) =>
-      reasonLower.includes(keyword.toLowerCase())
-    );
-
-    if (isStockIssue && reception.appointmentId) {
+    // Update appointment status to parts_insufficient when staff rejects
+    // This follows the workflow: reception_created → (reject due to parts) → parts_insufficient
+    if (reception.appointmentId) {
       try {
         const appointment = await Appointment.findById(
           reception.appointmentId
         ).session(session);
 
         if (appointment) {
-          // Determine appropriate status based on current appointment status
-          let newAppointmentStatus = null;
+          // Store rejection reason for customer visibility
+          appointment.status = "parts_insufficient";
+          appointment.staffRejectionReason = reason;
+          appointment.rejectedAt = new Date();
+          appointment.rejectedBy = staffId;
 
-          // If currently in service, set to parts_insufficient
-          if (
-            ["in_progress", "reception_approved", "reception_created"].includes(
-              appointment.status
-            )
-          ) {
-            newAppointmentStatus = "parts_insufficient";
-          }
-          // If in parts-related status, set to waiting_for_parts
-          else if (
-            ["parts_requested", "waiting_for_parts"].includes(
-              appointment.status
-            )
-          ) {
-            newAppointmentStatus = "waiting_for_parts";
-          }
-          // For other statuses, try to set to parts_insufficient if allowed
-          else if (
-            appointment.canTransitionTo("parts_insufficient", "staff", staffId)
-          ) {
-            newAppointmentStatus = "parts_insufficient";
-          }
+          appointment.workflowHistory.push({
+            status: "parts_insufficient",
+            changedBy: staffId,
+            changedAt: new Date(),
+            notes: `Parts request rejected via conflict resolution: ${reason}`,
+          });
 
-          if (newAppointmentStatus) {
-            await appointment.updateStatus(
-              newAppointmentStatus,
-              staffId,
-              "staff",
-              "Parts request rejected due to insufficient stock",
-              reason
-            );
-          }
+          await appointment.save({ session });
+
+          console.log(
+            `✅ Updated appointment ${appointment.appointmentNumber} status to parts_insufficient`
+          );
         }
       } catch (appointmentError) {
         console.error(

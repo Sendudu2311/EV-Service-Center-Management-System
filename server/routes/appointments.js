@@ -41,6 +41,12 @@ import {
   confirmFinalPayment,
   confirmPaymentAfterReception,
   staffFinalConfirmation,
+  // NEW: Follow-up and Pre-booking APIs
+  getPreBookedAppointments,
+  assignSlotToPreBooking,
+  // NEW: Parts insufficient approval
+  approvePartsAvailable,
+  getPartsInsufficientAppointments,
 } from "../controllers/appointmentController.js";
 import { protect } from "../middleware/auth.js";
 import { uploadPaymentProof } from "../middleware/upload.js";
@@ -109,6 +115,14 @@ router.post(
 );
 
 router.post("/:id/staff-final-confirm", staffFinalConfirmation);
+
+// NEW: Pre-booking routes (Staff/Admin only)
+router.get("/pre-bookings/list", getPreBookedAppointments); // Must come before /:id
+router.put("/:id/assign-slot", assignSlotToPreBooking);
+
+// NEW: Parts insufficient approval routes (Staff/Admin only)
+router.get("/parts-insufficient/list", getPartsInsufficientAppointments); // Must come before /:id
+router.put("/:id/approve-parts-available", approvePartsAvailable);
 
 // Parameterized routes - must come after specific routes
 router.get("/:id", getAppointment);

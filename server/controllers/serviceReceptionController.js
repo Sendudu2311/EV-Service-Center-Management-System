@@ -26,9 +26,12 @@ export const createServiceReception = async (req, res) => {
     } = req.body;
 
     // Check if service reception already exists for this appointment
-    // Allow creating new reception if previous one was rejected
+    // Allow creating new reception if previous one was rejected OR if appointment is in parts_insufficient status
     const existingReception = await ServiceReception.findOne({ appointmentId });
-    if (existingReception && existingReception.status !== "rejected") {
+    if (
+      existingReception &&
+      existingReception.submissionStatus.staffReviewStatus !== "rejected"
+    ) {
       return sendError(
         res,
         400,
@@ -68,12 +71,13 @@ export const createServiceReception = async (req, res) => {
       );
     }
 
-    // Verify appointment status
-    if (appointment.status !== "customer_arrived") {
+    // Verify appointment status - allow customer_arrived or parts_insufficient (for resubmission after rejection)
+    const allowedStatuses = ["customer_arrived", "parts_insufficient"];
+    if (!allowedStatuses.includes(appointment.status)) {
       return sendError(
         res,
         400,
-        "Cannot create service reception. Customer must be marked as arrived first",
+        `Cannot create service reception. Current status: ${appointment.status}. Allowed: customer_arrived or parts_insufficient (after rejection).`,
         null,
         "INVALID_STATUS"
       );
@@ -205,7 +209,11 @@ export const createServiceReception = async (req, res) => {
     );
 
     // Change booking type to full service if it was deposit booking
-    if (recommendedServices && recommendedServices.length > 0 && appointment.bookingType === "deposit_booking") {
+    if (
+      recommendedServices &&
+      recommendedServices.length > 0 &&
+      appointment.bookingType === "deposit_booking"
+    ) {
       appointment.bookingType = "full_service";
       console.log(
         "🔄 [createServiceReception] Changed booking type to full_service"
@@ -382,7 +390,10 @@ export const getAllServiceReceptionsByAppointment = async (req, res) => {
       serviceReceptions
     );
   } catch (error) {
-    console.error("Error retrieving all service receptions by appointment:", error);
+    console.error(
+      "Error retrieving all service receptions by appointment:",
+      error
+    );
     return sendError(
       res,
       500,
@@ -417,8 +428,14 @@ export const getServiceReceptionsByTechnician = async (req, res) => {
     for (const reception of serviceReceptions) {
       if (reception.workflowHistory && reception.workflowHistory.length > 0) {
         await ServiceReception.populate(reception, [
-          { path: 'workflowHistory.performedBy', select: 'firstName lastName email' },
-          { path: 'workflowHistory.changedBy', select: 'firstName lastName email' }
+          {
+            path: "workflowHistory.performedBy",
+            select: "firstName lastName email",
+          },
+          {
+            path: "workflowHistory.changedBy",
+            select: "firstName lastName email",
+          },
         ]);
       }
     }
@@ -612,8 +629,15 @@ export const resubmitServiceReception = async (req, res) => {
 export const approveServiceReception = async (req, res) => {
   try {
     const { id } = req.params;
-    const { decision, reviewNotes, approved, staffNotes, externalParts, extendedCompletionDate, modifications } =
-      req.body;
+    const {
+      decision,
+      reviewNotes,
+      approved,
+      staffNotes,
+      externalParts,
+      extendedCompletionDate,
+      modifications,
+    } = req.body;
 
     // Support both old format (approved: boolean) and new format (decision: 'approved'/'rejected')
     const isApproved = decision ? decision === "approved" : approved;
@@ -631,7 +655,11 @@ export const approveServiceReception = async (req, res) => {
     }
 
     // Handle staff modifications to services/parts
-    if (modifications && modifications.modifiedServices && modifications.modifiedParts) {
+    if (
+      modifications &&
+      modifications.modifiedServices &&
+      modifications.modifiedParts
+    ) {
       // Update services and parts with staff modifications
       serviceReception.recommendedServices = modifications.modifiedServices;
       serviceReception.requestedParts = modifications.modifiedParts;
@@ -772,7 +800,9 @@ export const approveServiceReception = async (req, res) => {
       }
 
       // ✅ IMMEDIATE PART REDUCTION: Reduce inventory when staff approves service reception
-      console.log("\n🔧 [IMMEDIATE PART REDUCTION] Reducing parts inventory...");
+      console.log(
+        "\n🔧 [IMMEDIATE PART REDUCTION] Reducing parts inventory..."
+      );
       const Part = mongoose.model("Part");
 
       // METHOD 1: Reduce requestedParts (parts đề xuất trong phiếu)
@@ -787,8 +817,12 @@ export const approveServiceReception = async (req, res) => {
               continue;
             }
 
-            console.log(`   Processing requested part: ${part.partNumber} - ${part.name} (Qty: ${requestedPart.quantity})`);
-            console.log(`   - Current stock: ${part.inventory.currentStock}, Used stock: ${part.inventory.usedStock}`);
+            console.log(
+              `   Processing requested part: ${part.partNumber} - ${part.name} (Qty: ${requestedPart.quantity})`
+            );
+            console.log(
+              `   - Current stock: ${part.inventory.currentStock}, Used stock: ${part.inventory.usedStock}`
+            );
 
             if (part.inventory.currentStock >= requestedPart.quantity) {
               part.inventory.currentStock -= requestedPart.quantity;
@@ -797,36 +831,61 @@ export const approveServiceReception = async (req, res) => {
                 part.inventory.averageUsage * 0.9 + requestedPart.quantity * 0.1
               );
               await part.save();
-              console.log(`   ✅ Reduced! New currentStock: ${part.inventory.currentStock}, usedStock: ${part.inventory.usedStock}`);
+              console.log(
+                `   ✅ Reduced! New currentStock: ${part.inventory.currentStock}, usedStock: ${part.inventory.usedStock}`
+              );
             } else {
-              console.warn(`   ⚠️ Insufficient stock: Available ${part.inventory.currentStock}, Needed ${requestedPart.quantity}`);
+              console.warn(
+                `   ⚠️ Insufficient stock: Available ${part.inventory.currentStock}, Needed ${requestedPart.quantity}`
+              );
             }
           } catch (partError) {
-            console.error(`❌ Error reducing requested part ${requestedPart.partNumber}:`, partError);
+            console.error(
+              `❌ Error reducing requested part ${requestedPart.partNumber}:`,
+              partError
+            );
           }
         }
       }
 
       // METHOD 2: Reduce commonParts from approved services (parts liên quan trong dịch vụ)
-      console.log("\n📦 [METHOD 2] Processing commonParts from approved services...");
-      for (const recommendedService of serviceReception.recommendedServices || []) {
+      console.log(
+        "\n📦 [METHOD 2] Processing commonParts from approved services..."
+      );
+      for (const recommendedService of serviceReception.recommendedServices ||
+        []) {
         try {
-          const serviceDoc = await Service.findById(recommendedService.serviceId);
-          if (serviceDoc && serviceDoc.commonParts && serviceDoc.commonParts.length > 0) {
-            console.log(`   Service: ${serviceDoc.name} has ${serviceDoc.commonParts.length} common parts`);
+          const serviceDoc = await Service.findById(
+            recommendedService.serviceId
+          );
+          if (
+            serviceDoc &&
+            serviceDoc.commonParts &&
+            serviceDoc.commonParts.length > 0
+          ) {
+            console.log(
+              `   Service: ${serviceDoc.name} has ${serviceDoc.commonParts.length} common parts`
+            );
 
             for (const commonPart of serviceDoc.commonParts) {
               // Only reduce required parts (skip optional parts)
               if (!commonPart.isOptional) {
                 const part = await Part.findById(commonPart.partId);
                 if (!part) {
-                  console.warn(`   ⚠️ Common part not found: ${commonPart.partId}`);
+                  console.warn(
+                    `   ⚠️ Common part not found: ${commonPart.partId}`
+                  );
                   continue;
                 }
 
-                const quantity = commonPart.quantity * (recommendedService.quantity || 1);
-                console.log(`   Processing common part: ${part.partNumber} - ${part.name} (Qty: ${quantity})`);
-                console.log(`   - Current stock: ${part.inventory.currentStock}, Used stock: ${part.inventory.usedStock}`);
+                const quantity =
+                  commonPart.quantity * (recommendedService.quantity || 1);
+                console.log(
+                  `   Processing common part: ${part.partNumber} - ${part.name} (Qty: ${quantity})`
+                );
+                console.log(
+                  `   - Current stock: ${part.inventory.currentStock}, Used stock: ${part.inventory.usedStock}`
+                );
 
                 if (part.inventory.currentStock >= quantity) {
                   part.inventory.currentStock -= quantity;
@@ -835,15 +894,22 @@ export const approveServiceReception = async (req, res) => {
                     part.inventory.averageUsage * 0.9 + quantity * 0.1
                   );
                   await part.save();
-                  console.log(`   ✅ Reduced! New currentStock: ${part.inventory.currentStock}, usedStock: ${part.inventory.usedStock}`);
+                  console.log(
+                    `   ✅ Reduced! New currentStock: ${part.inventory.currentStock}, usedStock: ${part.inventory.usedStock}`
+                  );
                 } else {
-                  console.warn(`   ⚠️ Insufficient stock: Available ${part.inventory.currentStock}, Needed ${quantity}`);
+                  console.warn(
+                    `   ⚠️ Insufficient stock: Available ${part.inventory.currentStock}, Needed ${quantity}`
+                  );
                 }
               }
             }
           }
         } catch (serviceError) {
-          console.error(`❌ Error processing service ${recommendedService.serviceId}:`, serviceError);
+          console.error(
+            `❌ Error processing service ${recommendedService.serviceId}:`,
+            serviceError
+          );
         }
       }
 
@@ -887,28 +953,50 @@ export const approveServiceReception = async (req, res) => {
         );
 
         appointment.estimatedCompletion = newCompletionDate;
-        console.log("Updated estimatedCompletion to:", newCompletionDate, "(date:", extendedCompletionDate, ", time from original:", originalCompletion.toLocaleTimeString('vi-VN'), ")");
+        console.log(
+          "Updated estimatedCompletion to:",
+          newCompletionDate,
+          "(date:",
+          extendedCompletionDate,
+          ", time from original:",
+          originalCompletion.toLocaleTimeString("vi-VN"),
+          ")"
+        );
       }
 
       // Update appointment status
       appointment.status = "reception_approved";
+
+      // Clear rejection info when approved (in case this was a resubmission after rejection)
+      appointment.staffRejectionReason = undefined;
+      appointment.rejectedAt = undefined;
+      appointment.rejectedBy = undefined;
+
       appointment.workflowHistory.push({
         status: "reception_approved",
         changedBy: req.user._id,
         changedAt: new Date(),
-        notes: `Service reception approved by staff. Additional cost: ${totalAdditional} VND (Services: ${additionalServicesCost}, Parts: ${additionalPartsCost}, Labor: ${laborCost})${extendedCompletionDate ? `. Extended completion date: ${new Date(extendedCompletionDate).toLocaleDateString('vi-VN')}` : ''}`,
+        notes: `Service reception approved by staff. Additional cost: ${totalAdditional} VND (Services: ${additionalServicesCost}, Parts: ${additionalPartsCost}, Labor: ${laborCost})${extendedCompletionDate ? `. Extended completion date: ${new Date(extendedCompletionDate).toLocaleDateString("vi-VN")}` : ""}`,
       });
       await appointment.save();
     } else if (appointment && !isApproved) {
-      // When rejected, reset appointment to customer_arrived so technician can create new reception
-      appointment.status = "customer_arrived";
+      // When rejected due to insufficient parts, set to parts_insufficient so customer knows the reason
+      appointment.status = "parts_insufficient";
+
+      // Store rejection reason for customer visibility
+      appointment.staffRejectionReason =
+        notes ||
+        "Parts insufficient or service cannot be completed at this time";
+      appointment.rejectedAt = new Date();
+      appointment.rejectedBy = req.user._id;
+
       appointment.workflowHistory.push({
-        status: "customer_arrived",
+        status: "parts_insufficient",
         changedBy: req.user._id,
         changedAt: new Date(),
         notes: `Service reception rejected by staff: ${
-          notes || "No reason provided"
-        }. Appointment reset to customer_arrived for new reception creation.`,
+          notes || "Parts insufficient"
+        }. Waiting for parts availability or customer decision.`,
       });
       await appointment.save();
     }
@@ -1068,7 +1156,9 @@ const syncChecklistWithAppointment = async (
   }
 };
 
-
+// @desc    Get available EVChecklist templates
+// @route   GET /api/service-receptions/checklist-templates
+// @access  Private (Technician/Staff)
 // @desc    Get available EVChecklist templates
 // @route   GET /api/service-receptions/checklist-templates
 // @access  Private (Technician/Staff)

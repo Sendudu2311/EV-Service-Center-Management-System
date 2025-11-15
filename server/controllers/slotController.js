@@ -23,11 +23,38 @@ export const listSlots = async (req, res) => {
     console.log(`🔍 [listSlots] Query params:`, { technicianId, from, to });
     console.log(`🔍 [listSlots] MongoDB query:`, JSON.stringify(q, null, 2));
 
+    // DEBUG: Check total slots in DB
+    const totalSlots = await Slot.countDocuments();
+    console.log(`📊 [listSlots] Total slots in DB: ${totalSlots}`);
+
+    // DEBUG: Get sample slot to see date format
+    if (totalSlots > 0) {
+      const sampleSlot = await Slot.findOne().select(
+        "date startTime endTime start end"
+      );
+      console.log(`📋 [listSlots] Sample slot:`, {
+        date: sampleSlot.date,
+        startTime: sampleSlot.startTime,
+        endTime: sampleSlot.endTime,
+        start: sampleSlot.start,
+        end: sampleSlot.end,
+      });
+    }
+
     const slots = await Slot.find(q)
       .populate("technicianIds", "firstName lastName email")
       .sort({ start: 1 });
 
-    console.log(`🔍 [listSlots] Found ${slots.length} slots`);
+    console.log(`🔍 [listSlots] Found ${slots.length} slots matching query`);
+
+    // DEBUG: If query returns nothing but we have slots, show first 3 slot dates
+    if (slots.length === 0 && totalSlots > 0) {
+      const allSlotDates = await Slot.find().select("date").limit(5);
+      console.log(
+        `⚠️ [listSlots] Sample slot dates in DB:`,
+        allSlotDates.map((s) => s.date)
+      );
+    }
 
     return sendSuccess(res, 200, "Slots fetched", {
       count: slots.length,

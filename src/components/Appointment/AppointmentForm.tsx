@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { XMarkIcon, CheckIcon } from "@heroicons/react/24/outline";
+import { useLocation } from "react-router-dom";
 import {
   vehiclesAPI,
   techniciansAPI,
@@ -51,12 +52,47 @@ interface PendingAppointment {
 
 interface AppointmentFormProps {
   onCancel: () => void;
+  followUpData?: {
+    isFollowUp?: boolean;
+    baseAppointmentId?: string;
+    baseAppointmentNumber?: string;
+    followUpReason?: string;
+    followUpNotes?: string;
+    vehicleId?: string;
+  } | null;
 }
 
 // Constant for selected services to prevent re-creation on every render
 const SELECTED_SERVICES = [{ serviceId: "BOOK001", category: "general" }];
 
-const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
+const AppointmentForm: React.FC<AppointmentFormProps> = ({
+  onCancel,
+  followUpData,
+}) => {
+  const location = useLocation();
+
+  // Use followUpData from props (passed from AppointmentsPage) or fallback to location.state
+  const locationState = location.state as {
+    isFollowUp?: boolean;
+    baseAppointmentId?: string;
+    baseAppointmentNumber?: string;
+    followUpReason?: string;
+    followUpNotes?: string;
+    vehicleId?: string;
+  } | null;
+
+  const followUpState = followUpData || locationState;
+
+  // Debug: Log the follow-up state when component mounts
+  useEffect(() => {
+    if (followUpState?.isFollowUp) {
+      console.log(
+        "✅ [AppointmentForm] Follow-up state received:",
+        followUpState
+      );
+    }
+  }, [followUpState]);
+
   const [loading, setLoading] = useState(false);
   const [checkingVehicle, setCheckingVehicle] = useState(false);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -73,12 +109,17 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
   const [pendingAppointment, setPendingAppointment] =
     useState<PendingAppointment | null>(null);
 
+  // NEW: Pre-booking state for far-future dates
+  const [isFarFuture, setIsFarFuture] = useState(false);
+  const [requestedTimeRange, setRequestedTimeRange] =
+    useState<string>("morning");
+
   const [formData, setFormData] = useState({
-    vehicleId: "",
+    vehicleId: followUpState?.vehicleId || "", // Pre-fill from follow-up
     services: ["BOOK001"],
     scheduledDate: "",
     scheduledTime: "",
-    customerNotes: "",
+    customerNotes: followUpState?.followUpNotes || "", // Pre-fill notes
     priority: "normal",
     technicianId: null as string | null,
   });
@@ -107,11 +148,31 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
   useEffect(() => {
     if (!formData.scheduledDate) {
       setSlots([]);
+      setIsFarFuture(false);
       if (!paymentVerified) {
         setSelectedSlotId(null);
         setFormData((prev) => ({ ...prev, scheduledTime: "" }));
       }
       return;
+    }
+
+    // NEW: Check if selected date is far-future (>30 days from now)
+    const selectedDate = new Date(formData.scheduledDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const daysDifference = Math.ceil(
+      (selectedDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    const FAR_FUTURE_THRESHOLD = 30; // days
+
+    if (daysDifference > FAR_FUTURE_THRESHOLD) {
+      setIsFarFuture(true);
+      setSlots([]);
+      setSelectedSlotId(null);
+      setFormData((prev) => ({ ...prev, scheduledTime: "" }));
+      return;
+    } else {
+      setIsFarFuture(false);
     }
 
     const fetchSlots = async () => {
@@ -222,8 +283,8 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
       const techniciansData = Array.isArray(response.data?.data)
         ? response.data.data
         : Array.isArray(response.data)
-        ? response.data
-        : [];
+          ? response.data
+          : [];
 
       const mappedTechnicians = techniciansData.map((tech: unknown) => {
         const techObj = tech as Record<string, unknown>;
@@ -332,8 +393,8 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
     setLoading(true);
 
     try {
-      // Reserve slot first (don't create appointment yet)
-      if (selectedSlotId && !reservedSlotId) {
+      // Reserve slot first (don't create appointment yet) - SKIP if pre-booking
+      if (selectedSlotId && !reservedSlotId && !isFarFuture) {
         try {
           const r = await slotsAPI.reserve(selectedSlotId);
           setReservedSlotId(r.data?.data?._id || selectedSlotId);
@@ -351,12 +412,23 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
       const appointmentData = {
         vehicleId: formData.vehicleId,
         scheduledDate: formData.scheduledDate,
-        scheduledTime: formData.scheduledTime,
+        scheduledTime: isFarFuture ? "" : formData.scheduledTime, // Empty if pre-booking
         customerNotes: formData.customerNotes,
         priority: formData.priority,
         technicianId: formData.technicianId,
-        slotId: selectedSlotId,
+        slotId: isFarFuture ? null : selectedSlotId, // Null if pre-booking
         services: [], // Empty services for deposit booking
+        // NEW: Follow-up params
+        ...(followUpState?.isFollowUp && {
+          baseAppointmentId: followUpState.baseAppointmentId,
+          followUpReason: followUpState.followUpReason,
+          followUpNotes: followUpState.followUpNotes,
+        }),
+        // NEW: Pre-booking params
+        ...(isFarFuture && {
+          isPreBooked: true,
+          requestedTimeRange: requestedTimeRange,
+        }),
       };
 
       // Create payment for deposit (appointment will be created after payment success)
@@ -402,9 +474,8 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
   const checkVehicleBookingStatus = async (vehicleId: string) => {
     setCheckingVehicle(true);
     try {
-      const response = await appointmentsAPI.checkVehicleBookingStatus(
-        vehicleId
-      );
+      const response =
+        await appointmentsAPI.checkVehicleBookingStatus(vehicleId);
       const data = response.data?.data;
 
       if (data?.hasPendingAppointments) {
@@ -440,9 +511,23 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.vehicleId || !formData.scheduledDate || !selectedSlotId) {
-      toast.error("Vui lòng điền đầy đủ thông tin");
-      return;
+    // NEW: Validation - different for pre-booking vs normal booking
+    if (isFarFuture) {
+      // Pre-booking validation (no slot required)
+      if (
+        !formData.vehicleId ||
+        !formData.scheduledDate ||
+        !requestedTimeRange
+      ) {
+        toast.error("Vui lòng điền đầy đủ thông tin");
+        return;
+      }
+    } else {
+      // Normal booking validation (slot required)
+      if (!formData.vehicleId || !formData.scheduledDate || !selectedSlotId) {
+        toast.error("Vui lòng điền đầy đủ thông tin");
+        return;
+      }
     }
 
     // Check vehicle booking status before proceeding
@@ -588,6 +673,56 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
         <div className="flex-1 overflow-y-auto px-6 py-6">
           {currentStep === "input" ? (
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* NEW: Follow-up Banner */}
+              {followUpState?.isFollowUp && (
+                <div className="bg-purple-900 bg-opacity-20 border-2 border-purple-500 rounded-xl p-4 shadow-lg">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg
+                        className="w-6 h-6 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 10V3L4 14h7v7l9-11h-7z"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-lg font-bold text-white">
+                        Đặt lịch Follow-up
+                      </h4>
+                      <p className="text-sm text-purple-200 mt-1">
+                        Lịch hẹn gốc:{" "}
+                        <span className="font-semibold text-purple-100">
+                          #{followUpState.baseAppointmentNumber}
+                        </span>
+                      </p>
+                      <p className="text-sm text-purple-200 mt-1">
+                        Lý do:{" "}
+                        <span className="font-semibold text-purple-100">
+                          {followUpState.followUpReason === "warranty_issue"
+                            ? "Vấn đề bảo hành"
+                            : followUpState.followUpReason ===
+                                "additional_service"
+                              ? "Dịch vụ bổ sung"
+                              : followUpState.followUpReason ===
+                                  "periodic_maintenance"
+                                ? "Bảo dưỡng định kỳ"
+                                : followUpState.followUpReason ===
+                                    "unsatisfied_result"
+                                  ? "Không hài lòng kết quả"
+                                  : "Lý do khác"}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
               {/* Vehicle & Date Section */}
               <div className="bg-dark-900 rounded-xl p-5 space-y-4">
                 <h4 className="font-semibold text-white flex items-center">
@@ -646,8 +781,97 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                 </div>
               </div>
 
-              {/* Time Slots Section */}
-              {formData.scheduledDate && slots.length > 0 && (
+              {/* NEW: TimeRange Selector for Far-Future Dates */}
+              {formData.scheduledDate && isFarFuture && (
+                <div className="bg-dark-900 rounded-xl p-5">
+                  <div className="bg-blue-900 bg-opacity-20 border border-blue-500 rounded-lg p-3 mb-4">
+                    <div className="flex items-start space-x-2">
+                      <svg
+                        className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <div className="flex-1">
+                        <p className="text-sm text-blue-200 font-medium">
+                          Ngày đã chọn quá xa trong tương lai (&gt;30 ngày)
+                        </p>
+                        <p className="text-xs text-blue-300 mt-1">
+                          Slot chưa được tạo. Vui lòng chọn buổi mong muốn,
+                          staff sẽ phân công slot sau.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <h4 className="font-semibold text-white mb-4 flex items-center">
+                    <svg
+                      className="w-5 h-5 mr-2 text-lime-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    Chọn buổi mong muốn{" "}
+                    <span className="text-red-600 ml-1">*</span>
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      {
+                        value: "morning",
+                        label: "Buổi sáng",
+                        time: "8:00 - 12:00",
+                        icon: "🌅",
+                      },
+                      {
+                        value: "afternoon",
+                        label: "Buổi chiều",
+                        time: "13:00 - 17:00",
+                        icon: "☀️",
+                      },
+                    ].map((range) => (
+                      <button
+                        key={range.value}
+                        type="button"
+                        onClick={() => setRequestedTimeRange(range.value)}
+                        disabled={paymentVerified}
+                        className={`p-4 rounded-lg border-2 transition-all duration-200 transform hover:scale-105 ${
+                          requestedTimeRange === range.value
+                            ? "border-lime-600 bg-lime-600 text-dark-900 shadow-md font-semibold"
+                            : "border-dark-200 hover:border-blue-300 bg-dark-300 text-text-secondary hover:shadow-sm"
+                        }`}
+                      >
+                        <div className="text-2xl mb-2">{range.icon}</div>
+                        <div className="text-base font-bold">{range.label}</div>
+                        <div
+                          className={`text-xs mt-1 ${
+                            requestedTimeRange === range.value
+                              ? "text-dark-900"
+                              : "text-text-muted"
+                          }`}
+                        >
+                          {range.time}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Time Slots Section - Only for near-future dates */}
+              {formData.scheduledDate && !isFarFuture && slots.length > 0 && (
                 <div className="bg-dark-900 rounded-xl p-5">
                   <h4 className="font-semibold text-white mb-4 flex items-center">
                     <svg
@@ -687,8 +911,8 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                             isSelected
                               ? "border-lime-600 bg-lime-600 text-dark-900 shadow-md font-semibold hover:bg-dark-9000"
                               : isAvailable
-                              ? "border-dark-200 hover:border-blue-300 bg-dark-300 text-text-secondary hover:shadow-sm"
-                              : "border-dark-200 bg-dark-100 text-text-muted cursor-not-allowed opacity-60"
+                                ? "border-dark-200 hover:border-blue-300 bg-dark-300 text-text-secondary hover:shadow-sm"
+                                : "border-dark-200 bg-dark-100 text-text-muted cursor-not-allowed opacity-60"
                           }`}
                         >
                           <div className="text-base font-bold">
@@ -710,7 +934,9 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                 </div>
               )}
 
+              {/* Show "No slots" warning only for near-future dates with no slots */}
               {formData.scheduledDate &&
+                !isFarFuture &&
                 formData.services.length > 0 &&
                 slots.length === 0 && (
                   <div className="bg-dark-300 border-l-4 border-blue-400 rounded-lg p-4">
@@ -728,7 +954,8 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                       </svg>
                       <p className="text-sm text-text-secondary">
                         Không có khung giờ khả dụng cho ngày này. Vui lòng chọn
-                        ngày khác.
+                        ngày khác hoặc chọn ngày xa hơn (&gt;30 ngày) để đặt
+                        trước.
                       </p>
                     </div>
                   </div>
@@ -872,7 +1099,8 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                   disabled={
                     !formData.vehicleId ||
                     !formData.scheduledDate ||
-                    !selectedSlotId ||
+                    (!isFarFuture && !selectedSlotId) || // Only require slot if NOT pre-booking
+                    (isFarFuture && !requestedTimeRange) || // Require time range if pre-booking
                     loading ||
                     checkingVehicle
                   }
@@ -912,6 +1140,70 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
           ) : (
             // Step 2: Confirmation View
             <div className="space-y-6">
+              {/* Follow-up Banner in Confirmation */}
+              {followUpState?.isFollowUp && (
+                <div className="bg-purple-900 bg-opacity-20 border-2 border-purple-500 rounded-xl p-4 shadow-lg">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg
+                        className="w-6 h-6 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 10V3L4 14h7v7l9-11h-7z"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-lg font-bold text-white">
+                        Đặt lịch Follow-up
+                      </h4>
+                      <p className="text-sm text-purple-200 mt-1">
+                        Lịch hẹn gốc:{" "}
+                        <span className="font-semibold">
+                          #{followUpState.baseAppointmentNumber}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Pre-booking Banner in Confirmation */}
+              {isFarFuture && (
+                <div className="bg-blue-900 bg-opacity-20 border-2 border-blue-500 rounded-xl p-4 shadow-lg">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg
+                        className="w-6 h-6 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-lg font-bold text-white">
+                        Đặt lịch trước (Pre-booking)
+                      </h4>
+                      <p className="text-sm text-blue-200 mt-1">
+                        Slot chưa được tạo. Staff sẽ phân công slot cho bạn sau
+                        khi thanh toán.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Confirmation Card */}
               <div className="bg-dark-300 rounded-xl p-6 space-y-5 shadow-sm">
                 <div className="flex items-center space-x-2 mb-4">
@@ -1043,14 +1335,25 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                         />
                       </svg>
                       <h5 className="text-sm text-text-muted text-text-muted">
-                        Khung giờ
+                        {isFarFuture ? "Buổi mong muốn" : "Khung giờ"}
                       </h5>
                     </div>
                     <p className="text-lg font-semibold text-white">
-                      {selectedSlot &&
-                        utcToVietnameseDateTime(new Date(selectedSlot.start))
-                          .time}
+                      {isFarFuture
+                        ? requestedTimeRange === "morning"
+                          ? "Buổi sáng (8:00 - 12:00)"
+                          : requestedTimeRange === "afternoon"
+                            ? "Buổi chiều (13:00 - 17:00)"
+                            : "Buổi tối (17:00 - 20:00)"
+                        : selectedSlot &&
+                          utcToVietnameseDateTime(new Date(selectedSlot.start))
+                            .time}
                     </p>
+                    {isFarFuture && (
+                      <p className="text-xs text-blue-400 mt-1">
+                        Staff sẽ phân công slot cụ thể sau
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -1215,7 +1518,9 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onCancel }) => {
                         </svg>
                       </div>
                       <div>
-                        <p className="text-sm text-text-secondary">Tổng thanh toán</p>
+                        <p className="text-sm text-text-secondary">
+                          Tổng thanh toán
+                        </p>
                         <p className="text-3xl font-bold text-white">
                           {calculateTotalAmount().toLocaleString("vi-VN")} ₫
                         </p>
