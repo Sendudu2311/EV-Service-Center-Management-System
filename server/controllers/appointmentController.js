@@ -1097,6 +1097,25 @@ export const updateAppointment = async (req, res) => {
     // Update completion time if status changed to completed
     if (updates.status === "completed" && !appointment.actualCompletion) {
       appointment.actualCompletion = new Date();
+
+      // Reset vehicle maintenance counter when appointment is completed
+      try {
+        const vehicle = await Vehicle.findById(appointment.vehicleId);
+        if (vehicle) {
+          // Update last maintenance date to now
+          vehicle.lastMaintenanceDate = new Date();
+
+          // Recalculate next maintenance date based on the new last maintenance date
+          vehicle.calculateNextMaintenance();
+
+          await vehicle.save();
+
+          console.log(`Vehicle ${vehicle._id} maintenance counter reset. Next maintenance: ${vehicle.nextMaintenanceDate}`);
+        }
+      } catch (vehicleError) {
+        // Log error but don't fail the appointment update
+        console.error('Error updating vehicle maintenance date:', vehicleError);
+      }
     }
 
     await appointment.save();
