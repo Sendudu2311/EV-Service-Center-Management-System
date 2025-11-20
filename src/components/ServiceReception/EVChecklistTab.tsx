@@ -392,10 +392,10 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
         return (
           <div
             key={category}
-            className="bg-dark-300 border border-dark-200 rounded-lg overflow-hidden"
+            className="bg-dark-800 border border-lime-600/30 rounded-lg overflow-hidden"
           >
             {/* Category Header */}
-            <div className="bg-dark-900 px-4 py-3 border-b border-dark-200">
+            <div className="bg-dark-900 px-4 py-3 border-b border-lime-600/30">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   {getCategoryIcon(category)}
@@ -403,18 +403,18 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
                     {getCategoryLabel(category)}
                   </h4>
                 </div>
-                <span className="text-xs text-text-secondary">
+                <span className="text-xs text-lime-600 font-medium">
                   {categoryProgress.checked}/{categoryProgress.total}
                 </span>
               </div>
             </div>
 
             {/* Category Items */}
-            <div className="divide-y divide-gray-100">
+            <div className="p-3 space-y-3">
               {categoryItems.map((item) => (
                 <div
                   key={item.id}
-                  className="px-4 py-3 hover:bg-dark-900 transition-colors"
+                  className="bg-dark-900 rounded-lg p-4 border border-dark-200 hover:border-lime-600/50 transition-colors"
                 >
                   <div className="flex items-start space-x-3">
                     {/* Checkbox */}
@@ -425,29 +425,29 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
                         handleCheckChange(item.id, e.target.checked)
                       }
                       disabled={readOnly}
-                      className="mt-1 h-4 w-4 text-lime-600 focus:ring-lime-400 border-dark-300 rounded disabled:opacity-50"
+                      className="mt-1 h-5 w-5 text-lime-600 focus:ring-lime-400 border-dark-300 rounded disabled:opacity-50"
                     />
 
                     {/* Item Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm text-text-muted text-white">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-white">
                           {item.label}
-                        </label>
-                        {getStatusIcon(item.status)}
+                        </span>
+                        {item.checked && getStatusIcon(item.status)}
                       </div>
 
                       {/* Status Buttons */}
-                      {item.checked && (
-                        <div className="mt-2 flex items-center space-x-2">
+                      {item.checked && !readOnly && (
+                        <div className="flex items-center space-x-2 mb-2">
                           <button
                             type="button"
                             onClick={() => handleStatusChange(item.id, "good")}
                             disabled={readOnly}
-                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                            className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${
                               item.status === "good"
-                                ? "bg-dark-300 text-green-600 text-text-muted"
-                                : "bg-dark-100 text-text-secondary hover:bg-dark-200"
+                                ? "bg-green-600/20 text-green-400 border border-green-600/50"
+                                : "bg-dark-100 text-text-secondary hover:bg-dark-200 border border-dark-200"
                             } disabled:opacity-50`}
                           >
                             Tốt
@@ -458,10 +458,10 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
                               handleStatusChange(item.id, "warning")
                             }
                             disabled={readOnly}
-                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                            className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${
                               item.status === "warning"
-                                ? "bg-dark-300 text-yellow-600 text-text-muted"
-                                : "bg-dark-100 text-text-secondary hover:bg-dark-200"
+                                ? "bg-yellow-600/20 text-yellow-400 border border-yellow-600/50"
+                                : "bg-dark-100 text-text-secondary hover:bg-dark-200 border border-dark-200"
                             } disabled:opacity-50`}
                           >
                             Cảnh báo
@@ -472,10 +472,10 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
                               handleStatusChange(item.id, "critical")
                             }
                             disabled={readOnly}
-                            className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                            className={`px-3 py-1.5 text-xs rounded-md font-medium transition-colors ${
                               item.status === "critical"
-                                ? "bg-dark-300 text-red-600 text-text-muted"
-                                : "bg-dark-100 text-text-secondary hover:bg-dark-200"
+                                ? "bg-red-600/20 text-red-400 border border-red-600/50"
+                                : "bg-dark-100 text-text-secondary hover:bg-dark-200 border border-dark-200"
                             } disabled:opacity-50`}
                           >
                             Nghiêm trọng
@@ -487,7 +487,7 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
                                 expandedNotes === item.id ? null : item.id
                               )
                             }
-                            className="text-xs text-lime-600 hover:text-lime-800"
+                            className="text-xs text-lime-600 hover:text-lime-400 font-medium"
                           >
                             {expandedNotes === item.id
                               ? "Ẩn ghi chú"
@@ -496,27 +496,29 @@ const EVChecklistTab: React.FC<EVChecklistTabProps> = ({
                         </div>
                       )}
 
-                      {/* Notes */}
-                      {item.checked && expandedNotes === item.id && (
+                      {/* Notes Textarea */}
+                      {item.checked && expandedNotes === item.id && !readOnly && (
                         <div className="mt-2">
                           <textarea
                             value={item.notes || ""}
                             onChange={(e) =>
                               handleNotesChange(item.id, e.target.value)
                             }
-                            disabled={readOnly}
                             placeholder="Ghi chú chi tiết..."
                             rows={2}
-                            className="w-full text-xs bg-dark-300 text-white border-dark-200 rounded-md shadow-sm focus:border-lime-400 focus:ring-lime-400 disabled:bg-dark-900 disabled:opacity-50"
+                            className="w-full text-xs bg-dark-300 text-white border border-dark-200 rounded-md shadow-sm focus:border-lime-400 focus:ring-lime-400 p-2"
                           />
                         </div>
                       )}
 
-                      {/* Display notes if exists and not editing */}
-                      {item.notes && expandedNotes !== item.id && (
-                        <p className="mt-1 text-xs text-text-secondary italic">
-                          {item.notes}
-                        </p>
+                      {/* Display Notes (readonly or collapsed) */}
+                      {item.checked && item.notes && (readOnly || expandedNotes !== item.id) && (
+                        <div className="mt-2 bg-dark-800 rounded-md p-3 border border-lime-600/20">
+                          <p className="text-xs text-text-secondary">
+                            <span className="text-lime-600 font-semibold">Ghi chú:</span>{" "}
+                            {item.notes}
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>
