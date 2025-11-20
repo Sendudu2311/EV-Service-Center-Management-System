@@ -13,11 +13,17 @@ export const getParts = async (req, res) => {
       year,
       search,
       inStock = true,
+      isActive,
       page = 1,
       limit = 20
     } = req.query;
 
-    let filter = { isActive: true };
+    let filter = {};
+
+    // Active status filter - only apply if explicitly provided
+    if (isActive !== undefined && isActive !== '') {
+      filter.isActive = isActive === 'true';
+    }
 
     // Category filter
     if (category) {

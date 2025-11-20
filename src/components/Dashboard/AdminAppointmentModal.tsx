@@ -461,7 +461,7 @@ const AdminAppointmentModal: React.FC<AdminAppointmentModalProps> = ({
                           className="flex justify-between items-center py-2 px-3 bg-dark-300 rounded border border-dark-200"
                         >
                           <div className="flex-1">
-                            <p className="text-sm text-white">{part.partId.name}</p>
+                            <p className="text-sm text-white">{part.partId?.name}</p>
                             <p className="text-xs text-text-muted">
                               {part.partId.partNumber} • Qty: {part.quantity}
                             </p>

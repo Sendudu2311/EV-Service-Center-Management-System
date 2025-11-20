@@ -126,8 +126,8 @@ const PartsList: React.FC<PartsListProps> = ({
       setLoading(true);
       const token = localStorage.getItem('token');
 
-      // Fetch all parts without pagination
-      const response = await fetch(`/api/parts?limit=1000`, {
+      // Fetch all parts without pagination - include both active and inactive
+      const response = await fetch(`/api/parts?limit=1000&isActive=`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

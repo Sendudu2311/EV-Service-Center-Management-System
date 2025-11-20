@@ -12,6 +12,113 @@ interface Message {
   blocked?: boolean;
 }
 
+// Simple markdown renderer for chatbot messages
+const renderMarkdown = (text: string): React.ReactNode => {
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+  let inList = false;
+  let listItems: React.ReactNode[] = [];
+
+  const processLine = (line: string, index: number) => {
+    // Handle lists
+    if (line.match(/^[\d]+\.\s+\*\*/)) {
+      // Numbered list with bold: "1. **Text**: description"
+      const match = line.match(/^(\d+)\.\s+\*\*([^*]+)\*\*:?\s*(.*)$/);
+      if (match) {
+        const [, num, boldText, rest] = match;
+        if (!inList) {
+          inList = true;
+          listItems = [];
+        }
+        listItems.push(
+          <li key={`list-${index}`} className="mb-2">
+            <strong className="text-lime-400">{boldText}:</strong>
+            {rest && <span className="ml-1">{rest}</span>}
+          </li>
+        );
+        return null;
+      }
+    }
+
+    // Regular numbered/bulleted lists
+    if (line.match(/^[\d]+\.\s+/) || line.match(/^[-•]\s+/)) {
+      const content = line.replace(/^[\d]+\.\s+/, '').replace(/^[-•]\s+/, '');
+      if (!inList) {
+        inList = true;
+        listItems = [];
+      }
+      listItems.push(
+        <li key={`list-${index}`} className="mb-1">{processInlineMarkdown(content)}</li>
+      );
+      return null;
+    }
+
+    // Close list if we were in one
+    if (inList && !line.match(/^[\d]+\.\s+/) && !line.match(/^[-•]\s+/)) {
+      const list = <ol key={`ol-${index}`} className="list-decimal list-inside space-y-1 my-2 ml-2">{listItems}</ol>;
+      elements.push(list);
+      inList = false;
+      listItems = [];
+    }
+
+    // Empty lines
+    if (!line.trim()) {
+      return <br key={`br-${index}`} />;
+    }
+
+    // Regular paragraphs
+    return <p key={`p-${index}`} className="mb-2">{processInlineMarkdown(line)}</p>;
+  };
+
+  const processInlineMarkdown = (text: string): React.ReactNode => {
+    const parts: React.ReactNode[] = [];
+    let currentIndex = 0;
+
+    // Process **bold** and emojis
+    const regex = /(\*\*[^*]+\*\*|⚡|✅|❌|⚠️|🔧|🔋|🚗|📅|🔄|📝)/g;
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+      // Add text before match
+      if (match.index > currentIndex) {
+        parts.push(text.substring(currentIndex, match.index));
+      }
+
+      const matched = match[0];
+
+      // Handle bold
+      if (matched.startsWith('**') && matched.endsWith('**')) {
+        const boldText = matched.slice(2, -2);
+        parts.push(<strong key={`bold-${match.index}`} className="font-bold text-lime-400">{boldText}</strong>);
+      } else {
+        // Emoji
+        parts.push(<span key={`emoji-${match.index}`} className="inline-block">{matched}</span>);
+      }
+
+      currentIndex = match.index + matched.length;
+    }
+
+    // Add remaining text
+    if (currentIndex < text.length) {
+      parts.push(text.substring(currentIndex));
+    }
+
+    return parts.length > 0 ? parts : text;
+  };
+
+  lines.forEach((line, index) => {
+    const element = processLine(line, index);
+    if (element) elements.push(element);
+  });
+
+  // Close any remaining list
+  if (inList && listItems.length > 0) {
+    elements.push(<ol key="ol-final" className="list-decimal list-inside space-y-1 my-2 ml-2">{listItems}</ol>);
+  }
+
+  return <div className="markdown-content">{elements}</div>;
+};
+
 interface EVChatbotProps {
   isOpen: boolean;
   onClose: () => void;
@@ -21,7 +128,7 @@ const EVChatbot: React.FC<EVChatbotProps> = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [language] = useState<'en' | 'vi'>('en'); // Can be extended to use context
+  const [language] = useState<'en' | 'vi'>('vi'); // Default Vietnamese
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -181,7 +288,9 @@ const EVChatbot: React.FC<EVChatbotProps> = ({ isOpen, onClose }) => {
                     ? 'bg-lime-600 text-dark-900 border-2 border-lime-600'
                     : 'bg-dark-300 text-white border-2 border-dark-200'
                   }`}>
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  <div className="text-sm">
+                    {message.role === 'assistant' ? renderMarkdown(message.content) : <p className="whitespace-pre-wrap">{message.content}</p>}
+                  </div>
                   <p className="text-xs mt-1 opacity-60">
                     {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
@@ -207,7 +316,7 @@ const EVChatbot: React.FC<EVChatbotProps> = ({ isOpen, onClose }) => {
                 <div className="bg-dark-300 rounded-lg p-3 border-2 border-dark-200">
                   <div className="flex items-center space-x-2 text-text-muted">
                     <Loader2 className="w-4 h-4 animate-spin text-lime-600" />
-                    <span className="text-sm">Generating response...</span>
+                    <span className="text-sm">{language === 'vi' ? 'Đang tạo câu trả lời...' : 'Generating response...'}</span>
                   </div>
                 </div>
               </div>
@@ -240,7 +349,7 @@ const EVChatbot: React.FC<EVChatbotProps> = ({ isOpen, onClose }) => {
             </button>
           </div>
           <p className="text-xs text-text-muted mt-2">
-            Ask about appointments, services, parts, or vehicle maintenance
+            {language === 'vi' ? 'Hỏi về lịch hẹn, dịch vụ, phụ tùng hoặc bảo dưỡng xe' : 'Ask about appointments, services, parts, or vehicle maintenance'}
           </p>
         </div>
       </div>
