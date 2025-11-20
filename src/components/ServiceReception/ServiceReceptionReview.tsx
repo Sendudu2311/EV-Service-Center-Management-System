@@ -328,7 +328,17 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
       });
       if (response.ok) {
         const data = await response.json();
-        setAvailableServices(data.data || []);
+        const allServices = data.data || [];
+
+        // Filter out services already in the reception
+        const existingServiceIds = editedServices.map(s =>
+          typeof s.serviceId === 'string' ? s.serviceId : s.serviceId._id
+        );
+        const filtered = allServices.filter((service: any) =>
+          !existingServiceIds.includes(service._id)
+        );
+
+        setAvailableServices(filtered);
       }
     } catch (error) {
       console.error('Error fetching services:', error);
@@ -349,7 +359,17 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
       });
       if (response.ok) {
         const data = await response.json();
-        setAvailableParts(data.data || []);
+        const allParts = data.data || [];
+
+        // Filter out parts already in the reception
+        const existingPartIds = editedParts.map(p =>
+          typeof p.partId === 'string' ? p.partId : p.partId._id
+        );
+        const filtered = allParts.filter((part: any) =>
+          !existingPartIds.includes(part._id)
+        );
+
+        setAvailableParts(filtered);
       }
     } catch (error) {
       console.error('Error fetching parts:', error);
@@ -1194,19 +1214,6 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                             + Thêm phụ tùng
                           </button>
                         )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Technician Note about External Parts */}
-                  {selectedReception.specialInstructions?.fromStaff && (
-                    <div className="mb-6">
-                      <h4 className="text-text-muted text-text-secondary mb-2 flex items-center gap-2">
-                        <span className="text-amber-500">📝</span>
-                        Ghi chú từ kỹ thuật viên
-                      </h4>
-                      <div className="bg-amber-50 border-2 border-amber-400 rounded-lg p-4 text-sm text-gray-900">
-                        <p className="whitespace-pre-wrap">{selectedReception.specialInstructions.fromStaff}</p>
                       </div>
                     </div>
                   )}
