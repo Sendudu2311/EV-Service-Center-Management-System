@@ -237,8 +237,9 @@ const EnhancedTechnicianDashboard: React.FC = () => {
       });
 
       // Ensure workQueueData is always an array
-      const workQueueData = Array.isArray(queueResponse.data?.data)
-        ? (queueResponse.data.data as WorkQueueItem[])
+      const responseData = queueResponse.data as any;
+      const workQueueData = Array.isArray(responseData?.appointments)
+        ? (responseData.appointments as WorkQueueItem[])
         : [];
 
       // Sort: active status first, then by priority and date

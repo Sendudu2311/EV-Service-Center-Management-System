@@ -384,19 +384,6 @@ const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
                       <Text style={{ fontSize: 10, fontWeight: '600', color: '#065f46' }}>✓ Đã duyệt</Text>
                     </View>
                   )}
-                  {part.isAvailable ? (
-                    <View style={{ backgroundColor: '#dbeafe', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
-                      <Text style={{ fontSize: 10, fontWeight: '600', color: '#1e40af' }}>
-                        ✓ Có sẵn ({part.availableQuantity || 0})
-                      </Text>
-                    </View>
-                  ) : (
-                    <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
-                      <Text style={{ fontSize: 10, fontWeight: '600', color: '#92400e' }}>
-                        ⚠ {part.shortfall ? `Thiếu ${part.shortfall}` : 'Chưa có'}
-                      </Text>
-                    </View>
-                  )}
                   <Text style={styles.partQuantity}>x{part.quantity}</Text>
                 </View>
                 <Text style={styles.partNumber}>Mã: {part.partNumber}</Text>

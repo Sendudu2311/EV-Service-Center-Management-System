@@ -137,11 +137,6 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
     });
   };
 
-  // Handle view work progress
-  const handleViewProgress = () => {
-    navigation.navigate('WorkProgress', { appointmentId });
-  };
-
   // Handle complete work
   const handleCompleteWork = () => {
     navigation.navigate('CompleteService', { appointmentId });
@@ -179,50 +174,6 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
       style: 'currency',
       currency: 'VND',
     }).format(amount);
-  };
-
-  // Get order status text
-  const getOrderStatusText = (status: string) => {
-    const statusMap: Record<string, string> = {
-      ordered: 'Đã đặt hàng',
-      in_transit: 'Đang vận chuyển',
-      delivered: 'Đã giao',
-      cancelled: 'Đã hủy',
-      pending: 'Chờ đặt hàng',
-    };
-    return statusMap[status] || status;
-  };
-
-  // Get order status badge style
-  const getOrderStatusBadgeStyle = (status: string) => {
-    switch (status) {
-      case 'delivered':
-        return { backgroundColor: '#D1FAE5' };
-      case 'in_transit':
-        return { backgroundColor: '#DBEAFE' };
-      case 'ordered':
-        return { backgroundColor: '#FEF3C7' };
-      case 'cancelled':
-        return { backgroundColor: '#FEE2E2' };
-      default:
-        return { backgroundColor: '#F3F4F6' };
-    }
-  };
-
-  // Get order status text style
-  const getOrderStatusTextStyle = (status: string) => {
-    switch (status) {
-      case 'delivered':
-        return { color: '#065F46' };
-      case 'in_transit':
-        return { color: '#1E40AF' };
-      case 'ordered':
-        return { color: '#92400E' };
-      case 'cancelled':
-        return { color: '#991B1B' };
-      default:
-        return { color: '#374151' };
-    }
   };
 
   // Loading state
@@ -297,20 +248,12 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
 
     if (status === 'in_progress') {
       return (
-        <View style={styles.buttonGroup}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.secondaryButton, { flex: 1, marginRight: 8 }]}
-            onPress={handleViewProgress}
-          >
-            <Text style={styles.secondaryButtonText}>📊 Tiến độ</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.successButton, { flex: 1 }]}
-            onPress={handleCompleteWork}
-          >
-            <Text style={styles.actionButtonText}>✅ Hoàn thành</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.successButton]}
+          onPress={handleCompleteWork}
+        >
+          <Text style={styles.actionButtonText}>✅ Hoàn thành</Text>
+        </TouchableOpacity>
       );
     }
 
@@ -541,11 +484,6 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
               <View key={index} style={styles.externalPartItem}>
                 <View style={styles.serviceHeader}>
                   <Text style={styles.serviceName}>{part.partName}</Text>
-                  <View style={[styles.badge, getOrderStatusBadgeStyle(part.orderStatus)]}>
-                    <Text style={[styles.badgeText, getOrderStatusTextStyle(part.orderStatus)]}>
-                      {getOrderStatusText(part.orderStatus)}
-                    </Text>
-                  </View>
                 </View>
                 <Text style={styles.serviceDetail}>Mã: {part.partNumber}</Text>
                 <Text style={styles.serviceDetail}>
@@ -619,19 +557,6 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
                         <Text style={[styles.badgeText, { color: '#065F46' }]}>✓ Đã duyệt</Text>
                       </View>
                     )}
-                    {part.isAvailable ? (
-                      <View style={[styles.badge, styles.badgeAvailable]}>
-                        <Text style={[styles.badgeText, { color: '#1E40AF' }]}>
-                          ✓ Có sẵn ({part.availableQuantity || 0})
-                        </Text>
-                      </View>
-                    ) : (
-                      <View style={[styles.badge, styles.badgeWarning]}>
-                        <Text style={[styles.badgeText, { color: '#92400E' }]}>
-                          ⚠ {part.shortfall ? `Thiếu ${part.shortfall}` : 'Chưa có'}
-                        </Text>
-                      </View>
-                    )}
                   </View>
                   <View style={{ marginTop: 4 }}>
                     <Text style={styles.serviceDetail}>
@@ -651,52 +576,6 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
               })}
             </>
           )}
-
-          {/* Total at bottom of card */}
-          {(() => {
-            // Calculate total from displayed services and approved+available parts only
-            let total = 0;
-
-            // Add services cost
-            if (appointment.services && appointment.services.length > 0) {
-              total += appointment.services.reduce((sum: number, service: any) => {
-                return sum + (service.price || 0) * (service.quantity || 1);
-              }, 0);
-            }
-
-            // Add ONLY approved and available parts cost
-            if (serviceReception && serviceReception.requestedParts && serviceReception.requestedParts.length > 0) {
-              total += serviceReception.requestedParts
-                .filter((part: any) => part.isApproved && part.isAvailable)
-                .reduce((sum: number, part: any) => {
-                  return sum + (part.estimatedCost || 0) * (part.quantity || 1);
-                }, 0);
-            }
-
-            // Add 10% VAT
-            const subtotal = total;
-            const tax = subtotal * 0.1;
-            const grandTotal = subtotal + tax;
-
-            if (grandTotal <= 0) return null;
-
-            return (
-              <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#374151' }}>
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>Tạm tính:</Text>
-                  <Text style={styles.totalAmount}>{formatCurrency(subtotal)}</Text>
-                </View>
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>VAT (10%):</Text>
-                  <Text style={styles.totalAmount}>{formatCurrency(tax)}</Text>
-                </View>
-                <View style={[styles.totalRow, { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#374151' }]}>
-                  <Text style={[styles.totalLabel, { fontSize: 18, fontWeight: '700' }]}>Tổng cộng:</Text>
-                  <Text style={[styles.totalAmount, { fontSize: 20, fontWeight: '700' }]}>{formatCurrency(grandTotal)}</Text>
-                </View>
-              </View>
-            );
-          })()}
         </View>
         )}
       </ScrollView>
