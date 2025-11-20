@@ -980,23 +980,23 @@ export const approveServiceReception = async (req, res) => {
       });
       await appointment.save();
     } else if (appointment && !isApproved) {
-      // When rejected due to insufficient parts, set to parts_insufficient so customer knows the reason
-      appointment.status = "parts_insufficient";
+      // UPDATED: When rejected, return appointment to customer_arrived status
+      // This allows technician to create a new reception form with corrections
+      appointment.status = "customer_arrived";
 
-      // Store rejection reason for customer visibility
+      // Store rejection reason for technician visibility
       appointment.staffRejectionReason =
-        notes ||
-        "Parts insufficient or service cannot be completed at this time";
+        notes || "Service reception rejected by staff. Please review and resubmit.";
       appointment.rejectedAt = new Date();
       appointment.rejectedBy = req.user._id;
 
       appointment.workflowHistory.push({
-        status: "parts_insufficient",
+        status: "customer_arrived",
         changedBy: req.user._id,
         changedAt: new Date(),
         notes: `Service reception rejected by staff: ${
-          notes || "Parts insufficient"
-        }. Waiting for parts availability or customer decision.`,
+          notes || "Please review reception details and resubmit"
+        }. Appointment returned to customer_arrived for technician to create new reception.`,
       });
       await appointment.save();
     }
@@ -1054,14 +1054,16 @@ export const approveServiceReception = async (req, res) => {
       await serviceReception.save();
     }
 
-    // Detect conflicts for requested parts if approved
+    // REMOVED: Conflict detection logic - no longer using part conflict system
+    // Parts are now managed sequentially through first-come-first-served approval
+    // Staff approves receptions in order, and stock is deducted immediately
+    /* DISABLED - Part Conflict Detection
     if (
       isApproved &&
       serviceReception.requestedParts &&
       serviceReception.requestedParts.length > 0
     ) {
       try {
-        // Get unique part IDs from requested parts
         const partIds = [
           ...new Set(
             serviceReception.requestedParts
@@ -1070,16 +1072,12 @@ export const approveServiceReception = async (req, res) => {
           ),
         ];
 
-        // Check conflicts for each part
         const conflictPromises = partIds.map((partId) =>
           detectPartConflicts(partId)
         );
         const conflicts = await Promise.all(conflictPromises);
-
-        // Filter out null results (no conflicts)
         const detectedConflicts = conflicts.filter((c) => c !== null);
 
-        // Mark service reception if it has conflicts
         if (detectedConflicts.length > 0) {
           serviceReception.hasConflict = true;
           serviceReception.conflictIds = detectedConflicts.map((c) => c._id);
@@ -1090,6 +1088,7 @@ export const approveServiceReception = async (req, res) => {
         // Don't fail the approval if conflict detection fails
       }
     }
+    */ // END DISABLED - Part Conflict Detection
 
     const populatedReception = await ServiceReception.findById(
       serviceReception._id

@@ -39,7 +39,8 @@ import TermsOfServicePage from "./pages/TermsOfServicePage";
 import SecurityPage from "./pages/SecurityPage";
 import CareersPage from "./pages/CareersPage";
 import ContactManagementPage from "./pages/ContactManagementPage";
-import PartConflictManagementPage from "./pages/PartConflictManagementPage";
+// REMOVED: PartConflictManagementPage - no longer using part conflict system
+// import PartConflictManagementPage from "./pages/PartConflictManagementPage";
 
 function App() {
   return (
@@ -237,15 +238,7 @@ function App() {
                   }
                 />
 
-                {/* Part Conflict Management */}
-                <Route
-                  path="/part-conflicts"
-                  element={
-                    <ProtectedRoute roles={["staff", "admin"]}>
-                      <PartConflictManagementPage />
-                    </ProtectedRoute>
-                  }
-                />
+                {/* REMOVED: Part Conflict Management Route - no longer using part conflict system */}
 
                 {/* Admin routes */}
                 <Route

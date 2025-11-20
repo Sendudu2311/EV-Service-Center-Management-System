@@ -181,6 +181,109 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
   const [availableParts, setAvailableParts] = useState<any[]>([]);
   const [loadingCatalog, setLoadingCatalog] = useState(false);
 
+  // Part stock information
+  const [partStockInfo, setPartStockInfo] = useState<Map<string, { currentStock: number; loading: boolean }>>(new Map());
+
+  // Service details (to access commonParts)
+  const [serviceDetails, setServiceDetails] = useState<Map<string, any>>(new Map());
+
+  // Fetch stock info for parts
+  const fetchPartStockInfo = async (partIds: string[]) => {
+    if (partIds.length === 0) return;
+
+    try {
+      // Mark as loading
+      const loadingMap = new Map(partStockInfo);
+      partIds.forEach(id => {
+        loadingMap.set(id, { currentStock: 0, loading: true });
+      });
+      setPartStockInfo(loadingMap);
+
+      // Fetch all parts data
+      const response = await fetch('/api/parts?limit=1000', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const stockMap = new Map(partStockInfo);
+
+        // Update stock info for each part
+        partIds.forEach(partId => {
+          const partData = data.data?.find((p: any) => p._id === partId);
+          if (partData) {
+            stockMap.set(partId, {
+              currentStock: partData.inventory?.currentStock || 0,
+              loading: false
+            });
+          } else {
+            stockMap.set(partId, { currentStock: 0, loading: false });
+          }
+        });
+
+        setPartStockInfo(stockMap);
+      }
+    } catch (error) {
+      console.error('Error fetching part stock info:', error);
+      // Mark as not loading even on error
+      const errorMap = new Map(partStockInfo);
+      partIds.forEach(id => {
+        errorMap.set(id, { currentStock: 0, loading: false });
+      });
+      setPartStockInfo(errorMap);
+    }
+  };
+
+  // Fetch service details including common parts
+  const fetchServiceDetails = async (serviceIds: string[]) => {
+    if (serviceIds.length === 0) return;
+
+    try {
+      // Fetch services to get commonParts info
+      const response = await fetch('/api/services?limit=1000', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const services = data.data || [];
+
+        // Store service details
+        const detailsMap = new Map(serviceDetails);
+        const partIdsFromServices: string[] = [];
+
+        serviceIds.forEach(serviceId => {
+          const service = services.find((s: any) => s._id === serviceId);
+          if (service) {
+            detailsMap.set(serviceId, service);
+
+            // Collect part IDs from commonParts
+            if (service.commonParts) {
+              service.commonParts.forEach((cp: any) => {
+                if (cp.partId) {
+                  partIdsFromServices.push(cp.partId);
+                }
+              });
+            }
+          }
+        });
+
+        setServiceDetails(detailsMap);
+
+        // Fetch stock info for these parts
+        if (partIdsFromServices.length > 0) {
+          fetchPartStockInfo(partIdsFromServices);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching service details:', error);
+    }
+  };
+
   // Helper: Initialize editing state when modal opens
   const handleOpenReviewModal = (reception: ServiceReception) => {
     setSelectedReception(reception);
@@ -190,6 +293,24 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
     setModificationReason("");
     setIsEditingServices(false);
     setIsEditingParts(false);
+
+    // Fetch stock info for all parts in this reception
+    const partIds = (reception.requestedParts || [])
+      .map(p => typeof p.partId === 'object' ? p.partId._id : p.partId)
+      .filter(Boolean);
+
+    if (partIds.length > 0) {
+      fetchPartStockInfo(partIds);
+    }
+
+    // Fetch service details to get commonParts info
+    const serviceIds = (reception.recommendedServices || [])
+      .map(s => typeof s.serviceId === 'object' ? s.serviceId._id : s.serviceId)
+      .filter(Boolean);
+
+    if (serviceIds.length > 0) {
+      fetchServiceDetails(serviceIds);
+    }
   };
 
   // Helper: Detect if services were modified
@@ -317,6 +438,48 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
     return 'unchanged';
   };
 
+  // Helper: Get stock info for a part
+  const getPartStockInfo = (partId: string) => {
+    const info = partStockInfo.get(partId);
+    return info || { currentStock: 0, loading: false };
+  };
+
+  // Helper: Get common parts for a service
+  const getServiceCommonParts = (serviceId: string) => {
+    const service = serviceDetails.get(serviceId);
+    return service?.commonParts || [];
+  };
+
+  // Helper: Check if there are any parts with stock issues
+  const hasStockIssues = () => {
+    if (!selectedReception) return false;
+
+    // Check requested parts
+    const partsIssues = editedParts.some(part => {
+      const partId = typeof part.partId === 'object' ? part.partId._id : part.partId;
+      const stockInfo = getPartStockInfo(partId);
+      const isOutOfStock = !stockInfo.loading && stockInfo.currentStock === 0;
+      const isLowStock = !stockInfo.loading && stockInfo.currentStock > 0 && stockInfo.currentStock < part.quantity;
+      return isOutOfStock || isLowStock;
+    });
+
+    // Check service common parts
+    const servicePartsIssues = editedServices.some(service => {
+      const serviceId = typeof service.serviceId === 'object' ? service.serviceId._id : service.serviceId;
+      const commonParts = getServiceCommonParts(serviceId);
+
+      return commonParts.some((cp: any) => {
+        const stockInfo = getPartStockInfo(cp.partId);
+        const requiredQty = (cp.quantity || 1) * service.quantity;
+        const isOutOfStock = !stockInfo.loading && stockInfo.currentStock === 0;
+        const isLowStock = !stockInfo.loading && stockInfo.currentStock > 0 && stockInfo.currentStock < requiredQty;
+        return (isOutOfStock || isLowStock) && !cp.isOptional; // Only block if part is not optional
+      });
+    });
+
+    return partsIssues || servicePartsIssues;
+  };
+
   // Fetch services catalog
   const fetchServicesCatalog = async () => {
     try {
@@ -428,58 +591,10 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
         modifiedParts: editedParts
       } : null;
 
-      // Check for conflicts before approving - HARD BLOCK
-      if (decision === "approve") {
-        try {
-          const conflictCheck = await partConflictsAPI.checkReceptionConflicts(
-            selectedReception._id
-          );
-
-          if (conflictCheck.data.data?.hasConflict) {
-            const conflictCount = conflictCheck.data.data?.conflictCount || 0;
-            const conflicts = conflictCheck.data.data?.conflicts || [];
-
-            // Build conflict details message
-            const conflictParts = conflicts
-              .map((c: any) => `${c.partName} (${c.partNumber})`)
-              .join(", ");
-
-            // HARD BLOCK - Cannot approve if conflict exists
-            toast.error(
-              `Không thể duyệt phiếu tiếp nhận!\n\n` +
-                `Phiếu này có ${conflictCount} xung đột phụ tùng:\n` +
-                `${conflictParts}\n\n` +
-                `Vui lòng giải quyết xung đột trong tab "Quản lý xung đột" trước khi duyệt.`,
-              {
-                duration: 8000,
-                icon: "🚫",
-              }
-            );
-            setIsSubmitting(false);
-            return; // BLOCK approval completely
-          }
-        } catch (conflictError: any) {
-          console.error("Error checking conflicts:", conflictError);
-
-          // HARD BLOCK on API error too - cannot verify safety
-          const errorMsg =
-            conflictError.response?.data?.message ||
-            conflictError.message ||
-            "Lỗi kết nối";
-
-          toast.error(
-            `🚫 Không thể kiểm tra xung đột phụ tùng!\n\n` +
-              `Lỗi: ${errorMsg}\n\n` +
-              `Vui lòng thử lại hoặc liên hệ quản trị viên.`,
-            {
-              duration: 8000,
-              icon: "🚫",
-            }
-          );
-          setIsSubmitting(false);
-          return; // BLOCK approval on API error
-        }
-      }
+      // REMOVED: Part conflict checking logic
+      // New approach: Staff approves receptions sequentially (first-come-first-served)
+      // When staff approves a reception, parts stock is deducted immediately
+      // Subsequent receptions will naturally see reduced stock and receive warnings if insufficient
 
       await onReview(
         selectedReception._id,
@@ -549,11 +664,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
         {receptions.map((reception) => (
           <div
             key={reception._id}
-            className={`bg-dark-300 border rounded-lg shadow-sm hover:shadow-md transition-all ${
-              (reception as any).hasConflict
-                ? "border-red-500 border-2 bg-red-900/10"
-                : "border-dark-200"
-            }`}
+            className="bg-dark-300 border border-dark-200 rounded-lg shadow-sm hover:shadow-md transition-all"
           >
             <div className="p-6">
               {/* Header */}
@@ -567,41 +678,15 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                       Lịch hẹn #{reception.appointmentId.appointmentNumber}
                     </p>
                   </div>
-                  {(reception as any).hasConflict && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-600 text-white animate-pulse">
-                      <ExclamationTriangleIcon className="h-4 w-4 mr-1" />
-                      Xung đột phụ tùng
-                    </span>
-                  )}
+                  {/* REMOVED: Conflict badge - no longer using part conflict system */}
                 </div>
-                {(reception as any).hasConflict ? (
-                  <div className="text-yellow-400 text-sm flex items-center">
-                    <ExclamationTriangleIcon className="h-4 w-4 mr-1" />
-                    <span>
-                      Có xung đột phụ tùng.{" "}
-                      <button
-                        onClick={() => handleOpenReviewModal(reception)}
-                        className="text-blue-400 underline hover:text-blue-300"
-                      >
-                        Xem chi tiết
-                      </button>{" "}
-                      hoặc{" "}
-                      <a
-                        href="/part-conflicts"
-                        className="text-blue-400 underline hover:text-blue-300"
-                      >
-                        giải quyết xung đột
-                      </a>
-                    </span>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => handleOpenReviewModal(reception)}
-                    className="text-lime-600 hover:text-lime-700 text-sm text-text-muted"
-                  >
-                    Xem chi tiết & duyệt
-                  </button>
-                )}
+                {/* REMOVED: Conflict warning - approve directly without conflict checking */}
+                <button
+                  onClick={() => handleOpenReviewModal(reception)}
+                  className="text-lime-600 hover:text-lime-700 text-sm text-text-muted"
+                >
+                  Xem chi tiết & duyệt
+                </button>
               </div>
 
               {/* Basic Info */}
@@ -672,16 +757,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                         <h4 className="text-text-muted text-text-secondary text-sm">
                           Phụ tùng yêu cầu
                         </h4>
-                        {(reception as any).hasConflict && (
-                          <Link
-                            to="/part-conflicts"
-                            className="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold text-yellow-100 bg-yellow-600 hover:bg-yellow-700"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <ExclamationTriangleIcon className="h-3 w-3 mr-1" />
-                            Có xung đột phụ tùng
-                          </Link>
-                        )}
+                        {/* REMOVED: Conflict badge - no longer showing conflict warnings */}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {reception.requestedParts.map((part, index) => (
@@ -965,6 +1041,24 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                       {editedServices && editedServices.length > 0 ? (
                         editedServices.map((service, index) => {
                           const status = getServiceStatus(service);
+                          const serviceId = typeof service.serviceId === 'object' ? service.serviceId._id : service.serviceId;
+                          const commonParts = getServiceCommonParts(serviceId);
+
+                          // Check if any common parts are out of stock or low stock
+                          const partsStockIssues = commonParts
+                            .map((cp: any) => {
+                              const stockInfo = getPartStockInfo(cp.partId);
+                              const requiredQty = (cp.quantity || 1) * service.quantity;
+                              return {
+                                partName: cp.partName,
+                                requiredQty,
+                                stockInfo,
+                                isOutOfStock: !stockInfo.loading && stockInfo.currentStock === 0,
+                                isLowStock: !stockInfo.loading && stockInfo.currentStock > 0 && stockInfo.currentStock < requiredQty,
+                              };
+                            })
+                            .filter((p: any) => p.isOutOfStock || p.isLowStock);
+
                           const bgColorClass =
                             status === 'added' ? 'bg-green-100 dark:bg-green-900/30 border-green-500' :
                             status === 'modified' ? 'bg-yellow-100 dark:bg-yellow-900/30 border-yellow-500' :
@@ -978,12 +1072,22 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                               }`}
                             >
                               <div className="flex justify-between items-start mb-1">
-                                <span className="text-text-muted flex-1">
-                                  {status === 'added' && <span className="text-green-600 mr-1">🟢</span>}
-                                  {status === 'modified' && <span className="text-yellow-600 mr-1">🟡</span>}
-                                  {service.serviceName}
-                                </span>
-                                <div className="text-right">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-text-muted">
+                                      {status === 'added' && <span className="text-green-600 mr-1">🟢</span>}
+                                      {status === 'modified' && <span className="text-yellow-600 mr-1">🟡</span>}
+                                      {service.serviceName}
+                                    </span>
+                                    {/* Show warning if service has parts with stock issues */}
+                                    {partsStockIssues.length > 0 && (
+                                      <span className="text-xs px-2 py-0.5 rounded bg-orange-900/30 text-orange-400 font-semibold">
+                                        ⚠️ {partsStockIssues.length} part thiếu
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="text-right ml-4">
                                   {(() => {
                                     const duration =
                                       typeof service.serviceId === "object"
@@ -996,7 +1100,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                     ) : null;
                                   })()}
                                   {service.estimatedCost && (
-                                    <div className="text-lime-600 text-text-muted">
+                                    <div className="text-lime-600">
                                       {(
                                         service.estimatedCost * service.quantity
                                       ).toLocaleString("vi-VN")}{" "}
@@ -1038,6 +1142,48 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                               {service.reason && (
                                 <div className="text-text-muted text-xs mt-1">
                                   Lý do: {service.reason}
+                                </div>
+                              )}
+
+                              {/* Show common parts if any */}
+                              {commonParts.length > 0 && (
+                                <div className="mt-2 pt-2 border-t border-dark-200">
+                                  <div className="text-xs text-text-secondary mb-1 font-semibold">
+                                    🔧 Parts thường dùng cho dịch vụ này:
+                                  </div>
+                                  <div className="space-y-1">
+                                    {commonParts.map((cp: any, cpIndex: number) => {
+                                      const stockInfo = getPartStockInfo(cp.partId);
+                                      const requiredQty = (cp.quantity || 1) * service.quantity;
+                                      const isOutOfStock = !stockInfo.loading && stockInfo.currentStock === 0;
+                                      const isLowStock = !stockInfo.loading && stockInfo.currentStock > 0 && stockInfo.currentStock < requiredQty;
+
+                                      return (
+                                        <div key={cpIndex} className="flex items-center gap-2 text-xs bg-dark-900/50 p-1.5 rounded">
+                                          <span className="text-text-muted flex-1">
+                                            • {cp.partName} {cp.isOptional && '(tùy chọn)'} - Cần: {requiredQty}
+                                          </span>
+                                          {stockInfo.loading ? (
+                                            <span className="px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">
+                                              ...
+                                            </span>
+                                          ) : isOutOfStock ? (
+                                            <span className="px-1.5 py-0.5 rounded bg-red-900/30 text-red-400 font-semibold">
+                                              ⚠️ Hết (0)
+                                            </span>
+                                          ) : isLowStock ? (
+                                            <span className="px-1.5 py-0.5 rounded bg-yellow-900/30 text-yellow-400 font-semibold">
+                                              ⚠️ Kho: {stockInfo.currentStock}
+                                            </span>
+                                          ) : (
+                                            <span className="px-1.5 py-0.5 rounded bg-green-900/30 text-green-400">
+                                              ✓ Kho: {stockInfo.currentStock}
+                                            </span>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
                                 </div>
                               )}
 
@@ -1108,6 +1254,11 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                       <div className="space-y-2">
                         {editedParts.map((part, index) => {
                           const status = getPartStatus(part);
+                          const partId = typeof part.partId === 'object' ? part.partId._id : part.partId;
+                          const stockInfo = getPartStockInfo(partId);
+                          const isOutOfStock = !stockInfo.loading && stockInfo.currentStock === 0;
+                          const isLowStock = !stockInfo.loading && stockInfo.currentStock > 0 && stockInfo.currentStock < part.quantity;
+
                           const bgColorClass =
                             status === 'added' ? 'bg-green-100 dark:bg-green-900/30 border-green-500' :
                             status === 'modified' ? 'bg-yellow-100 dark:bg-yellow-900/30 border-yellow-500' :
@@ -1121,12 +1272,39 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                               }`}
                             >
                               <div className="flex justify-between items-start mb-1">
-                                <span className="text-text-muted flex-1">
-                                  {status === 'added' && <span className="text-green-600 mr-1">🟢</span>}
-                                  {status === 'modified' && <span className="text-yellow-600 mr-1">🟡</span>}
-                                  {part.partName}
-                                </span>
-                                <div className="text-right">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-text-muted">
+                                      {status === 'added' && <span className="text-green-600 mr-1">🟢</span>}
+                                      {status === 'modified' && <span className="text-yellow-600 mr-1">🟡</span>}
+                                      {part.partName}
+                                    </span>
+                                    {/* Stock info badge */}
+                                    {stockInfo.loading ? (
+                                      <span className="text-xs px-2 py-0.5 rounded bg-gray-200 text-gray-600">
+                                        Loading...
+                                      </span>
+                                    ) : isOutOfStock ? (
+                                      <span className="text-xs px-2 py-0.5 rounded bg-red-900/30 text-red-400 font-semibold">
+                                        ⚠️ Hết hàng (0)
+                                      </span>
+                                    ) : isLowStock ? (
+                                      <span className="text-xs px-2 py-0.5 rounded bg-yellow-900/30 text-yellow-400 font-semibold">
+                                        ⚠️ Kho: {stockInfo.currentStock} (cần {part.quantity})
+                                      </span>
+                                    ) : (
+                                      <span className="text-xs px-2 py-0.5 rounded bg-green-900/30 text-green-400">
+                                        ✓ Kho: {stockInfo.currentStock}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {part.partNumber && (
+                                    <div className="text-xs text-text-secondary mt-0.5">
+                                      #{part.partNumber}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="text-right ml-4">
                                   <div className="text-purple-600 text-text-muted">
                                     {(
                                       (part.estimatedCost || 0) *
@@ -1177,6 +1355,20 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                               {status === 'added' && (
                                 <div className="text-green-600 text-xs mt-1 italic">
                                   ✨ Phụ tùng mới thêm
+                                </div>
+                              )}
+
+                              {/* Out of stock warning */}
+                              {isOutOfStock && (
+                                <div className="mt-2 p-2 bg-red-900/20 border border-red-500/30 rounded text-xs text-red-400">
+                                  <strong>⚠️ Cảnh báo:</strong> Phụ tùng này hiện đã hết hàng trong kho. Cần đặt hàng từ nhà cung cấp hoặc thêm vào danh sách linh kiện đặt ngoài.
+                                </div>
+                              )}
+
+                              {/* Low stock warning */}
+                              {isLowStock && (
+                                <div className="mt-2 p-2 bg-yellow-900/20 border border-yellow-500/30 rounded text-xs text-yellow-400">
+                                  <strong>⚠️ Cảnh báo:</strong> Số lượng trong kho ({stockInfo.currentStock}) không đủ so với yêu cầu ({part.quantity}). Thiếu {part.quantity - stockInfo.currentStock} cái.
                                 </div>
                               )}
                             </div>
@@ -1378,54 +1570,68 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-end space-x-4 mt-8 pt-6 border-t">
-              <button
-                onClick={() => setSelectedReception(null)}
-                className="px-6 py-2 border border-dark-200 rounded-md text-text-secondary hover:bg-dark-900"
-              >
-                Đóng
-              </button>
-              {(selectedReception as any)?.hasConflict ? (
-                <div className="flex items-center text-yellow-400 text-sm px-4 py-2 bg-yellow-900/20 rounded-md border border-yellow-600/30">
-                  <ExclamationTriangleIcon className="h-5 w-5 mr-2" />
-                  <span>
-                    Không thể duyệt do có xung đột phụ tùng.{" "}
-                    <a
-                      href="/part-conflicts"
-                      className="text-blue-400 underline hover:text-blue-300 font-semibold"
-                    >
-                      Hãy qua tab Quản lý xung đột để giải quyết
-                    </a>
-                  </span>
+            <div className="flex flex-col items-end mt-8 pt-6 border-t">
+              {/* Stock issue warning */}
+              {hasStockIssues() && (
+                <div className="w-full mb-4 p-3 bg-red-900/20 border border-red-500/30 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <ExclamationTriangleIcon className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="text-red-400 font-semibold mb-1">
+                        Không thể duyệt - Phụ tùng thiếu hàng
+                      </h4>
+                      <p className="text-red-300 text-sm">
+                        Có phụ tùng trong phiếu hoặc dịch vụ đang thiếu hàng trong kho.
+                        Vui lòng xử lý một trong các cách sau:
+                      </p>
+                      <ul className="text-red-300 text-sm mt-2 ml-4 list-disc space-y-1">
+                        <li>Xóa hoặc giảm số lượng phụ tùng thiếu trong tab "Chỉnh sửa"</li>
+                        <li>Thêm phụ tùng thiếu vào danh sách "Linh kiện đặt ngoài"</li>
+                        <li>Hoặc từ chối phiếu và yêu cầu kỹ thuật viên cập nhật lại</li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
-              ) : (
-                <>
-                  <button
-                    onClick={() => handleReviewSubmit("reject")}
-                    disabled={isSubmitting}
-                    className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 flex items-center"
-                  >
-                    {isSubmitting ? (
-                      <ClockIcon className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <XMarkIcon className="w-4 h-4 mr-2" />
-                    )}
-                    Từ chối
-                  </button>
-                  <button
-                    onClick={() => handleReviewSubmit("approve")}
-                    disabled={isSubmitting}
-                    className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center"
-                  >
-                    {isSubmitting ? (
-                      <ClockIcon className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <CheckCircleIcon className="w-4 h-4 mr-2" />
-                    )}
-                    Duyệt
-                  </button>
-                </>
               )}
+
+              <div className="flex items-center justify-end space-x-4 w-full">
+                <button
+                  onClick={() => setSelectedReception(null)}
+                  className="px-6 py-2 border border-dark-200 rounded-md text-text-secondary hover:bg-dark-900"
+                >
+                  Đóng
+                </button>
+                <button
+                  onClick={() => handleReviewSubmit("reject")}
+                  disabled={isSubmitting}
+                  className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 flex items-center"
+                >
+                  {isSubmitting ? (
+                    <ClockIcon className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <XMarkIcon className="w-4 h-4 mr-2" />
+                  )}
+                  Từ chối
+                </button>
+                <button
+                  onClick={() => handleReviewSubmit("approve")}
+                  disabled={isSubmitting || hasStockIssues()}
+                  className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center relative group"
+                  title={hasStockIssues() ? "Không thể duyệt vì có phụ tùng thiếu hàng" : ""}
+                >
+                  {isSubmitting ? (
+                    <ClockIcon className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <CheckCircleIcon className="w-4 h-4 mr-2" />
+                  )}
+                  Duyệt
+                  {hasStockIssues() && !isSubmitting && (
+                    <span className="ml-2">
+                      <ExclamationTriangleIcon className="w-4 h-4 text-yellow-300" />
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

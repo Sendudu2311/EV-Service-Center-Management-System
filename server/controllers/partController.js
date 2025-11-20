@@ -246,6 +246,11 @@ export const reserveParts = async (req, res) => {
       part.inventory.currentStock -= partReq.quantity;
       part.inventory.reservedStock += partReq.quantity;
 
+      // Auto-deactivate if currentStock reaches 0
+      if (part.inventory.currentStock === 0 && part.isActive) {
+        part.isActive = false;
+      }
+
       // Add reservation record
       part.inventory.reservations.push({
         appointmentId,
@@ -411,10 +416,19 @@ export const useReservedParts = async (req, res) => {
       if (quantityNotUsed > 0) {
         // Return unused parts to stock
         part.inventory.currentStock += quantityNotUsed;
+        // Auto-activate if stock becomes available
+        if (part.inventory.currentStock > 0 && !part.isActive) {
+          part.isActive = true;
+        }
       }
 
       part.inventory.reservedStock -= reservation.quantity;
       part.inventory.usedStock += usedPart.quantityUsed;
+
+      // Check if currentStock is now 0 after this operation
+      if (part.inventory.currentStock === 0 && part.isActive) {
+        part.isActive = false;
+      }
 
       // Update usage statistics
       part.inventory.averageUsage = Math.round(
@@ -619,9 +633,14 @@ export const adjustPartStock = async (req, res) => {
     }
 
     const previousStock = part.inventory.currentStock;
+    const wasActive = part.isActive;
 
     if (type === 'add') {
       part.inventory.currentStock += Math.abs(quantity);
+      // Auto-activate part when stock is added
+      if (part.inventory.currentStock > 0 && !part.isActive) {
+        part.isActive = true;
+      }
     } else if (type === 'remove') {
       if (part.inventory.currentStock < Math.abs(quantity)) {
         return res.status(400).json({
@@ -630,6 +649,10 @@ export const adjustPartStock = async (req, res) => {
         });
       }
       part.inventory.currentStock -= Math.abs(quantity);
+      // Auto-deactivate part when stock reaches 0
+      if (part.inventory.currentStock === 0 && part.isActive) {
+        part.isActive = false;
+      }
     }
 
     // Add to stock history (if we implement this feature later)
@@ -646,14 +669,18 @@ export const adjustPartStock = async (req, res) => {
 
     await part.save();
 
+    const statusChanged = wasActive !== part.isActive;
+
     res.status(200).json({
       success: true,
-      message: `Stock ${type === 'add' ? 'added' : 'removed'} successfully`,
+      message: `Stock ${type === 'add' ? 'added' : 'removed'} successfully${statusChanged ? '. Part status updated automatically.' : ''}`,
       data: {
         partId: part._id,
         previousStock,
         newStock: part.inventory.currentStock,
-        adjustment: type === 'add' ? quantity : -quantity
+        adjustment: type === 'add' ? quantity : -quantity,
+        isActive: part.isActive,
+        statusChanged
       }
     });
   } catch (error) {

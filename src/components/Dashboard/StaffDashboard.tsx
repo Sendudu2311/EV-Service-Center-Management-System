@@ -230,9 +230,7 @@ const StaffDashboard: React.FC = () => {
     if (activeTab === "completed-approval") {
       fetchCompletedAppointments();
     }
-    if (activeTab === "parts-insufficient") {
-      fetchPartsInsufficientAppointments();
-    }
+    // REMOVED: fetchPartsInsufficientAppointments - no longer using this workflow
   }, [activeTab]);
 
   const fetchDashboardData = async () => {
@@ -538,11 +536,7 @@ const StaffDashboard: React.FC = () => {
                       {pendingReceptions.length}
                     </span>
                   )}
-                  {conflictCount > 0 && (
-                    <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-yellow-100 bg-yellow-600 rounded-full">
-                      {conflictCount} xung đột
-                    </span>
-                  )}
+                  {/* REMOVED: Conflict count badge - no longer using part conflict system */}
                 </div>
               </button>
               <button
@@ -583,24 +577,7 @@ const StaffDashboard: React.FC = () => {
                   )}
                 </div>
               </button>
-              <button
-                onClick={() => setActiveTab("parts-insufficient")}
-                className={`px-4 py-2 rounded-md text-sm text-text-muted transition-colors ${
-                  activeTab === "parts-insufficient"
-                    ? "bg-dark-300 text-amber-600 shadow-sm"
-                    : "text-text-muted hover:text-text-secondary"
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <ExclamationCircleIcon className="h-4 w-4" />
-                  <span>Thiếu phụ tùng</span>
-                  {partsInsufficientAppointments.length > 0 && (
-                    <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-amber-100 bg-amber-600 rounded-full">
-                      {partsInsufficientAppointments.length}
-                    </span>
-                  )}
-                </div>
-              </button>
+              {/* REMOVED: Parts Insufficient Tab - no longer using this workflow */}
             </div>
           </div>
         </div>
@@ -981,29 +958,7 @@ const StaffDashboard: React.FC = () => {
         {activeTab === "reception-review" && (
           // Reception Review Tab Content
           <>
-            {/* Conflict Alert Banner */}
-            {conflictCount > 0 && (
-              <div className="mb-6 bg-yellow-600 border border-yellow-500 rounded-lg p-4 flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <ExclamationTriangleIcon className="h-6 w-6 text-yellow-100" />
-                  <div>
-                    <p className="text-sm font-semibold text-yellow-100">
-                      Có {conflictCount} xung đột phụ tùng cần giải quyết
-                    </p>
-                    <p className="text-xs text-yellow-200 mt-1">
-                      Nhiều đơn hàng đang yêu cầu cùng một phụ tùng nhưng kho
-                      không đủ
-                    </p>
-                  </div>
-                </div>
-                <Link
-                  to="/part-conflicts"
-                  className="px-4 py-2 bg-yellow-700 hover:bg-yellow-800 text-white rounded-md text-sm font-semibold transition-colors"
-                >
-                  Giải quyết ngay
-                </Link>
-              </div>
-            )}
+            {/* REMOVED: Conflict Alert Banner - No longer using part conflict system */}
 
             <ServiceReceptionReview
               receptions={pendingReceptions}
@@ -1225,159 +1180,7 @@ const StaffDashboard: React.FC = () => {
           </div>
         )}
 
-        {activeTab === "parts-insufficient" && (
-          // Parts Insufficient Tab Content
-          <div className="bg-dark-300 shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg leading-6 text-white">
-                  Lịch hẹn thiếu phụ tùng
-                </h3>
-                <button
-                  onClick={fetchPartsInsufficientAppointments}
-                  disabled={partsInsufficientLoading}
-                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs rounded text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-amber-500 disabled:opacity-50"
-                >
-                  {partsInsufficientLoading ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
-                    <>
-                      <RefreshCw className="h-4 w-4 mr-1" />
-                      Làm mới
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {partsInsufficientLoading ? (
-                <div className="flex justify-center items-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
-                </div>
-              ) : partsInsufficientAppointments.length === 0 ? (
-                <div className="text-center py-12">
-                  <ExclamationCircleIcon className="mx-auto h-12 w-12 text-text-muted" />
-                  <h3 className="mt-2 text-sm text-text-muted">
-                    Không có lịch hẹn thiếu phụ tùng
-                  </h3>
-                  <p className="mt-1 text-sm text-text-muted">
-                    Tất cả phụ tùng đã có sẵn
-                  </p>
-                </div>
-              ) : (
-                <div className="overflow-hidden">
-                  <ul className="divide-y divide-dark-200">
-                    {partsInsufficientAppointments.map((appointment: any) => {
-                      const serviceReception = appointment.serviceReceptionId;
-                      const insufficientParts = serviceReception?.requestedParts?.filter(
-                        (part: any) => !part.isApproved
-                      ) || [];
-
-                      return (
-                        <li key={appointment._id} className="py-4">
-                          <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center space-x-3">
-                                  <div className="flex-shrink-0">
-                                    <span className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-amber-600">
-                                      <span className="text-xs text-white font-bold truncate px-1">
-                                        #{appointment.appointmentNumber}
-                                      </span>
-                                    </span>
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm text-white truncate">
-                                      {appointment.customerId?.firstName}{" "}
-                                      {appointment.customerId?.lastName}
-                                    </p>
-                                    <p className="text-xs text-text-muted">
-                                      {appointment.vehicleId?.make}{" "}
-                                      {appointment.vehicleId?.model} -{" "}
-                                      {appointment.vehicleId?.licensePlate}
-                                    </p>
-                                    <p className="text-xs text-text-muted mt-1">
-                                      <Clock className="inline h-3 w-3 mr-1" />
-                                      {appointment.scheduledDate
-                                        ? `${format(
-                                            new Date(appointment.scheduledDate),
-                                            "dd/MM/yyyy"
-                                          )} ${appointment.scheduledTime || ""}`
-                                        : "N/A"}
-                                    </p>
-                                    {appointment.staffRejectionReason && (
-                                      <p className="text-xs text-amber-400 mt-1">
-                                        Lý do từ chối: {appointment.staffRejectionReason}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="ml-4 flex-shrink-0">
-                                <button
-                                  onClick={() => handleApprovePartsAvailable(appointment._id)}
-                                  disabled={actionLoading === appointment._id}
-                                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm rounded text-dark-900 bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-amber-500 disabled:opacity-50 transition-all duration-200 transform hover:scale-105"
-                                >
-                                  {actionLoading === appointment._id ? (
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-dark-900"></div>
-                                  ) : (
-                                    <>
-                                      <CheckCircle className="h-4 w-4 mr-2" />
-                                      Duyệt phụ tùng có sẵn
-                                    </>
-                                  )}
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Insufficient Parts List */}
-                            {insufficientParts.length > 0 && (
-                              <div className="ml-14 bg-amber-900/20 border border-amber-600/30 rounded-lg p-3">
-                                <h5 className="text-xs font-semibold text-amber-400 mb-2 flex items-center">
-                                  <ExclamationCircleIcon className="h-4 w-4 mr-1" />
-                                  Phụ tùng còn thiếu ({insufficientParts.length})
-                                </h5>
-                                <div className="space-y-2">
-                                  {insufficientParts.map((part: any, idx: number) => (
-                                    <div key={idx} className="flex justify-between items-start text-xs">
-                                      <div className="flex-1">
-                                        <p className="text-white font-medium">
-                                          {part.partId?.name || part.partName || "N/A"}
-                                        </p>
-                                        <p className="text-text-muted">
-                                          Mã: {part.partId?.partNumber || part.partNumber || "N/A"}
-                                        </p>
-                                        {part.reason && (
-                                          <p className="text-amber-300 mt-1">
-                                            Lý do: {part.reason}
-                                          </p>
-                                        )}
-                                      </div>
-                                      <div className="text-right ml-4">
-                                        <p className="text-white">
-                                          SL: {part.quantity}
-                                        </p>
-                                        {part.partId?.inventory && (
-                                          <p className="text-text-muted">
-                                            Tồn: {part.partId.inventory.currentStock || 0}
-                                          </p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        {/* REMOVED: Parts Insufficient Tab Content - no longer using this workflow */}
       </div>
 
       {/* NEW WORKFLOW: Reception Payment Modal */}

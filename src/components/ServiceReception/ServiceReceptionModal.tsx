@@ -253,13 +253,17 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
     }
   }, [isOpen]);
 
-  // Load available parts from API
+  // Load available parts from API - FILTER OUT parts with stock = 0
   useEffect(() => {
     const loadParts = async () => {
       try {
         setLoadingParts(true);
         const response = await partsAPI.getAll();
-        setAvailableParts(response.data.data || []);
+        // Filter to only show parts with current stock > 0
+        const partsInStock = (response.data.data || []).filter(
+          (part: any) => (part.inventory?.currentStock || 0) > 0
+        );
+        setAvailableParts(partsInStock);
       } catch (error) {
         console.error("Error loading parts:", error);
       } finally {
