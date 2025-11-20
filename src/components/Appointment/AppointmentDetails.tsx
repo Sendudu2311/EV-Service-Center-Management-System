@@ -453,6 +453,11 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                         const vatAmount = subtotal * 0.1;
                         const totalWithVAT = subtotal + vatAmount;
 
+                        // Check if we have actual service/parts (not just initial booking)
+                        const hasActualServices = appointment.partsUsed?.length > 0 ||
+                          appointment.serviceReceptionId?.externalParts?.length > 0 ||
+                          ["reception_approved", "in_progress", "completed", "invoiced"].includes(appointment.status);
+
                         return (
                           <>
                             {/* Services Subtotal */}
@@ -503,21 +508,7 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                               </span>
                             </div>
 
-                            {/* Deposit */}
-                            {appointment.depositInfo &&
-                              appointment.depositInfo.paid &&
-                              appointment.depositInfo.amount && (
-                                <div className="flex justify-between items-center text-sm border-t border-dark-200 pt-2">
-                                  <span className="text-text-muted">
-                                    Đã đặt cọc:
-                                  </span>
-                                  <span className="text-green-600">
-                                    -{formatVND(appointment.depositInfo.amount)}
-                                  </span>
-                                </div>
-                              )}
-
-                            {/* Total */}
+                            {/* Total (always show) */}
                             <div className="flex justify-between items-center pt-2 border-t border-dark-200">
                               <span className="text-base font-semibold text-white">
                                 Tổng cộng:
@@ -527,21 +518,33 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
                               </span>
                             </div>
 
-                            {/* Remaining Amount */}
-                            {appointment.depositInfo &&
+                            {/* Deposit and Remaining - only show when there's actual service progress */}
+                            {hasActualServices &&
+                              appointment.depositInfo &&
                               appointment.depositInfo.paid &&
                               appointment.depositInfo.amount && (
-                                <div className="flex justify-between items-center text-sm">
-                                  <span className="text-text-muted">
-                                    Còn phải trả:
-                                  </span>
-                                  <span className="text-orange-500 font-semibold">
-                                    {formatVND(
-                                      totalWithVAT -
-                                        appointment.depositInfo.amount
-                                    )}
-                                  </span>
-                                </div>
+                                <>
+                                  <div className="flex justify-between items-center text-sm border-t border-dark-200 pt-2">
+                                    <span className="text-text-muted">
+                                      Đã đặt cọc:
+                                    </span>
+                                    <span className="text-green-600">
+                                      -{formatVND(appointment.depositInfo.amount)}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex justify-between items-center text-sm">
+                                    <span className="text-text-muted">
+                                      Còn phải trả:
+                                    </span>
+                                    <span className="text-orange-500 font-semibold">
+                                      {formatVND(
+                                        totalWithVAT -
+                                          appointment.depositInfo.amount
+                                      )}
+                                    </span>
+                                  </div>
+                                </>
                               )}
                           </>
                         );
@@ -697,6 +700,7 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({
       <FollowUpModal
         isOpen={showFollowUpModal}
         onClose={() => setShowFollowUpModal(false)}
+        onCloseParent={onClose}
         baseAppointment={{
           _id: appointment._id,
           appointmentNumber: appointment.appointmentNumber,

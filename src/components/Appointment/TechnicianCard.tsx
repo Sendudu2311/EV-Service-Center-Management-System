@@ -136,35 +136,14 @@ const TechnicianCard: React.FC<TechnicianCardProps> = ({
       </div>
 
       {/* Availability Status */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between gap-2">
-          <span
-            className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold border ${getAvailabilityColor(
-              technician.availability.status
-            )}`}
-          >
-            <span
-              className={`w-2 h-2 rounded-full mr-2 ${
-                technician.availability.status === "available"
-                  ? "bg-emerald-500 animate-pulse"
-                  : technician.availability.status === "busy"
-                  ? "bg-amber-500"
-                  : "bg-dark-400"
-              }`}
-            />
-            {getAvailabilityText(technician.availability.status)}
-          </span>
-          <span className="text-xs bg-dark-300 text-text-secondary px-3 py-1.5 rounded-lg">
-            {Math.round(technician.availability.workloadPercentage)}% workload
-          </span>
-        </div>
-        {!isAvailableForSlot && (
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-text-muted text-red-600 bg-dark-300 px-3 py-2 rounded-lg border border-red-600">
+      {!isAvailableForSlot && (
+        <div className="mb-4">
+          <div className="flex items-center gap-1.5 text-xs text-red-600 bg-red-900/20 px-3 py-2 rounded-lg border border-red-600">
             <ClockIcon className="w-4 h-4 flex-shrink-0" />
             Not available for selected time slot
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Performance Metrics */}
       <div className="grid grid-cols-3 gap-2 mb-4">
