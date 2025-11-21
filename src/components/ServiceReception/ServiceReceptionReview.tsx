@@ -204,8 +204,8 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
       });
       setPartStockInfo(loadingMap);
 
-      // Fetch all parts data
-      const response = await fetch("/api/parts?limit=1000", {
+      // Fetch all parts data - include out of stock parts for accurate inventory check
+      const response = await fetch("/api/parts?limit=1000&inStock=false", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -213,31 +213,81 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        const stockMap = new Map(); // ✅ FIX: Create new Map instead of copying old state
 
-        // Update stock info for each part
-        partIds.forEach((partId) => {
-          const partData = data.data?.find((p: any) => p._id === partId);
-          if (partData) {
-            stockMap.set(partId, {
-              currentStock: partData.inventory?.currentStock || 0,
-              loading: false,
-            });
-          } else {
-            stockMap.set(partId, { currentStock: 0, loading: false });
-          }
+        console.log("🔍 [fetchPartStockInfo] API Response:", {
+          totalParts: data.data?.length || 0,
+          requestedPartIds: partIds,
         });
 
-        setPartStockInfo(stockMap);
+        // ✅ FIX: Use functional update to avoid stale closure
+        setPartStockInfo((prevMap) => {
+          const stockMap = new Map(prevMap);
+
+          // Update stock info for each part
+          partIds.forEach((partId) => {
+            const partData = data.data?.find((p: any) => p._id === partId);
+
+            if (!partData) {
+              console.error(
+                `❌ [fetchPartStockInfo] Part ${partId} NOT FOUND in API response!`
+              );
+              console.log(
+                "   Available part IDs in response:",
+                data.data?.map((p: any) => p._id).slice(0, 10)
+              );
+            } else {
+              console.log(`✅ [fetchPartStockInfo] Found part ${partId}:`, {
+                _id: partData._id,
+                name: partData.name,
+                inventory: partData.inventory,
+                currentStock: partData.inventory?.currentStock,
+              });
+            }
+
+            if (partData) {
+              stockMap.set(partId, {
+                currentStock: partData.inventory?.currentStock || 0,
+                loading: false,
+              });
+            } else {
+              console.warn(
+                `⚠️ [fetchPartStockInfo] Part ${partId} not found in API response!`
+              );
+              stockMap.set(partId, { currentStock: 0, loading: false });
+            }
+          });
+
+          console.log(
+            "🔍 [fetchPartStockInfo] Final stockMap:",
+            Array.from(stockMap.entries()).map(([id, info]) => ({
+              id,
+              currentStock: info.currentStock,
+              loading: info.loading,
+            }))
+          );
+          console.log("🔍 [fetchPartStockInfo] Requested part IDs:", partIds);
+          console.log(
+            "🔍 [fetchPartStockInfo] Map size before update:",
+            prevMap.size
+          );
+          console.log(
+            "🔍 [fetchPartStockInfo] Map size after update:",
+            stockMap.size
+          );
+
+          return stockMap;
+        });
       }
     } catch (error) {
       console.error("Error fetching part stock info:", error);
-      // Mark as not loading even on error
-      const errorMap = new Map(); // ✅ FIX: Create new Map instead of copying old state
-      partIds.forEach((id) => {
-        errorMap.set(id, { currentStock: 0, loading: false });
+      // Mark as not loading even on error, merge with existing data
+      setPartStockInfo((prevMap) => {
+        const errorMap = new Map(prevMap);
+        partIds.forEach((id) => {
+          errorMap.set(id, { currentStock: 0, loading: false });
+        });
+        return errorMap;
       });
-      setPartStockInfo(errorMap);
     }
   };
 
@@ -270,7 +320,10 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
             if (service.commonParts) {
               service.commonParts.forEach((cp: any) => {
                 if (cp.partId) {
-                  partIdsFromServices.push(cp.partId);
+                  // Normalize partId - could be string or populated object
+                  const partId =
+                    typeof cp.partId === "object" ? cp.partId._id : cp.partId;
+                  partIdsFromServices.push(partId);
                 }
               });
             }
@@ -578,7 +631,10 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
       const commonParts = getServiceCommonParts(serviceId);
 
       return commonParts.some((cp: any) => {
-        const stockInfo = getPartStockInfo(cp.partId);
+        // Normalize partId - could be string or populated object
+        const partId =
+          typeof cp.partId === "object" ? cp.partId._id : cp.partId;
+        const stockInfo = getPartStockInfo(partId);
         const requiredQty = (cp.quantity || 1) * service.quantity;
         const isOutOfStock = !stockInfo.loading && stockInfo.currentStock === 0;
         const isLowStock =
@@ -588,7 +644,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
         if ((isOutOfStock || isLowStock) && !cp.isOptional) {
           console.log(
-            `🔍 [hasStockIssues] Service common part issue: ${cp.partId}`
+            `🔍 [hasStockIssues] Service common part issue: ${partId}`
           );
           console.log(
             `   currentStock: ${stockInfo.currentStock}, required: ${requiredQty}, optional: ${cp.isOptional}`

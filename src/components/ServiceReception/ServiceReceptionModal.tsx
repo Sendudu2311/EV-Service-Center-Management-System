@@ -259,12 +259,12 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
       try {
         setLoadingParts(true);
         const response = await partsAPI.getAll();
-        
+
         // Filter to only show parts with current stock > 0
         const partsInStock = (response.data.data || []).filter(
           (part: any) => (part.inventory?.currentStock || 0) > 0
         );
-        
+
         setAvailableParts(partsInStock);
       } catch (error) {
         console.error("Error loading parts:", error);
@@ -300,8 +300,6 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
       ...formData,
       estimatedServiceTime: totalTime,
     };
-
-
 
     await onSubmit(updatedFormData);
   };
@@ -869,7 +867,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                               const selectedPart = availableParts.find(
                                 (p) => p._id === e.target.value
                               );
-                              
+
                               const newParts = [...formData.requestedParts];
                               newParts[index] = {
                                 ...part,
@@ -884,7 +882,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                                 availableQuantity:
                                   selectedPart?.inventory?.currentStock || 0,
                               };
-                              
+
                               setFormData((prev) => ({
                                 ...prev,
                                 requestedParts: newParts,
