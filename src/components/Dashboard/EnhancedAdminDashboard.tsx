@@ -760,10 +760,17 @@ const AnalyticsTab: React.FC<{
         >
           <h3 className="text-sm text-text-secondary">Completion Rate</h3>
           <p className="text-3xl font-bold text-white mt-2">
-            {analyticsData.stats.completionRate}%
+            {analyticsData.stats.totalAppointmentsCount > 0
+              ? Math.round(
+                  (analyticsData.stats.completedAndInvoicedCount /
+                    analyticsData.stats.totalAppointmentsCount) *
+                    100
+                )
+              : 0}
+            %
           </p>
           <p className="text-xs text-text-muted mt-1">
-            {analyticsData.stats.completedAppointments} completed
+            {analyticsData.stats.completedAndInvoicedCount}/{analyticsData.stats.totalAppointmentsCount} completed & invoiced
           </p>
         </div>
 
