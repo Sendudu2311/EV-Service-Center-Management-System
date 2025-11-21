@@ -32,43 +32,42 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const { user, token, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    // Disable Socket.io in production (Vercel deployment)
-    // Check both env and hostname to be absolutely sure
-    const isProd =
-      import.meta.env.PROD || window.location.hostname.includes("vercel.app");
+    // Get Socket.IO server URL based on environment
+    const getSocketUrl = () => {
+      if (import.meta.env.PROD) {
+        // Production: use same domain (backend handles CORS)
+        return "";
+      }
+      // Development: use localhost
+      return "http://localhost:3000";
+    };
 
     console.log("[SocketContext] Environment check:", {
       envProd: import.meta.env.PROD,
       hostname: window.location.hostname,
-      isProd,
+      socketUrl: getSocketUrl(),
       isAuthenticated,
     });
 
-    if (isProd) {
-      console.log(
-        "[SocketContext] Socket.io DISABLED - Production mode detected"
-      );
-      setSocket(null);
-      setIsConnected(false);
-      return;
-    }
-
     if (isAuthenticated && token && user) {
-      console.log("[SocketContext] Initializing Socket.io in development mode");
-      const socketInstance = io(
-        import.meta.env.VITE_API_URL ??
-          (import.meta.env.PROD ? "" : "http://localhost:3000"),
-        {
-          auth: {
-            token,
-            userId: user._id,
-            role: user.role,
-            // serviceCenterId removed - single center architecture
-          },
-          transports: ["websocket", "polling"],
-          timeout: 10000,
-        }
+      console.log(
+        `[SocketContext] Initializing Socket.io (${import.meta.env.PROD ? "production" : "development"} mode)`
       );
+      
+      const socketInstance = io(getSocketUrl(), {
+        auth: {
+          token,
+          userId: user._id,
+          role: user.role,
+          // serviceCenterId removed - single center architecture
+        },
+        transports: ["websocket", "polling"],
+        timeout: 10000,
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        reconnectionAttempts: 5,
+      });
 
       socketInstance.on("connect", () => {
         console.log("Socket connected:", socketInstance.id);
