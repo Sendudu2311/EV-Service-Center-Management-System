@@ -35,8 +35,10 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     // Get Socket.IO server URL based on environment
     const getSocketUrl = () => {
       if (import.meta.env.PROD) {
-        // Production: use same domain (backend handles CORS)
-        return "";
+        // Production: construct full URL with HTTPS
+        // Frontend and backend on same domain (Railway handles routing)
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        return `${protocol}//${window.location.host}`;
       }
       // Development: use localhost
       return "http://localhost:3000";
@@ -55,6 +57,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       );
 
       const socketInstance = io(getSocketUrl(), {
+        path: "/socket.io/",
         auth: {
           token,
           userId: user._id,
