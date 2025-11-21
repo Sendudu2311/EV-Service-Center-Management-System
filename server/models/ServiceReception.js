@@ -504,6 +504,10 @@ const serviceReceptionSchema = new mongoose.Schema(
       },
       reviewedAt: Date,
       reviewNotes: String,
+      customerDeclinedService: {
+        type: Boolean,
+        default: false,
+      },
       approvalDecision: {
         servicesApproved: [
           {

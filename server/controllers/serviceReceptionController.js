@@ -660,6 +660,7 @@ export const approveServiceReception = async (req, res) => {
       externalParts,
       extendedCompletionDate,
       modifications,
+      customerDeclinedService,
     } = req.body;
 
     // Support both old format (approved: boolean) and new format (decision: 'approved'/'rejected')
@@ -740,6 +741,7 @@ export const approveServiceReception = async (req, res) => {
     serviceReception.submissionStatus.reviewedBy = req.user._id;
     serviceReception.submissionStatus.reviewedAt = new Date();
     serviceReception.submissionStatus.reviewNotes = notes;
+    serviceReception.submissionStatus.customerDeclinedService = customerDeclinedService || false;
     serviceReception.updatedAt = new Date();
 
     // Auto-approve recommended services and available parts when staff approves
@@ -1003,24 +1005,42 @@ export const approveServiceReception = async (req, res) => {
       });
       await appointment.save();
     } else if (appointment && !isApproved) {
-      // UPDATED: When rejected, return appointment to customer_arrived status
-      // This allows technician to create a new reception form with corrections
-      appointment.status = "customer_arrived";
+      // Check if customer declined service
+      if (customerDeclinedService) {
+        // Customer does not want to proceed with service → Cancel appointment
+        appointment.status = "cancelled";
+        appointment.cancelledAt = new Date();
+        appointment.cancelledBy = req.user._id;
+        appointment.cancellationReason = notes || "Khách hàng không muốn thực hiện dịch vụ sau khi xem phiếu tiếp nhận";
 
-      // Store rejection reason for technician visibility
-      appointment.staffRejectionReason =
-        notes || "Service reception rejected by staff. Please review and resubmit.";
-      appointment.rejectedAt = new Date();
-      appointment.rejectedBy = req.user._id;
+        appointment.workflowHistory.push({
+          status: "cancelled",
+          changedBy: req.user._id,
+          changedAt: new Date(),
+          notes: `Appointment cancelled because customer declined service after reviewing reception form: ${
+            notes || "Customer chose not to proceed with service"
+          }`,
+        });
+      } else {
+        // Normal rejection → Return appointment to customer_arrived status
+        // This allows technician to create a new reception form with corrections
+        appointment.status = "customer_arrived";
 
-      appointment.workflowHistory.push({
-        status: "customer_arrived",
-        changedBy: req.user._id,
-        changedAt: new Date(),
-        notes: `Service reception rejected by staff: ${
-          notes || "Please review reception details and resubmit"
-        }. Appointment returned to customer_arrived for technician to create new reception.`,
-      });
+        // Store rejection reason for technician visibility
+        appointment.staffRejectionReason =
+          notes || "Service reception rejected by staff. Please review and resubmit.";
+        appointment.rejectedAt = new Date();
+        appointment.rejectedBy = req.user._id;
+
+        appointment.workflowHistory.push({
+          status: "customer_arrived",
+          changedBy: req.user._id,
+          changedAt: new Date(),
+          notes: `Service reception rejected by staff: ${
+            notes || "Please review reception details and resubmit"
+          }. Appointment returned to customer_arrived for technician to create new reception.`,
+        });
+      }
       await appointment.save();
     }
 

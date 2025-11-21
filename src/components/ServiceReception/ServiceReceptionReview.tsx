@@ -146,7 +146,8 @@ interface ServiceReceptionReviewProps {
       modificationReason: string;
       modifiedServices: any[];
       modifiedParts: any[];
-    } | null
+    } | null,
+    customerDeclinedService?: boolean
   ) => Promise<void>;
   loading?: boolean;
   onReceptionUpdated?: () => void;
@@ -174,6 +175,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
   const [editedServices, setEditedServices] = useState<any[]>([]);
   const [editedParts, setEditedParts] = useState<any[]>([]);
   const [modificationReason, setModificationReason] = useState("");
+  const [customerDeclinedService, setCustomerDeclinedService] = useState(false);
 
   // Add service/part picker states
   const [showServicePicker, setShowServicePicker] = useState(false);
@@ -391,6 +393,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
     setModificationReason("");
     setIsEditingServices(false);
     setIsEditingParts(false);
+    setCustomerDeclinedService(false);
 
     // Fetch stock info for all parts in this reception
     const partIds = (reception.requestedParts || [])
@@ -811,12 +814,15 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
         reviewNotes,
         externalParts,
         extendedCompletionDate,
-        modificationsData
+        modificationsData,
+        customerDeclinedService
       );
 
       toast.success(
         decision === "approve"
           ? "Đã duyệt phiếu tiếp nhận"
+          : customerDeclinedService
+          ? "Đã từ chối phiếu và hủy lịch hẹn"
           : "Đã từ chối phiếu tiếp nhận"
       );
 
@@ -824,6 +830,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
       setReviewNotes("");
       setExternalParts([]);
       setExtendedCompletionDate("");
+      setCustomerDeclinedService(false);
       if (onReceptionUpdated) {
         onReceptionUpdated();
       }
@@ -1886,6 +1893,26 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                 </div>
               )}
 
+              {/* Checkbox: Khách không muốn thực hiện dịch vụ */}
+              <div className="mb-4 p-4 border border-orange-500/30 rounded-lg bg-orange-900/10">
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={customerDeclinedService}
+                    onChange={(e) => setCustomerDeclinedService(e.target.checked)}
+                    className="w-5 h-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                  />
+                  <span className="text-white font-medium">
+                    Khách hàng không muốn thực hiện dịch vụ
+                  </span>
+                </label>
+                {customerDeclinedService && (
+                  <p className="text-sm text-orange-400 mt-2 ml-8">
+                    Khi chọn mục này, phiếu sẽ bị từ chối và lịch hẹn sẽ chuyển sang trạng thái Đã hủy.
+                  </p>
+                )}
+              </div>
+
               <div className="flex items-center justify-end space-x-4 w-full">
                 <button
                   onClick={() => setSelectedReception(null)}
@@ -1893,40 +1920,44 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                 >
                   Đóng
                 </button>
-                <button
-                  onClick={() => handleReviewSubmit("reject")}
-                  disabled={isSubmitting}
-                  className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 flex items-center"
-                >
-                  {isSubmitting ? (
-                    <ClockIcon className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <XMarkIcon className="w-4 h-4 mr-2" />
-                  )}
-                  Từ chối
-                </button>
-                <button
-                  onClick={() => handleReviewSubmit("approve")}
-                  disabled={isSubmitting || hasStockIssues()}
-                  className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center relative group"
-                  title={
-                    hasStockIssues()
-                      ? "Không thể duyệt vì có phụ tùng thiếu hàng"
-                      : ""
-                  }
-                >
-                  {isSubmitting ? (
-                    <ClockIcon className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <CheckCircleIcon className="w-4 h-4 mr-2" />
-                  )}
-                  Duyệt
-                  {hasStockIssues() && !isSubmitting && (
-                    <span className="ml-2">
-                      <ExclamationTriangleIcon className="w-4 h-4 text-yellow-300" />
-                    </span>
-                  )}
-                </button>
+
+                {/* Nút Từ chối - CHỈ hiện khi checkbox được check */}
+                {customerDeclinedService && (
+                  <button
+                    onClick={() => handleReviewSubmit("reject")}
+                    disabled={isSubmitting}
+                    className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 flex items-center"
+                  >
+                    {isSubmitting ? (
+                      <ClockIcon className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <XMarkIcon className="w-4 h-4 mr-2" />
+                    )}
+                    Từ chối & Hủy lịch hẹn
+                  </button>
+                )}
+
+                {/* Nút Duyệt - CHỈ hiện khi checkbox KHÔNG được check */}
+                {!customerDeclinedService && (
+                  <button
+                    onClick={() => handleReviewSubmit("approve")}
+                    disabled={isSubmitting || hasStockIssues()}
+                    className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center relative group"
+                    title={hasStockIssues() ? "Không thể duyệt vì có phụ tùng thiếu hàng" : ""}
+                  >
+                    {isSubmitting ? (
+                      <ClockIcon className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <CheckCircleIcon className="w-4 h-4 mr-2" />
+                    )}
+                    Duyệt
+                    {hasStockIssues() && !isSubmitting && (
+                      <span className="ml-2">
+                        <ExclamationTriangleIcon className="w-4 h-4 text-yellow-300" />
+                      </span>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           </div>

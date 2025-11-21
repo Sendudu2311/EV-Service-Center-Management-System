@@ -467,7 +467,7 @@ const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
             {reception.specialInstructions.fromStaff && (
               <View style={{ marginBottom: 12 }}>
                 <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 4 }}>
-                  Từ staff:
+                  Từ Technician:
                 </Text>
                 <Text style={styles.instructions}>{reception.specialInstructions.fromStaff}</Text>
               </View>
