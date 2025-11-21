@@ -53,7 +53,7 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       console.log(
         `[SocketContext] Initializing Socket.io (${import.meta.env.PROD ? "production" : "development"} mode)`
       );
-      
+
       const socketInstance = io(getSocketUrl(), {
         auth: {
           token,
