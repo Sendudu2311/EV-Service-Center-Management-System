@@ -52,7 +52,12 @@ const getDateRange = (period = "6months") => {
 // @route   GET /api/reports/analytics
 // @access  Private (Admin only)
 export const getAnalytics = asyncHandler(async (req, res) => {
-  const { startDate: startDateParam, endDate: endDateParam, serviceId, technicianId } = req.query;
+  const {
+    startDate: startDateParam,
+    endDate: endDateParam,
+    serviceId,
+    technicianId,
+  } = req.query;
 
   // Use provided dates or default to last 30 days
   let startDate, endDate;
@@ -96,7 +101,7 @@ export const getAnalytics = asyncHandler(async (req, res) => {
   const pendingAppointments = appointments.filter(
     (a) => a.status === "pending" || a.status === "confirmed"
   );
-  
+
   // Appointments that generate revenue (completed OR invoiced)
   const revenueGeneratingAppointments = appointments.filter(
     (a) => a.status === "completed" || a.status === "invoiced"
@@ -120,7 +125,7 @@ export const getAnalytics = asyncHandler(async (req, res) => {
   // Count completed + invoiced appointments
   const completedAndInvoicedCount = await Appointment.countDocuments({
     createdAt: { $gte: startDate, $lte: endDate },
-    status: { $in: ['completed', 'invoiced'] },
+    status: { $in: ["completed", "invoiced"] },
   });
 
   // 3. Get invoices for payment data
@@ -128,9 +133,13 @@ export const getAnalytics = asyncHandler(async (req, res) => {
     createdAt: { $gte: startDate, $lte: endDate },
   });
 
-  const paidInvoices = invoices.filter((inv) => inv.paymentInfo?.status === "paid");
+  const paidInvoices = invoices.filter(
+    (inv) => inv.paymentInfo?.status === "paid"
+  );
   const pendingInvoices = invoices.filter(
-    (inv) => inv.paymentInfo?.status === "pending" || inv.paymentInfo?.status === "unpaid"
+    (inv) =>
+      inv.paymentInfo?.status === "pending" ||
+      inv.paymentInfo?.status === "unpaid"
   );
 
   // 4. Monthly trends (appointments)
@@ -212,12 +221,40 @@ export const getAnalytics = asyncHandler(async (req, res) => {
     })
   );
 
-  // 6. Appointment status distribution
-  const appointmentStatusData = [
-    { status: "Completed", count: completedAppointments.length, color: "#10b981" },
-    { status: "Cancelled", count: cancelledAppointments.length, color: "#ef4444" },
-    { status: "Pending", count: pendingAppointments.length, color: "#f59e0b" },
-  ];
+  // 6. Appointment status distribution - Count all statuses
+  const statusCounts = {};
+  const statusColorMap = {
+    pending_slot_assignment: "#94a3b8",
+    pending: "#f59e0b",
+    confirmed: "#3b82f6",
+    customer_arrived: "#8b5cf6",
+    reception_created: "#ec4899",
+    parts_insufficient: "#ef4444",
+    reception_approved: "#10b981",
+    in_progress: "#06b6d4",
+    completed: "#14b8a6",
+    invoiced: "#6366f1",
+    cancelled: "#ef4444",
+    cancel_requested: "#f97316",
+    cancel_approved: "#ea580c",
+    cancel_refunded: "#16a34a",
+    no_show: "#64748b",
+  };
+
+  appointments.forEach((appt) => {
+    const status = appt.status || "unknown";
+    statusCounts[status] = (statusCounts[status] || 0) + 1;
+  });
+
+  const appointmentStatusData = Object.entries(statusCounts)
+    .map(([status, count]) => ({
+      status:
+        status.replace(/_/g, " ").charAt(0).toUpperCase() +
+        status.replace(/_/g, " ").slice(1),
+      count,
+      color: statusColorMap[status] || "#cbd5e1",
+    }))
+    .sort((a, b) => b.count - a.count);
 
   // 7. Technician performance (if not filtered by specific technician)
   let technicianPerformanceData = [];
@@ -325,7 +362,11 @@ export const getAnalytics = asyncHandler(async (req, res) => {
 // @route   GET /api/reports/detailed
 // @access  Private (Admin only)
 export const getDetailedReport = asyncHandler(async (req, res) => {
-  const { startDate: startDateParam, endDate: endDateParam, format = "json" } = req.query;
+  const {
+    startDate: startDateParam,
+    endDate: endDateParam,
+    format = "json",
+  } = req.query;
 
   // Use provided dates or default to last 30 days
   let startDate, endDate;
@@ -362,8 +403,7 @@ export const getDetailedReport = asyncHandler(async (req, res) => {
       customer: appt.customer?.firstName + " " + appt.customer?.lastName,
       date: appt.createdAt,
       status: appt.status,
-      technician:
-        appt.technician?.firstName + " " + appt.technician?.lastName,
+      technician: appt.technician?.firstName + " " + appt.technician?.lastName,
       services: appt.services.map((s) => ({
         name: s.serviceId?.name,
         price: s.serviceId?.price,
@@ -385,7 +425,10 @@ export const getDetailedReport = asyncHandler(async (req, res) => {
   if (format === "csv") {
     // Return CSV-friendly format
     res.set("Content-Type", "text/csv");
-    res.set("Content-Disposition", `attachment; filename="report-${period}.csv"`);
+    res.set(
+      "Content-Disposition",
+      `attachment; filename="report-${period}.csv"`
+    );
     // CSV conversion would go here - for now return JSON
   }
 
@@ -401,7 +444,7 @@ export const getKPI = asyncHandler(async (req, res) => {
 
   const appointments = await Appointment.find({
     createdAt: { $gte: startDate, $lte: endDate },
-    status: { $in: ['completed', 'invoiced'] }, // Both completed and invoiced generate revenue
+    status: { $in: ["completed", "invoiced"] }, // Both completed and invoiced generate revenue
   }).populate("services.serviceId", "price");
 
   const invoices = await Invoice.find({
@@ -409,7 +452,10 @@ export const getKPI = asyncHandler(async (req, res) => {
   });
 
   const users = await User.countDocuments({ isActive: true });
-  const customers = await User.countDocuments({ role: 'customer', isActive: true });
+  const customers = await User.countDocuments({
+    role: "customer",
+    isActive: true,
+  });
   const vehicles = await Vehicle.countDocuments({ isActive: true });
 
   // Calculate KPIs using totalAmount field
@@ -437,9 +483,14 @@ export const getKPI = asyncHandler(async (req, res) => {
     invoiceCollectionRate: {
       value: invoices.filter((i) => i.paymentInfo?.status === "paid").length,
       total: invoices.length,
-      percentage: invoices.length > 0
-        ? Math.round((invoices.filter((i) => i.paymentInfo?.status === "paid").length / invoices.length) * 100)
-        : 0,
+      percentage:
+        invoices.length > 0
+          ? Math.round(
+              (invoices.filter((i) => i.paymentInfo?.status === "paid").length /
+                invoices.length) *
+                100
+            )
+          : 0,
       unit: "%",
     },
   };
