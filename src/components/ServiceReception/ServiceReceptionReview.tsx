@@ -774,6 +774,9 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
     setEditedParts([...editedParts, newPart]);
     setShowPartPicker(false);
     toast.success(`Đã thêm phụ tùng: ${part.name}`);
+
+    // ✅ FIX: Fetch real-time stock info for newly added part
+    fetchPartStockInfo([part._id]);
   };
 
   const handleReviewSubmit = async (decision: "approve" | "reject") => {
@@ -1294,16 +1297,20 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                               <div className="flex justify-between items-start mb-1">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2">
-                                    <span className="text-text-muted">
+                                    <span
+                                      className={`font-medium ${
+                                        status === "added"
+                                          ? "text-green-800 dark:text-green-200"
+                                          : status === "modified"
+                                            ? "text-yellow-800 dark:text-yellow-200"
+                                            : "text-gray-900 dark:text-gray-100"
+                                      }`}
+                                    >
                                       {status === "added" && (
-                                        <span className="text-green-600 mr-1">
-                                          🟢
-                                        </span>
+                                        <span className="mr-1">🟢</span>
                                       )}
                                       {status === "modified" && (
-                                        <span className="text-yellow-600 mr-1">
-                                          🟡
-                                        </span>
+                                        <span className="mr-1">🟡</span>
                                       )}
                                       {service.serviceName}
                                     </span>
@@ -1328,7 +1335,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                     ) : null;
                                   })()}
                                   {service.estimatedCost && (
-                                    <div className="text-lime-600">
+                                    <div className="font-semibold text-lime-700 dark:text-lime-400">
                                       {(
                                         service.estimatedCost * service.quantity
                                       ).toLocaleString("vi-VN")}{" "}
@@ -1520,10 +1527,10 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
                           const bgColorClass =
                             status === "added"
-                              ? "bg-green-100 dark:bg-green-900/30 border-green-500"
+                              ? "bg-green-50 dark:bg-green-900/30 border-green-500"
                               : status === "modified"
-                                ? "bg-yellow-100 dark:bg-yellow-900/30 border-yellow-500"
-                                : "bg-dark-300 border-dark-200";
+                                ? "bg-yellow-50 dark:bg-yellow-900/30 border-yellow-500"
+                                : "bg-gray-50 dark:bg-dark-300 border-gray-200 dark:border-dark-200";
 
                           return (
                             <div
@@ -1535,16 +1542,20 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                               <div className="flex justify-between items-start mb-1">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2">
-                                    <span className="text-text-muted">
+                                    <span
+                                      className={`font-medium ${
+                                        status === "added"
+                                          ? "text-green-800 dark:text-green-200"
+                                          : status === "modified"
+                                            ? "text-yellow-800 dark:text-yellow-200"
+                                            : "text-gray-900 dark:text-gray-100"
+                                      }`}
+                                    >
                                       {status === "added" && (
-                                        <span className="text-green-600 mr-1">
-                                          🟢
-                                        </span>
+                                        <span className="mr-1">🟢</span>
                                       )}
                                       {status === "modified" && (
-                                        <span className="text-yellow-600 mr-1">
-                                          🟡
-                                        </span>
+                                        <span className="mr-1">🟡</span>
                                       )}
                                       {part.partName}
                                     </span>
@@ -1571,7 +1582,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                   )}
                                 </div>
                                 <div className="text-right ml-4">
-                                  <div className="text-purple-600 text-text-muted">
+                                  <div className="font-semibold text-purple-700 dark:text-purple-300">
                                     {(
                                       (part.estimatedCost || 0) * part.quantity
                                     ).toLocaleString("vi-VN")}{" "}
@@ -1580,7 +1591,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                 </div>
                               </div>
 
-                              <div className="text-text-secondary flex items-center justify-between">
+                              <div className="text-gray-600 dark:text-gray-300 flex items-center justify-between">
                                 <div>
                                   {!isEditingParts && (
                                     <span>Số lượng: {part.quantity}</span>
@@ -1589,7 +1600,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
                                 {isEditingParts && (
                                   <div className="flex items-center gap-2 ml-auto">
-                                    <label className="text-xs text-text-muted">
+                                    <label className="text-xs text-gray-600 dark:text-gray-300">
                                       Số lượng:
                                     </label>
                                     <input

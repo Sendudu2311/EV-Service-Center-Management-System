@@ -1,0 +1,388 @@
+@startuml EV Service Center - Complete Class Diagram
+
+' ============================================
+' CORE USER & AUTHENTICATION
+' ============================================
+
+class User {
+  - _id: ObjectId
+  - email: String {unique}
+  - password: String
+  - firstName: String
+  - lastName: String
+  - phone: String
+  - role: Enum
+  - avatar: String
+  - isActive: Boolean
+  - isEmailVerified: Boolean
+  - googleId: String
+  - authProvider: Enum
+  - specializations: String[]
+  - certifications: Object[]
+  - lastLogin: Date
+  - resetPasswordToken: String
+  - resetPasswordExpire: Date
+  --
+  + matchPassword(enteredPassword): Boolean
+  + fullName: String {virtual}
+}
+
+' ============================================
+' VEHICLE MANAGEMENT
+' ============================================
+
+class Vehicle {
+  - _id: ObjectId
+  - customerId: ObjectId
+  - vin: String {unique}
+  - make: String
+  - model: String
+  - year: Number
+  - color: String
+  - batteryType: Enum
+  - batteryCapacity: Number
+  - maxChargingPower: Number
+  - range: Number
+  - purchaseDate: Date
+  - mileage: Number
+  - lastMaintenanceDate: Date
+  - nextMaintenanceDate: Date
+  - maintenanceInterval: Number
+  - warrantyExpiry: Date
+  - isActive: Boolean
+  --
+  + calculateNextMaintenance(): Date
+}
+
+' ============================================
+' APPOINTMENT & SCHEDULING
+' ============================================
+
+class Appointment {
+  - _id: ObjectId
+  - appointmentNumber: String {unique}
+  - customerId: ObjectId
+  - vehicleId: ObjectId
+  - services: Object[]
+  - bookingType: Enum
+  - depositInfo: Object
+  - scheduledDate: Date
+  - scheduledTime: String
+  - status: Enum
+  - coreStatus: Enum
+  - reasonCode: Enum
+  - priority: Enum
+  - assignedTechnician: ObjectId
+  - estimatedCompletion: Date
+  - actualCompletion: Date
+  - customerNotes: String
+  - internalNotes: String
+  - isPreBooked: Boolean
+  --
+  + updateStatus(newStatus): void
+  + canTransitionTo(newStatus): Boolean
+  + calculateTotal(): Number
+  + requestCancellation(reason): void
+  + reschedule(newDate, newTime): void
+  + getCoreStatus(): String
+  + getCustomerActions(): String[]
+}
+
+class Slot {
+  - _id: ObjectId
+  - date: Date
+  - startTime: String
+  - endTime: String
+  - isAvailable: Boolean
+  - isPreBooked: Boolean
+  - assignedTechnician: ObjectId
+  - appointmentId: ObjectId
+  - capacity: Number
+  - currentBookings: Number
+  --
+  + checkAvailability(): Boolean
+  + reserve(appointmentId): void
+  + release(): void
+}
+
+' ============================================
+' SERVICE RECEPTION & CHECKLIST
+' ============================================
+
+class ServiceReception {
+  - _id: ObjectId
+  - receptionNumber: String {unique}
+  - appointmentId: ObjectId
+  - customerId: ObjectId
+  - vehicleId: ObjectId
+  - vehicleCondition: Object
+  - recommendedServices: Object[]
+  - requestedParts: Object[]
+  - status: Enum
+  - receivedAt: Date
+  - checklistData: Object
+  - staffReviewNotes: String
+  - estimatedCost: Number
+  - actualCost: Number
+  --
+  + submitToStaff(): void
+  + staffReview(decision, notes): void
+  + addAdditionalService(serviceId): void
+  + calculateTotalCost(): Number
+  + canBeApproved(): Boolean
+  + canStartWork(): Boolean
+}
+
+class EVChecklist {
+  - _id: ObjectId
+  - appointmentId: ObjectId
+  - vehicleId: ObjectId
+  - checklistData: Object
+  - status: Enum
+  - completedBy: ObjectId
+  - completedAt: Date
+  - batteryHealth: Object
+  - exteriorCondition: Object
+  - interiorCondition: Object
+  - tiresCondition: Object
+  - fluidsLevel: Object
+  - diagnosticResults: Object
+  --
+  + complete(): void
+  + getOverallCondition(): String
+}
+
+' ============================================
+' SERVICE & PARTS CATALOG
+' ============================================
+
+class Service {
+  - _id: ObjectId
+  - name: String
+  - code: String {unique}
+  - description: String
+  - category: Enum
+  - subcategory: String
+  - basePrice: Number
+  - estimatedDuration: Number
+  - skillLevel: Enum
+  - requiredCertifications: String[]
+  - requiredTools: Object[]
+  - checklist: Object[]
+  - commonParts: Object[]
+  - warranty: Object
+  - isActive: Boolean
+  - applicableVehicles: Object
+  --
+  + calculatePrice(vehicleType): Number
+  + getEstimatedTime(): Number
+}
+
+class Part {
+  - _id: ObjectId
+  - partNumber: String {unique}
+  - name: String
+  - description: String
+  - category: Enum
+  - subcategory: String
+  - brand: String
+  - specifications: Object
+  - compatibility: Object
+  - pricing: Object
+  - supplierInfo: Object
+  - inventory: Object
+  --
+  + getAvailableStock(): Number
+  + needsReorder(): Boolean
+  + recordDemand(quantity): void
+  + calculateDynamicReorderPoint(): Number
+  + reserveStock(quantity): Boolean
+  + releaseStock(quantity): void
+}
+
+' ============================================
+' PARTS REQUEST & CONFLICT MANAGEMENT
+' ============================================
+
+class PartRequest {
+  - _id: ObjectId
+  - requestNumber: String {unique}
+  - type: Enum
+  - appointmentId: ObjectId
+  - serviceReceptionId: ObjectId
+  - requestedBy: ObjectId
+  - requestedParts: Object[]
+  - status: Enum
+  - reviewDetails: Object
+  - createdAt: Date
+  - updatedAt: Date
+  --
+  + submit(): void
+  + approve(): void
+  + reject(reason): void
+  + partialApprove(approvedParts): void
+}
+
+class PartConflict {
+  - _id: ObjectId
+  - conflictNumber: String {unique}
+  - appointmentId: ObjectId
+  - partId: ObjectId
+  - requestedQuantity: Number
+  - availableQuantity: Number
+  - status: Enum
+  - resolution: Object
+  - createdAt: Date
+  - resolvedAt: Date
+  --
+  + resolve(solution): void
+  + suggestAlternative(alternativePartId): void
+}
+
+' ============================================
+' INVOICE & PAYMENT
+' ============================================
+
+class Invoice {
+  - _id: ObjectId
+  - invoiceNumber: String {unique}
+  - appointmentId: ObjectId
+  - serviceReceptionId: ObjectId
+  - customerId: ObjectId
+  - vehicleId: ObjectId
+  - serviceItems: Object[]
+  - partItems: Object[]
+  - laborCharges: Number
+  - subtotal: Number
+  - taxAmount: Number
+  - discountAmount: Number
+  - totalAmount: Number
+  - depositApplied: Number
+  - amountDue: Number
+  - status: Enum
+  - dueDate: Date
+  - paidDate: Date
+  --
+  + calculateTotal(): Number
+  + addServiceItem(item): void
+  + addPartItem(item): void
+  + recordPayment(transaction): void
+  + generatePDF(): Buffer
+}
+
+class Transaction {
+  - _id: ObjectId
+  - transactionRef: String {unique}
+  - transactionType: Enum
+  - paymentPurpose: Enum
+  - userId: ObjectId
+  - appointmentId: ObjectId
+  - invoiceId: ObjectId
+  - amount: Number
+  - paidAmount: Number
+  - currency: String
+  - status: Enum
+  - processedBy: ObjectId
+  - processedAt: Date
+  - paymentMethod: String
+  - bankCode: String
+  - cardType: String
+  - metadata: Object
+  --
+  + process(): void
+  + refund(amount): void
+  + verify(): Boolean
+}
+
+class VNPAYTransaction {
+  - _id: ObjectId
+  - vnp_TxnRef: String {unique}
+  - vnp_Amount: Number
+  - vnp_BankCode: String
+  - vnp_BankTranNo: String
+  - vnp_CardType: String
+  - vnp_OrderInfo: String
+  - vnp_PayDate: String
+  - vnp_ResponseCode: String
+  - vnp_TransactionNo: String
+  - vnp_TransactionStatus: String
+  - appointmentId: ObjectId
+  - userId: ObjectId
+  - createdAt: Date
+  --
+  + verify(secureHash): Boolean
+  + isSuccess(): Boolean
+}
+
+' ============================================
+' SUPPORT & COMMUNICATION
+' ============================================
+
+class Contact {
+  - _id: ObjectId
+  - name: String
+  - email: String
+  - phone: String
+  - subject: String
+  - message: String
+  - status: Enum
+  - response: String
+  - respondedBy: ObjectId
+  - respondedAt: Date
+  - createdAt: Date
+  --
+  + markAsResolved(): void
+  + respond(message): void
+}
+
+' ============================================
+' RELATIONSHIPS
+' ============================================
+
+' User relationships
+User "1" -- "0..*" Vehicle : owns >
+User "1" -- "0..*" Appointment : books >
+User "0..1" -- "0..*" Appointment : assigned to <
+User "1" -- "0..*" ServiceReception : creates >
+User "1" -- "0..*" Invoice : receives >
+User "1" -- "0..*" Transaction : makes >
+
+' Vehicle relationships
+Vehicle "1" -- "0..*" Appointment : scheduled for >
+Vehicle "1" -- "0..*" ServiceReception : inspected in >
+Vehicle "1" -- "0..1" EVChecklist : has >
+
+' Appointment relationships
+Appointment "1" -- "0..1" ServiceReception : generates >
+Appointment "1" -- "0..*" Invoice : billed in >
+Appointment "1" -- "0..*" Transaction : paid by >
+Appointment "1" -- "0..1" EVChecklist : inspected via >
+Appointment "1" -- "0..*" PartRequest : requests >
+Appointment "1" -- "0..*" PartConflict : has >
+Appointment "0..1" -- "0..*" Slot : reserves >
+Appointment "0..*" -- "0..*" Service : includes >
+
+' ServiceReception relationships
+ServiceReception "1" -- "0..*" PartRequest : generates >
+ServiceReception "0..*" -- "0..*" Service : recommends >
+ServiceReception "0..*" -- "0..*" Part : requests >
+
+' Service & Parts
+Service "0..*" -- "0..*" Part : requires >
+
+' PartRequest relationships
+PartRequest "0..*" -- "1..*" Part : requests >
+PartRequest "1" -- "0..*" PartConflict : may create >
+
+' Invoice relationships
+Invoice "0..1" -- "0..*" Transaction : paid by >
+Invoice "0..*" -- "0..*" Part : includes >
+Invoice "0..*" -- "0..*" Service : bills for >
+
+' Transaction relationships
+Transaction "0..1" -- "0..1" VNPAYTransaction : extends >
+
+' Slot relationships
+Slot "0..*" -- "0..1" User : assigned to >
+
+@enduml
