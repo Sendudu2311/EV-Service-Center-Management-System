@@ -5,7 +5,7 @@ import { Alert } from "react-native";
 // Replace with your actual API URL
 // Use your computer's IP address for mobile testing
 // Get your IP with: ifconfig (Mac/Linux) or ipconfig (Windows)
-const API_URL = "http://172.20.10.5:3000"; // Update this for production
+const API_URL = "http://10.87.29.196:3000"; // Update this for production
 
 // Create axios instance
 const api = axios.create({
@@ -242,10 +242,9 @@ export const appointmentsAPI = {
     }
   ) =>
     api
-      .post<ApiResponse<any>>(
-        `/api/appointments/${id}/request-cancel`,
-        cancelData
-      )
+      .post<
+        ApiResponse<any>
+      >(`/api/appointments/${id}/request-cancel`, cancelData)
       .catch(handleApiError),
 
   approveCancellation: (
@@ -255,10 +254,9 @@ export const appointmentsAPI = {
     }
   ) =>
     api
-      .post<ApiResponse<any>>(
-        `/api/appointments/${id}/approve-cancel`,
-        approvalData
-      )
+      .post<
+        ApiResponse<any>
+      >(`/api/appointments/${id}/approve-cancel`, approvalData)
       .catch(handleApiError),
 
   processRefund: (
@@ -269,10 +267,9 @@ export const appointmentsAPI = {
     }
   ) =>
     api
-      .post<ApiResponse<any>>(
-        `/api/appointments/${id}/process-refund`,
-        refundData
-      )
+      .post<
+        ApiResponse<any>
+      >(`/api/appointments/${id}/process-refund`, refundData)
       .catch(handleApiError),
 
   getAvailableTechniciansForSlot: (slotId: string) =>

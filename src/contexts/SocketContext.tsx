@@ -32,16 +32,13 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const { user, token, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    // Disable Socket.IO in production environment
-    if (import.meta.env.PROD) {
-      console.log("[SocketContext] Socket.IO disabled in production mode");
-      setSocket(null);
-      setIsConnected(false);
-      return;
-    }
-
-    // Development only: Get Socket.IO server URL
+    // Get Socket.IO server URL based on environment
     const getSocketUrl = () => {
+      if (import.meta.env.PROD) {
+        // Production: Use environment variable or empty string (same domain)
+        return import.meta.env.VITE_SOCKET_URL || "";
+      }
+      // Development: use localhost
       return "http://localhost:3000";
     };
 
@@ -53,7 +50,9 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
     });
 
     if (isAuthenticated && token && user) {
-      console.log("[SocketContext] Initializing Socket.io (development mode)");
+      console.log(
+        `[SocketContext] Initializing Socket.io (${import.meta.env.PROD ? "production" : "development"} mode)`
+      );
 
       const socketInstance = io(getSocketUrl(), {
         path: "/socket.io/",
