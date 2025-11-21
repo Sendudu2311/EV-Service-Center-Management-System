@@ -257,7 +257,14 @@ const PartForm: React.FC<PartFormProps> = ({ part, isOpen, onClose }) => {
   };
 
   const categories = [
-    'Battery', 'Motor', 'Electronics', 'Charging', 'Body', 'Interior', 'Tires', 'Fluids'
+    { value: 'battery', label: 'Battery' },
+    { value: 'motor', label: 'Motor' },
+    { value: 'electronics', label: 'Electronics' },
+    { value: 'charging', label: 'Charging' },
+    { value: 'body', label: 'Body' },
+    { value: 'interior', label: 'Interior' },
+    { value: 'safety', label: 'Safety' },
+    { value: 'consumables', label: 'Consumables' }
   ];
 
   const batteryTypes = [
@@ -347,7 +354,7 @@ const PartForm: React.FC<PartFormProps> = ({ part, isOpen, onClose }) => {
                         className="w-full px-3 py-2 border border-dark-200 bg-dark-300 text-white rounded-md focus:ring-2 focus:ring-lime-400 focus:border-lime-400"
                       >
                         {categories.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
+                          <option key={cat.value} value={cat.value}>{cat.label}</option>
                         ))}
                       </select>
                     </div>
