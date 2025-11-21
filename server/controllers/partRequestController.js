@@ -69,7 +69,7 @@ export const createAdditionalPartRequest = async (req, res) => {
         });
       }
 
-      const availableQuantity = part.currentStock;
+      const availableQuantity = part.inventory.currentStock;
       const shortfall = Math.max(0, requestedPart.quantity - availableQuantity);
 
       processedParts.push({
@@ -497,9 +497,9 @@ async function reserveRequestedParts(partRequest) {
           requestedPart.approvedQuantity || requestedPart.quantity;
 
         // Only reserve if we have sufficient stock
-        if (part.currentStock >= quantityToReserve) {
-          part.reservedStock = (part.reservedStock || 0) + quantityToReserve;
-          part.currentStock -= quantityToReserve;
+        if (part.inventory.currentStock >= quantityToReserve) {
+          part.inventory.reservedStock = (part.inventory.reservedStock || 0) + quantityToReserve;
+          part.inventory.currentStock -= quantityToReserve;
           await part.save();
 
           requestedPart.reserved = true;

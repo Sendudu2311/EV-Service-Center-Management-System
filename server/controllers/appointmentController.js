@@ -4604,25 +4604,46 @@ async function checkPartsAvailability(serviceReception, appointment, staffId) {
     let allPartsAvailable = true;
     let insufficientParts = [];
 
+    console.log("\n🔍 [checkPartsAvailability] Starting parts availability check...");
+    console.log(`   Reception ID: ${serviceReception._id}`);
+    console.log(`   Requested Parts Count: ${serviceReception.requestedParts.length}`);
+
     // Check each requested part
     for (const requestedPart of serviceReception.requestedParts) {
+      console.log(`\n   Checking part: ${requestedPart.partName} (ID: ${requestedPart.partId})`);
+
       const part = await Part.findById(requestedPart.partId);
       if (part) {
-        requestedPart.availableQuantity = part.currentStock;
+        console.log(`   ✅ Part found in database`);
+        console.log(`      Part Number: ${part.partNumber}`);
+        console.log(`      Inventory Object:`, JSON.stringify(part.inventory, null, 2));
+        console.log(`      Current Stock: ${part.inventory?.currentStock}`);
+        console.log(`      Reserved Stock: ${part.inventory?.reservedStock}`);
+        console.log(`      Used Stock: ${part.inventory?.usedStock}`);
+        console.log(`      Requested Quantity: ${requestedPart.quantity}`);
 
-        if (part.currentStock < requestedPart.quantity) {
+        requestedPart.availableQuantity = part.inventory.currentStock;
+
+        if (part.inventory.currentStock < requestedPart.quantity) {
           allPartsAvailable = false;
-          requestedPart.shortfall = requestedPart.quantity - part.currentStock;
+          requestedPart.shortfall = requestedPart.quantity - part.inventory.currentStock;
+          console.log(`   ❌ INSUFFICIENT! Shortfall: ${requestedPart.shortfall}`);
           insufficientParts.push({
             partName: part.name,
             partNumber: part.partNumber,
             requested: requestedPart.quantity,
-            available: part.currentStock,
+            available: part.inventory.currentStock,
             shortfall: requestedPart.shortfall,
           });
+        } else {
+          console.log(`   ✅ AVAILABLE! Stock sufficient`);
         }
 
-        requestedPart.isAvailable = part.currentStock >= requestedPart.quantity;
+        requestedPart.isAvailable = part.inventory.currentStock >= requestedPart.quantity;
+        console.log(`      isAvailable set to: ${requestedPart.isAvailable}`);
+        console.log(`      availableQuantity set to: ${requestedPart.availableQuantity}`);
+      } else {
+        console.log(`   ⚠️ Part NOT found in database!`);
       }
     }
 

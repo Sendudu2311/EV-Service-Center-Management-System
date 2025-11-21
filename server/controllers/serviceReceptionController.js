@@ -239,7 +239,7 @@ export const createServiceReception = async (req, res) => {
       .populate("vehicleId", "make model year licensePlate")
       .populate("receivedBy", "firstName lastName email")
       .populate("recommendedServices.serviceId", "name description basePrice")
-      .populate("requestedParts.partId", "name partNumber price");
+      .populate("requestedParts.partId", "name partNumber pricing inventory");
 
     return sendSuccess(
       res,
@@ -272,7 +272,7 @@ export const getServiceReception = async (req, res) => {
         "name description basePrice category estimatedDuration"
       )
       .populate("recommendedServices.addedBy", "firstName lastName")
-      .populate("requestedParts.partId", "name partNumber pricing");
+      .populate("requestedParts.partId", "name partNumber pricing inventory.currentStock inventory.reservedStock inventory.usedStock");
 
     if (!serviceReception) {
       return sendError(
@@ -323,7 +323,7 @@ export const getServiceReceptionByAppointment = async (req, res) => {
         "name description basePrice category estimatedDuration"
       )
       .populate("recommendedServices.addedBy", "firstName lastName")
-      .populate("requestedParts.partId", "name partNumber pricing");
+      .populate("requestedParts.partId", "name partNumber pricing inventory.currentStock inventory.reservedStock inventory.usedStock");
 
     if (!serviceReception) {
       return sendError(
@@ -333,6 +333,29 @@ export const getServiceReceptionByAppointment = async (req, res) => {
         null,
         "RECEPTION_NOT_FOUND"
       );
+    }
+
+    // DEBUG: Log parts data to verify inventory population
+    console.log("\n📤 [getServiceReceptionByAppointment] Sending data to frontend");
+    console.log(`   Reception ID: ${serviceReception._id}`);
+    console.log(`   Requested Parts Count: ${serviceReception.requestedParts?.length || 0}`);
+    if (serviceReception.requestedParts && serviceReception.requestedParts.length > 0) {
+      serviceReception.requestedParts.forEach((part, index) => {
+        console.log(`\n   Part ${index + 1}:`);
+        console.log(`      Part Name: ${part.partName}`);
+        console.log(`      Part ID (raw): ${part.partId}`);
+        console.log(`      Part ID type: ${typeof part.partId}`);
+        if (typeof part.partId === 'object' && part.partId !== null) {
+          console.log(`      Part ID._id: ${part.partId._id}`);
+          console.log(`      Part ID.name: ${part.partId.name}`);
+          console.log(`      Part ID.partNumber: ${part.partId.partNumber}`);
+          console.log(`      Part ID.pricing:`, part.partId.pricing);
+          console.log(`      Part ID.inventory:`, part.partId.inventory);
+          console.log(`      Part ID.inventory.currentStock: ${part.partId.inventory?.currentStock}`);
+        }
+        console.log(`      isAvailable: ${part.isAvailable}`);
+        console.log(`      availableQuantity: ${part.availableQuantity}`);
+      });
     }
 
     return sendSuccess(
@@ -521,7 +544,7 @@ export const updateServiceReception = async (req, res) => {
         "name description basePrice category estimatedDuration"
       )
       .populate("recommendedServices.addedBy", "firstName lastName")
-      .populate("requestedParts.partId", "name partNumber pricing");
+      .populate("requestedParts.partId", "name partNumber pricing inventory.currentStock inventory.reservedStock inventory.usedStock");
 
     return sendSuccess(
       res,
@@ -606,7 +629,7 @@ export const resubmitServiceReception = async (req, res) => {
         "name description basePrice category estimatedDuration"
       )
       .populate("recommendedServices.addedBy", "firstName lastName")
-      .populate("requestedParts.partId", "name partNumber pricing");
+      .populate("requestedParts.partId", "name partNumber pricing inventory.currentStock inventory.reservedStock inventory.usedStock");
 
     return sendSuccess(
       res,
@@ -1102,7 +1125,7 @@ export const approveServiceReception = async (req, res) => {
         "name description basePrice category estimatedDuration"
       )
       .populate("recommendedServices.addedBy", "firstName lastName")
-      .populate("requestedParts.partId", "name partNumber pricing");
+      .populate("requestedParts.partId", "name partNumber pricing inventory.currentStock inventory.reservedStock inventory.usedStock");
 
     return sendSuccess(
       res,
@@ -1303,7 +1326,7 @@ export const confirmPayment = async (req, res) => {
         "recommendedServices.serviceId",
         "name description basePrice category estimatedDuration"
       )
-      .populate("requestedParts.partId", "name partNumber pricing");
+      .populate("requestedParts.partId", "name partNumber pricing inventory");
 
     // Get appointment for deposit info
     const Appointment = mongoose.model("Appointment");

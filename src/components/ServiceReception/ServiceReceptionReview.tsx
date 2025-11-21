@@ -208,7 +208,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        const stockMap = new Map(partStockInfo);
+        const stockMap = new Map();  // ✅ FIX: Create new Map instead of copying old state
 
         // Update stock info for each part
         partIds.forEach(partId => {
@@ -228,7 +228,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
     } catch (error) {
       console.error('Error fetching part stock info:', error);
       // Mark as not loading even on error
-      const errorMap = new Map(partStockInfo);
+      const errorMap = new Map();  // ✅ FIX: Create new Map instead of copying old state
       partIds.forEach(id => {
         errorMap.set(id, { currentStock: 0, loading: false });
       });
@@ -286,6 +286,32 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
   // Helper: Initialize editing state when modal opens
   const handleOpenReviewModal = (reception: ServiceReception) => {
+    console.log('\n🔍 [Frontend] handleOpenReviewModal - Reception data received:');
+    console.log('   Reception ID:', reception._id);
+    console.log('   Requested Parts Count:', reception.requestedParts?.length || 0);
+
+    if (reception.requestedParts && reception.requestedParts.length > 0) {
+      reception.requestedParts.forEach((part, index) => {
+        console.log(`\n   Part ${index + 1}:`);
+        console.log('      partName:', part.partName);
+        console.log('      partId type:', typeof part.partId);
+        console.log('      partId:', part.partId);
+
+        if (typeof part.partId === 'object' && part.partId !== null) {
+          console.log('      partId._id:', (part.partId as any)._id);
+          console.log('      partId.name:', (part.partId as any).name);
+          console.log('      partId.partNumber:', (part.partId as any).partNumber);
+          console.log('      partId.pricing:', (part.partId as any).pricing);
+          console.log('      partId.inventory:', (part.partId as any).inventory);
+          console.log('      partId.inventory?.currentStock:', (part.partId as any).inventory?.currentStock);
+        }
+
+        console.log('      isAvailable:', part.isAvailable);
+        console.log('      availableQuantity:', part.availableQuantity);
+        console.log('      quantity:', part.quantity);
+      });
+    }
+
     setSelectedReception(reception);
     setEditedServices([...(reception.recommendedServices || [])]);
     setEditedParts([...(reception.requestedParts || [])]);
@@ -298,6 +324,8 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
     const partIds = (reception.requestedParts || [])
       .map(p => typeof p.partId === 'object' ? p.partId._id : p.partId)
       .filter(Boolean);
+
+    console.log('   Part IDs to fetch:', partIds);
 
     if (partIds.length > 0) {
       fetchPartStockInfo(partIds);
@@ -454,16 +482,22 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
   const hasStockIssues = () => {
     if (!selectedReception) return false;
 
-    // Check requested parts
+    // ✅ FIX: Use isAvailable and availableQuantity from reception data
+    // These fields are already set by backend and are more reliable than populate
     const partsIssues = editedParts.some(part => {
-      const partId = typeof part.partId === 'object' ? part.partId._id : part.partId;
-      const stockInfo = getPartStockInfo(partId);
-      const isOutOfStock = !stockInfo.loading && stockInfo.currentStock === 0;
-      const isLowStock = !stockInfo.loading && stockInfo.currentStock > 0 && stockInfo.currentStock < part.quantity;
+      // Use data already in the reception (set by backend when creating reception)
+      const isOutOfStock = part.isAvailable === false;
+      const isLowStock = part.isAvailable === true &&
+                        (part.availableQuantity || 0) < part.quantity;
+
+      console.log(`🔍 [hasStockIssues] Checking part: ${part.partName}`);
+      console.log(`   isAvailable: ${part.isAvailable}, availableQuantity: ${part.availableQuantity}, requested: ${part.quantity}`);
+      console.log(`   → isOutOfStock: ${isOutOfStock}, isLowStock: ${isLowStock}`);
+
       return isOutOfStock || isLowStock;
     });
 
-    // Check service common parts
+    // Check service common parts - still use stockInfo from API for these
     const servicePartsIssues = editedServices.some(service => {
       const serviceId = typeof service.serviceId === 'object' ? service.serviceId._id : service.serviceId;
       const commonParts = getServiceCommonParts(serviceId);
@@ -473,11 +507,20 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
         const requiredQty = (cp.quantity || 1) * service.quantity;
         const isOutOfStock = !stockInfo.loading && stockInfo.currentStock === 0;
         const isLowStock = !stockInfo.loading && stockInfo.currentStock > 0 && stockInfo.currentStock < requiredQty;
+
+        if ((isOutOfStock || isLowStock) && !cp.isOptional) {
+          console.log(`🔍 [hasStockIssues] Service common part issue: ${cp.partId}`);
+          console.log(`   currentStock: ${stockInfo.currentStock}, required: ${requiredQty}, optional: ${cp.isOptional}`);
+        }
+
         return (isOutOfStock || isLowStock) && !cp.isOptional; // Only block if part is not optional
       });
     });
 
-    return partsIssues || servicePartsIssues;
+    const hasIssues = partsIssues || servicePartsIssues;
+    console.log(`📊 [hasStockIssues] Final result: ${hasIssues} (partsIssues: ${partsIssues}, servicePartsIssues: ${servicePartsIssues})`);
+
+    return hasIssues;
   };
 
   // Fetch services catalog
@@ -1274,10 +1317,10 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                       <div className="space-y-2">
                         {editedParts.map((part, index) => {
                           const status = getPartStatus(part);
-                          const partId = typeof part.partId === 'object' ? part.partId._id : part.partId;
-                          const stockInfo = getPartStockInfo(partId);
-                          const isOutOfStock = !stockInfo.loading && stockInfo.currentStock === 0;
-                          const isLowStock = !stockInfo.loading && stockInfo.currentStock > 0 && stockInfo.currentStock < part.quantity;
+                          // ✅ Use isAvailable and availableQuantity from reception data
+                          const isOutOfStock = part.isAvailable === false;
+                          const isLowStock = part.isAvailable === true && (part.availableQuantity || 0) < part.quantity;
+                          const currentStock = part.availableQuantity || 0;
 
                           const bgColorClass =
                             status === 'added' ? 'bg-green-100 dark:bg-green-900/30 border-green-500' :
@@ -1299,22 +1342,18 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                       {status === 'modified' && <span className="text-yellow-600 mr-1">🟡</span>}
                                       {part.partName}
                                     </span>
-                                    {/* Stock info badge */}
-                                    {stockInfo.loading ? (
-                                      <span className="text-xs px-2 py-0.5 rounded bg-gray-200 text-gray-600">
-                                        Loading...
-                                      </span>
-                                    ) : isOutOfStock ? (
+                                    {/* Stock info badge - using data from reception */}
+                                    {isOutOfStock ? (
                                       <span className="text-xs px-2 py-0.5 rounded bg-red-900/30 text-red-400 font-semibold">
-                                        ⚠️ Hết hàng (0)
+                                        ⚠️ Hết hàng
                                       </span>
                                     ) : isLowStock ? (
                                       <span className="text-xs px-2 py-0.5 rounded bg-yellow-900/30 text-yellow-400 font-semibold">
-                                        ⚠️ Kho: {stockInfo.currentStock} (cần {part.quantity})
+                                        ⚠️ Kho: {currentStock} (cần {part.quantity})
                                       </span>
                                     ) : (
                                       <span className="text-xs px-2 py-0.5 rounded bg-green-900/30 text-green-400">
-                                        ✓ Kho: {stockInfo.currentStock}
+                                        ✓ Kho: {currentStock}
                                       </span>
                                     )}
                                   </div>
@@ -1388,7 +1427,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                               {/* Low stock warning */}
                               {isLowStock && (
                                 <div className="mt-2 p-2 bg-yellow-900/20 border border-yellow-500/30 rounded text-xs text-yellow-400">
-                                  <strong>⚠️ Cảnh báo:</strong> Số lượng trong kho ({stockInfo.currentStock}) không đủ so với yêu cầu ({part.quantity}). Thiếu {part.quantity - stockInfo.currentStock} cái.
+                                  <strong>⚠️ Cảnh báo:</strong> Số lượng trong kho ({currentStock}) không đủ so với yêu cầu ({part.quantity}). Thiếu {part.quantity - currentStock} cái.
                                 </div>
                               )}
                             </div>
