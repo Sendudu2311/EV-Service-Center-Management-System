@@ -39,9 +39,8 @@ export const createAdditionalPartRequest = async (req, res) => {
 
     // Validate service reception exists if provided
     if (serviceReceptionId) {
-      const serviceReception = await ServiceReception.findById(
-        serviceReceptionId
-      );
+      const serviceReception =
+        await ServiceReception.findById(serviceReceptionId);
       if (!serviceReception) {
         return res.status(404).json({
           success: false,
@@ -79,7 +78,7 @@ export const createAdditionalPartRequest = async (req, res) => {
         priority: requestedPart.priority || "normal",
         availableQuantity,
         shortfall,
-        estimatedCost: part.unitPrice * requestedPart.quantity,
+        estimatedCost: (part.pricing?.retail || 0) * requestedPart.quantity,
       });
     }
 
@@ -108,9 +107,8 @@ export const createAdditionalPartRequest = async (req, res) => {
 
     // Add reference to service reception if exists
     if (serviceReceptionId) {
-      const serviceReception = await ServiceReception.findById(
-        serviceReceptionId
-      );
+      const serviceReception =
+        await ServiceReception.findById(serviceReceptionId);
       serviceReception.additionalPartRequests.push(partRequest._id);
       await serviceReception.save();
     }
@@ -122,7 +120,7 @@ export const createAdditionalPartRequest = async (req, res) => {
       { path: "requestedBy", select: "firstName lastName" },
       {
         path: "requestedParts.partId",
-        select: "name partNumber category unitPrice currentStock",
+        select: "name partNumber category pricing.retail inventory",
       },
     ]);
 
@@ -165,7 +163,7 @@ export const getPendingPartRequests = async (req, res) => {
       .populate("requestedBy", "firstName lastName")
       .populate(
         "requestedParts.partId",
-        "name partNumber category unitPrice currentStock minimumStock"
+        "name partNumber category pricing.retail inventory"
       )
       .populate({
         path: "appointmentId",
@@ -240,10 +238,29 @@ export const reviewPartRequest = async (req, res) => {
         statusMessage = "Part request approved by staff";
         appointmentStatusUpdate = "parts_approved";
 
-        // Check if all parts are available
-        const allAvailable = partRequest.requestedParts.every(
-          (part) => part.shortfall === 0
+        // Re-check real-time inventory before approval (prevent race condition)
+        const partIds = partRequest.requestedParts.map((rp) => rp.partId);
+        const currentParts = await Part.find({ _id: { $in: partIds } });
+        const partStockMap = new Map(
+          currentParts.map((p) => [p._id.toString(), p.inventory.currentStock])
         );
+
+        // Update shortfall with real-time data
+        let allAvailable = true;
+        for (const requestedPart of partRequest.requestedParts) {
+          const currentStock =
+            partStockMap.get(requestedPart.partId.toString()) || 0;
+          requestedPart.availableQuantity = currentStock;
+          requestedPart.shortfall = Math.max(
+            0,
+            requestedPart.quantity - currentStock
+          );
+
+          if (requestedPart.shortfall > 0) {
+            allAvailable = false;
+          }
+        }
+
         if (!allAvailable) {
           appointmentStatusUpdate = "parts_insufficient";
           statusMessage =
@@ -311,7 +328,10 @@ export const reviewPartRequest = async (req, res) => {
     await partRequest.populate([
       { path: "requestedBy", select: "firstName lastName" },
       { path: "reviewedBy", select: "firstName lastName" },
-      { path: "requestedParts.partId", select: "name partNumber currentStock" },
+      {
+        path: "requestedParts.partId",
+        select: "name partNumber pricing.retail inventory",
+      },
     ]);
 
     res.status(200).json({
@@ -342,7 +362,7 @@ export const getPartRequest = async (req, res) => {
       .populate("reviewedBy", "firstName lastName")
       .populate(
         "requestedParts.partId",
-        "name partNumber category unitPrice currentStock minimumStock"
+        "name partNumber category pricing.retail inventory"
       )
       .populate({
         path: "appointmentId",
@@ -404,7 +424,7 @@ export const getPartRequestsByAppointment = async (req, res) => {
       .populate("reviewedBy", "firstName lastName")
       .populate(
         "requestedParts.partId",
-        "name partNumber category unitPrice currentStock"
+        "name partNumber category pricing.retail inventory"
       )
       .sort({ requestedAt: -1 });
 
@@ -491,20 +511,31 @@ export const updatePartRequestStatus = async (req, res) => {
 async function reserveRequestedParts(partRequest) {
   try {
     for (const requestedPart of partRequest.requestedParts) {
+      // Re-fetch part to get latest inventory (prevent race condition)
       const part = await Part.findById(requestedPart.partId);
       if (part) {
         const quantityToReserve =
           requestedPart.approvedQuantity || requestedPart.quantity;
 
+        // Check real-time inventory before reserving
+        const currentStock = part.inventory.currentStock;
+
         // Only reserve if we have sufficient stock
-        if (part.inventory.currentStock >= quantityToReserve) {
-          part.inventory.reservedStock = (part.inventory.reservedStock || 0) + quantityToReserve;
+        if (currentStock >= quantityToReserve) {
+          // Simplified inventory model: only use currentStock (no separate reservedStock)
           part.inventory.currentStock -= quantityToReserve;
           await part.save();
 
           requestedPart.reserved = true;
           requestedPart.reservedQuantity = quantityToReserve;
           requestedPart.reservedAt = new Date();
+        } else {
+          // Insufficient stock - mark as failed reservation
+          requestedPart.reserved = false;
+          requestedPart.reservationFailedReason = `Insufficient stock. Available: ${currentStock}, Requested: ${quantityToReserve}`;
+          console.warn(
+            `Failed to reserve part ${part.partNumber}: ${requestedPart.reservationFailedReason}`
+          );
         }
       }
     }

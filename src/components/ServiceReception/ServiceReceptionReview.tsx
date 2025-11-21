@@ -165,7 +165,8 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
   const [reviewNotes, setReviewNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [externalParts, setExternalParts] = useState<any[]>([]);
-  const [extendedCompletionDate, setExtendedCompletionDate] = useState<string>("");
+  const [extendedCompletionDate, setExtendedCompletionDate] =
+    useState<string>("");
 
   // Staff editing states
   const [isEditingServices, setIsEditingServices] = useState(false);
@@ -182,10 +183,14 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
   const [loadingCatalog, setLoadingCatalog] = useState(false);
 
   // Part stock information
-  const [partStockInfo, setPartStockInfo] = useState<Map<string, { currentStock: number; loading: boolean }>>(new Map());
+  const [partStockInfo, setPartStockInfo] = useState<
+    Map<string, { currentStock: number; loading: boolean }>
+  >(new Map());
 
   // Service details (to access commonParts)
-  const [serviceDetails, setServiceDetails] = useState<Map<string, any>>(new Map());
+  const [serviceDetails, setServiceDetails] = useState<Map<string, any>>(
+    new Map()
+  );
 
   // Fetch stock info for parts
   const fetchPartStockInfo = async (partIds: string[]) => {
@@ -194,29 +199,29 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
     try {
       // Mark as loading
       const loadingMap = new Map(partStockInfo);
-      partIds.forEach(id => {
+      partIds.forEach((id) => {
         loadingMap.set(id, { currentStock: 0, loading: true });
       });
       setPartStockInfo(loadingMap);
 
       // Fetch all parts data
-      const response = await fetch('/api/parts?limit=1000', {
+      const response = await fetch("/api/parts?limit=1000", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
 
       if (response.ok) {
         const data = await response.json();
-        const stockMap = new Map();  // ✅ FIX: Create new Map instead of copying old state
+        const stockMap = new Map(); // ✅ FIX: Create new Map instead of copying old state
 
         // Update stock info for each part
-        partIds.forEach(partId => {
+        partIds.forEach((partId) => {
           const partData = data.data?.find((p: any) => p._id === partId);
           if (partData) {
             stockMap.set(partId, {
               currentStock: partData.inventory?.currentStock || 0,
-              loading: false
+              loading: false,
             });
           } else {
             stockMap.set(partId, { currentStock: 0, loading: false });
@@ -226,10 +231,10 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
         setPartStockInfo(stockMap);
       }
     } catch (error) {
-      console.error('Error fetching part stock info:', error);
+      console.error("Error fetching part stock info:", error);
       // Mark as not loading even on error
-      const errorMap = new Map();  // ✅ FIX: Create new Map instead of copying old state
-      partIds.forEach(id => {
+      const errorMap = new Map(); // ✅ FIX: Create new Map instead of copying old state
+      partIds.forEach((id) => {
         errorMap.set(id, { currentStock: 0, loading: false });
       });
       setPartStockInfo(errorMap);
@@ -242,9 +247,9 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
     try {
       // Fetch services to get commonParts info
-      const response = await fetch('/api/services?limit=1000', {
+      const response = await fetch("/api/services?limit=1000", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
 
@@ -256,7 +261,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
         const detailsMap = new Map(serviceDetails);
         const partIdsFromServices: string[] = [];
 
-        serviceIds.forEach(serviceId => {
+        serviceIds.forEach((serviceId) => {
           const service = services.find((s: any) => s._id === serviceId);
           if (service) {
             detailsMap.set(serviceId, service);
@@ -280,35 +285,49 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
         }
       }
     } catch (error) {
-      console.error('Error fetching service details:', error);
+      console.error("Error fetching service details:", error);
     }
   };
 
   // Helper: Initialize editing state when modal opens
   const handleOpenReviewModal = (reception: ServiceReception) => {
-    console.log('\n🔍 [Frontend] handleOpenReviewModal - Reception data received:');
-    console.log('   Reception ID:', reception._id);
-    console.log('   Requested Parts Count:', reception.requestedParts?.length || 0);
+    console.log(
+      "\n🔍 [Frontend] handleOpenReviewModal - Reception data received:"
+    );
+    console.log("   Reception ID:", reception._id);
+    console.log(
+      "   Requested Parts Count:",
+      reception.requestedParts?.length || 0
+    );
 
     if (reception.requestedParts && reception.requestedParts.length > 0) {
       reception.requestedParts.forEach((part, index) => {
         console.log(`\n   Part ${index + 1}:`);
-        console.log('      partName:', part.partName);
-        console.log('      partId type:', typeof part.partId);
-        console.log('      partId:', part.partId);
+        console.log("      partName:", part.partName);
+        console.log("      partId type:", typeof part.partId);
+        console.log("      partId:", part.partId);
 
-        if (typeof part.partId === 'object' && part.partId !== null) {
-          console.log('      partId._id:', (part.partId as any)._id);
-          console.log('      partId.name:', (part.partId as any).name);
-          console.log('      partId.partNumber:', (part.partId as any).partNumber);
-          console.log('      partId.pricing:', (part.partId as any).pricing);
-          console.log('      partId.inventory:', (part.partId as any).inventory);
-          console.log('      partId.inventory?.currentStock:', (part.partId as any).inventory?.currentStock);
+        if (typeof part.partId === "object" && part.partId !== null) {
+          console.log("      partId._id:", (part.partId as any)._id);
+          console.log("      partId.name:", (part.partId as any).name);
+          console.log(
+            "      partId.partNumber:",
+            (part.partId as any).partNumber
+          );
+          console.log("      partId.pricing:", (part.partId as any).pricing);
+          console.log(
+            "      partId.inventory:",
+            (part.partId as any).inventory
+          );
+          console.log(
+            "      partId.inventory?.currentStock:",
+            (part.partId as any).inventory?.currentStock
+          );
         }
 
-        console.log('      isAvailable:', part.isAvailable);
-        console.log('      availableQuantity:', part.availableQuantity);
-        console.log('      quantity:', part.quantity);
+        console.log("      isAvailable:", part.isAvailable);
+        console.log("      availableQuantity:", part.availableQuantity);
+        console.log("      quantity:", part.quantity);
       });
     }
 
@@ -322,10 +341,10 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
     // Fetch stock info for all parts in this reception
     const partIds = (reception.requestedParts || [])
-      .map(p => typeof p.partId === 'object' ? p.partId._id : p.partId)
+      .map((p) => (typeof p.partId === "object" ? p.partId._id : p.partId))
       .filter(Boolean);
 
-    console.log('   Part IDs to fetch:', partIds);
+    console.log("   Part IDs to fetch:", partIds);
 
     if (partIds.length > 0) {
       fetchPartStockInfo(partIds);
@@ -333,7 +352,9 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
     // Fetch service details to get commonParts info
     const serviceIds = (reception.recommendedServices || [])
-      .map(s => typeof s.serviceId === 'object' ? s.serviceId._id : s.serviceId)
+      .map((s) =>
+        typeof s.serviceId === "object" ? s.serviceId._id : s.serviceId
+      )
       .filter(Boolean);
 
     if (serviceIds.length > 0) {
@@ -348,31 +369,52 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
     const original = selectedReception.recommendedServices || [];
     const edited = editedServices;
 
-    const added = edited.filter(e => !original.find(o =>
-      (typeof o.serviceId === 'object' ? o.serviceId._id : o.serviceId) ===
-      (typeof e.serviceId === 'object' ? e.serviceId._id : e.serviceId)
-    ));
+    const added = edited.filter(
+      (e) =>
+        !original.find(
+          (o) =>
+            (typeof o.serviceId === "object"
+              ? o.serviceId._id
+              : o.serviceId) ===
+            (typeof e.serviceId === "object" ? e.serviceId._id : e.serviceId)
+        )
+    );
 
-    const removed = original.filter(o => !edited.find(e =>
-      (typeof o.serviceId === 'object' ? o.serviceId._id : o.serviceId) ===
-      (typeof e.serviceId === 'object' ? e.serviceId._id : e.serviceId)
-    ));
+    const removed = original.filter(
+      (o) =>
+        !edited.find(
+          (e) =>
+            (typeof o.serviceId === "object"
+              ? o.serviceId._id
+              : o.serviceId) ===
+            (typeof e.serviceId === "object" ? e.serviceId._id : e.serviceId)
+        )
+    );
 
-    const modified = edited.filter(e => {
-      const orig = original.find(o =>
-        (typeof o.serviceId === 'object' ? o.serviceId._id : o.serviceId) ===
-        (typeof e.serviceId === 'object' ? e.serviceId._id : e.serviceId)
-      );
-      return orig && (orig.quantity !== e.quantity);
-    }).map(e => {
-      const orig = original.find(o =>
-        (typeof o.serviceId === 'object' ? o.serviceId._id : o.serviceId) ===
-        (typeof e.serviceId === 'object' ? e.serviceId._id : e.serviceId)
-      );
-      return { before: orig, after: e };
-    });
+    const modified = edited
+      .filter((e) => {
+        const orig = original.find(
+          (o) =>
+            (typeof o.serviceId === "object"
+              ? o.serviceId._id
+              : o.serviceId) ===
+            (typeof e.serviceId === "object" ? e.serviceId._id : e.serviceId)
+        );
+        return orig && orig.quantity !== e.quantity;
+      })
+      .map((e) => {
+        const orig = original.find(
+          (o) =>
+            (typeof o.serviceId === "object"
+              ? o.serviceId._id
+              : o.serviceId) ===
+            (typeof e.serviceId === "object" ? e.serviceId._id : e.serviceId)
+        );
+        return { before: orig, after: e };
+      });
 
-    const hasChanges = added.length > 0 || removed.length > 0 || modified.length > 0;
+    const hasChanges =
+      added.length > 0 || removed.length > 0 || modified.length > 0;
     return hasChanges ? { added, removed, modified } : null;
   };
 
@@ -383,31 +425,44 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
     const original = selectedReception.requestedParts || [];
     const edited = editedParts;
 
-    const added = edited.filter(e => !original.find(o =>
-      (typeof o.partId === 'object' ? o.partId._id : o.partId) ===
-      (typeof e.partId === 'object' ? e.partId._id : e.partId)
-    ));
+    const added = edited.filter(
+      (e) =>
+        !original.find(
+          (o) =>
+            (typeof o.partId === "object" ? o.partId._id : o.partId) ===
+            (typeof e.partId === "object" ? e.partId._id : e.partId)
+        )
+    );
 
-    const removed = original.filter(o => !edited.find(e =>
-      (typeof o.partId === 'object' ? o.partId._id : o.partId) ===
-      (typeof e.partId === 'object' ? e.partId._id : e.partId)
-    ));
+    const removed = original.filter(
+      (o) =>
+        !edited.find(
+          (e) =>
+            (typeof o.partId === "object" ? o.partId._id : o.partId) ===
+            (typeof e.partId === "object" ? e.partId._id : e.partId)
+        )
+    );
 
-    const modified = edited.filter(e => {
-      const orig = original.find(o =>
-        (typeof o.partId === 'object' ? o.partId._id : o.partId) ===
-        (typeof e.partId === 'object' ? e.partId._id : e.partId)
-      );
-      return orig && (orig.quantity !== e.quantity);
-    }).map(e => {
-      const orig = original.find(o =>
-        (typeof o.partId === 'object' ? o.partId._id : o.partId) ===
-        (typeof e.partId === 'object' ? e.partId._id : e.partId)
-      );
-      return { before: orig, after: e };
-    });
+    const modified = edited
+      .filter((e) => {
+        const orig = original.find(
+          (o) =>
+            (typeof o.partId === "object" ? o.partId._id : o.partId) ===
+            (typeof e.partId === "object" ? e.partId._id : e.partId)
+        );
+        return orig && orig.quantity !== e.quantity;
+      })
+      .map((e) => {
+        const orig = original.find(
+          (o) =>
+            (typeof o.partId === "object" ? o.partId._id : o.partId) ===
+            (typeof e.partId === "object" ? e.partId._id : e.partId)
+        );
+        return { before: orig, after: e };
+      });
 
-    const hasChanges = added.length > 0 || removed.length > 0 || modified.length > 0;
+    const hasChanges =
+      added.length > 0 || removed.length > 0 || modified.length > 0;
     return hasChanges ? { added, removed, modified } : null;
   };
 
@@ -439,31 +494,37 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
   // Helper to get item status for color coding
   const getServiceStatus = (service: any) => {
-    if (!selectedReception) return 'unchanged';
+    if (!selectedReception) return "unchanged";
     const original = selectedReception.recommendedServices || [];
-    const serviceId = typeof service.serviceId === 'object' ? service.serviceId._id : service.serviceId;
+    const serviceId =
+      typeof service.serviceId === "object"
+        ? service.serviceId._id
+        : service.serviceId;
 
-    const inOriginal = original.find(o =>
-      (typeof o.serviceId === 'object' ? o.serviceId._id : o.serviceId) === serviceId
+    const inOriginal = original.find(
+      (o) =>
+        (typeof o.serviceId === "object" ? o.serviceId._id : o.serviceId) ===
+        serviceId
     );
 
-    if (!inOriginal) return 'added';
-    if (inOriginal.quantity !== service.quantity) return 'modified';
-    return 'unchanged';
+    if (!inOriginal) return "added";
+    if (inOriginal.quantity !== service.quantity) return "modified";
+    return "unchanged";
   };
 
   const getPartStatus = (part: any) => {
-    if (!selectedReception) return 'unchanged';
+    if (!selectedReception) return "unchanged";
     const original = selectedReception.requestedParts || [];
-    const partId = typeof part.partId === 'object' ? part.partId._id : part.partId;
+    const partId =
+      typeof part.partId === "object" ? part.partId._id : part.partId;
 
-    const inOriginal = original.find(o =>
-      (typeof o.partId === 'object' ? o.partId._id : o.partId) === partId
+    const inOriginal = original.find(
+      (o) => (typeof o.partId === "object" ? o.partId._id : o.partId) === partId
     );
 
-    if (!inOriginal) return 'added';
-    if (inOriginal.quantity !== part.quantity) return 'modified';
-    return 'unchanged';
+    if (!inOriginal) return "added";
+    if (inOriginal.quantity !== part.quantity) return "modified";
+    return "unchanged";
   };
 
   // Helper: Get stock info for a part
@@ -482,35 +543,56 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
   const hasStockIssues = () => {
     if (!selectedReception) return false;
 
-    // ✅ FIX: Use isAvailable and availableQuantity from reception data
-    // These fields are already set by backend and are more reliable than populate
-    const partsIssues = editedParts.some(part => {
-      // Use data already in the reception (set by backend when creating reception)
-      const isOutOfStock = part.isAvailable === false;
-      const isLowStock = part.isAvailable === true &&
-                        (part.availableQuantity || 0) < part.quantity;
+    // ✅ FIX: Use real-time stock info from Part model, not stale ServiceReception data
+    const partsIssues = editedParts.some((part) => {
+      const partId =
+        typeof part.partId === "object" ? part.partId._id : part.partId;
+      const stockInfo = getPartStockInfo(partId);
 
-      console.log(`🔍 [hasStockIssues] Checking part: ${part.partName}`);
-      console.log(`   isAvailable: ${part.isAvailable}, availableQuantity: ${part.availableQuantity}, requested: ${part.quantity}`);
-      console.log(`   → isOutOfStock: ${isOutOfStock}, isLowStock: ${isLowStock}`);
+      // Use real-time currentStock from Part model
+      const isOutOfStock = !stockInfo.loading && stockInfo.currentStock === 0;
+      const isLowStock =
+        !stockInfo.loading &&
+        stockInfo.currentStock > 0 &&
+        stockInfo.currentStock < part.quantity;
+
+      console.log(
+        `🔍 [hasStockIssues] Checking requested part: ${part.partName}`
+      );
+      console.log(
+        `   real-time currentStock: ${stockInfo.currentStock}, requested: ${part.quantity}, loading: ${stockInfo.loading}`
+      );
+      console.log(
+        `   → isOutOfStock: ${isOutOfStock}, isLowStock: ${isLowStock}`
+      );
 
       return isOutOfStock || isLowStock;
     });
 
     // Check service common parts - still use stockInfo from API for these
-    const servicePartsIssues = editedServices.some(service => {
-      const serviceId = typeof service.serviceId === 'object' ? service.serviceId._id : service.serviceId;
+    const servicePartsIssues = editedServices.some((service) => {
+      const serviceId =
+        typeof service.serviceId === "object"
+          ? service.serviceId._id
+          : service.serviceId;
       const commonParts = getServiceCommonParts(serviceId);
 
       return commonParts.some((cp: any) => {
         const stockInfo = getPartStockInfo(cp.partId);
         const requiredQty = (cp.quantity || 1) * service.quantity;
         const isOutOfStock = !stockInfo.loading && stockInfo.currentStock === 0;
-        const isLowStock = !stockInfo.loading && stockInfo.currentStock > 0 && stockInfo.currentStock < requiredQty;
+        const isLowStock =
+          !stockInfo.loading &&
+          stockInfo.currentStock > 0 &&
+          stockInfo.currentStock < requiredQty;
 
         if ((isOutOfStock || isLowStock) && !cp.isOptional) {
-          console.log(`🔍 [hasStockIssues] Service common part issue: ${cp.partId}`);
-          console.log(`   currentStock: ${stockInfo.currentStock}, required: ${requiredQty}, optional: ${cp.isOptional}`);
+          console.log(
+            `🔍 [hasStockIssues] Service common part issue: ${cp.partId}`
+          );
+          console.log(
+            `   currentStock: ${stockInfo.currentStock}, required: ${requiredQty}, optional: ${cp.isOptional}`
+          );
         }
 
         return (isOutOfStock || isLowStock) && !cp.isOptional; // Only block if part is not optional
@@ -518,7 +600,9 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
     });
 
     const hasIssues = partsIssues || servicePartsIssues;
-    console.log(`📊 [hasStockIssues] Final result: ${hasIssues} (partsIssues: ${partsIssues}, servicePartsIssues: ${servicePartsIssues})`);
+    console.log(
+      `📊 [hasStockIssues] Final result: ${hasIssues} (partsIssues: ${partsIssues}, servicePartsIssues: ${servicePartsIssues})`
+    );
 
     return hasIssues;
   };
@@ -527,9 +611,9 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
   const fetchServicesCatalog = async () => {
     try {
       setLoadingCatalog(true);
-      const response = await fetch('/api/services', {
+      const response = await fetch("/api/services", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       if (response.ok) {
@@ -537,18 +621,18 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
         const allServices = data.data || [];
 
         // Filter out services already in the reception
-        const existingServiceIds = editedServices.map(s =>
-          typeof s.serviceId === 'string' ? s.serviceId : s.serviceId._id
+        const existingServiceIds = editedServices.map((s) =>
+          typeof s.serviceId === "string" ? s.serviceId : s.serviceId._id
         );
-        const filtered = allServices.filter((service: any) =>
-          !existingServiceIds.includes(service._id)
+        const filtered = allServices.filter(
+          (service: any) => !existingServiceIds.includes(service._id)
         );
 
         setAvailableServices(filtered);
       }
     } catch (error) {
-      console.error('Error fetching services:', error);
-      toast.error('Không thể tải danh sách dịch vụ');
+      console.error("Error fetching services:", error);
+      toast.error("Không thể tải danh sách dịch vụ");
     } finally {
       setLoadingCatalog(false);
     }
@@ -558,9 +642,9 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
   const fetchPartsCatalog = async () => {
     try {
       setLoadingCatalog(true);
-      const response = await fetch('/api/parts', {
+      const response = await fetch("/api/parts", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       if (response.ok) {
@@ -568,18 +652,18 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
         const allParts = data.data || [];
 
         // Filter out parts already in the reception
-        const existingPartIds = editedParts.map(p =>
-          typeof p.partId === 'string' ? p.partId : p.partId._id
+        const existingPartIds = editedParts.map((p) =>
+          typeof p.partId === "string" ? p.partId : p.partId._id
         );
-        const filtered = allParts.filter((part: any) =>
-          !existingPartIds.includes(part._id)
+        const filtered = allParts.filter(
+          (part: any) => !existingPartIds.includes(part._id)
         );
 
         setAvailableParts(filtered);
       }
     } catch (error) {
-      console.error('Error fetching parts:', error);
-      toast.error('Không thể tải danh sách phụ tùng');
+      console.error("Error fetching parts:", error);
+      toast.error("Không thể tải danh sách phụ tùng");
     } finally {
       setLoadingCatalog(false);
     }
@@ -588,7 +672,9 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
   // Add service to edited list
   const handleAddService = (service: any) => {
     if (!currentUser?._id) {
-      toast.error('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
+      toast.error(
+        "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại."
+      );
       return;
     }
 
@@ -597,7 +683,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
       serviceName: service.name,
       category: service.category,
       quantity: 1,
-      reason: '',
+      reason: "",
       estimatedCost: service.basePrice,
       estimatedDuration: service.estimatedDuration,
       addedBy: currentUser._id, // Required field - must be valid ObjectId
@@ -610,7 +696,9 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
   // Add part to edited list
   const handleAddPart = (part: any) => {
     if (!currentUser?._id) {
-      toast.error('Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.');
+      toast.error(
+        "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại."
+      );
       return;
     }
 
@@ -619,7 +707,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
       partName: part.name,
       partNumber: part.partNumber,
       quantity: 1,
-      reason: '',
+      reason: "",
       isApproved: true,
       isAvailable: (part.inventory?.currentStock || 0) > 0,
       availableQuantity: part.inventory?.currentStock || 0,
@@ -646,13 +734,15 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
       }
 
       // Prepare modification data
-      const modificationsData = hasAnyModifications() ? {
-        servicesChanges: getServicesChanges(),
-        partsChanges: getPartsChanges(),
-        modificationReason: modificationReason.trim(),
-        modifiedServices: editedServices,
-        modifiedParts: editedParts
-      } : null;
+      const modificationsData = hasAnyModifications()
+        ? {
+            servicesChanges: getServicesChanges(),
+            partsChanges: getPartsChanges(),
+            modificationReason: modificationReason.trim(),
+            modifiedServices: editedServices,
+            modifiedParts: editedParts,
+          }
+        : null;
 
       // REMOVED: Part conflict checking logic
       // New approach: Staff approves receptions sequentially (first-come-first-served)
@@ -957,8 +1047,8 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                           item.status === "critical"
                                             ? "text-red-600"
                                             : item.status === "warning"
-                                            ? "text-yellow-500"
-                                            : "text-green-500"
+                                              ? "text-yellow-500"
+                                              : "text-green-500"
                                         }`}
                                       />
                                       <div className="flex-1">
@@ -972,15 +1062,15 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                                 item.status === "critical"
                                                   ? "bg-dark-300 text-red-600"
                                                   : item.status === "warning"
-                                                  ? "bg-dark-300 text-yellow-600"
-                                                  : "bg-dark-300 text-green-600"
+                                                    ? "bg-dark-300 text-yellow-600"
+                                                    : "bg-dark-300 text-green-600"
                                               }`}
                                             >
                                               {item.status === "critical"
                                                 ? "Nghiêm trọng"
                                                 : item.status === "warning"
-                                                ? "Cảnh báo"
-                                                : "Tốt"}
+                                                  ? "Cảnh báo"
+                                                  : "Tốt"}
                                             </span>
                                           )}
                                         </div>
@@ -1092,11 +1182,11 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                         onClick={() => setIsEditingServices(!isEditingServices)}
                         className={`px-3 py-1 text-xs rounded-md transition-colors ${
                           isEditingServices
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-dark-300 text-blue-400 hover:bg-dark-200'
+                            ? "bg-blue-600 text-white"
+                            : "bg-dark-300 text-blue-400 hover:bg-dark-200"
                         }`}
                       >
-                        {isEditingServices ? '✓ Xong' : '✏️ Chỉnh sửa'}
+                        {isEditingServices ? "✓ Xong" : "✏️ Chỉnh sửa"}
                       </button>
                     </div>
 
@@ -1104,42 +1194,61 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                       {editedServices && editedServices.length > 0 ? (
                         editedServices.map((service, index) => {
                           const status = getServiceStatus(service);
-                          const serviceId = typeof service.serviceId === 'object' ? service.serviceId._id : service.serviceId;
+                          const serviceId =
+                            typeof service.serviceId === "object"
+                              ? service.serviceId._id
+                              : service.serviceId;
                           const commonParts = getServiceCommonParts(serviceId);
 
                           // Check if any common parts are out of stock or low stock
                           const partsStockIssues = commonParts
                             .map((cp: any) => {
                               const stockInfo = getPartStockInfo(cp.partId);
-                              const requiredQty = (cp.quantity || 1) * service.quantity;
+                              const requiredQty =
+                                (cp.quantity || 1) * service.quantity;
                               return {
                                 partName: cp.partName,
                                 requiredQty,
                                 stockInfo,
-                                isOutOfStock: !stockInfo.loading && stockInfo.currentStock === 0,
-                                isLowStock: !stockInfo.loading && stockInfo.currentStock > 0 && stockInfo.currentStock < requiredQty,
+                                isOutOfStock:
+                                  !stockInfo.loading &&
+                                  stockInfo.currentStock === 0,
+                                isLowStock:
+                                  !stockInfo.loading &&
+                                  stockInfo.currentStock > 0 &&
+                                  stockInfo.currentStock < requiredQty,
                               };
                             })
                             .filter((p: any) => p.isOutOfStock || p.isLowStock);
 
                           const bgColorClass =
-                            status === 'added' ? 'bg-green-100 dark:bg-green-900/30 border-green-500' :
-                            status === 'modified' ? 'bg-yellow-100 dark:bg-yellow-900/30 border-yellow-500' :
-                            'bg-dark-300 border-dark-200';
+                            status === "added"
+                              ? "bg-green-100 dark:bg-green-900/30 border-green-500"
+                              : status === "modified"
+                                ? "bg-yellow-100 dark:bg-yellow-900/30 border-yellow-500"
+                                : "bg-dark-300 border-dark-200";
 
                           return (
                             <div
                               key={index}
                               className={`rounded p-3 text-sm border ${bgColorClass} ${
-                                status !== 'unchanged' ? 'border-2' : ''
+                                status !== "unchanged" ? "border-2" : ""
                               }`}
                             >
                               <div className="flex justify-between items-start mb-1">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2">
                                     <span className="text-text-muted">
-                                      {status === 'added' && <span className="text-green-600 mr-1">🟢</span>}
-                                      {status === 'modified' && <span className="text-yellow-600 mr-1">🟡</span>}
+                                      {status === "added" && (
+                                        <span className="text-green-600 mr-1">
+                                          🟢
+                                        </span>
+                                      )}
+                                      {status === "modified" && (
+                                        <span className="text-yellow-600 mr-1">
+                                          🟡
+                                        </span>
+                                      )}
                                       {service.serviceName}
                                     </span>
                                     {/* Show warning if service has parts with stock issues */}
@@ -1183,12 +1292,19 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
                                 {isEditingServices && (
                                   <div className="flex items-center gap-2">
-                                    <label className="text-xs text-text-muted">Số lượng:</label>
+                                    <label className="text-xs text-text-muted">
+                                      Số lượng:
+                                    </label>
                                     <input
                                       type="number"
                                       min="1"
                                       value={service.quantity}
-                                      onChange={(e) => handleUpdateServiceQuantity(index, parseInt(e.target.value) || 1)}
+                                      onChange={(e) =>
+                                        handleUpdateServiceQuantity(
+                                          index,
+                                          parseInt(e.target.value) || 1
+                                        )
+                                      }
                                       className="w-16 px-2 py-1 text-sm bg-dark-200 text-white border border-dark-100 rounded"
                                     />
                                     <button
@@ -1215,47 +1331,62 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                     🔧 Parts thường dùng cho dịch vụ này:
                                   </div>
                                   <div className="space-y-1">
-                                    {commonParts.map((cp: any, cpIndex: number) => {
-                                      const stockInfo = getPartStockInfo(cp.partId);
-                                      const requiredQty = (cp.quantity || 1) * service.quantity;
-                                      const isOutOfStock = !stockInfo.loading && stockInfo.currentStock === 0;
-                                      const isLowStock = !stockInfo.loading && stockInfo.currentStock > 0 && stockInfo.currentStock < requiredQty;
+                                    {commonParts.map(
+                                      (cp: any, cpIndex: number) => {
+                                        const stockInfo = getPartStockInfo(
+                                          cp.partId
+                                        );
+                                        const requiredQty =
+                                          (cp.quantity || 1) * service.quantity;
+                                        const isOutOfStock =
+                                          !stockInfo.loading &&
+                                          stockInfo.currentStock === 0;
+                                        const isLowStock =
+                                          !stockInfo.loading &&
+                                          stockInfo.currentStock > 0 &&
+                                          stockInfo.currentStock < requiredQty;
 
-                                      return (
-                                        <div key={cpIndex} className="flex items-center gap-2 text-xs bg-dark-900/50 p-1.5 rounded">
-                                          <span className="text-text-muted flex-1">
-                                            • {cp.partName} {cp.isOptional && '(tùy chọn)'} - Cần: {requiredQty}
-                                          </span>
-                                          {stockInfo.loading ? (
-                                            <span className="px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">
-                                              ...
+                                        return (
+                                          <div
+                                            key={cpIndex}
+                                            className="flex items-center gap-2 text-xs bg-dark-900/50 p-1.5 rounded"
+                                          >
+                                            <span className="text-text-muted flex-1">
+                                              • {cp.partName}{" "}
+                                              {cp.isOptional && "(tùy chọn)"} -
+                                              Cần: {requiredQty}
                                             </span>
-                                          ) : isOutOfStock ? (
-                                            <span className="px-1.5 py-0.5 rounded bg-red-900/30 text-red-400 font-semibold">
-                                              ⚠️ Hết (0)
-                                            </span>
-                                          ) : isLowStock ? (
-                                            <span className="px-1.5 py-0.5 rounded bg-yellow-900/30 text-yellow-400 font-semibold">
-                                              ⚠️ Kho: {stockInfo.currentStock}
-                                            </span>
-                                          ) : (
-                                            <span className="px-1.5 py-0.5 rounded bg-green-900/30 text-green-400">
-                                              ✓ Kho: {stockInfo.currentStock}
-                                            </span>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
+                                            {stockInfo.loading ? (
+                                              <span className="px-1.5 py-0.5 rounded bg-gray-200 text-gray-600">
+                                                ...
+                                              </span>
+                                            ) : isOutOfStock ? (
+                                              <span className="px-1.5 py-0.5 rounded bg-red-900/30 text-red-400 font-semibold">
+                                                ⚠️ Hết (0)
+                                              </span>
+                                            ) : isLowStock ? (
+                                              <span className="px-1.5 py-0.5 rounded bg-yellow-900/30 text-yellow-400 font-semibold">
+                                                ⚠️ Kho: {stockInfo.currentStock}
+                                              </span>
+                                            ) : (
+                                              <span className="px-1.5 py-0.5 rounded bg-green-900/30 text-green-400">
+                                                ✓ Kho: {stockInfo.currentStock}
+                                              </span>
+                                            )}
+                                          </div>
+                                        );
+                                      }
+                                    )}
                                   </div>
                                 </div>
                               )}
 
-                              {status === 'modified' && (
+                              {status === "modified" && (
                                 <div className="text-yellow-600 text-xs mt-1 italic">
                                   📝 Số lượng đã thay đổi
                                 </div>
                               )}
-                              {status === 'added' && (
+                              {status === "added" && (
                                 <div className="text-green-600 text-xs mt-1 italic">
                                   ✨ Dịch vụ mới thêm
                                 </div>
@@ -1306,40 +1437,59 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                           onClick={() => setIsEditingParts(!isEditingParts)}
                           className={`px-3 py-1 text-xs rounded-md transition-colors ${
                             isEditingParts
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-dark-300 text-blue-400 hover:bg-dark-200'
+                              ? "bg-blue-600 text-white"
+                              : "bg-dark-300 text-blue-400 hover:bg-dark-200"
                           }`}
                         >
-                          {isEditingParts ? '✓ Xong' : '✏️ Chỉnh sửa'}
+                          {isEditingParts ? "✓ Xong" : "✏️ Chỉnh sửa"}
                         </button>
                       </div>
 
                       <div className="space-y-2">
                         {editedParts.map((part, index) => {
                           const status = getPartStatus(part);
-                          // ✅ Use isAvailable and availableQuantity from reception data
-                          const isOutOfStock = part.isAvailable === false;
-                          const isLowStock = part.isAvailable === true && (part.availableQuantity || 0) < part.quantity;
-                          const currentStock = part.availableQuantity || 0;
+                          // ✅ Use real-time stock info from Part model
+                          const partId =
+                            typeof part.partId === "object"
+                              ? part.partId._id
+                              : part.partId;
+                          const stockInfo = getPartStockInfo(partId);
+                          const currentStock = stockInfo.currentStock;
+                          const isOutOfStock =
+                            !stockInfo.loading && currentStock === 0;
+                          const isLowStock =
+                            !stockInfo.loading &&
+                            currentStock > 0 &&
+                            currentStock < part.quantity;
 
                           const bgColorClass =
-                            status === 'added' ? 'bg-green-100 dark:bg-green-900/30 border-green-500' :
-                            status === 'modified' ? 'bg-yellow-100 dark:bg-yellow-900/30 border-yellow-500' :
-                            'bg-dark-300 border-dark-200';
+                            status === "added"
+                              ? "bg-green-100 dark:bg-green-900/30 border-green-500"
+                              : status === "modified"
+                                ? "bg-yellow-100 dark:bg-yellow-900/30 border-yellow-500"
+                                : "bg-dark-300 border-dark-200";
 
                           return (
                             <div
                               key={index}
                               className={`rounded p-3 text-sm border ${bgColorClass} ${
-                                status !== 'unchanged' ? 'border-2' : ''
+                                status !== "unchanged" ? "border-2" : ""
                               }`}
                             >
                               <div className="flex justify-between items-start mb-1">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2">
                                     <span className="text-text-muted">
-                                      {status === 'added' && <span className="text-green-600 mr-1">🟢</span>}
-                                      {status === 'modified' && <span className="text-yellow-600 mr-1">🟡</span>}
+                                      {status === "added" && (
+                                        <span className="text-green-600 mr-1">
+                                          🟢
+                                        </span>
+                                      )}
+                                      {status === "modified" && (
+                                        <span className="text-yellow-600 mr-1">
+                                          🟡
+                                        </span>
+                                      )}
                                       {part.partName}
                                     </span>
                                     {/* Stock info badge - using data from reception */}
@@ -1349,7 +1499,8 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                       </span>
                                     ) : isLowStock ? (
                                       <span className="text-xs px-2 py-0.5 rounded bg-yellow-900/30 text-yellow-400 font-semibold">
-                                        ⚠️ Kho: {currentStock} (cần {part.quantity})
+                                        ⚠️ Kho: {currentStock} (cần{" "}
+                                        {part.quantity})
                                       </span>
                                     ) : (
                                       <span className="text-xs px-2 py-0.5 rounded bg-green-900/30 text-green-400">
@@ -1366,8 +1517,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                 <div className="text-right ml-4">
                                   <div className="text-purple-600 text-text-muted">
                                     {(
-                                      (part.estimatedCost || 0) *
-                                      part.quantity
+                                      (part.estimatedCost || 0) * part.quantity
                                     ).toLocaleString("vi-VN")}{" "}
                                     VNĐ
                                   </div>
@@ -1383,12 +1533,19 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
                                 {isEditingParts && (
                                   <div className="flex items-center gap-2 ml-auto">
-                                    <label className="text-xs text-text-muted">Số lượng:</label>
+                                    <label className="text-xs text-text-muted">
+                                      Số lượng:
+                                    </label>
                                     <input
                                       type="number"
                                       min="1"
                                       value={part.quantity}
-                                      onChange={(e) => handleUpdatePartQuantity(index, parseInt(e.target.value) || 1)}
+                                      onChange={(e) =>
+                                        handleUpdatePartQuantity(
+                                          index,
+                                          parseInt(e.target.value) || 1
+                                        )
+                                      }
                                       className="w-16 px-2 py-1 text-sm bg-dark-200 text-white border border-dark-100 rounded"
                                     />
                                     <button
@@ -1406,12 +1563,12 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                 Lý do: {part.reason}
                               </div>
 
-                              {status === 'modified' && (
+                              {status === "modified" && (
                                 <div className="text-yellow-600 text-xs mt-1 italic">
                                   📝 Số lượng đã thay đổi
                                 </div>
                               )}
-                              {status === 'added' && (
+                              {status === "added" && (
                                 <div className="text-green-600 text-xs mt-1 italic">
                                   ✨ Phụ tùng mới thêm
                                 </div>
@@ -1420,14 +1577,20 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                               {/* Out of stock warning */}
                               {isOutOfStock && (
                                 <div className="mt-2 p-2 bg-red-900/20 border border-red-500/30 rounded text-xs text-red-400">
-                                  <strong>⚠️ Cảnh báo:</strong> Phụ tùng này hiện đã hết hàng trong kho. Cần đặt hàng từ nhà cung cấp hoặc thêm vào danh sách linh kiện đặt ngoài.
+                                  <strong>⚠️ Cảnh báo:</strong> Phụ tùng này
+                                  hiện đã hết hàng trong kho. Cần đặt hàng từ
+                                  nhà cung cấp hoặc thêm vào danh sách linh kiện
+                                  đặt ngoài.
                                 </div>
                               )}
 
                               {/* Low stock warning */}
                               {isLowStock && (
                                 <div className="mt-2 p-2 bg-yellow-900/20 border border-yellow-500/30 rounded text-xs text-yellow-400">
-                                  <strong>⚠️ Cảnh báo:</strong> Số lượng trong kho ({currentStock}) không đủ so với yêu cầu ({part.quantity}). Thiếu {part.quantity - currentStock} cái.
+                                  <strong>⚠️ Cảnh báo:</strong> Số lượng trong
+                                  kho ({currentStock}) không đủ so với yêu cầu (
+                                  {part.quantity}). Thiếu{" "}
+                                  {part.quantity - currentStock} cái.
                                 </div>
                               )}
                             </div>
@@ -1453,8 +1616,12 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                   {selectedReception.specialInstructions?.fromStaff && (
                     <div className="mb-6">
                       <ExternalPartsManager
-                        technicianNote={selectedReception.specialInstructions.fromStaff}
-                        existingParts={(selectedReception as any).externalParts || []}
+                        technicianNote={
+                          selectedReception.specialInstructions.fromStaff
+                        }
+                        existingParts={
+                          (selectedReception as any).externalParts || []
+                        }
                         onChange={setExternalParts}
                       />
                     </div>
@@ -1480,8 +1647,12 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                       {/* Total Cost Summary */}
                       {(() => {
                         // Use edited services/parts if editing, otherwise use original data
-                        const servicesToCalculate = isEditingServices ? editedServices : (selectedReception.recommendedServices || []);
-                        const partsToCalculate = isEditingParts ? editedParts : (selectedReception.requestedParts || []);
+                        const servicesToCalculate = isEditingServices
+                          ? editedServices
+                          : selectedReception.recommendedServices || [];
+                        const partsToCalculate = isEditingParts
+                          ? editedParts
+                          : selectedReception.requestedParts || [];
 
                         const servicesCost = servicesToCalculate.reduce(
                           (total, service) =>
@@ -1498,7 +1669,8 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                           (total, part) => total + (part.totalPrice || 0),
                           0
                         );
-                        const totalCost = servicesCost + partsCost + externalPartsCost;
+                        const totalCost =
+                          servicesCost + partsCost + externalPartsCost;
 
                         return totalCost > 0 ? (
                           <div className="bg-dark-900 border border-blue-200 rounded-lg p-4 mb-4">
@@ -1529,7 +1701,8 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                     Linh kiện đặt ngoài:
                                   </span>
                                   <span className="text-amber-500 font-semibold">
-                                    {externalPartsCost.toLocaleString("vi-VN")} VNĐ
+                                    {externalPartsCost.toLocaleString("vi-VN")}{" "}
+                                    VNĐ
                                   </span>
                                 </div>
                               )}
@@ -1564,12 +1737,16 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                           <input
                             type="date"
                             value={extendedCompletionDate}
-                            onChange={(e) => setExtendedCompletionDate(e.target.value)}
+                            onChange={(e) =>
+                              setExtendedCompletionDate(e.target.value)
+                            }
                             className="block w-full rounded-md bg-dark-300 text-white border-amber-600/50 shadow-sm focus:border-amber-400 focus:ring-amber-400"
                             placeholder="Chọn ngày hoàn thành mới..."
                           />
                           <p className="mt-2 text-xs text-amber-300">
-                            💡 Chọn ngày dự kiến hoàn thành mới (giờ sẽ giữ theo lịch hẹn gốc). Vì cần đặt linh kiện ngoài nên xe có thể phải để lại lâu hơn.
+                            💡 Chọn ngày dự kiến hoàn thành mới (giờ sẽ giữ theo
+                            lịch hẹn gốc). Vì cần đặt linh kiện ngoài nên xe có
+                            thể phải để lại lâu hơn.
                           </p>
                         </div>
                       )}
@@ -1582,14 +1759,18 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                           </label>
                           <textarea
                             value={modificationReason}
-                            onChange={(e) => setModificationReason(e.target.value)}
+                            onChange={(e) =>
+                              setModificationReason(e.target.value)
+                            }
                             className="w-full bg-dark-300 text-white border border-yellow-600/50 rounded-lg p-3 focus:border-yellow-400 focus:ring-yellow-400"
                             rows={3}
                             placeholder="Giải thích lý do bạn thay đổi services/parts..."
                             required
                           />
                           <p className="mt-2 text-xs text-yellow-300">
-                            💡 Vui lòng giải thích tại sao bạn thay đổi dịch vụ hoặc phụ tùng so với đề xuất ban đầu của kỹ thuật viên
+                            💡 Vui lòng giải thích tại sao bạn thay đổi dịch vụ
+                            hoặc phụ tùng so với đề xuất ban đầu của kỹ thuật
+                            viên
                           </p>
                         </div>
                       )}
@@ -1627,13 +1808,22 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                         Không thể duyệt - Phụ tùng thiếu hàng
                       </h4>
                       <p className="text-red-300 text-sm">
-                        Có phụ tùng trong phiếu hoặc dịch vụ đang thiếu hàng trong kho.
-                        Vui lòng xử lý một trong các cách sau:
+                        Có phụ tùng trong phiếu hoặc dịch vụ đang thiếu hàng
+                        trong kho. Vui lòng xử lý một trong các cách sau:
                       </p>
                       <ul className="text-red-300 text-sm mt-2 ml-4 list-disc space-y-1">
-                        <li>Xóa hoặc giảm số lượng phụ tùng thiếu trong tab "Chỉnh sửa"</li>
-                        <li>Thêm phụ tùng thiếu vào danh sách "Linh kiện đặt ngoài"</li>
-                        <li>Hoặc từ chối phiếu và yêu cầu kỹ thuật viên cập nhật lại</li>
+                        <li>
+                          Xóa hoặc giảm số lượng phụ tùng thiếu trong tab "Chỉnh
+                          sửa"
+                        </li>
+                        <li>
+                          Thêm phụ tùng thiếu vào danh sách "Linh kiện đặt
+                          ngoài"
+                        </li>
+                        <li>
+                          Hoặc từ chối phiếu và yêu cầu kỹ thuật viên cập nhật
+                          lại
+                        </li>
                       </ul>
                     </div>
                   </div>
@@ -1663,7 +1853,11 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                   onClick={() => handleReviewSubmit("approve")}
                   disabled={isSubmitting || hasStockIssues()}
                   className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center relative group"
-                  title={hasStockIssues() ? "Không thể duyệt vì có phụ tùng thiếu hàng" : ""}
+                  title={
+                    hasStockIssues()
+                      ? "Không thể duyệt vì có phụ tùng thiếu hàng"
+                      : ""
+                  }
                 >
                   {isSubmitting ? (
                     <ClockIcon className="w-4 h-4 mr-2 animate-spin" />
@@ -1688,7 +1882,9 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
         <div className="fixed inset-0 bg-black bg-opacity-75 overflow-y-auto h-full w-full z-[60] flex items-center justify-center">
           <div className="relative mx-auto p-6 border w-11/12 max-w-2xl shadow-lg rounded-md bg-dark-300">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white">Chọn dịch vụ để thêm</h3>
+              <h3 className="text-lg font-bold text-white">
+                Chọn dịch vụ để thêm
+              </h3>
               <button
                 onClick={() => setShowServicePicker(false)}
                 className="text-text-muted hover:text-white"
@@ -1711,15 +1907,21 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h4 className="text-white font-semibold">{service.name}</h4>
-                        <p className="text-text-secondary text-sm">{service.category}</p>
+                        <h4 className="text-white font-semibold">
+                          {service.name}
+                        </h4>
+                        <p className="text-text-secondary text-sm">
+                          {service.category}
+                        </p>
                         {service.description && (
-                          <p className="text-text-muted text-xs mt-1">{service.description}</p>
+                          <p className="text-text-muted text-xs mt-1">
+                            {service.description}
+                          </p>
                         )}
                       </div>
                       <div className="text-right ml-4">
                         <div className="text-lime-600 font-semibold">
-                          {(service.basePrice || 0).toLocaleString('vi-VN')} VNĐ
+                          {(service.basePrice || 0).toLocaleString("vi-VN")} VNĐ
                         </div>
                         <div className="text-text-secondary text-xs">
                           {service.estimatedDuration} phút
@@ -1744,7 +1946,9 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
         <div className="fixed inset-0 bg-black bg-opacity-75 overflow-y-auto h-full w-full z-[60] flex items-center justify-center">
           <div className="relative mx-auto p-6 border w-11/12 max-w-2xl shadow-lg rounded-md bg-dark-300">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white">Chọn phụ tùng để thêm</h3>
+              <h3 className="text-lg font-bold text-white">
+                Chọn phụ tùng để thêm
+              </h3>
               <button
                 onClick={() => setShowPartPicker(false)}
                 className="text-text-muted hover:text-white"
@@ -1767,26 +1971,35 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <h4 className="text-white font-semibold">{part.name}</h4>
-                        <p className="text-text-secondary text-sm">#{part.partNumber}</p>
+                        <h4 className="text-white font-semibold">
+                          {part.name}
+                        </h4>
+                        <p className="text-text-secondary text-sm">
+                          #{part.partNumber}
+                        </p>
                         {part.description && (
-                          <p className="text-text-muted text-xs mt-1">{part.description}</p>
+                          <p className="text-text-muted text-xs mt-1">
+                            {part.description}
+                          </p>
                         )}
                         <div className="flex items-center gap-2 mt-1">
-                          <span className={`text-xs px-2 py-0.5 rounded ${
-                            (part.inventory?.currentStock || 0) > 0
-                              ? 'bg-green-900/30 text-green-400'
-                              : 'bg-red-900/30 text-red-400'
-                          }`}>
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded ${
+                              (part.inventory?.currentStock || 0) > 0
+                                ? "bg-green-900/30 text-green-400"
+                                : "bg-red-900/30 text-red-400"
+                            }`}
+                          >
                             {(part.inventory?.currentStock || 0) > 0
                               ? `Còn ${part.inventory.currentStock} cái`
-                              : 'Hết hàng'}
+                              : "Hết hàng"}
                           </span>
                         </div>
                       </div>
                       <div className="text-right ml-4">
                         <div className="text-purple-600 font-semibold">
-                          {(part.pricing?.retail || 0).toLocaleString('vi-VN')} VNĐ
+                          {(part.pricing?.retail || 0).toLocaleString("vi-VN")}{" "}
+                          VNĐ
                         </div>
                       </div>
                     </div>
