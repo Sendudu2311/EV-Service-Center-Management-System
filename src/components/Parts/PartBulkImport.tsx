@@ -129,26 +129,41 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
           
           // Specifications
           'Spec Voltage': 'specVoltage',
+          'Voltage': 'voltage',
+          'Spec Capacity': 'specCapacity',
+          'Capacity': 'capacity',
           'Spec Power': 'specPower',
+          'Power': 'power',
           'Dim Length': 'dimLength',
           'Dim Width': 'dimWidth',
           'Dim Height': 'dimHeight',
+          'Dim Weight': 'dimWeight',
+          'Weight': 'weight',
+          'Material': 'material',
+          'Color': 'color',
           'Spec Other': 'specOther',
           
           // Compatibility
           'Compatibility Makes': 'makes',
+          'Makes': 'makes',
           'Compatibility Models': 'models',
+          'Models': 'models',
           'Compatibility Years Min': 'yearsMin',
+          'Years Min': 'yearsMin',
           'Compatibility Years Max': 'yearsMax',
+          'Years Max': 'yearsMax',
           'Battery Types': 'batteryTypes',
           
           // Pricing
           'Cost Price': 'costPrice',
           'CostPrice': 'costPrice',
+          'Cost': 'cost',
           'Retail Price': 'retailPrice',
           'RetailPrice': 'retailPrice',
+          'Retail': 'retail',
           'Wholesale Price': 'wholesalePrice',
           'WholesalePrice': 'wholesalePrice',
+          'Wholesale': 'wholesale',
           'Currency': 'currency',
           
           // Supplier
@@ -160,24 +175,43 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
           'Current Stock': 'currentStock',
           'CurrentStock': 'currentStock',
           'Reserved Stock': 'reservedStock',
+          'ReservedStock': 'reservedStock',
+          'Used Stock': 'usedStock',
+          'UsedStock': 'usedStock',
           'Min Stock Level': 'minStockLevel',
           'MinStockLevel': 'minStockLevel',
           'Max Stock Level': 'maxStockLevel',
           'MaxStockLevel': 'maxStockLevel',
           'Reorder Point': 'reorderPoint',
+          'ReorderPoint': 'reorderPoint',
           'Average Usage': 'averageUsage',
+          'AverageUsage': 'averageUsage',
+          'Warehouse Location': 'location',
+          'Location': 'location',
           
           // Other fields
           'Lead Time (days)': 'leadTime',
-          'Warranty Duration (days)': 'warrantyDuration',
+          'Lead Time': 'leadTime',
+          'LeadTime': 'leadTime',
+          'Warranty Duration (months)': 'warrantyDuration',
+          'Warranty Duration': 'warrantyDuration',
           'Warranty Type': 'warrantyType',
           'Warranty Description': 'warrantyDescription',
           'Tags (comma separated)': 'tags',
+          'Tags': 'tags',
           'Image URLs (comma separated)': 'images',
+          'Images': 'images',
           'Is Recommended (true/false)': 'isRecommended',
+          'Is Recommended': 'isRecommended',
+          'IsRecommended': 'isRecommended',
           'Is Active (true/false)': 'isActive',
+          'Is Active': 'isActive',
+          'IsActive': 'isActive',
           'Is Discontinued (true/false)': 'isDiscontinued',
-          'Replacement Part Numbers (comma separated)': 'replacementParts'
+          'Is Discontinued': 'isDiscontinued',
+          'IsDiscontinued': 'isDiscontinued',
+          'Replacement Part Numbers (comma separated)': 'replacementParts',
+          'Replacement Parts': 'replacementParts'
         };
 
         // Process data rows
@@ -214,7 +248,7 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
     };
 
     reader.readAsArrayBuffer(file);
-  };;
+  };;;
 
   const handleImport = async () => {
     if (validationErrors.length > 0) {
@@ -258,7 +292,8 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
           minStockLevel: Number(row.minStockLevel ?? 0) || 0,
           maxStockLevel: Number(row.maxStockLevel ?? 0) || 0,
           reorderPoint: Number(row.reorderPoint ?? 0) || 0,
-          averageUsage: Number(row.averageUsage ?? 0) || 0
+          averageUsage: Number(row.averageUsage ?? 0) || 0,
+          location: row.location || undefined
         };
 
         // Handle years properly - can be from separate min/max columns or JSON string
@@ -294,14 +329,18 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
         // Handle specifications
         const specifications: any = {};
         if (row.specVoltage || row.voltage) specifications.voltage = Number(row.specVoltage || row.voltage);
+        if (row.specCapacity || row.capacity) specifications.capacity = Number(row.specCapacity || row.capacity);
         if (row.specPower || row.power) specifications.power = Number(row.specPower || row.power);
+        if (row.material) specifications.material = String(row.material);
+        if (row.color) specifications.color = String(row.color);
         
         // Handle dimensions
-        if (row.dimLength || row.dimWidth || row.dimHeight) {
+        if (row.dimLength || row.dimWidth || row.dimHeight || row.dimWeight || row.weight) {
           specifications.dimensions = {};
           if (row.dimLength) specifications.dimensions.length = Number(row.dimLength);
           if (row.dimWidth) specifications.dimensions.width = Number(row.dimWidth);
           if (row.dimHeight) specifications.dimensions.height = Number(row.dimHeight);
+          if (row.dimWeight || row.weight) specifications.dimensions.weight = Number(row.dimWeight || row.weight);
         }
         
         // Handle spec other - parse key:value;key:value format
@@ -409,51 +448,51 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
       setIsProcessing(false);
       setProgress(0);
     }
-  };;
+  };;;
 
   const downloadTemplate = () => {
     const templateData = [
       [
         'Part Name', 'Part Number', 'Category', 'Subcategory', 'Brand', 'Model', 'Description',
-        'Spec Voltage', 'Spec Power', 'Dim Length', 'Dim Width', 'Dim Height', 'Spec Other',
+        'Spec Voltage', 'Spec Capacity', 'Spec Power', 'Dim Length', 'Dim Width', 'Dim Height', 'Dim Weight', 'Material', 'Color', 'Spec Other',
         'Compatibility Makes', 'Compatibility Models', 'Compatibility Years Min', 'Compatibility Years Max', 'Battery Types',
         'Cost Price', 'Retail Price', 'Wholesale Price', 'Currency',
         'Supplier Name', 'Supplier Contact', 'Supplier Notes',
-        'Current Stock', 'Reserved Stock', 'Min Stock Level', 'Max Stock Level', 'Reorder Point', 'Average Usage',
-        'Lead Time (days)', 
+        'Current Stock', 'Reserved Stock', 'Used Stock', 'Min Stock Level', 'Max Stock Level', 'Reorder Point', 'Average Usage', 'Warehouse Location',
+        'Lead Time (days)',
         'Warranty Duration (months)', 'Warranty Type', 'Warranty Description',
         'Tags (comma separated)', 'Image URLs (comma separated)', 'Is Recommended (true/false)', 'Is Active (true/false)', 'Is Discontinued (true/false)'
       ],
       [
         '22kW Onboard Charger (Template Example)', 'CHG-ONBOARD-22KW-001', 'charging', 'onboard-charger', 'ChargeMax', '', 'High-efficiency 22kW onboard charging unit for EV',
-        '400', '22', '400', '300', '150', 'efficiency:95;cooling:liquid',
+        '400', '22', '22000', '400', '300', '150', '25', 'aluminum', 'black', 'efficiency:95;cooling:liquid',
         'VinFast,Hyundai,BMW', 'VF e34,IONIQ 5,i4', '2022', '2025', 'lithium-ion',
         '3500000', '5500000', '4500000', 'VND',
         'ChargeMax Technologies', 'info@chargemax.com', 'Specialized EV charging equipment',
-        '15', '2', '5', '25', '10', '4',
-        '10', 
+        '15', '2', '0', '5', '25', '10', '4', 'Warehouse-A-Shelf-12',
+        '10',
         '24', 'manufacturer', '24 months manufacturer warranty covering defects',
         'charging,onboard,22kw,charger,fast-charging', 'https://res.cloudinary.com/de9bsmb2q/image/upload/v1759333457/ev-service/parts/dtl5pim5rzi0whrrvgkx.jpg', 'true', 'true', 'false'
       ],
       [
         'DC-DC Converter 12V 125A (Template Example)', 'ELC-DC-CONVERTER-125A-001', 'electronics', 'power-converter', 'PowerTech', '', 'High voltage to 12V DC converter for auxiliary systems',
-        '12', '1.5', '250', '180', '80', 'inputVoltage:250-450V;outputCurrent:125A;efficiency:92',
+        '12', '', '1500', '250', '180', '80', '3.5', 'aluminum', 'silver', 'inputVoltage:250-450V;outputCurrent:125A;efficiency:92',
         'Tesla,VinFast,Hyundai', 'Model 3,Model Y,VF e34,IONIQ 5', '2020', '2025', 'lithium-ion',
         '2000000', '3200000', '2600000', 'VND',
         'PowerTech Solutions', 'support@powertech.com', 'Automotive power electronics specialist',
-        '20', '3', '8', '35', '15', '7',
-        '7', 
+        '20', '3', '0', '8', '35', '15', '7', 'Warehouse-B-Shelf-08',
+        '7',
         '12', 'manufacturer', '12 months manufacturer warranty',
         'electronics,dc-converter,12v,power,auxiliary', 'https://res.cloudinary.com/de9bsmb2q/image/upload/v1759461734/ev-service/parts/k9edp8mqhw1yham2nt46.jpg', 'true', 'true', 'false'
       ],
       [
         '22kW Onboard Charger (TEST: Merge with existing stock)', 'CHG-ONBOARD-22KW-001', 'charging', 'onboard-charger', 'ChargeMax', '', 'High-efficiency 22kW onboard charging unit - THIS PART EXISTS IN DB WITH STOCK 12',
-        '400', '22', '400', '300', '150', 'efficiency:95;cooling:liquid',
+        '400', '22', '22000', '400', '300', '150', '25', 'aluminum', 'black', 'efficiency:95;cooling:liquid',
         'VinFast,Hyundai,BMW', 'VF e34,IONIQ 5,i4', '2022', '2025', 'lithium-ion',
         '3500000', '5500000', '4500000', 'VND',
         'ChargeMax Technologies', 'info@chargemax.com', 'Specialized EV charging equipment',
-        '10', '2', '5', '25', '10', '4',
-        '10', 
+        '10', '2', '0', '5', '25', '10', '4', 'Warehouse-A-Shelf-12',
+        '10',
         '24', 'manufacturer', '24 months manufacturer warranty covering defects',
         'charging,onboard,22kw,charger,fast-charging', 'https://res.cloudinary.com/de9bsmb2q/image/upload/v1759333457/ev-service/parts/dtl5pim5rzi0whrrvgkx.jpg', 'true', 'true', 'false'
       ]
@@ -470,14 +509,14 @@ const PartBulkImport: React.FC<PartBulkImportProps> = ({ isOpen, onClose, onImpo
       { wch: 12 }, // Brand
       { wch: 12 }, // Model
       { wch: 25 }, // Description
-      { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 20 }, // Specifications
-      { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, // Compatibility
-      { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, // Pricing
-      { wch: 20 }, { wch: 18 }, { wch: 15 }, // Supplier
-      { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, // Inventory
-      { wch: 12 }, // Lead Time
-      { wch: 18 }, { wch: 16 }, { wch: 30 }, // Warranty
-      { wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 25 } // Other
+      { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 }, { wch: 25 }, // Specifications (10 fields: voltage, capacity, power, length, width, height, weight, material, color, other)
+      { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, // Compatibility (5 fields)
+      { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 10 }, // Pricing (4 fields)
+      { wch: 20 }, { wch: 18 }, { wch: 15 }, // Supplier (3 fields)
+      { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 20 }, // Inventory (8 fields: current, reserved, used, min, max, reorder, average, location)
+      { wch: 12 }, // Lead Time (1 field)
+      { wch: 18 }, { wch: 16 }, { wch: 30 }, // Warranty (3 fields)
+      { wch: 20 }, { wch: 25 }, { wch: 20 }, { wch: 15 }, { wch: 15 } // Other (5 fields: tags, images, isRecommended, isActive, isDiscontinued)
     ];
     
     const workbook = XLSX.utils.book_new();

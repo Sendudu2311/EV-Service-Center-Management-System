@@ -95,9 +95,9 @@ interface ServiceReceptionData {
     partNumber?: string;
     quantity: number;
     reason: string;
-    estimatedCost?: number;
-    isAvailable?: boolean;
-    availableQuantity?: number;
+    estimatedCost: number;
+    isAvailable: boolean;
+    availableQuantity: number;
   }>;
 }
 
@@ -186,11 +186,10 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
   // Calculate totals
   // NOTE: Initial booked service is NOT included - it's already paid
   // Only calculate recommended services + parts
-  const calculateTotals = () => {
+  const calculateTotalTime = () => {
     let totalTime = 0;
-    let totalCost = 0;
 
-    // Add time and cost from recommended services (discovered during inspection)
+    // Add time from recommended services (discovered during inspection)
     formData.recommendedServices.forEach((service) => {
       const serviceData = availableServices.find(
         (s) => s._id === service.serviceId
@@ -199,24 +198,41 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
         totalTime +=
           (service.estimatedDuration || serviceData.estimatedDuration) *
           service.quantity;
-        totalCost +=
-          (service.estimatedCost || serviceData.basePrice) * service.quantity;
       }
     });
 
-    // Add cost from requested parts
-    formData.requestedParts.forEach((part) => {
-      const partData = availableParts.find((p) => p._id === part.partId);
-      if (partData) {
-        totalCost +=
-          (part.estimatedCost || partData.pricing?.retail || 0) * part.quantity;
-      }
-    });
-
-    return { totalTime, totalCost };
+    return totalTime;
   };
 
-  const { totalTime, totalCost } = calculateTotals();
+  const calculateTotalCost = () => {
+    let totalServiceCost = 0;
+    let totalPartsCost = 0;
+
+    // Calculate cost of recommended services
+    formData.recommendedServices.forEach((service) => {
+      const serviceData = availableServices.find(
+        (s) => s._id === service.serviceId
+      );
+      if (serviceData) {
+        totalServiceCost +=
+          (service.estimatedPrice || serviceData.price) * service.quantity;
+      }
+    });
+
+    // Calculate cost of requested parts
+    formData.requestedParts.forEach((part) => {
+      totalPartsCost += part.estimatedCost * part.quantity;
+    });
+
+    return {
+      serviceCost: totalServiceCost,
+      partsCost: totalPartsCost,
+      total: totalServiceCost + totalPartsCost,
+    };
+  };
+
+  const totalTime = calculateTotalTime();
+  const totalCost = calculateTotalCost();
 
   // Load available services from API
   useEffect(() => {
@@ -237,13 +253,19 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
     }
   }, [isOpen]);
 
-  // Load available parts from API
+  // Load available parts from API - FILTER OUT parts with stock = 0
   useEffect(() => {
     const loadParts = async () => {
       try {
         setLoadingParts(true);
         const response = await partsAPI.getAll();
-        setAvailableParts(response.data.data || []);
+
+        // Filter to only show parts with current stock > 0
+        const partsInStock = (response.data.data || []).filter(
+          (part: any) => (part.inventory?.currentStock || 0) > 0
+        );
+
+        setAvailableParts(partsInStock);
       } catch (error) {
         console.error("Error loading parts:", error);
       } finally {
@@ -278,23 +300,6 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
       ...formData,
       estimatedServiceTime: totalTime,
     };
-
-    console.log(
-      "🔍 [ServiceReceptionModal] handleSubmit - formData:",
-      formData
-    );
-    console.log(
-      "🔍 [ServiceReceptionModal] handleSubmit - recommendedServices:",
-      formData.recommendedServices
-    );
-    console.log(
-      "🔍 [ServiceReceptionModal] handleSubmit - recommendedServices.length:",
-      formData.recommendedServices?.length
-    );
-    console.log(
-      "🔍 [ServiceReceptionModal] handleSubmit - updatedFormData:",
-      updatedFormData
-    );
 
     await onSubmit(updatedFormData);
   };
@@ -504,36 +509,21 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                 Dịch vụ đã đặt
               </h4>
               <div className="space-y-2">
-                {appointment.services.map((service, index) => {
-                  const price =
-                    service.serviceId.basePrice ||
-                    availableServices.find(
-                      (s) => s._id === service.serviceId._id
-                    )?.basePrice ||
-                    0;
-                  const totalServicePrice = price * service.quantity;
-                  return (
-                    <div
-                      key={index}
-                      className="flex justify-between items-center text-sm"
-                    >
-                      <span>
-                        {service.serviceId.name}{" "}
-                        {service.quantity > 1 ? `(${service.quantity})` : ""}
-                      </span>
-                      <div className="text-right">
-                        <div className="text-text-secondary">
-                          {service.serviceId.estimatedDuration *
-                            service.quantity}{" "}
-                          phút
-                        </div>
-                        <div className="text-lime-600 text-text-muted">
-                          {totalServicePrice.toLocaleString("vi-VN")} VNĐ
-                        </div>
-                      </div>
+                {appointment.services.map((service, index) => (
+                  <div
+                    key={index}
+                    className="flex justify-between items-center text-sm"
+                  >
+                    <span>
+                      {service.serviceId.name}{" "}
+                      {service.quantity > 1 ? `(x${service.quantity})` : ""}
+                    </span>
+                    <div className="text-text-secondary">
+                      {service.serviceId.estimatedDuration * service.quantity}{" "}
+                      phút
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
               <div className="mt-3 pt-3 border-t text-sm">
                 <div className="flex justify-between">
@@ -548,25 +538,6 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                       0
                     )}{" "}
                     phút
-                  </span>
-                </div>
-                <div className="flex justify-between mt-1">
-                  <span className="text-text-muted">
-                    Tổng chi phí dịch vụ đã đặt:
-                  </span>
-                  <span className="text-lime-600 font-semibold">
-                    {appointment.services
-                      .reduce((total, service) => {
-                        const price =
-                          service.serviceId.basePrice ||
-                          availableServices.find(
-                            (s) => s._id === service.serviceId._id
-                          )?.basePrice ||
-                          0;
-                        return total + price * service.quantity;
-                      }, 0)
-                      .toLocaleString("vi-VN")}{" "}
-                    VNĐ
                   </span>
                 </div>
               </div>
@@ -739,22 +710,27 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                         />
                       </div>
 
-                      {(service.estimatedCost || 0) > 0 && (
-                        <div className="text-sm text-text-secondary bg-dark-300 p-2 rounded">
-                          <span className="text-text-muted">Giá dịch vụ: </span>
-                          <span className="text-lime-600 font-semibold">
-                            {(service.estimatedCost || 0).toLocaleString(
-                              "vi-VN"
-                            )}{" "}
-                            VNĐ
-                          </span>
-                          <span className="text-text-muted ml-2">
-                            (Tổng:{" "}
-                            {(
-                              (service.estimatedCost || 0) * service.quantity
-                            ).toLocaleString("vi-VN")}{" "}
-                            VNĐ)
-                          </span>
+                      {/* Service price info */}
+                      {service.serviceId && (
+                        <div className="p-3 bg-dark-800 rounded-md">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-text-muted">Đơn giá:</span>
+                            <span className="text-white font-medium">
+                              {(service.estimatedPrice || 0).toLocaleString(
+                                "vi-VN"
+                              )}{" "}
+                              VNĐ
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm mt-1">
+                            <span className="text-text-muted">Tổng giá:</span>
+                            <span className="text-white font-medium">
+                              {(
+                                (service.estimatedPrice || 0) * service.quantity
+                              ).toLocaleString("vi-VN")}{" "}
+                              VNĐ
+                            </span>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -831,8 +807,8 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                           quantity: 1,
                           reason: "",
                           estimatedCost: 0,
-                          isAvailable: undefined,
-                          availableQuantity: undefined,
+                          isAvailable: false,
+                          availableQuantity: 0,
                         },
                       ],
                     }))
@@ -846,7 +822,9 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
 
               {formData.requestedParts.length === 0 ? (
                 <div className="text-center py-8 border-2 border-dashed border-dark-300 rounded-lg">
-                  <p className="text-text-muted">Chưa có yêu cầu phụ tùng nào</p>
+                  <p className="text-text-muted">
+                    Chưa có yêu cầu phụ tùng nào
+                  </p>
                   <button
                     onClick={() =>
                       setFormData((prev) => ({
@@ -860,8 +838,8 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                             quantity: 1,
                             reason: "",
                             estimatedCost: 0,
-                            isAvailable: undefined,
-                            availableQuantity: undefined,
+                            isAvailable: false,
+                            availableQuantity: 0,
                           },
                         ],
                       }))
@@ -889,6 +867,7 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                               const selectedPart = availableParts.find(
                                 (p) => p._id === e.target.value
                               );
+
                               const newParts = [...formData.requestedParts];
                               newParts[index] = {
                                 ...part,
@@ -898,11 +877,12 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                                 estimatedCost:
                                   selectedPart?.pricing?.retail || 0,
                                 isAvailable:
-                                  (selectedPart?.inventory?.currentStock || 0) >
-                                  0,
+                                  (selectedPart?.inventory?.currentStock ||
+                                    0) >= part.quantity,
                                 availableQuantity:
                                   selectedPart?.inventory?.currentStock || 0,
                               };
+
                               setFormData((prev) => ({
                                 ...prev,
                                 requestedParts: newParts,
@@ -923,10 +903,6 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                                   "vi-VN"
                                 )}{" "}
                                 VNĐ
-                                {(availablePart.inventory?.currentStock || 0) >
-                                0
-                                  ? ` - Có sẵn: ${availablePart.inventory?.currentStock}`
-                                  : " - Hết hàng"}
                               </option>
                             ))}
                           </select>
@@ -955,9 +931,13 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                           value={part.quantity}
                           onChange={(e) => {
                             const newParts = [...formData.requestedParts];
+                            const newQuantity = parseInt(e.target.value) || 1;
+                            // Keep availableQuantity for comparison (it's from real-time Part model)
                             newParts[index] = {
                               ...part,
-                              quantity: parseInt(e.target.value) || 1,
+                              quantity: newQuantity,
+                              isAvailable:
+                                (part.availableQuantity || 0) >= newQuantity,
                             };
                             setFormData((prev) => ({
                               ...prev,
@@ -968,57 +948,34 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                         />
                       </div>
 
-                      {part.partId && (part.estimatedCost || 0) > 0 && (
-                        <div className="mb-3 text-sm bg-dark-300 p-3 rounded">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <span className="text-text-muted text-text-secondary">
-                                Giá:{" "}
-                              </span>
-                              <span className="text-lime-600 font-semibold">
-                                {(part.estimatedCost || 0).toLocaleString(
-                                  "vi-VN"
-                                )}{" "}
-                                VNĐ
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-text-muted text-text-secondary">
-                                Tồn kho:{" "}
-                              </span>
-                              <span
-                                className={`font-semibold ${
-                                  part.isAvailable
-                                    ? "text-green-600"
-                                    : "text-red-600"
-                                }`}
-                              >
-                                {part.availableQuantity || 0}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="mt-2">
-                            <span className="text-text-muted text-text-secondary">
-                              Tổng giá:{" "}
+                      {/* Part price and availability info */}
+                      {part.partId && (
+                        <div className="mb-3 p-3 bg-dark-800 rounded-md space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-text-muted">Đơn giá:</span>
+                            <span className="text-white font-medium">
+                              {part.estimatedCost.toLocaleString("vi-VN")} VNĐ
                             </span>
-                            <span className="text-green-600 font-semibold">
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-text-muted">Tổng giá:</span>
+                            <span className="text-white font-medium">
                               {(
-                                (part.estimatedCost || 0) * part.quantity
+                                part.estimatedCost * part.quantity
                               ).toLocaleString("vi-VN")}{" "}
                               VNĐ
                             </span>
-                            {!part.isAvailable && (
-                              <span className="ml-2 text-red-600 text-xs">
-                                ⚠️ Phụ tùng hiện tại hết hàng
-                              </span>
-                            )}
-                            {part.isAvailable &&
-                              part.quantity > (part.availableQuantity || 0) && (
-                                <span className="ml-2 text-orange-600 text-xs">
-                                  ⚠️ Yêu cầu {part.quantity} nhưng chỉ còn{" "}
-                                  {part.availableQuantity || 0}
-                                </span>
-                              )}
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-text-muted">Tồn kho:</span>
+                            <span
+                              className={`font-medium ${(part.availableQuantity || 0) >= part.quantity ? "text-green-400" : "text-red-400"}`}
+                            >
+                              {part.availableQuantity || 0}{" "}
+                              {(part.availableQuantity || 0) >= part.quantity
+                                ? "(Đủ hàng)"
+                                : "(Thiếu hàng)"}
+                            </span>
                           </div>
                         </div>
                       )}
@@ -1053,69 +1010,39 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
               <h4 className="text-md text-text-muted text-white mb-2">
                 Tóm tắt
               </h4>
-              <div className="text-sm text-text-secondary space-y-1">
-                <p>
-                  • Dịch vụ đã đặt: {appointment.services.length} dịch vụ
-                  <span className="ml-2 text-lime-600 text-text-muted">
-                    (
-                    {appointment.services
-                      .reduce((total, service) => {
-                        const price =
-                          service.serviceId.basePrice ||
-                          availableServices.find(
-                            (s) => s._id === service.serviceId._id
-                          )?.basePrice ||
-                          0;
-                        return total + price * service.quantity;
-                      }, 0)
-                      .toLocaleString("vi-VN")}{" "}
-                    VNĐ)
-                  </span>
-                </p>
+              <div className="text-sm text-text-secondary space-y-2">
+                <p>• Dịch vụ đã đặt: {appointment.services.length} dịch vụ</p>
                 <p>
                   • Dịch vụ đề xuất: {formData.recommendedServices.length} dịch
                   vụ
-                  {formData.recommendedServices.length > 0 && (
-                    <span className="ml-2 text-lime-600 text-text-muted">
-                      (
-                      {formData.recommendedServices
-                        .reduce(
-                          (total, service) =>
-                            total +
-                            (service.estimatedCost || 0) * service.quantity,
-                          0
-                        )
-                        .toLocaleString("vi-VN")}{" "}
-                      VNĐ)
-                    </span>
-                  )}
                 </p>
                 <p>
                   • Phụ tùng yêu cầu: {formData.requestedParts.length} phụ tùng
-                  {formData.requestedParts.length > 0 && (
-                    <span className="ml-2 text-lime-600 text-text-muted">
-                      (
-                      {formData.requestedParts
-                        .reduce(
-                          (total, part) =>
-                            total + (part.estimatedCost || 0) * part.quantity,
-                          0
-                        )
-                        .toLocaleString("vi-VN")}{" "}
-                      VNĐ)
-                    </span>
-                  )}
                 </p>
-                <p className="text-white">• Tổng thời gian dự kiến: {totalTime} phút</p>
-                {(formData.recommendedServices.length > 0 ||
-                  formData.requestedParts.length > 0) && (
-                  <div className="pt-2 mt-2 border-t border-green-200">
-                    <p className="font-semibold text-green-700">
-                      • Tổng chi phí ước tính:{" "}
-                      {totalCost.toLocaleString("vi-VN")} VNĐ (chưa bao gồm VAT)
-                    </p>
-                  </div>
-                )}
+                <p className="text-white font-medium">
+                  • Tổng thời gian dự kiến: {totalTime} phút
+                </p>
+                <div className="border-t border-dark-200 pt-2 mt-2">
+                  <p className="text-text-muted">
+                    Chi phí dịch vụ đề xuất:{" "}
+                    <span className="text-white font-medium">
+                      {totalCost.serviceCost.toLocaleString("vi-VN")} VNĐ
+                    </span>
+                  </p>
+                  <p className="text-text-muted">
+                    Chi phí phụ tùng:{" "}
+                    <span className="text-white font-medium">
+                      {totalCost.partsCost.toLocaleString("vi-VN")} VNĐ
+                    </span>
+                  </p>
+                  <p className="text-white font-bold text-base mt-1">
+                    Tổng chi phí dự kiến:{" "}
+                    {totalCost.total.toLocaleString("vi-VN")} VNĐ
+                  </p>
+                  <p className="text-xs text-text-muted mt-1">
+                    (Chưa bao gồm dịch vụ đã đặt trước)
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -1145,7 +1072,8 @@ const ServiceReceptionModal: React.FC<ServiceReceptionModalProps> = ({
                 placeholder="Ví dụ: Cần đặt ngoài linh kiện pin lithium 72V 100Ah từ nhà cung cấp ABC. Khách hàng đồng ý để xe lại. Dự kiến giao hàng 3-5 ngày..."
               />
               <p className="mt-2 text-xs text-amber-700">
-                💡 Ghi rõ: tên linh kiện cần đặt, lý do, thời gian dự kiến, và xác nhận khách đồng ý để xe
+                💡 Ghi rõ: tên linh kiện cần đặt, lý do, thời gian dự kiến, và
+                xác nhận khách đồng ý để xe
               </p>
             </div>
           </div>

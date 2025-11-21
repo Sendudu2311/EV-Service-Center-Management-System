@@ -419,7 +419,10 @@ export interface ActionButtonsProps {
 export type TechnicianStackParamList = {
   TechnicianWorkQueue: undefined;
   TechnicianAppointmentDetail: { appointmentId: string };
-  ServiceReceptionCreate: { appointmentId: string };
+  ServiceReceptionCreate: {
+    appointmentId: string;
+    rejectedReceptionId?: string; // Optional: ID of rejected reception to pre-fill form
+  };
   ServiceReceptionEdit: { receptionId: string; appointmentId: string };
   EVChecklist: { receptionId: string };
   PartsRequest: { appointmentId: string; receptionId?: string };

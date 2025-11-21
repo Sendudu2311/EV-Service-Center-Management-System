@@ -302,12 +302,7 @@ export const statusTransitions: StatusTransition[] = [
   { from: "confirmed", to: "no_show", allowedRoles: ["staff", "admin"] },
   {
     from: "customer_arrived",
-    to: "reception_created",
-    allowedRoles: ["technician", "staff", "admin"],
-  },
-  {
-    from: "reception_created",
-    to: "reception_approved",
+    to: "cancelled",
     allowedRoles: ["staff", "admin"],
   },
   {

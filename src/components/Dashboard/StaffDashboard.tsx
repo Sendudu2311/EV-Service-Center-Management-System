@@ -67,7 +67,7 @@ const StaffDashboard: React.FC = () => {
   );
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<
-    "appointments" | "reception-review" | "customer-arrival" | "pending-payment" | "completed-approval"
+    "appointments" | "reception-review" | "customer-arrival" | "pending-payment" | "completed-approval" | "parts-insufficient"
   >("appointments");
   const [appointmentsNeedingArrival, setAppointmentsNeedingArrival] = useState<
     any[]
@@ -88,6 +88,10 @@ const StaffDashboard: React.FC = () => {
   // NEW: Completed appointments waiting for final staff approval
   const [completedAppointments, setCompletedAppointments] = useState<any[]>([]);
   const [completedLoading, setCompletedLoading] = useState(false);
+
+  // Parts Insufficient appointments waiting for parts restock
+  const [partsInsufficientAppointments, setPartsInsufficientAppointments] = useState<any[]>([]);
+  const [partsInsufficientLoading, setPartsInsufficientLoading] = useState(false);
 
   // Confirmation modal for final approval
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -193,6 +197,24 @@ const StaffDashboard: React.FC = () => {
     }
   };
 
+  const fetchPartsInsufficientAppointments = async () => {
+    try {
+      setPartsInsufficientLoading(true);
+      const response = await appointmentsAPI.getAll({
+        status: "parts_insufficient",
+        limit: 100,
+        dateRange: "all"
+      });
+      const appointments = response.data.data || response.data || [];
+      setPartsInsufficientAppointments(appointments);
+    } catch (error: any) {
+      console.error("Error fetching parts insufficient appointments:", error);
+      toast.error("Không thể tải danh sách lịch hẹn thiếu phụ tùng");
+    } finally {
+      setPartsInsufficientLoading(false);
+    }
+  };
+
   useEffect(() => {
     debouncedFetchDashboard();
     fetchConflictStats();
@@ -208,6 +230,7 @@ const StaffDashboard: React.FC = () => {
     if (activeTab === "completed-approval") {
       fetchCompletedAppointments();
     }
+    // REMOVED: fetchPartsInsufficientAppointments - no longer using this workflow
   }, [activeTab]);
 
   const fetchDashboardData = async () => {
@@ -257,7 +280,15 @@ const StaffDashboard: React.FC = () => {
     decision: "approve" | "reject",
     notes: string,
     externalParts?: any[],
-    extendedCompletionDate?: string
+    extendedCompletionDate?: string,
+    modifications?: {
+      servicesChanges: any;
+      partsChanges: any;
+      modificationReason: string;
+      modifiedServices: any[];
+      modifiedParts: any[];
+    } | null,
+    customerDeclinedService?: boolean
   ) => {
     try {
       // receptionId is now the actual ServiceReception _id, not appointment ID
@@ -274,6 +305,8 @@ const StaffDashboard: React.FC = () => {
             reviewNotes: notes,
             externalParts: externalParts || [],
             extendedCompletionDate: extendedCompletionDate || null,
+            modifications: modifications || null,
+            customerDeclinedService: customerDeclinedService || false,
           }),
         }
       );
@@ -409,6 +442,23 @@ const StaffDashboard: React.FC = () => {
     }
   };
 
+  const handleApprovePartsAvailable = async (appointmentId: string) => {
+    setActionLoading(appointmentId);
+    try {
+      await appointmentsAPI.approvePartsAvailable(appointmentId, "Phụ tùng đã được nhập kho");
+      toast.success("Đã duyệt phụ tùng có sẵn!");
+      fetchPartsInsufficientAppointments(); // Refresh parts insufficient list
+      immediateFetchDashboard(); // Refresh dashboard stats
+    } catch (error: any) {
+      console.error("Error approving parts available:", error);
+      toast.error(
+        error.response?.data?.message || "Không thể duyệt phụ tùng"
+      );
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   // Handle payment modal success
   const handlePaymentSuccess = () => {
     setShowReceptionPaymentModal(false);
@@ -488,11 +538,7 @@ const StaffDashboard: React.FC = () => {
                       {pendingReceptions.length}
                     </span>
                   )}
-                  {conflictCount > 0 && (
-                    <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-yellow-100 bg-yellow-600 rounded-full">
-                      {conflictCount} xung đột
-                    </span>
-                  )}
+                  {/* REMOVED: Conflict count badge - no longer using part conflict system */}
                 </div>
               </button>
               <button
@@ -533,6 +579,7 @@ const StaffDashboard: React.FC = () => {
                   )}
                 </div>
               </button>
+              {/* REMOVED: Parts Insufficient Tab - no longer using this workflow */}
             </div>
           </div>
         </div>
@@ -913,35 +960,14 @@ const StaffDashboard: React.FC = () => {
         {activeTab === "reception-review" && (
           // Reception Review Tab Content
           <>
-            {/* Conflict Alert Banner */}
-            {conflictCount > 0 && (
-              <div className="mb-6 bg-yellow-600 border border-yellow-500 rounded-lg p-4 flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <ExclamationTriangleIcon className="h-6 w-6 text-yellow-100" />
-                  <div>
-                    <p className="text-sm font-semibold text-yellow-100">
-                      Có {conflictCount} xung đột phụ tùng cần giải quyết
-                    </p>
-                    <p className="text-xs text-yellow-200 mt-1">
-                      Nhiều đơn hàng đang yêu cầu cùng một phụ tùng nhưng kho
-                      không đủ
-                    </p>
-                  </div>
-                </div>
-                <Link
-                  to="/part-conflicts"
-                  className="px-4 py-2 bg-yellow-700 hover:bg-yellow-800 text-white rounded-md text-sm font-semibold transition-colors"
-                >
-                  Giải quyết ngay
-                </Link>
-              </div>
-            )}
+            {/* REMOVED: Conflict Alert Banner - No longer using part conflict system */}
 
             <ServiceReceptionReview
               receptions={pendingReceptions}
               loading={receptionLoading}
               onReview={handleReceptionReview}
               onReceptionUpdated={fetchConflictStats}
+              currentUser={user}
             />
           </>
         )}
@@ -1155,6 +1181,8 @@ const StaffDashboard: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* REMOVED: Parts Insufficient Tab Content - no longer using this workflow */}
       </div>
 
       {/* NEW WORKFLOW: Reception Payment Modal */}

@@ -1,7 +1,10 @@
 import axios, { AxiosResponse, AxiosError } from "axios";
 import toast from "react-hot-toast";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+// In production (Vercel), use empty string because API is on same domain via rewrites
+// In development, use localhost:3000
+const API_URL = import.meta.env.VITE_API_URL ??
+  (import.meta.env.PROD ? "" : "http://localhost:3000");
 
 // Create axios instance
 const api = axios.create({
@@ -264,6 +267,17 @@ export const appointmentsAPI = {
       })
       .catch(handleApiError),
 
+  // NEW: Pre-booking management
+  getPreBookings: (params?: any) =>
+    api
+      .get<ApiResponse<any[]>>("/api/appointments/pre-bookings/list", { params })
+      .catch(handleApiError),
+
+  assignSlot: (id: string, data: { slotId: string }) =>
+    api
+      .put<ApiResponse<any>>(`/api/appointments/${id}/assign-slot`, data)
+      .catch(handleApiError),
+
   // New: Smart status mapping to specific workflow endpoints
   updateStatus: (id: string, status: string, notes?: string) => {
     const request = (() => {
@@ -383,6 +397,13 @@ export const appointmentsAPI = {
   staffFinalConfirm: (appointmentId: string) =>
     api.post<ApiResponse<any>>(
       `/api/appointments/${appointmentId}/staff-final-confirm`
+    ),
+
+  // Approve parts available after restock
+  approvePartsAvailable: (appointmentId: string, notes?: string) =>
+    api.put<ApiResponse<any>>(
+      `/api/appointments/${appointmentId}/approve-parts-available`,
+      { notes }
     ),
 
   // Get invoice by appointment
@@ -1135,7 +1156,8 @@ export const contactsAPI = {
 // Reports API
 export const reportsAPI = {
   getAnalytics: (params?: {
-    period?: "1month" | "3months" | "6months" | "1year";
+    startDate?: string;
+    endDate?: string;
     serviceId?: string;
     technicianId?: string;
   }) =>
@@ -1144,7 +1166,8 @@ export const reportsAPI = {
       .catch(handleApiError),
 
   getDetailedReport: (params?: {
-    period?: "1month" | "3months" | "6months" | "1year";
+    startDate?: string;
+    endDate?: string;
     format?: "json" | "csv";
   }) =>
     api

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import toast from 'react-hot-toast';
 import {
   MagnifyingGlassIcon,
@@ -102,11 +102,60 @@ const PartsSelection: React.FC<PartsSelectionProps> = ({
 
   const fetchReservedParts = async () => {
     try {
-      const response = await axios.get(`/api/parts/appointment/${appointmentId}`);
+      // Try to get parts from ServiceReception first (for reception_approved status)
+      try {
+        const receptionResponse = await api.get(`/api/service-receptions/appointment/${appointmentId}`);
+        if (receptionResponse.data.success && receptionResponse.data.data) {
+          const reception = receptionResponse.data.data;
+
+          // If reception is approved, use parts from reception
+          if (reception.submissionStatus?.staffReviewStatus === 'approved' && reception.requestedParts?.length > 0) {
+            const partsFromReception = reception.requestedParts
+              .filter((p: any) => p.isApproved)
+              .map((p: any) => ({
+                partId: p.partId,
+                partNumber: p.partNumber,
+                name: p.partName,
+                quantity: p.quantity,
+                unitPrice: p.estimatedCost,
+                totalPrice: p.estimatedCost * p.quantity,
+                status: 'approved',
+                reservedAt: reception.submissionStatus.reviewedAt
+              }));
+
+            setReservedParts(partsFromReception);
+            setWorkflowInfo({
+              appointmentStatus: 'reception_approved',
+              canReserveParts: false,
+              canModifyParts: false,
+              isAssignedTechnician: true,
+              restrictions: {
+                message: 'Parts from approved service reception'
+              }
+            });
+
+            if (mode === 'use') {
+              setSelectedParts(
+                partsFromReception.map((part: ReservedPart) => ({
+                  partId: part.partId,
+                  quantity: part.quantity
+                }))
+              );
+            }
+            return;
+          }
+        }
+      } catch (receptionError) {
+        // No reception found or not approved yet, continue to regular parts
+        console.log('No approved reception found, checking regular reserved parts');
+      }
+
+      // Fallback to regular reserved parts (for confirmed/pending status)
+      const response = await api.get(`/api/parts/appointment/${appointmentId}`);
       if (response.data.success) {
         setReservedParts(response.data.data);
         setWorkflowInfo(response.data.workflowInfo);
-        
+
         // Initialize selectedParts for 'use' mode with reserved quantities
         if (mode === 'use') {
           setSelectedParts(
@@ -135,7 +184,7 @@ const PartsSelection: React.FC<PartsSelectionProps> = ({
         params.append('vehicleYear', vehicleInfo.year.toString());
       }
 
-      const response = await axios.get(
+      const response = await api.get(
         `/api/parts/by-service/${activeCategory}?${params.toString()}`
       );
       
@@ -221,7 +270,7 @@ const PartsSelection: React.FC<PartsSelectionProps> = ({
 
     setSubmitting(true);
     try {
-      const response = await axios.post('/api/parts/reserve', {
+      const response = await api.post('/api/parts/reserve', {
         appointmentId,
         parts: selectedParts
       });
@@ -246,7 +295,7 @@ const PartsSelection: React.FC<PartsSelectionProps> = ({
 
     setSubmitting(true);
     try {
-      const response = await axios.put('/api/parts/use', {
+      const response = await api.put('/api/parts/use', {
         appointmentId,
         usedParts: selectedParts
       });
@@ -361,22 +410,40 @@ const PartsSelection: React.FC<PartsSelectionProps> = ({
 
       {/* Reserved Parts Summary */}
       {reservedParts.length > 0 && (
-        <div className="bg-dark-900 border border-blue-200 rounded-lg p-4">
-          <h4 className="text-sm text-text-muted text-lime-900 mb-2">
-            Reserved Parts ({reservedParts.length})
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div className="bg-dark-800 border border-lime-600/30 rounded-lg p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-lg font-semibold text-white flex items-center">
+              <CubeIcon className="w-5 h-5 mr-2 text-lime-600" />
+              Reserved Parts ({reservedParts.length})
+            </h4>
+          </div>
+          <div className="space-y-3">
             {reservedParts.map((part) => (
-              <div key={part.partId} className="flex items-center justify-between text-sm">
-                <span className="text-lime-800">{part.name} ({part.partNumber})</span>
-                <span className="text-text-muted text-lime-900">Qty: {part.quantity}</span>
+              <div
+                key={part.partId}
+                className="bg-dark-900 rounded-lg p-4 border border-dark-200 hover:border-lime-600/50 transition-colors"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-white font-medium mb-1">{part.name}</p>
+                    <p className="text-sm text-text-secondary">{part.partNumber}</p>
+                  </div>
+                  <div className="text-right ml-4">
+                    <p className="text-lime-600 font-semibold">Qty: {part.quantity}</p>
+                    {part.unitPrice && (
+                      <p className="text-sm text-text-secondary mt-1">
+                        {formatCurrency(part.unitPrice * part.quantity, 'VND')}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {mode === 'reserve' && (
+      {mode === 'reserve' && workflowInfo?.canReserveParts && (
         <>
           {/* Category Tabs */}
           <div className="flex flex-wrap gap-2">

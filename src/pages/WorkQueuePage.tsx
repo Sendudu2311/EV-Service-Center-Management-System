@@ -84,7 +84,6 @@ const WorkQueuePage: React.FC = () => {
   const [detailsTab, setDetailsTab] = useState<
     "overview" | "checklist" | "parts"
   >("overview");
-  const [newNote, setNewNote] = useState("");
   const [showReceptionModal, setShowReceptionModal] = useState(false);
   const [creatingReception, setCreatingReception] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -314,28 +313,6 @@ const WorkQueuePage: React.FC = () => {
     }
   };
 
-  const handleAddServiceNote = async (appointmentId: string) => {
-    if (!newNote.trim()) return;
-
-    try {
-      await api.put(`/api/appointments/${appointmentId}`, {
-        addServiceNote: newNote,
-      });
-      setNewNote("");
-      toast.success("Service note added");
-      fetchWorkQueueData();
-
-      // Update selected appointment
-      if (selectedAppointment && selectedAppointment._id === appointmentId) {
-        const response = await api.get(`/api/appointments/${appointmentId}`);
-        setSelectedAppointment(response.data.data);
-      }
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "Failed to add service note"
-      );
-    }
-  };
 
   const handleChecklistItemUpdate = async (
     appointmentId: string,
@@ -941,59 +918,6 @@ const WorkQueuePage: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Status Actions */}
-                      <div>
-                        <h4 className="text-sm text-text-muted text-white mb-2">
-                          Status Actions
-                        </h4>
-                        <StatusActionButton
-                          appointmentId={selectedAppointment._id}
-                          currentStatus={selectedAppointment.status}
-                          userRole="technician"
-                          onAction={handleStatusAction}
-                        />
-                      </div>
-
-                      {/* Service Notes */}
-                      <div>
-                        <h4 className="text-sm text-text-muted text-white mb-2">
-                          Service Notes
-                        </h4>
-                        <div className="space-y-2">
-                          {(selectedAppointment.serviceNotes || []).map(
-                            (note, index) => (
-                              <div
-                                key={index}
-                                className="bg-dark-900 p-3 rounded text-sm"
-                              >
-                                <p className="text-white">{note.note}</p>
-                                <p className="text-text-muted text-xs mt-1">
-                                  By {note.addedBy.firstName}{" "}
-                                  {note.addedBy.lastName} on{" "}
-                                  {formatDate(note.addedAt)}
-                                </p>
-                              </div>
-                            )
-                          )}
-                          <div className="flex space-x-2">
-                            <input
-                              type="text"
-                              value={newNote}
-                              onChange={(e) => setNewNote(e.target.value)}
-                              placeholder="Add service note..."
-                              className="flex-1 border border-dark-200 rounded-md px-3 py-1 text-sm"
-                            />
-                            <button
-                              onClick={() =>
-                                handleAddServiceNote(selectedAppointment._id)
-                              }
-                              className="px-3 py-1 bg-lime-200 text-dark-900 text-sm rounded hover:bg-lime-100 transition-all duration-200 transform hover:scale-105"
-                            >
-                              Add
-                            </button>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   )}
 

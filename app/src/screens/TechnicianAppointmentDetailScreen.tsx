@@ -16,7 +16,6 @@ import {
   getAllServiceReceptionsByAppointment,
 } from '../services/technician.api';
 import { TechnicianStackParamList } from '../types/navigation.types';
-import api from '../services/api';
 
 type RouteParams = RouteProp<TechnicianStackParamList, 'AppointmentDetail'>;
 type NavigationProp = NativeStackNavigationProp<TechnicianStackParamList, 'AppointmentDetail'>;
@@ -29,6 +28,7 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
   // State
   const [appointment, setAppointment] = useState<any | null>(null);
   const [serviceReception, setServiceReception] = useState<any | null>(null);
+  const [rejectedReception, setRejectedReception] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
@@ -57,7 +57,24 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
             const latestReception = activeReceptions.sort(
               (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             )[0];
+            console.log('📋 ServiceReception status:', latestReception.submissionStatus?.staffReviewStatus);
+            console.log('📋 Reception ID:', latestReception._id);
             setServiceReception(latestReception);
+          }
+
+          // Check for rejected receptions
+          const rejectedReceptions = receptionResponse.data.filter(
+            (r: any) => r.submissionStatus?.staffReviewStatus === 'rejected'
+          );
+
+          if (rejectedReceptions.length > 0) {
+            // Get the latest rejected reception (sorted by createdAt)
+            const latestRejected = rejectedReceptions.sort(
+              (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            )[0];
+            setRejectedReception(latestRejected);
+          } else {
+            setRejectedReception(null);
           }
         }
       } catch (error: any) {
@@ -104,30 +121,13 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
     );
   };
 
-  // Handle customer arrival
-  const handleCustomerArrival = async () => {
-    try {
-      setIsActionLoading(true);
-      const response = await api.put(`/api/appointments/${appointmentId}/customer-arrived`, {
-        vehicleConditionNotes: '',
-        customerItems: [],
-      });
-
-      if (response.data.success) {
-        Alert.alert('Thành công', 'Đã xác nhận khách hàng đã đến');
-        await fetchAppointmentData(); // Reload to show new status
-      }
-    } catch (error: any) {
-      console.error('Error marking customer arrival:', error);
-      Alert.alert('Lỗi', error.response?.data?.message || 'Không thể xác nhận khách đến');
-    } finally {
-      setIsActionLoading(false);
-    }
-  };
 
   // Handle create service reception
   const handleCreateReception = () => {
-    navigation.navigate('CreateReception', { appointmentId });
+    navigation.navigate('CreateReception', {
+      appointmentId,
+      rejectedReceptionId: rejectedReception?._id
+    });
   };
 
   // Handle view service reception
@@ -135,11 +135,6 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
     navigation.navigate('ViewReception', {
       appointmentId,
     });
-  };
-
-  // Handle view work progress
-  const handleViewProgress = () => {
-    navigation.navigate('WorkProgress', { appointmentId });
   };
 
   // Handle complete work
@@ -181,50 +176,6 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
     }).format(amount);
   };
 
-  // Get order status text
-  const getOrderStatusText = (status: string) => {
-    const statusMap: Record<string, string> = {
-      ordered: 'Đã đặt hàng',
-      in_transit: 'Đang vận chuyển',
-      delivered: 'Đã giao',
-      cancelled: 'Đã hủy',
-      pending: 'Chờ đặt hàng',
-    };
-    return statusMap[status] || status;
-  };
-
-  // Get order status badge style
-  const getOrderStatusBadgeStyle = (status: string) => {
-    switch (status) {
-      case 'delivered':
-        return { backgroundColor: '#D1FAE5' };
-      case 'in_transit':
-        return { backgroundColor: '#DBEAFE' };
-      case 'ordered':
-        return { backgroundColor: '#FEF3C7' };
-      case 'cancelled':
-        return { backgroundColor: '#FEE2E2' };
-      default:
-        return { backgroundColor: '#F3F4F6' };
-    }
-  };
-
-  // Get order status text style
-  const getOrderStatusTextStyle = (status: string) => {
-    switch (status) {
-      case 'delivered':
-        return { color: '#065F46' };
-      case 'in_transit':
-        return { color: '#1E40AF' };
-      case 'ordered':
-        return { color: '#92400E' };
-      case 'cancelled':
-        return { color: '#991B1B' };
-      default:
-        return { color: '#374151' };
-    }
-  };
-
   // Loading state
   if (isLoading || !appointment) {
     return (
@@ -240,19 +191,8 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
     const status = appointment.status;
 
     if (status === 'confirmed') {
-      return (
-        <TouchableOpacity
-          style={[styles.actionButton, styles.primaryButton]}
-          onPress={handleCustomerArrival}
-          disabled={isActionLoading}
-        >
-          {isActionLoading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.actionButtonText}>✅ Xác nhận khách đã đến</Text>
-          )}
-        </TouchableOpacity>
-      );
+      // Không hiển thị nút gì, chờ staff xác nhận khách đã đến
+      return null;
     }
 
     if (status === 'customer_arrived') {
@@ -262,12 +202,15 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
           onPress={handleCreateReception}
           disabled={isActionLoading}
         >
-          <Text style={styles.actionButtonText}>📋 Lập phiếu tiếp nhận</Text>
+          <Text style={styles.actionButtonText}>
+            {rejectedReception ? '✏️ Tạo phiếu mới' : '📋 Lập phiếu tiếp nhận'}
+          </Text>
         </TouchableOpacity>
       );
     }
 
-    if (status === 'reception_created' || status === 'reception_approved') {
+    if (status === 'reception_created') {
+      // Reception created but not yet approved by staff
       return (
         <View style={styles.buttonGroup}>
           <TouchableOpacity
@@ -291,22 +234,26 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
       );
     }
 
+    if (status === 'reception_approved') {
+      // Reception approved - waiting for customer payment, then auto-start work
+      return (
+        <TouchableOpacity
+          style={[styles.actionButton, styles.secondaryButton]}
+          onPress={handleViewReception}
+        >
+          <Text style={styles.secondaryButtonText}>📄 Xem phiếu</Text>
+        </TouchableOpacity>
+      );
+    }
+
     if (status === 'in_progress') {
       return (
-        <View style={styles.buttonGroup}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.secondaryButton, { flex: 1, marginRight: 8 }]}
-            onPress={handleViewProgress}
-          >
-            <Text style={styles.secondaryButtonText}>📊 Tiến độ</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.successButton, { flex: 1 }]}
-            onPress={handleCompleteWork}
-          >
-            <Text style={styles.actionButtonText}>✅ Hoàn thành</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.successButton]}
+          onPress={handleCompleteWork}
+        >
+          <Text style={styles.actionButtonText}>✅ Hoàn thành</Text>
+        </TouchableOpacity>
       );
     }
 
@@ -348,6 +295,26 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
             <Text style={styles.statusText}>{getStatusText(appointment.status)}</Text>
           </View>
         </View>
+
+        {/* Rejection Notice Banner */}
+        {rejectedReception && appointment.status === 'customer_arrived' && (
+          <View style={styles.rejectionBanner}>
+            <View style={styles.rejectionHeader}>
+              <Text style={styles.rejectionIcon}>❌</Text>
+              <Text style={styles.rejectionTitle}>Phiếu tiếp nhận đã bị từ chối</Text>
+            </View>
+            <Text style={styles.rejectionReason}>
+              <Text style={styles.rejectionLabel}>Lý do: </Text>
+              {rejectedReception.submissionStatus?.reviewNotes || 'Không có ghi chú'}
+            </Text>
+            <Text style={styles.rejectionTime}>
+              Từ chối lúc: {new Date(rejectedReception.submissionStatus?.reviewedAt).toLocaleString('vi-VN')}
+            </Text>
+            <Text style={styles.rejectionHint}>
+              💡 Vui lòng tạo phiếu mới theo yêu cầu của nhân viên
+            </Text>
+          </View>
+        )}
 
         {/* Schedule Info */}
         <View style={styles.card}>
@@ -420,27 +387,6 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Services */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>🔧 Dịch vụ đã đặt</Text>
-          {appointment.services.map((service: any, index: number) => (
-            <View key={index} style={styles.serviceItem}>
-              <View style={styles.serviceInfo}>
-                <Text style={styles.serviceName}>{service.serviceId.name}</Text>
-                <Text style={styles.serviceCategory}>({service.serviceId.category})</Text>
-              </View>
-              <View style={styles.serviceDetails}>
-                <Text style={styles.serviceQuantity}>x{service.quantity}</Text>
-                <Text style={styles.servicePrice}>{formatCurrency(service.price)}</Text>
-              </View>
-            </View>
-          ))}
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Tổng cộng:</Text>
-            <Text style={styles.totalAmount}>{formatCurrency(appointment.totalAmount)}</Text>
-          </View>
-        </View>
-
         {/* Notes */}
         {appointment.notes && (
           <View style={styles.card}>
@@ -476,8 +422,11 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Recommended Services from Reception */}
-        {serviceReception && serviceReception.recommendedServices && serviceReception.recommendedServices.length > 0 && (
+        {/* Recommended Services from Reception - Only show if not approved yet */}
+        {serviceReception &&
+         serviceReception.submissionStatus?.staffReviewStatus !== 'approved' &&
+         serviceReception.recommendedServices &&
+         serviceReception.recommendedServices.length > 0 && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>🔧 Dịch vụ đề xuất từ phiếu tiếp nhận</Text>
             {serviceReception.recommendedServices.map((service: any, index: number) => (
@@ -505,7 +454,7 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
                 <View style={{ marginTop: 4 }}>
                   <Text style={styles.serviceCategory}>{service.category}</Text>
                   <Text style={styles.serviceDetail}>
-                    {formatCurrency(service.estimatedCost)} • {service.estimatedDuration} phút
+                    x{service.quantity} • {formatCurrency(service.estimatedCost * service.quantity)} • {service.estimatedDuration} phút
                   </Text>
                   {service.reason && (
                     <Text style={styles.serviceReason}>Lý do: {service.reason}</Text>
@@ -513,6 +462,17 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
                 </View>
               </View>
             ))}
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Tổng cộng dịch vụ:</Text>
+              <Text style={styles.totalAmount}>
+                {formatCurrency(
+                  serviceReception.recommendedServices.reduce(
+                    (sum: number, s: any) => sum + (s.estimatedCost * s.quantity),
+                    0
+                  )
+                )}
+              </Text>
+            </View>
           </View>
         )}
 
@@ -524,11 +484,6 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
               <View key={index} style={styles.externalPartItem}>
                 <View style={styles.serviceHeader}>
                   <Text style={styles.serviceName}>{part.partName}</Text>
-                  <View style={[styles.badge, getOrderStatusBadgeStyle(part.orderStatus)]}>
-                    <Text style={[styles.badgeText, getOrderStatusTextStyle(part.orderStatus)]}>
-                      {getOrderStatusText(part.orderStatus)}
-                    </Text>
-                  </View>
                 </View>
                 <Text style={styles.serviceDetail}>Mã: {part.partNumber}</Text>
                 <Text style={styles.serviceDetail}>
@@ -551,51 +506,77 @@ const TechnicianAppointmentDetailScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Requested Parts from Reception */}
-        {serviceReception && serviceReception.requestedParts && serviceReception.requestedParts.length > 0 && (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>🔩 Phụ tùng yêu cầu (Technician)</Text>
-            {serviceReception.requestedParts.map((part: any, index: number) => (
-              <View key={index} style={styles.serviceItem}>
-                <View style={styles.serviceHeader}>
-                  <Text style={styles.serviceName}>{part.partName}</Text>
-                  <View style={styles.badgeContainer}>
+        {/* Services, Parts, and Total - Combined in one card if approved */}
+        {(!serviceReception || serviceReception.submissionStatus?.staffReviewStatus === 'approved') && (
+          appointment.services.length > 0 ||
+          (serviceReception && serviceReception.requestedParts && serviceReception.requestedParts.length > 0) ||
+          appointment.totalAmount > 0
+        ) && (
+        <View style={styles.card}>
+          {/* Services Section */}
+          {appointment.services.length > 0 && (
+            <>
+              <Text style={styles.cardTitle}>🔧 Dịch vụ</Text>
+              {appointment.services.map((service: any, index: number) => (
+                <View key={index} style={styles.serviceItem}>
+                  <View style={styles.serviceInfo}>
+                    <Text style={styles.serviceName}>{service.serviceId.name}</Text>
+                    <Text style={styles.serviceCategory}>({service.serviceId.category})</Text>
+                  </View>
+                  <View style={styles.serviceDetails}>
+                    <Text style={styles.serviceQuantity}>x{service.quantity}</Text>
+                    <Text style={styles.servicePrice}>{formatCurrency(service.price)}</Text>
+                  </View>
+                </View>
+              ))}
+            </>
+          )}
+
+          {/* Parts Section */}
+          {serviceReception && serviceReception.requestedParts && serviceReception.requestedParts.length > 0 && (
+            <>
+              <Text style={[styles.cardTitle, appointment.services.length > 0 && { marginTop: 16 }]}>🔩 Phụ tùng yêu cầu</Text>
+              {serviceReception.requestedParts.map((part: any, index: number) => {
+                console.log('🔍 Part debug:', {
+                  partName: part.partName,
+                  isApproved: part.isApproved,
+                  isAvailable: part.isAvailable,
+                  availableQuantity: part.availableQuantity,
+                  shortfall: part.shortfall
+                });
+                return (
+                <View key={index} style={styles.serviceItem}>
+                  {/* Part name on its own line */}
+                  <View>
+                    <Text style={styles.serviceName} numberOfLines={2}>{part.partName}</Text>
+                  </View>
+                  {/* Badges below with flex wrap */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
                     {part.isApproved && (
                       <View style={[styles.badge, styles.badgeApproved]}>
                         <Text style={[styles.badgeText, { color: '#065F46' }]}>✓ Đã duyệt</Text>
                       </View>
                     )}
-                    {part.isAvailable ? (
-                      <View style={[styles.badge, styles.badgeAvailable]}>
-                        <Text style={[styles.badgeText, { color: '#1E40AF' }]}>
-                          ✓ Có sẵn ({part.availableQuantity || 0})
-                        </Text>
-                      </View>
-                    ) : (
-                      <View style={[styles.badge, styles.badgeWarning]}>
-                        <Text style={[styles.badgeText, { color: '#92400E' }]}>
-                          ⚠ {part.shortfall ? `Thiếu ${part.shortfall}` : 'Chưa có'}
-                        </Text>
-                      </View>
+                  </View>
+                  <View style={{ marginTop: 4 }}>
+                    <Text style={styles.serviceDetail}>
+                      Số lượng: {part.quantity} • {formatCurrency(part.estimatedCost)}
+                    </Text>
+                    {part.reason && (
+                      <Text style={styles.serviceReason}>Lý do: {part.reason}</Text>
+                    )}
+                    {part.alternatives && part.alternatives.length > 0 && (
+                      <Text style={styles.serviceReason}>
+                        Có {part.alternatives.length} phụ tùng thay thế
+                      </Text>
                     )}
                   </View>
                 </View>
-                <View style={{ marginTop: 4 }}>
-                  <Text style={styles.serviceDetail}>
-                    Số lượng: {part.quantity} • {formatCurrency(part.estimatedCost)}
-                  </Text>
-                  {part.reason && (
-                    <Text style={styles.serviceReason}>Lý do: {part.reason}</Text>
-                  )}
-                  {part.alternatives && part.alternatives.length > 0 && (
-                    <Text style={styles.serviceReason}>
-                      Có {part.alternatives.length} phụ tùng thay thế
-                    </Text>
-                  )}
-                </View>
-              </View>
-            ))}
-          </View>
+                );
+              })}
+            </>
+          )}
+        </View>
         )}
       </ScrollView>
 
@@ -865,6 +846,58 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     marginTop: 4,
     fontStyle: 'italic',
+  },
+  // Rejection Banner Styles
+  rejectionBanner: {
+    backgroundColor: '#FEF2F2',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  rejectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  rejectionIcon: {
+    fontSize: 24,
+    marginRight: 8,
+  },
+  rejectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#DC2626',
+    flex: 1,
+  },
+  rejectionReason: {
+    fontSize: 14,
+    color: '#991B1B',
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  rejectionLabel: {
+    fontWeight: 'bold',
+    color: '#7F1D1D',
+  },
+  rejectionTime: {
+    fontSize: 12,
+    color: '#B91C1C',
+    marginBottom: 8,
+  },
+  rejectionHint: {
+    fontSize: 13,
+    color: '#DC2626',
+    backgroundColor: '#FEE2E2',
+    padding: 8,
+    borderRadius: 6,
+    marginTop: 4,
   },
 });
 

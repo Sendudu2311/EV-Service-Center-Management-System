@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { slotsAPI, techniciansAPI, usersAPI } from '../../services/api';
+import { slotsAPI, techniciansAPI, usersAPI, appointmentsAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 import { vietnameseDateTimeToUTC } from '../../utils/timezone';
+import AssignSlotModal from './AssignSlotModal';
 
 // Weekly timetable: days across (Mon..Sun), times vertically. 2-hour slots 08-10,10-12,13-15,15-17
 const SlotManager: React.FC = () => {
@@ -21,12 +22,40 @@ const SlotManager: React.FC = () => {
   const [slotsWeekMap, setSlotsWeekMap] = useState<Record<string, Record<string, any>>>({});
   const [editing, setEditing] = useState<{date:string, start:string, slot:any, selectedTechIds: string[], capacity: number} | null>(null);
 
+  // NEW: Tab system and pre-bookings
+  const [activeTab, setActiveTab] = useState<'timetable' | 'prebookings'>('timetable');
+  const [preBookings, setPreBookings] = useState<any[]>([]);
+  const [loadingPreBookings, setLoadingPreBookings] = useState(false);
+  const [selectedPreBooking, setSelectedPreBooking] = useState<any | null>(null);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+
   const slotRanges = [ ['08:00','10:00'], ['10:00','12:00'], ['13:00','15:00'], ['15:00','17:00'] ];
 
-  useEffect(()=>{ fetchAll(); }, [weekStart]);
+  useEffect(()=>{ fetchAll(); }, [weekStart, activeTab]);
 
   const fetchAll = async () => {
-    await Promise.all([fetchTechnicians(), fetchSlotsForWeek()]);
+    await fetchTechnicians();
+    if (activeTab === 'timetable') {
+      await fetchSlotsForWeek();
+    } else if (activeTab === 'prebookings') {
+      await fetchPreBookings();
+    }
+  };
+
+  // NEW: Fetch pre-bookings
+  const fetchPreBookings = async () => {
+    setLoadingPreBookings(true);
+    try {
+      const response = await appointmentsAPI.getPreBookings();
+      const data = response.data?.data || response.data || [];
+      setPreBookings(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching pre-bookings:', error);
+      toast.error('Không thể tải danh sách pre-bookings');
+      setPreBookings([]);
+    } finally {
+      setLoadingPreBookings(false);
+    }
   };
 
   const fetchTechnicians = async () => {
@@ -278,11 +307,57 @@ const getTechName = (slot: any) => {
 
   const days = getWeekDates();
 
+  const handleAssignSuccess = () => {
+    setShowAssignModal(false);
+    setSelectedPreBooking(null);
+    fetchPreBookings(); // Refresh list
+  };
+
+  const TIME_RANGE_MAP: Record<string, { label: string; hours: string; icon: string }> = {
+    morning: { label: 'Buổi sáng', hours: '8:00 - 12:00', icon: '🌅' },
+    afternoon: { label: 'Buổi chiều', hours: '13:00 - 17:00', icon: '☀️' },
+    evening: { label: 'Buổi tối', hours: '17:00 - 20:00', icon: '🌆' },
+  };
+
   return (
     <div className="p-4 bg-dark-300">
-      <h3 className="text-text-secondary mt-2">Slot Manager — Weekly Timetable</h3>
+      <h3 className="text-text-secondary mt-2 mb-4">Slot Manager</h3>
 
-      <div className="flex items-center gap-4 mb-4 flex-wrap">
+      {/* NEW: Tab Navigation */}
+      <div className="mb-6 border-b border-dark-700">
+        <div className="flex space-x-1">
+          <button
+            onClick={() => setActiveTab('timetable')}
+            className={`px-6 py-3 text-sm font-semibold transition-all duration-200 ${
+              activeTab === 'timetable'
+                ? 'text-lime-400 border-b-2 border-lime-400'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            📅 Weekly Timetable
+          </button>
+          <button
+            onClick={() => setActiveTab('prebookings')}
+            className={`px-6 py-3 text-sm font-semibold transition-all duration-200 relative ${
+              activeTab === 'prebookings'
+                ? 'text-lime-400 border-b-2 border-lime-400'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            ⏳ Pre-bookings
+            {preBookings.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {preBookings.length}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'timetable' ? (
+        <>
+          <div className="flex items-center gap-4 mb-4 flex-wrap">
         <div className="flex items-center gap-2">
           <label className="text-sm text-text-secondary">Week start (Mon)</label>
           <input 
@@ -505,6 +580,137 @@ const getTechName = (slot: any) => {
           </div>
         </div>
       )}
+        </>
+      ) : (
+        /* NEW: Pre-bookings Tab */
+        <div className="space-y-4">
+          {loadingPreBookings ? (
+            <div className="flex items-center justify-center py-12">
+              <svg
+                className="animate-spin h-10 w-10 text-lime-600"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <span className="ml-3 text-text-secondary">Đang tải...</span>
+            </div>
+          ) : preBookings.length === 0 ? (
+            <div className="bg-dark-900 rounded-lg p-8 text-center">
+              <svg
+                className="w-16 h-16 text-gray-500 mx-auto mb-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                />
+              </svg>
+              <p className="text-text-secondary text-lg">Không có pre-booking nào</p>
+              <p className="text-gray-500 text-sm mt-2">
+                Các lịch hẹn đặt trước (&gt;30 ngày) sẽ hiển thị ở đây
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {preBookings.map((appointment) => {
+                const timeRangeInfo = TIME_RANGE_MAP[appointment.preBookingDetails?.requestedTimeRange] || TIME_RANGE_MAP.morning;
+
+                return (
+                  <div
+                    key={appointment._id}
+                    className="bg-dark-900 rounded-lg p-4 border border-dark-700 hover:border-lime-500 transition-all duration-200"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-3">
+                          <span className="text-lg font-bold text-lime-400">
+                            #{appointment.appointmentNumber}
+                          </span>
+                          <span className="px-2 py-1 bg-blue-900 bg-opacity-30 border border-blue-500 rounded text-xs text-blue-300">
+                            Pre-booking
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <p className="text-gray-400 text-xs mb-1">Khách hàng</p>
+                            <p className="text-white font-semibold">
+                              {appointment.customerId?.firstName} {appointment.customerId?.lastName}
+                            </p>
+                            <p className="text-gray-500 text-xs">{appointment.customerId?.phone}</p>
+                          </div>
+
+                          <div>
+                            <p className="text-gray-400 text-xs mb-1">Xe</p>
+                            <p className="text-white font-semibold">
+                              {appointment.vehicleId?.make} {appointment.vehicleId?.model}
+                            </p>
+                            <p className="text-gray-500 text-xs">{appointment.vehicleId?.licensePlate}</p>
+                          </div>
+
+                          <div>
+                            <p className="text-gray-400 text-xs mb-1">Ngày & Buổi mong muốn</p>
+                            <p className="text-white font-semibold">
+                              {new Date(appointment.preBookingDetails?.requestedDate).toLocaleDateString('vi-VN', {
+                                weekday: 'short',
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                              })}
+                            </p>
+                            <p className="text-lime-400 text-xs flex items-center gap-1 mt-1">
+                              <span>{timeRangeInfo.icon}</span>
+                              {timeRangeInfo.label} ({timeRangeInfo.hours})
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setSelectedPreBooking(appointment);
+                          setShowAssignModal(true);
+                        }}
+                        className="ml-4 px-4 py-2 bg-lime-600 text-dark-900 rounded-md hover:bg-lime-500 font-semibold text-sm transition-all duration-200 transform hover:scale-105"
+                      >
+                        Phân công Slot
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* NEW: Assign Slot Modal */}
+      <AssignSlotModal
+        isOpen={showAssignModal}
+        onClose={() => {
+          setShowAssignModal(false);
+          setSelectedPreBooking(null);
+        }}
+        appointment={selectedPreBooking}
+        onSuccess={handleAssignSuccess}
+      />
     </div>
   );
 };

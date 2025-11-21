@@ -37,7 +37,10 @@ router.post(
 router.get("/:id", getServiceReception);
 
 // Get all service receptions by appointment ID (returns array)
-router.get("/appointment/:appointmentId/all", getAllServiceReceptionsByAppointment);
+router.get(
+  "/appointment/:appointmentId/all",
+  getAllServiceReceptionsByAppointment
+);
 
 // Get service reception by appointment ID (returns latest active one)
 router.get("/appointment/:appointmentId", getServiceReceptionByAppointment);

@@ -63,15 +63,20 @@ const appointmentSchema = new mongoose.Schema(
     },
     scheduledTime: {
       type: String,
-      required: true,
+      required: function () {
+        // scheduledTime is required UNLESS it's a pre-booked appointment
+        return !this.isPreBooked;
+      },
     },
     status: {
       type: String,
       enum: [
+        "pending_slot_assignment", // NEW: Chờ staff assign slot (pre-booking)
         "pending", // Khách vừa đặt
         "confirmed", // Auto-confirmed when technician assigned
         "customer_arrived", // Khách đã mang xe đến
         "reception_created", // Technician đã tạo phiếu tiếp nhận
+        "parts_insufficient", // Staff reject do thiếu phụ tùng, chờ nhập kho
         "reception_approved", // Staff đã duyệt phiếu + parts
         "in_progress", // Đang thực hiện service
         "completed", // Hoàn thành tất cả
@@ -113,6 +118,17 @@ const appointmentSchema = new mongoose.Schema(
         "no_show",
         "rescheduled",
       ],
+    },
+    // Staff rejection information (visible to customer)
+    staffRejectionReason: {
+      type: String,
+      description:
+        "Reason why staff rejected the service reception - visible to customer",
+    },
+    rejectedAt: Date,
+    rejectedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
     priority: {
       type: String,
@@ -272,6 +288,7 @@ const appointmentSchema = new mongoose.Schema(
     slotId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Slot",
+      required: false, // Optional for pre-booking appointments
     },
     serviceReceptionId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -280,6 +297,74 @@ const appointmentSchema = new mongoose.Schema(
     invoiceId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Invoice",
+    },
+
+    // Follow-up appointment tracking
+    baseAppointmentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Appointment",
+      description:
+        "Reference to the original appointment if this is a follow-up",
+    },
+    followUpAppointments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Appointment",
+        description:
+          "Array of follow-up appointments created from this appointment",
+      },
+    ],
+    isFollowUp: {
+      type: Boolean,
+      default: false,
+      description: "Indicates if this is a follow-up appointment",
+    },
+    followUpReason: {
+      type: String,
+      enum: [
+        "warranty_issue",
+        "additional_service",
+        "periodic_maintenance",
+        "unsatisfied_result",
+        "other",
+      ],
+      description: "Reason for creating this follow-up appointment",
+    },
+    followUpNotes: {
+      type: String,
+      description: "Additional notes about the follow-up reason",
+    },
+
+    // Pre-booking tracking (for far-future dates without slots)
+    isPreBooked: {
+      type: Boolean,
+      default: false,
+      description:
+        "Indicates if this appointment was booked before slot creation",
+    },
+    preBookingDetails: {
+      requestedDate: {
+        type: Date,
+        description: "Original date requested by customer",
+      },
+      requestedTimeRange: {
+        type: String,
+        enum: ["morning", "afternoon", "evening"],
+        description: "Preferred time range when slot wasn't available",
+      },
+      slotAssignedAt: {
+        type: Date,
+        description: "When the slot was assigned by staff",
+      },
+      assignedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        description: "Staff member who assigned the slot",
+      },
+      preBookingNotes: {
+        type: String,
+        description: "Additional notes about pre-booking",
+      },
     },
 
     // Cancel request tracking
@@ -1039,6 +1124,7 @@ appointmentSchema.methods.processRefund = function (
 // Static method để compute core status từ detailed status
 appointmentSchema.statics.getCoreStatus = function (detailedStatus) {
   const mapping = {
+    pending_slot_assignment: "Scheduled", // NEW: Pre-booking status
     pending: "Scheduled",
     confirmed: "Scheduled",
     customer_arrived: "CheckedIn",

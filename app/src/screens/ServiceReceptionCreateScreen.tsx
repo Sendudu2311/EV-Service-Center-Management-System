@@ -12,7 +12,7 @@ import {
   FlatList,
 } from 'react-native';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { createServiceReception, getAppointmentDetail } from '../services/technician.api';
 import api from '../services/api';
 import type {
@@ -26,7 +26,7 @@ import type {
 } from '../types/technician.types';
 
 type RouteParams = RouteProp<TechnicianStackParamList, 'ServiceReceptionCreate'>;
-type NavigationProp = StackNavigationProp<TechnicianStackParamList, 'ServiceReceptionCreate'>;
+type NavigationProp = NativeStackNavigationProp<TechnicianStackParamList, 'ServiceReceptionCreate'>;
 
 const ServiceReceptionCreateScreen: React.FC = () => {
   const route = useRoute<RouteParams>();
@@ -699,6 +699,34 @@ const ServiceReceptionCreateScreen: React.FC = () => {
           </View>
         ))
       )}
+
+      {/* External Parts Note - From Technician */}
+      <View style={styles.externalPartsCard}>
+        <View style={styles.externalPartsHeader}>
+          <Text style={styles.externalPartsIcon}>🛒</Text>
+          <Text style={styles.externalPartsTitle}>Ghi chú linh kiện đặt ngoài</Text>
+          <View style={styles.leaveCarBadge}>
+            <Text style={styles.leaveCarText}>ĐỂ XE LẠI</Text>
+          </View>
+        </View>
+        <Text style={styles.externalPartsSubtitle}>
+          Ghi chú của kỹ thuật viên nếu cần đặt linh kiện từ nhà cung cấp bên ngoài (Staff sẽ xử lý sau)
+        </Text>
+        <TextInput
+          style={styles.externalPartsTextArea}
+          placeholder="Ví dụ: Cần đặt pin lithium 72V 100Ah từ nhà cung cấp ABC. Khách đồng ý để xe. Dự kiến 3-5 ngày..."
+          placeholderTextColor="#9CA3AF"
+          multiline
+          numberOfLines={5}
+          value={specialInstructions.fromStaff || ''}
+          onChangeText={(text) =>
+            setSpecialInstructions({ ...specialInstructions, fromStaff: text })
+          }
+        />
+        <Text style={styles.externalPartsHint}>
+          💡 Ghi rõ: tên linh kiện, lý do cần đặt ngoài, xác nhận khách đồng ý để xe
+        </Text>
+      </View>
 
       {/* Summary */}
       <View style={styles.finalSummary}>
@@ -1394,6 +1422,62 @@ const styles = StyleSheet.create({
   modalItemDetail: {
     fontSize: 14,
     color: '#6B7280',
+  },
+  // External Parts Styles
+  externalPartsCard: {
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+  },
+  externalPartsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  externalPartsIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  externalPartsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#92400E',
+    flex: 1,
+  },
+  leaveCarBadge: {
+    backgroundColor: '#FDE68A',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  leaveCarText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#92400E',
+  },
+  externalPartsSubtitle: {
+    fontSize: 13,
+    color: '#78350F',
+    marginBottom: 12,
+  },
+  externalPartsTextArea: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#FCD34D',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    color: '#111827',
+    textAlignVertical: 'top',
+    minHeight: 100,
+  },
+  externalPartsHint: {
+    fontSize: 12,
+    color: '#92400E',
+    marginTop: 8,
   },
 });
 

@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2025-11-12T00:00:00.000Z" agent="GitHub Copilot" version="28.2.9">
+  <diagram name="Context-Diagram-Standard" id="ev-service-context-standard">
+    <mxGraphModel dx="2000" dy="1400" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Central System (Hệ thống trung tâm - duy nhất) -->
+        <mxCell id="system" value="HỆ THỐNG QUẢN LÝ&#xa;TRUNG TÂM BẢO DƯỠNG XE ĐIỆN" style="ellipse;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontColor=#000000;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="500" y="350" width="220" height="180" as="geometry" />
+        </mxCell>
+
+        <!-- External Entities (Tác nhân bên ngoài - dùng hình chữ nhật) -->
+        
+        <!-- Khách hàng -->
+        <mxCell id="customer" value="Khách hàng" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontColor=#000000;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="100" y="200" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Nhân viên tiếp nhận -->
+        <mxCell id="staff" value="Nhân viên&#xa;Tiếp nhận" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontColor=#000000;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="100" y="410" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Kỹ thuật viên -->
+        <mxCell id="technician" value="Kỹ thuật viên" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontColor=#000000;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="100" y="620" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Quản trị viên -->
+        <mxCell id="admin" value="Quản trị viên" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontColor=#000000;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="550" y="710" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Cổng thanh toán VNPay -->
+        <mxCell id="vnpay" value="Cổng thanh toán&#xa;VNPAY" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontColor=#000000;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1000" y="280" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Hệ thống Email -->
+        <mxCell id="email" value="Hệ thống Email&#xa;(Gmail SMTP)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontColor=#000000;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1000" y="460" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- Data Flows (Luồng dữ liệu) -->
+        
+        <!-- Khách hàng -> Hệ thống -->
+        <mxCell id="edge-guest-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4ade80;strokeWidth=2;fontColor=#ffffff;labelBackgroundColor=#1a1a1a" edge="1" parent="1" source="guest" target="system">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-guest-1-label" value="1. Browse Services&#xa;2. View Pricing" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#ffffff;fontSize=11;labelBackgroundColor=#1a1a1a" vertex="1" connectable="0" parent="edge-guest-1">
+          <mxGeometry x="-0.2" y="1" relative="1" as="geometry">
+            <mxPoint x="40" y="-30" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="edge-guest-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4ade80;strokeWidth=2;fontColor=#ffffff;labelBackgroundColor=#1a1a1a;dashed=1" edge="1" parent="1" source="system" target="guest">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="650" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-guest-2-label" value="Service Info&#xa;Estimated Pricing" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#4ade80;fontSize=11;labelBackgroundColor=#1a1a1a" vertex="1" connectable="0" parent="edge-guest-2">
+          <mxGeometry x="-0.2" y="1" relative="1" as="geometry">
+            <mxPoint x="-40" y="20" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Customer Interactions - Booking Flow -->
+        <mxCell id="edge-customer-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#22c55e;strokeWidth=2;fontColor=#ffffff" edge="1" parent="1" source="customer" target="system">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-customer-1-label" value="1. Register/Login (JWT)&#xa;2. Manage Vehicles&#xa;3. Book Appointment&#xa;   • Select Vehicle&#xa;   • Choose Date/Time/Slot&#xa;   • Select Technician (optional)" style="edgeLabel;html=1;align=left;verticalAlign=middle;resizable=0;points=[];fontColor=#ffffff;fontSize=10;labelBackgroundColor=#1a1a1a" vertex="1" connectable="0" parent="edge-customer-1">
+          <mxGeometry x="-0.3" y="2" relative="1" as="geometry">
+            <mxPoint x="80" y="-60" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Customer - Payment Flow -->
+        <mxCell id="edge-customer-payment-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10b981;strokeWidth=2;fontColor=#ffffff" edge="1" parent="1" source="customer" target="system">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="300" y="360" />
+              <mxPoint x="300" y="450" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-customer-payment-1-label" value="4. Pay Deposit&#xa;   (50% - 200,000 VND)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#10b981;fontSize=11;labelBackgroundColor=#1a1a1a;fontStyle=1" vertex="1" connectable="0" parent="edge-customer-payment-1">
+          <mxGeometry x="-0.2" y="1" relative="1" as="geometry">
+            <mxPoint x="50" y="-20" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- System to VNPay -->
+        <mxCell id="edge-vnpay-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10b981;strokeWidth=2;fontColor=#ffffff" edge="1" parent="1" source="system" target="vnpay">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-vnpay-1-label" value="Process Deposit&#xa;Payment (HTTPS)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#10b981;fontSize=10;labelBackgroundColor=#1a1a1a" vertex="1" connectable="0" parent="edge-vnpay-1">
+          <mxGeometry x="-0.1" y="2" relative="1" as="geometry">
+            <mxPoint x="20" y="-15" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="edge-vnpay-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10b981;strokeWidth=2;dashed=1" edge="1" parent="1" source="vnpay" target="system">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1000" y="300" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-vnpay-2-label" value="Payment Result&#xa;+ IPN Callback" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#10b981;fontSize=10;labelBackgroundColor=#1a1a1a" vertex="1" connectable="0" parent="edge-vnpay-2">
+          <mxGeometry x="-0.1" y="2" relative="1" as="geometry">
+            <mxPoint x="-20" y="15" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Customer Notifications -->
+        <mxCell id="edge-customer-notif" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a78bfa;strokeWidth=2;dashed=1" edge="1" parent="1" source="system" target="customer">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="550" y="380" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-customer-notif-label" value="Real-time Updates&#xa;(Socket.io + Email)&#xa;• Appointment Confirmed&#xa;• Reminders&#xa;• Status Changes&#xa;• Invoice Ready" style="edgeLabel;html=1;align=left;verticalAlign=middle;resizable=0;points=[];fontColor=#a78bfa;fontSize=10;labelBackgroundColor=#1a1a1a" vertex="1" connectable="0" parent="edge-customer-notif">
+          <mxGeometry x="-0.3" y="2" relative="1" as="geometry">
+            <mxPoint x="-120" y="-50" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Customer - Final Payment -->
+        <mxCell id="edge-customer-final-payment" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#10b981;strokeWidth=2" edge="1" parent="1" source="customer" target="system">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="250" y="400" />
+              <mxPoint x="250" y="520" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-customer-final-payment-label" value="8. Final Payment&#xa;   (After Service)&#xa;   • VNPAY/Cash/Card" style="edgeLabel;html=1;align=left;verticalAlign=middle;resizable=0;points=[];fontColor=#10b981;fontSize=10;labelBackgroundColor=#1a1a1a;fontStyle=1" vertex="1" connectable="0" parent="edge-customer-final-payment">
+          <mxGeometry x="-0.2" y="1" relative="1" as="geometry">
+            <mxPoint x="60" y="30" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Customer - View Services -->
+        <mxCell id="edge-customer-view" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#22c55e;strokeWidth=2;dashed=1" edge="1" parent="1" source="system" target="customer">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="550" y="420" />
+              <mxPoint x="200" y="420" />
+              <mxPoint x="200" y="360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-customer-view-label" value="• Booking History&#xa;• Invoice/Receipt&#xa;• Service Status&#xa;• Download Invoice PDF" style="edgeLabel;html=1;align=left;verticalAlign=middle;resizable=0;points=[];fontColor=#22c55e;fontSize=10;labelBackgroundColor=#1a1a1a" vertex="1" connectable="0" parent="edge-customer-view">
+          <mxGeometry x="-0.3" y="2" relative="1" as="geometry">
+            <mxPoint x="-90" y="40" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Staff Interactions -->
+        <mxCell id="edge-staff-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3b82f6;strokeWidth=2" edge="1" parent="1" source="staff" target="system">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-staff-1-label" value="1. Create Service Reception&#xa;   • Fill EV Checklist&#xa;   • Personal Belongings&#xa;   • Suggest Additional Services&#xa;2. Review Technician Reports&#xa;3. Generate Invoice&#xa;4. Manage Customer Info" style="edgeLabel;html=1;align=left;verticalAlign=middle;resizable=0;points=[];fontColor=#ffffff;fontSize=10;labelBackgroundColor=#1a1a1a" vertex="1" connectable="0" parent="edge-staff-1">
+          <mxGeometry x="-0.3" y="2" relative="1" as="geometry">
+            <mxPoint x="100" y="-60" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="edge-staff-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#3b82f6;strokeWidth=2;dashed=1" edge="1" parent="1" source="system" target="staff">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="550" y="560" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-staff-2-label" value="• Appointments List&#xa;• Service Requests&#xa;• Part Conflict Alerts&#xa;• Customer Info" style="edgeLabel;html=1;align=left;verticalAlign=middle;resizable=0;points=[];fontColor=#3b82f6;fontSize=10;labelBackgroundColor=#1a1a1a" vertex="1" connectable="0" parent="edge-staff-2">
+          <mxGeometry x="-0.3" y="2" relative="1" as="geometry">
+            <mxPoint x="-80" y="40" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Technician Interactions -->
+        <mxCell id="edge-tech-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#f59e0b;strokeWidth=2" edge="1" parent="1" source="technician" target="system">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-tech-1-label" value="1. View Assigned Jobs&#xa;2. Update EV Checklist&#xa;3. Request Parts&#xa;4. Update Service Status&#xa;5. Report Issues&#xa;6. Upload Photos" style="edgeLabel;html=1;align=left;verticalAlign=middle;resizable=0;points=[];fontColor=#ffffff;fontSize=10;labelBackgroundColor=#1a1a1a" vertex="1" connectable="0" parent="edge-tech-1">
+          <mxGeometry x="-0.3" y="2" relative="1" as="geometry">
+            <mxPoint x="90" y="-55" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="edge-tech-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#f59e0b;strokeWidth=2;dashed=1" edge="1" parent="1" source="system" target="technician">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="550" y="600" />
+              <mxPoint x="200" y="600" />
+              <mxPoint x="200" y="740" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-tech-2-label" value="• Schedule/Assignments&#xa;• Service Details&#xa;• EV Checklist Template&#xa;• Part Approval Status" style="edgeLabel;html=1;align=left;verticalAlign=middle;resizable=0;points=[];fontColor=#f59e0b;fontSize=10;labelBackgroundColor=#1a1a1a" vertex="1" connectable="0" parent="edge-tech-2">
+          <mxGeometry x="-0.3" y="2" relative="1" as="geometry">
+            <mxPoint x="-90" y="50" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Technician to Cloudinary -->
+        <mxCell id="edge-cloudinary" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#f87171;strokeWidth=2" edge="1" parent="1" source="system" target="cloudinary">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-cloudinary-label" value="Upload Photos&#xa;(Pre/Post Service)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=#f87171;fontSize=10;labelBackgroundColor=#1a1a1a" vertex="1" connectable="0" parent="edge-cloudinary">
+          <mxGeometry x="-0.1" y="2" relative="1" as="geometry">
+            <mxPoint x="20" y="-15" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Admin Interactions -->
+        <mxCell id="edge-admin-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#dc2626;strokeWidth=2" edge="1" parent="1" source="admin" target="system">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="920" />
+              <mxPoint x="400" y="620" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-admin-1-label" value="1. User Management&#xa;2. Service Management&#xa;3. Parts Inventory&#xa;4. Resolve Conflicts&#xa;5. Analytics Dashboard&#xa;6. System Configuration" style="edgeLabel;html=1;align=left;verticalAlign=middle;resizable=0;points=[];fontColor=#ffffff;fontSize=10;labelBackgroundColor=#1a1a1a" vertex="1" connectable="0" parent="edge-admin-1">
+          <mxGeometry x="-0.3" y="2" relative="1" as="geometry">
+            <mxPoint x="90" y="70" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="edge-admin-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#dc2626;strokeWidth=2;dashed=1" edge="1" parent="1" source="system" target="admin">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="550" y="620" />
+              <mxPoint x="350" y="620" />
+              <mxPoint x="350" y="920" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-admin-2-label" value="• Statistics/Reports&#xa;• Low Stock Alerts&#xa;• Part Conflict Alerts&#xa;• System Status" style="edgeLabel;html=1;align=left;verticalAlign=middle;resizable=0;points=[];fontColor=#dc2626;fontSize=10;labelBackgroundColor=#1a1a1a" vertex="1" connectable="0" parent="edge-admin-2">
+          <mxGeometry x="-0.3" y="2" relative="1" as="geometry">
+            <mxPoint x="-80" y="-60" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Email Notifications -->
+        <mxCell id="edge-gmail-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#a78bfa;strokeWidth=2" edge="1" parent="1" source="system" target="gmail">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-gmail-1-label" value="Send Emails:&#xa;• Booking Confirmation&#xa;• Payment Receipt&#xa;• Service Updates&#xa;• Invoice" style="edgeLabel;html=1;align=left;verticalAlign=middle;resizable=0;points=[];fontColor=#a78bfa;fontSize=10;labelBackgroundColor=#1a1a1a" vertex="1" connectable="0" parent="edge-gmail-1">
+          <mxGeometry x="-0.1" y="2" relative="1" as="geometry">
+            <mxPoint x="40" y="40" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Legend -->
+        <mxCell id="legend-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a1a;strokeColor=#4ade80;strokeWidth=2;opacity=80" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="260" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-title" value="LEGEND" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontColor=#4ade80;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="50" y="25" width="100" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-1" value="━━━  Request/Action" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#ffffff;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="50" y="45" width="120" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-2" value="- - -  Response/Data" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#ffffff;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="170" y="45" width="120" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-3" value="🟢 Payment Flow    🟣 Notification    🔴 Image Upload" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#ffffff;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="50" y="60" width="240" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Key Features Box -->
+        <mxCell id="features-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a1a;strokeColor=#4ade80;strokeWidth=2;opacity=80" vertex="1" parent="1">
+          <mxGeometry x="900" y="600" width="320" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="features-title" value="KEY FEATURES" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontColor=#4ade80;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="910" y="610" width="150" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="features-1" value="✅ JWT Authentication + RBAC" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#ffffff;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="910" y="635" width="300" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="features-2" value="✅ Real-time Updates (Socket.io WebSocket)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#ffffff;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="910" y="655" width="300" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="features-3" value="✅ 2-Stage Payment: Deposit (50%) + Final" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#ffffff;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="910" y="675" width="300" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="features-4" value="✅ EV Checklist (Battery, Motor, Charging, Safety)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#ffffff;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="910" y="695" width="300" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="features-5" value="✅ Part Request + Conflict Resolution" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#ffffff;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="910" y="715" width="300" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="features-6" value="✅ Service Reception Flow (Staff Review → Technician Work)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#ffffff;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="910" y="735" width="300" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="features-7" value="✅ Invoice Generation (PDF Download)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#ffffff;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="910" y="755" width="300" height="15" as="geometry" />
+        </mxCell>
+
+        <!-- Tech Stack Box -->
+        <mxCell id="tech-bg" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1a1a1a;strokeColor=#3b82f6;strokeWidth=2;opacity=80" vertex="1" parent="1">
+          <mxGeometry x="900" y="800" width="320" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="tech-title" value="TECHNOLOGY STACK" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontColor=#3b82f6;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="910" y="810" width="200" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="tech-1" value="Frontend: React 18 + TypeScript + Tailwind CSS + Vite" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#ffffff;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="910" y="835" width="300" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="tech-2" value="Backend: Node.js + Express.js + MongoDB (Mongoose)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#ffffff;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="910" y="855" width="300" height="15" as="geometry" />
+        </mxCell>
+        <mxCell id="tech-3" value="Real-time: Socket.io | Auth: JWT | Email: Nodemailer | Payment: VNPay" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#ffffff;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="910" y="875" width="300" height="15" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

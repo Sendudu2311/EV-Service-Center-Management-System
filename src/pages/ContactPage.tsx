@@ -51,17 +51,17 @@ const ContactPage: React.FC = () => {
       <div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
         {/* Hero Section */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold text-white mb-4">Contact Us</h1>
+          <h1 className="text-4xl font-bold text-white mb-4">Liên Hệ Với Chúng Tôi</h1>
           <p className="text-xl text-text-secondary max-w-3xl mx-auto">
-            Have questions about our EV services? We're here to help. Reach out to our team
-            and we'll get back to you as soon as possible.
+            Có câu hỏi về dịch vụ xe điện của chúng tôi? Chúng tôi sẵn sàng hỗ trợ. Liên hệ với đội ngũ của chúng tôi
+            và chúng tôi sẽ phản hồi sớm nhất có thể.
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact Information */}
           <div className="bg-dark-300 rounded-lg shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-white mb-6">Get in Touch</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">Thông Tin Liên Hệ</h2>
 
             <div className="space-y-6">
               <div className="flex items-start space-x-4">
@@ -74,7 +74,7 @@ const ContactPage: React.FC = () => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">Phone</h3>
+                  <h3 className="text-lg font-semibold text-white mb-1">Điện Thoại</h3>
                   <p className="text-text-secondary">+84 123 456 789</p>
                   <p className="text-text-secondary">+84 987 654 321</p>
                 </div>
@@ -100,10 +100,10 @@ const ContactPage: React.FC = () => {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">Business Hours</h3>
-                  <p className="text-text-secondary">Monday - Friday: 8:00 AM - 6:00 PM</p>
-                  <p className="text-text-secondary">Saturday: 9:00 AM - 4:00 PM</p>
-                  <p className="text-text-secondary">Sunday: Closed</p>
+                  <h3 className="text-lg font-semibold text-white mb-1">Giờ Làm Việc</h3>
+                  <p className="text-text-secondary">Thứ Hai - Thứ Sáu: 8:00 AM - 6:00 PM</p>
+                  <p className="text-text-secondary">Thứ Bảy: 9:00 AM - 4:00 PM</p>
+                  <p className="text-text-secondary">Chủ Nhật: Nghỉ</p>
                 </div>
               </div>
             </div>
@@ -111,12 +111,12 @@ const ContactPage: React.FC = () => {
 
           {/* Contact Form */}
           <div className="bg-dark-300 rounded-lg shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-white mb-6">Send us a Message</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">Gửi Tin Nhắn Cho Chúng Tôi</h2>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="name" className="block text-sm text-text-muted text-text-secondary mb-2">
-                  Full Name *
+                  Họ và Tên *
                 </label>
                 <input
                   type="text"
@@ -126,13 +126,13 @@ const ContactPage: React.FC = () => {
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-3 border border-dark-300 rounded-lg focus:ring-2 focus:ring-lime-400 focus:border-transparent"
-                  placeholder="Your full name"
+                  placeholder="Họ và tên của bạn"
                 />
               </div>
 
               <div>
                 <label htmlFor="email" className="block text-sm text-text-muted text-text-secondary mb-2">
-                  Email Address *
+                  Địa Chỉ Email *
                 </label>
                 <input
                   type="email"
@@ -142,13 +142,13 @@ const ContactPage: React.FC = () => {
                   onChange={handleChange}
                   required
                   className="w-full px-4 py-3 border border-dark-300 rounded-lg focus:ring-2 focus:ring-lime-400 focus:border-transparent"
-                  placeholder="your.email@example.com"
+                  placeholder="email.cua.ban@example.com"
                 />
               </div>
 
               <div>
                 <label htmlFor="subject" className="block text-sm text-text-muted text-text-secondary mb-2">
-                  Subject *
+                  Chủ Đề *
                 </label>
                 <select
                   id="subject"
@@ -158,19 +158,19 @@ const ContactPage: React.FC = () => {
                   required
                   className="w-full px-4 py-3 border border-dark-300 rounded-lg focus:ring-2 focus:ring-lime-400 focus:border-transparent"
                 >
-                  <option value="">Select a subject</option>
-                  <option value="service">Service Inquiry</option>
-                  <option value="appointment">Appointment Booking</option>
-                  <option value="parts">Parts & Accessories</option>
-                  <option value="warranty">Warranty Claim</option>
-                  <option value="feedback">Feedback</option>
-                  <option value="other">Other</option>
+                  <option value="">Chọn chủ đề</option>
+                  <option value="service">Hỏi Về Dịch Vụ</option>
+                  <option value="appointment">Đặt Lịch Hẹn</option>
+                  <option value="parts">Phụ Tùng & Phụ Kiện</option>
+                  <option value="warranty">Yêu Cầu Bảo Hành</option>
+                  <option value="feedback">Phản Hồi</option>
+                  <option value="other">Khác</option>
                 </select>
               </div>
 
               <div>
                 <label htmlFor="message" className="block text-sm text-text-muted text-text-secondary mb-2">
-                  Message *
+                  Tin Nhắn *
                 </label>
                 <textarea
                   id="message"
@@ -180,7 +180,7 @@ const ContactPage: React.FC = () => {
                   required
                   rows={6}
                   className="w-full px-4 py-3 border border-dark-300 rounded-lg focus:ring-2 focus:ring-lime-400 focus:border-transparent"
-                  placeholder="Please describe your inquiry in detail..."
+                  placeholder="Vui lòng mô tả chi tiết yêu cầu của bạn..."
                 />
               </div>
 
@@ -195,10 +195,10 @@ const ContactPage: React.FC = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Sending...
+                    Đang gửi...
                   </div>
                 ) : (
-                  'Send Message'
+                  'Gửi Tin Nhắn'
                 )}
               </button>
             </form>
@@ -207,14 +207,14 @@ const ContactPage: React.FC = () => {
 
         {/* Map Section */}
         <div className="mt-16 bg-dark-300 rounded-lg shadow-lg p-8">
-          <h2 className="text-2xl font-bold text-white mb-6 text-center">Find Us</h2>
+          <h2 className="text-2xl font-bold text-white mb-6 text-center">Tìm Chúng Tôi</h2>
           <div className="mb-4">
             <div className="bg-dark-900 rounded-lg p-4 mb-4">
-              <h3 className="text-lg font-semibold text-white mb-2">📍 Our Location</h3>
+              <h3 className="text-lg font-semibold text-white mb-2">📍 Địa Chỉ Của Chúng Tôi</h3>
               <p className="text-text-secondary">
-                <strong>FPT University Ho Chi Minh City Campus</strong><br />
+                <strong>Đại học FPT TP. Hồ Chí Minh</strong><br />
                 Lô E2a-7, Đường D1, Long Thạnh Mỹ, Thành Phố Thủ Đức, Hồ Chí Minh<br />
-                Vietnam 700000
+                Việt Nam 700000
               </p>
             </div>
           </div>
@@ -227,12 +227,12 @@ const ContactPage: React.FC = () => {
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title="FPT University Ho Chi Minh City Location"
+              title="Vị trí Đại học FPT TP. Hồ Chí Minh"
             ></iframe>
           </div>
           <div className="mt-4 text-center">
             <p className="text-sm text-text-secondary">
-              Located at FPT University Ho Chi Minh City - Easy access from major highways and public transport
+              Tọa lạc tại Đại học FPT TP. Hồ Chí Minh - Dễ dàng tiếp cận từ các tuyến đường chính và phương tiện giao thông công cộng
             </p>
           </div>
         </div>

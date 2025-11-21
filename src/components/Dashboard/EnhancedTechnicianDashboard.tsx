@@ -14,6 +14,7 @@ import { Link } from "react-router-dom";
 import { dashboardAPI, appointmentsAPI } from "../../services/api";
 import toast from "react-hot-toast";
 import ServiceReceptionModal from "../ServiceReception/ServiceReceptionModal";
+import WorkflowHistoryViewer from "../ServiceReception/WorkflowHistoryViewer";
 import {
   formatVietnameseDateTime,
   appointmentStatusTranslations,
@@ -133,6 +134,13 @@ interface ServiceReceptionItem {
     orderStatus: string;
     notes?: string;
   }>;
+  workflowHistory?: Array<{
+    action: string;
+    performedBy: any;
+    timestamp: string | Date;
+    changes?: any;
+    notes?: string;
+  }>;
 }
 
 const EnhancedTechnicianDashboard: React.FC = () => {
@@ -229,8 +237,9 @@ const EnhancedTechnicianDashboard: React.FC = () => {
       });
 
       // Ensure workQueueData is always an array
-      const workQueueData = Array.isArray(queueResponse.data?.data)
-        ? (queueResponse.data.data as WorkQueueItem[])
+      const responseData = queueResponse.data as any;
+      const workQueueData = Array.isArray(responseData?.appointments)
+        ? (responseData.appointments as WorkQueueItem[])
         : [];
 
       // Sort: active status first, then by priority and date
@@ -271,6 +280,11 @@ const EnhancedTechnicianDashboard: React.FC = () => {
         );
         if (receptionsResponse.ok) {
           const receptionsData = await receptionsResponse.json();
+          console.log('=== SERVICE RECEPTIONS DATA ===');
+          console.log('Receptions:', receptionsData.data);
+          if (receptionsData.data && receptionsData.data.length > 0) {
+            console.log('First reception workflowHistory:', receptionsData.data[0].workflowHistory);
+          }
           setServiceReceptions(receptionsData.data || []);
         }
       } catch (error) {
@@ -1011,7 +1025,12 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-text-muted">
                             <button
-                              onClick={() => setSelectedReception(reception)}
+                              onClick={() => {
+                                console.log('=== SELECTED RECEPTION ===');
+                                console.log('Reception:', reception);
+                                console.log('workflowHistory:', reception.workflowHistory);
+                                setSelectedReception(reception);
+                              }}
                               className="text-lime-600 hover:text-lime-900"
                             >
                               Xem chi tiết
@@ -1365,6 +1384,14 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                   </div>
                 )}
 
+                {/* Workflow History - Staff modifications */}
+                {selectedReception.workflowHistory &&
+                  selectedReception.workflowHistory.length > 0 && (
+                    <WorkflowHistoryViewer
+                      history={selectedReception.workflowHistory}
+                    />
+                  )}
+
                 {/* Created Date */}
                 <div className="bg-dark-900 p-4 rounded-lg">
                   <h4 className="text-sm font-semibold text-text-secondary mb-2">
@@ -1380,18 +1407,37 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                 {selectedReception.submissionStatus?.staffReviewStatus ===
                   "rejected" && (
                   <div className="text-sm">
-                    <p className="text-red-600 text-text-muted">
-                      Lý do từ chối:
-                    </p>
-                    <p className="text-text-secondary">
-                      {selectedReception.submissionStatus.reviewNotes ||
-                        "Không có lý do cụ thể"}
-                    </p>
+                    {selectedReception.submissionStatus.customerDeclinedService ? (
+                      <div className="p-3 bg-orange-900/20 border border-orange-500/30 rounded-lg">
+                        <p className="text-orange-500 font-semibold mb-1">
+                          ⚠️ Khách hàng không muốn thực hiện dịch vụ
+                        </p>
+                        <p className="text-text-secondary text-xs">
+                          Lịch hẹn đã bị hủy. Không thể tạo phiếu tiếp nhận mới.
+                        </p>
+                        {selectedReception.submissionStatus.reviewNotes && (
+                          <p className="text-text-muted text-xs mt-2 italic">
+                            Ghi chú: {selectedReception.submissionStatus.reviewNotes}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-red-600 text-text-muted">
+                          Lý do từ chối:
+                        </p>
+                        <p className="text-text-secondary">
+                          {selectedReception.submissionStatus.reviewNotes ||
+                            "Không có lý do cụ thể"}
+                        </p>
+                      </>
+                    )}
                   </div>
                 )}
                 <div className="flex space-x-2 ml-auto">
                   {selectedReception.submissionStatus?.staffReviewStatus ===
-                    "rejected" && (
+                    "rejected" &&
+                    !selectedReception.submissionStatus.customerDeclinedService && (
                     <button
                       onClick={() => {
                         // Open modal to create new reception for rejected appointment

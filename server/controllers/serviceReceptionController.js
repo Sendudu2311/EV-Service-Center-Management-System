@@ -26,9 +26,12 @@ export const createServiceReception = async (req, res) => {
     } = req.body;
 
     // Check if service reception already exists for this appointment
-    // Allow creating new reception if previous one was rejected
+    // Allow creating new reception if previous one was rejected OR if appointment is in parts_insufficient status
     const existingReception = await ServiceReception.findOne({ appointmentId });
-    if (existingReception && existingReception.status !== "rejected") {
+    if (
+      existingReception &&
+      existingReception.submissionStatus.staffReviewStatus !== "rejected"
+    ) {
       return sendError(
         res,
         400,
@@ -68,12 +71,13 @@ export const createServiceReception = async (req, res) => {
       );
     }
 
-    // Verify appointment status
-    if (appointment.status !== "customer_arrived") {
+    // Verify appointment status - allow customer_arrived or parts_insufficient (for resubmission after rejection)
+    const allowedStatuses = ["customer_arrived", "parts_insufficient"];
+    if (!allowedStatuses.includes(appointment.status)) {
       return sendError(
         res,
         400,
-        "Cannot create service reception. Customer must be marked as arrived first",
+        `Cannot create service reception. Current status: ${appointment.status}. Allowed: customer_arrived or parts_insufficient (after rejection).`,
         null,
         "INVALID_STATUS"
       );
@@ -205,7 +209,11 @@ export const createServiceReception = async (req, res) => {
     );
 
     // Change booking type to full service if it was deposit booking
-    if (recommendedServices && recommendedServices.length > 0 && appointment.bookingType === "deposit_booking") {
+    if (
+      recommendedServices &&
+      recommendedServices.length > 0 &&
+      appointment.bookingType === "deposit_booking"
+    ) {
       appointment.bookingType = "full_service";
       console.log(
         "🔄 [createServiceReception] Changed booking type to full_service"
@@ -231,7 +239,7 @@ export const createServiceReception = async (req, res) => {
       .populate("vehicleId", "make model year licensePlate")
       .populate("receivedBy", "firstName lastName email")
       .populate("recommendedServices.serviceId", "name description basePrice")
-      .populate("requestedParts.partId", "name partNumber price");
+      .populate("requestedParts.partId", "name partNumber pricing inventory");
 
     return sendSuccess(
       res,
@@ -264,7 +272,7 @@ export const getServiceReception = async (req, res) => {
         "name description basePrice category estimatedDuration"
       )
       .populate("recommendedServices.addedBy", "firstName lastName")
-      .populate("requestedParts.partId", "name partNumber pricing");
+      .populate("requestedParts.partId", "name partNumber pricing inventory.currentStock inventory.reservedStock inventory.usedStock");
 
     if (!serviceReception) {
       return sendError(
@@ -299,9 +307,14 @@ export const getServiceReceptionByAppointment = async (req, res) => {
   try {
     const { appointmentId } = req.params;
 
+    // ⚠️ FIX: Get the LATEST non-rejected reception for this appointment
+    // Sort by createdAt descending to get newest first
+    // Filter out rejected receptions to avoid returning old rejected ones
     const serviceReception = await ServiceReception.findOne({
       appointmentId: appointmentId,
+      "submissionStatus.staffReviewStatus": { $ne: "rejected" }, // Exclude rejected
     })
+      .sort({ createdAt: -1 }) // Get newest first
       .populate("customerId", "firstName lastName email phone")
       .populate("vehicleId", "make model year licensePlate")
       .populate("receivedBy", "firstName lastName email")
@@ -310,7 +323,7 @@ export const getServiceReceptionByAppointment = async (req, res) => {
         "name description basePrice category estimatedDuration"
       )
       .populate("recommendedServices.addedBy", "firstName lastName")
-      .populate("requestedParts.partId", "name partNumber pricing");
+      .populate("requestedParts.partId", "name partNumber pricing inventory.currentStock inventory.reservedStock inventory.usedStock");
 
     if (!serviceReception) {
       return sendError(
@@ -320,6 +333,29 @@ export const getServiceReceptionByAppointment = async (req, res) => {
         null,
         "RECEPTION_NOT_FOUND"
       );
+    }
+
+    // DEBUG: Log parts data to verify inventory population
+    console.log("\n📤 [getServiceReceptionByAppointment] Sending data to frontend");
+    console.log(`   Reception ID: ${serviceReception._id}`);
+    console.log(`   Requested Parts Count: ${serviceReception.requestedParts?.length || 0}`);
+    if (serviceReception.requestedParts && serviceReception.requestedParts.length > 0) {
+      serviceReception.requestedParts.forEach((part, index) => {
+        console.log(`\n   Part ${index + 1}:`);
+        console.log(`      Part Name: ${part.partName}`);
+        console.log(`      Part ID (raw): ${part.partId}`);
+        console.log(`      Part ID type: ${typeof part.partId}`);
+        if (typeof part.partId === 'object' && part.partId !== null) {
+          console.log(`      Part ID._id: ${part.partId._id}`);
+          console.log(`      Part ID.name: ${part.partId.name}`);
+          console.log(`      Part ID.partNumber: ${part.partId.partNumber}`);
+          console.log(`      Part ID.pricing:`, part.partId.pricing);
+          console.log(`      Part ID.inventory:`, part.partId.inventory);
+          console.log(`      Part ID.inventory.currentStock: ${part.partId.inventory?.currentStock}`);
+        }
+        console.log(`      isAvailable: ${part.isAvailable}`);
+        console.log(`      availableQuantity: ${part.availableQuantity}`);
+      });
     }
 
     return sendSuccess(
@@ -377,7 +413,10 @@ export const getAllServiceReceptionsByAppointment = async (req, res) => {
       serviceReceptions
     );
   } catch (error) {
-    console.error("Error retrieving all service receptions by appointment:", error);
+    console.error(
+      "Error retrieving all service receptions by appointment:",
+      error
+    );
     return sendError(
       res,
       500,
@@ -407,6 +446,22 @@ export const getServiceReceptionsByTechnician = async (req, res) => {
       .populate("recommendedServices.addedBy", "firstName lastName")
       .populate("requestedParts.partId", "name partNumber pricing")
       .sort({ createdAt: -1 });
+
+    // Manually populate workflowHistory users (both old and new workflow structure)
+    for (const reception of serviceReceptions) {
+      if (reception.workflowHistory && reception.workflowHistory.length > 0) {
+        await ServiceReception.populate(reception, [
+          {
+            path: "workflowHistory.performedBy",
+            select: "firstName lastName email",
+          },
+          {
+            path: "workflowHistory.changedBy",
+            select: "firstName lastName email",
+          },
+        ]);
+      }
+    }
 
     return sendSuccess(
       res,
@@ -489,7 +544,7 @@ export const updateServiceReception = async (req, res) => {
         "name description basePrice category estimatedDuration"
       )
       .populate("recommendedServices.addedBy", "firstName lastName")
-      .populate("requestedParts.partId", "name partNumber pricing");
+      .populate("requestedParts.partId", "name partNumber pricing inventory.currentStock inventory.reservedStock inventory.usedStock");
 
     return sendSuccess(
       res,
@@ -574,7 +629,7 @@ export const resubmitServiceReception = async (req, res) => {
         "name description basePrice category estimatedDuration"
       )
       .populate("recommendedServices.addedBy", "firstName lastName")
-      .populate("requestedParts.partId", "name partNumber pricing");
+      .populate("requestedParts.partId", "name partNumber pricing inventory.currentStock inventory.reservedStock inventory.usedStock");
 
     return sendSuccess(
       res,
@@ -597,8 +652,16 @@ export const resubmitServiceReception = async (req, res) => {
 export const approveServiceReception = async (req, res) => {
   try {
     const { id } = req.params;
-    const { decision, reviewNotes, approved, staffNotes, externalParts, extendedCompletionDate } =
-      req.body;
+    const {
+      decision,
+      reviewNotes,
+      approved,
+      staffNotes,
+      externalParts,
+      extendedCompletionDate,
+      modifications,
+      customerDeclinedService,
+    } = req.body;
 
     // Support both old format (approved: boolean) and new format (decision: 'approved'/'rejected')
     const isApproved = decision ? decision === "approved" : approved;
@@ -613,6 +676,33 @@ export const approveServiceReception = async (req, res) => {
         null,
         "RECEPTION_NOT_FOUND"
       );
+    }
+
+    // Handle staff modifications to services/parts
+    if (
+      modifications &&
+      modifications.modifiedServices &&
+      modifications.modifiedParts
+    ) {
+      // Update services and parts with staff modifications
+      serviceReception.recommendedServices = modifications.modifiedServices;
+      serviceReception.requestedParts = modifications.modifiedParts;
+
+      // Log modification to workflow history
+      serviceReception.workflowHistory.push({
+        action: "staff_modified_services_parts",
+        performedBy: req.user._id,
+        timestamp: new Date(),
+        changes: {
+          servicesAdded: modifications.servicesChanges?.added || [],
+          servicesRemoved: modifications.servicesChanges?.removed || [],
+          servicesModified: modifications.servicesChanges?.modified || [],
+          partsAdded: modifications.partsChanges?.added || [],
+          partsRemoved: modifications.partsChanges?.removed || [],
+          partsModified: modifications.partsChanges?.modified || [],
+        },
+        notes: modifications.modificationReason,
+      });
     }
 
     // Only staff or admin can approve
@@ -633,9 +723,6 @@ export const approveServiceReception = async (req, res) => {
       Array.isArray(externalParts) &&
       externalParts.length > 0
     ) {
-      console.log("=== ADDING EXTERNAL PARTS ===");
-      console.log("External parts count:", externalParts.length);
-
       // Add external parts to service reception
       serviceReception.externalParts = externalParts.map((part) => ({
         ...part,
@@ -643,8 +730,6 @@ export const approveServiceReception = async (req, res) => {
         addedAt: new Date(),
       }));
       serviceReception.hasExternalParts = true;
-
-      console.log("External parts added to service reception");
     }
 
     // Update approval info
@@ -656,45 +741,25 @@ export const approveServiceReception = async (req, res) => {
     serviceReception.submissionStatus.reviewedBy = req.user._id;
     serviceReception.submissionStatus.reviewedAt = new Date();
     serviceReception.submissionStatus.reviewNotes = notes;
+    serviceReception.submissionStatus.customerDeclinedService = customerDeclinedService || false;
     serviceReception.updatedAt = new Date();
 
     // Auto-approve recommended services and available parts when staff approves
     if (isApproved) {
-      console.log("=== AUTO-APPROVING SERVICES AND PARTS ===");
-      console.log(
-        "Recommended services count:",
-        serviceReception.recommendedServices.length
-      );
-      console.log(
-        "Requested parts count:",
-        serviceReception.requestedParts.length
-      );
-
       // Set customerApproved = true for all recommended services
-      serviceReception.recommendedServices.forEach((rs, idx) => {
-        console.log(
-          `Setting recommendedServices[${idx}].customerApproved = true`
-        );
+      serviceReception.recommendedServices.forEach((rs) => {
         rs.customerApproved = true;
       });
 
       // Set isApproved = true for all available parts
-      serviceReception.requestedParts.forEach((part, idx) => {
+      serviceReception.requestedParts.forEach((part) => {
         if (part.isAvailable) {
-          console.log(
-            `Setting requestedParts[${idx}].isApproved = true (isAvailable: ${part.isAvailable})`
-          );
           part.isApproved = true;
-        } else {
-          console.log(
-            `Skipping requestedParts[${idx}] (isAvailable: ${part.isAvailable})`
-          );
         }
       });
     }
 
     await serviceReception.save();
-    console.log("ServiceReception saved with auto-approvals");
 
     // Update appointment status and details
     const Appointment = mongoose.model("Appointment");
@@ -704,27 +769,16 @@ export const approveServiceReception = async (req, res) => {
     ).populate("services.serviceId");
 
     if (appointment && isApproved) {
-      console.log("=== UPDATING APPOINTMENT ===");
-      console.log("Appointment ID:", appointment._id);
-      console.log("Current totalAmount:", appointment.totalAmount);
-      console.log("Current services count:", appointment.services.length);
-      console.log("Current partsUsed count:", appointment.partsUsed.length);
-
       // Calculate additional costs from service reception
       let additionalServicesCost = 0;
       let additionalPartsCost = 0;
       let laborCost = serviceReception.estimatedLabor?.totalCost || 0;
-
-      console.log("Labor cost:", laborCost);
 
       // Add recommended services to appointment.services (only customer approved ones)
       // NOTE: This is the ONLY place where services are added to the appointment
       // Technician creates reception with recommendedServices → Staff approves → Services added here
       for (const recommendedService of serviceReception.recommendedServices ||
         []) {
-        console.log(
-          `Checking recommendedService - customerApproved: ${recommendedService.customerApproved}`
-        );
         if (recommendedService.customerApproved) {
           const serviceDoc = await Service.findById(
             recommendedService.serviceId
@@ -733,9 +787,6 @@ export const approveServiceReception = async (req, res) => {
             const serviceCost =
               (serviceDoc.basePrice || recommendedService.estimatedCost) *
               (recommendedService.quantity || 1);
-            console.log(
-              `Adding service: ${serviceDoc.name}, cost: ${serviceCost}`
-            );
             additionalServicesCost += serviceCost;
 
             // Add to appointment services array
@@ -751,25 +802,15 @@ export const approveServiceReception = async (req, res) => {
         }
       }
 
-      console.log("Total additional services cost:", additionalServicesCost);
-
       // Add requested parts to appointment.partsUsed (only available and approved ones)
       // NOTE: This is the ONLY place where parts are added to the appointment
       for (const requestedPart of serviceReception.requestedParts || []) {
-        console.log(
-          `Checking part - isAvailable: ${requestedPart.isAvailable}, isApproved: ${requestedPart.isApproved}`
-        );
         if (requestedPart.isAvailable && requestedPart.isApproved) {
           const unitPrice =
             requestedPart.partId?.pricing?.retail ||
             requestedPart.estimatedCost ||
             0;
           const partCost = unitPrice * requestedPart.quantity;
-          console.log(
-            `Adding part: ${
-              requestedPart.partId?.name || requestedPart.partName
-            }, cost: ${partCost}`
-          );
           additionalPartsCost += partCost;
 
           // Add to appointment partsUsed array
@@ -783,7 +824,121 @@ export const approveServiceReception = async (req, res) => {
         }
       }
 
-      console.log("Total additional parts cost:", additionalPartsCost);
+      // ✅ IMMEDIATE PART REDUCTION: Reduce inventory when staff approves service reception
+      console.log(
+        "\n🔧 [IMMEDIATE PART REDUCTION] Reducing parts inventory..."
+      );
+      const Part = mongoose.model("Part");
+
+      // METHOD 1: Reduce requestedParts (parts đề xuất trong phiếu)
+      console.log("📦 [METHOD 1] Processing requestedParts...");
+      for (const requestedPart of serviceReception.requestedParts || []) {
+        // Only reduce parts that are available (skip out-of-stock parts)
+        if (requestedPart.isAvailable) {
+          try {
+            const part = await Part.findById(requestedPart.partId);
+            if (!part) {
+              console.warn(`⚠️ Part not found: ${requestedPart.partId}`);
+              continue;
+            }
+
+            console.log(
+              `   Processing requested part: ${part.partNumber} - ${part.name} (Qty: ${requestedPart.quantity})`
+            );
+            console.log(
+              `   - Current stock: ${part.inventory.currentStock}, Used stock: ${part.inventory.usedStock}`
+            );
+
+            if (part.inventory.currentStock >= requestedPart.quantity) {
+              part.inventory.currentStock -= requestedPart.quantity;
+              part.inventory.usedStock += requestedPart.quantity;
+              part.inventory.averageUsage = Math.round(
+                part.inventory.averageUsage * 0.9 + requestedPart.quantity * 0.1
+              );
+              await part.save();
+              console.log(
+                `   ✅ Reduced! New currentStock: ${part.inventory.currentStock}, usedStock: ${part.inventory.usedStock}`
+              );
+            } else {
+              console.warn(
+                `   ⚠️ Insufficient stock: Available ${part.inventory.currentStock}, Needed ${requestedPart.quantity}`
+              );
+            }
+          } catch (partError) {
+            console.error(
+              `❌ Error reducing requested part ${requestedPart.partNumber}:`,
+              partError
+            );
+          }
+        }
+      }
+
+      // METHOD 2: Reduce commonParts from approved services (parts liên quan trong dịch vụ)
+      console.log(
+        "\n📦 [METHOD 2] Processing commonParts from approved services..."
+      );
+      for (const recommendedService of serviceReception.recommendedServices ||
+        []) {
+        try {
+          const serviceDoc = await Service.findById(
+            recommendedService.serviceId
+          );
+          if (
+            serviceDoc &&
+            serviceDoc.commonParts &&
+            serviceDoc.commonParts.length > 0
+          ) {
+            console.log(
+              `   Service: ${serviceDoc.name} has ${serviceDoc.commonParts.length} common parts`
+            );
+
+            for (const commonPart of serviceDoc.commonParts) {
+              // Only reduce required parts (skip optional parts)
+              if (!commonPart.isOptional) {
+                const part = await Part.findById(commonPart.partId);
+                if (!part) {
+                  console.warn(
+                    `   ⚠️ Common part not found: ${commonPart.partId}`
+                  );
+                  continue;
+                }
+
+                const quantity =
+                  commonPart.quantity * (recommendedService.quantity || 1);
+                console.log(
+                  `   Processing common part: ${part.partNumber} - ${part.name} (Qty: ${quantity})`
+                );
+                console.log(
+                  `   - Current stock: ${part.inventory.currentStock}, Used stock: ${part.inventory.usedStock}`
+                );
+
+                if (part.inventory.currentStock >= quantity) {
+                  part.inventory.currentStock -= quantity;
+                  part.inventory.usedStock += quantity;
+                  part.inventory.averageUsage = Math.round(
+                    part.inventory.averageUsage * 0.9 + quantity * 0.1
+                  );
+                  await part.save();
+                  console.log(
+                    `   ✅ Reduced! New currentStock: ${part.inventory.currentStock}, usedStock: ${part.inventory.usedStock}`
+                  );
+                } else {
+                  console.warn(
+                    `   ⚠️ Insufficient stock: Available ${part.inventory.currentStock}, Needed ${quantity}`
+                  );
+                }
+              }
+            }
+          }
+        } catch (serviceError) {
+          console.error(
+            `❌ Error processing service ${recommendedService.serviceId}:`,
+            serviceError
+          );
+        }
+      }
+
+      console.log("✅ [IMMEDIATE PART REDUCTION] Completed\n");
 
       // Calculate total additional cost
       const subtotalAdditional =
@@ -823,29 +978,69 @@ export const approveServiceReception = async (req, res) => {
         );
 
         appointment.estimatedCompletion = newCompletionDate;
-        console.log("Updated estimatedCompletion to:", newCompletionDate, "(date:", extendedCompletionDate, ", time from original:", originalCompletion.toLocaleTimeString('vi-VN'), ")");
+        console.log(
+          "Updated estimatedCompletion to:",
+          newCompletionDate,
+          "(date:",
+          extendedCompletionDate,
+          ", time from original:",
+          originalCompletion.toLocaleTimeString("vi-VN"),
+          ")"
+        );
       }
 
       // Update appointment status
       appointment.status = "reception_approved";
+
+      // Clear rejection info when approved (in case this was a resubmission after rejection)
+      appointment.staffRejectionReason = undefined;
+      appointment.rejectedAt = undefined;
+      appointment.rejectedBy = undefined;
+
       appointment.workflowHistory.push({
         status: "reception_approved",
         changedBy: req.user._id,
         changedAt: new Date(),
-        notes: `Service reception approved by staff. Additional cost: ${totalAdditional} VND (Services: ${additionalServicesCost}, Parts: ${additionalPartsCost}, Labor: ${laborCost})${extendedCompletionDate ? `. Extended completion date: ${new Date(extendedCompletionDate).toLocaleDateString('vi-VN')}` : ''}`,
+        notes: `Service reception approved by staff. Additional cost: ${totalAdditional} VND (Services: ${additionalServicesCost}, Parts: ${additionalPartsCost}, Labor: ${laborCost})${extendedCompletionDate ? `. Extended completion date: ${new Date(extendedCompletionDate).toLocaleDateString("vi-VN")}` : ""}`,
       });
       await appointment.save();
     } else if (appointment && !isApproved) {
-      // When rejected, reset appointment to customer_arrived so technician can create new reception
-      appointment.status = "customer_arrived";
-      appointment.workflowHistory.push({
-        status: "customer_arrived",
-        changedBy: req.user._id,
-        changedAt: new Date(),
-        notes: `Service reception rejected by staff: ${
-          notes || "No reason provided"
-        }. Appointment reset to customer_arrived for new reception creation.`,
-      });
+      // Check if customer declined service
+      if (customerDeclinedService) {
+        // Customer does not want to proceed with service → Cancel appointment
+        appointment.status = "cancelled";
+        appointment.cancelledAt = new Date();
+        appointment.cancelledBy = req.user._id;
+        appointment.cancellationReason = notes || "Khách hàng không muốn thực hiện dịch vụ sau khi xem phiếu tiếp nhận";
+
+        appointment.workflowHistory.push({
+          status: "cancelled",
+          changedBy: req.user._id,
+          changedAt: new Date(),
+          notes: `Appointment cancelled because customer declined service after reviewing reception form: ${
+            notes || "Customer chose not to proceed with service"
+          }`,
+        });
+      } else {
+        // Normal rejection → Return appointment to customer_arrived status
+        // This allows technician to create a new reception form with corrections
+        appointment.status = "customer_arrived";
+
+        // Store rejection reason for technician visibility
+        appointment.staffRejectionReason =
+          notes || "Service reception rejected by staff. Please review and resubmit.";
+        appointment.rejectedAt = new Date();
+        appointment.rejectedBy = req.user._id;
+
+        appointment.workflowHistory.push({
+          status: "customer_arrived",
+          changedBy: req.user._id,
+          changedAt: new Date(),
+          notes: `Service reception rejected by staff: ${
+            notes || "Please review reception details and resubmit"
+          }. Appointment returned to customer_arrived for technician to create new reception.`,
+        });
+      }
       await appointment.save();
     }
 
@@ -902,14 +1097,16 @@ export const approveServiceReception = async (req, res) => {
       await serviceReception.save();
     }
 
-    // Detect conflicts for requested parts if approved
+    // REMOVED: Conflict detection logic - no longer using part conflict system
+    // Parts are now managed sequentially through first-come-first-served approval
+    // Staff approves receptions in order, and stock is deducted immediately
+    /* DISABLED - Part Conflict Detection
     if (
       isApproved &&
       serviceReception.requestedParts &&
       serviceReception.requestedParts.length > 0
     ) {
       try {
-        // Get unique part IDs from requested parts
         const partIds = [
           ...new Set(
             serviceReception.requestedParts
@@ -918,16 +1115,12 @@ export const approveServiceReception = async (req, res) => {
           ),
         ];
 
-        // Check conflicts for each part
         const conflictPromises = partIds.map((partId) =>
           detectPartConflicts(partId)
         );
         const conflicts = await Promise.all(conflictPromises);
-
-        // Filter out null results (no conflicts)
         const detectedConflicts = conflicts.filter((c) => c !== null);
 
-        // Mark service reception if it has conflicts
         if (detectedConflicts.length > 0) {
           serviceReception.hasConflict = true;
           serviceReception.conflictIds = detectedConflicts.map((c) => c._id);
@@ -938,6 +1131,7 @@ export const approveServiceReception = async (req, res) => {
         // Don't fail the approval if conflict detection fails
       }
     }
+    */ // END DISABLED - Part Conflict Detection
 
     const populatedReception = await ServiceReception.findById(
       serviceReception._id
@@ -951,7 +1145,7 @@ export const approveServiceReception = async (req, res) => {
         "name description basePrice category estimatedDuration"
       )
       .populate("recommendedServices.addedBy", "firstName lastName")
-      .populate("requestedParts.partId", "name partNumber pricing");
+      .populate("requestedParts.partId", "name partNumber pricing inventory.currentStock inventory.reservedStock inventory.usedStock");
 
     return sendSuccess(
       res,
@@ -1004,7 +1198,9 @@ const syncChecklistWithAppointment = async (
   }
 };
 
-
+// @desc    Get available EVChecklist templates
+// @route   GET /api/service-receptions/checklist-templates
+// @access  Private (Technician/Staff)
 // @desc    Get available EVChecklist templates
 // @route   GET /api/service-receptions/checklist-templates
 // @access  Private (Technician/Staff)
@@ -1150,7 +1346,7 @@ export const confirmPayment = async (req, res) => {
         "recommendedServices.serviceId",
         "name description basePrice category estimatedDuration"
       )
-      .populate("requestedParts.partId", "name partNumber pricing");
+      .populate("requestedParts.partId", "name partNumber pricing inventory");
 
     // Get appointment for deposit info
     const Appointment = mongoose.model("Appointment");

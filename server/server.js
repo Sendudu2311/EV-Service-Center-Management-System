@@ -56,29 +56,81 @@ const app = express();
 const server = createServer(app);
 
 // Enable CORS with dynamic origins based on environment
-const allowedOrigins = process.env.NODE_ENV === "production"
-  ? [process.env.FRONTEND_URL, process.env.CLIENT_URL].filter(Boolean)
-  : ["http://localhost:5173", "http://localhost:3000", "http://localhost:8081"];
+const getAllowedOrigins = () => {
+  if (process.env.NODE_ENV === "production") {
+    const prodOrigins = [
+      process.env.FRONTEND_URL,
+      process.env.CLIENT_URL,
+      process.env.ADMIN_URL,
+    ].filter(Boolean);
+    
+    if (prodOrigins.length === 0) {
+      console.warn("⚠️  WARNING: No production origins configured in .env");
+    }
+    
+    return prodOrigins;
+  }
+  
+  // Development origins
+  return [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:8081",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8081",
+  ];
+};
 
+const allowedOrigins = getAllowedOrigins();
+console.log(`🌐 CORS Mode: ${process.env.NODE_ENV || "development"}`);
 console.log("🌐 Allowed CORS Origins:", allowedOrigins);
 
-app.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-    optionsSuccessStatus: 200,
-  })
-);
-
-// Socket.IO setup with authentication
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST"],
-    credentials: true,
+// CORS configuration
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      const errorMsg =
+        process.env.NODE_ENV === "production"
+          ? "CORS policy: Origin not allowed"
+          : `CORS policy: Origin '${origin}' not allowed`;
+      callback(new Error(errorMsg));
+    }
   },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Origin",
+  ],
+  exposedHeaders: ["X-Total-Count", "X-Page-Count"],
+  optionsSuccessStatus: 200,
+  maxAge: process.env.NODE_ENV === "production" ? 86400 : 3600, // 24h for prod, 1h for dev
+};
+
+app.use(cors(corsOptions));
+
+// Socket.IO setup with CORS and authentication
+const socketCorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Socket.IO CORS policy violation"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST"],
+};
+
+const io = new Server(server, {
+  cors: socketCorsOptions,
   transports: ["websocket", "polling"],
   pingTimeout: parseInt(process.env.SOCKET_PING_TIMEOUT) || 60000,
   pingInterval: parseInt(process.env.SOCKET_PING_INTERVAL) || 25000,

@@ -73,7 +73,6 @@ const Navbar: React.FC = () => {
             items: [
               { name: "Users", href: "/users" },
               { name: "Slots", href: "/slots" },
-              { name: "Part Conflicts", href: "/part-conflicts" },
               { name: "Contacts", href: "/manage-contacts" },
               { name: "Transactions", href: "/manage-transactions" },
             ],
@@ -98,7 +97,6 @@ const Navbar: React.FC = () => {
             items: [
               { name: "Users", href: "/users" },
               { name: "Slots", href: "/slots" },
-              { name: "Part Conflicts", href: "/part-conflicts" },
               { name: "Contacts", href: "/manage-contacts" },
               { name: "Transactions", href: "/manage-transactions" },
             ],

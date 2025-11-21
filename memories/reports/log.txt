@@ -1,0 +1,1326 @@
+{
+    "success": true,
+    "data": {
+        "appointments": [
+            {
+                "depositInfo": {
+                    "amount": 200000,
+                    "paid": true,
+                    "paidAt": "2025-11-09T17:13:07.427Z"
+                },
+                "reschedulingInfo": {
+                    "customerAgreed": false
+                },
+                "cancelRequest": {
+                    "refundPercentage": 100
+                },
+                "staffConfirmation": {
+                    "modificationsRequired": []
+                },
+                "customerArrival": {
+                    "arrivedAt": "2025-11-13T14:13:07.427Z",
+                    "customerItems": []
+                },
+                "externalPartsInfo": {
+                    "requiresExternalOrder": false,
+                    "customerAgreedToLeaveVehicle": false
+                },
+                "_id": "691611a3becd7b3503a57a26",
+                "appointmentNumber": "APT251201004",
+                "customerId": {
+                    "_id": "691611a0becd7b3503a579b3",
+                    "email": "customer1@gmail.com",
+                    "firstName": "Nguyễn Văn",
+                    "lastName": "Hùng",
+                    "phone": "0907890123"
+                },
+                "vehicleId": {
+                    "_id": "691611a3becd7b3503a57a09",
+                    "vin": "KMHL14JA7PA345678",
+                    "make": "Hyundai",
+                    "model": "IONIQ 5",
+                    "year": 2023,
+                    "color": "Gravity Gold Matte",
+                    "batteryType": "lithium-ion"
+                },
+                "services": [
+                    {
+                        "serviceId": {
+                            "_id": "6916119dbecd7b3503a57930",
+                            "name": "Motor Repair",
+                            "category": "motor",
+                            "basePrice": 2500000,
+                            "estimatedDuration": 30
+                        },
+                        "quantity": 1,
+                        "price": 2500000,
+                        "estimatedDuration": 30,
+                        "_id": "691611a3becd7b3503a57a27"
+                    }
+                ],
+                "bookingType": "deposit_booking",
+                "scheduledDate": "2025-11-13T14:13:07.427Z",
+                "scheduledTime": "15:00",
+                "status": "reception_approved",
+                "coreStatus": "InService",
+                "priority": "normal",
+                "assignedTechnician": {
+                    "_id": "6916119fbecd7b3503a579a5",
+                    "firstName": "Lê Minh",
+                    "lastName": "An",
+                    "phone": "0904567890",
+                    "specializations": [
+                        "battery",
+                        "motor",
+                        "charging"
+                    ]
+                },
+                "customerNotes": "Battery diagnostic and charging system check",
+                "totalAmount": 2500000,
+                "paymentStatus": "partial",
+                "transactions": [],
+                "remindersSent": 0,
+                "workflowHistory": [
+                    {
+                        "status": "confirmed",
+                        "changedBy": "691611a0becd7b3503a579b3",
+                        "changedAt": "2025-11-09T17:13:07.427Z",
+                        "reason": "payment_completed",
+                        "notes": "Deposit paid",
+                        "_id": "691611a3becd7b3503a57a28"
+                    },
+                    {
+                        "status": "customer_arrived",
+                        "changedBy": "6916119fbecd7b3503a5799f",
+                        "changedAt": "2025-11-13T14:13:07.427Z",
+                        "reason": "customer_checkin",
+                        "notes": "Customer checked in",
+                        "_id": "691611a3becd7b3503a57a29"
+                    },
+                    {
+                        "status": "reception_created",
+                        "changedBy": "6916119fbecd7b3503a579a5",
+                        "changedAt": "2025-11-13T15:13:07.427Z",
+                        "reason": "technician_inspection",
+                        "notes": "Initial inspection completed",
+                        "_id": "691611a3becd7b3503a57a2a"
+                    },
+                    {
+                        "status": "reception_approved",
+                        "changedBy": "6916119fbecd7b3503a5799f",
+                        "changedAt": "2025-11-13T16:13:07.427Z",
+                        "reason": "staff_approval",
+                        "notes": "Service reception and parts approved",
+                        "_id": "691611a3becd7b3503a57a2b"
+                    }
+                ],
+                "hasExternalParts": false,
+                "serviceNotes": [],
+                "checklistItems": [],
+                "partsUsed": [],
+                "images": [],
+                "createdAt": "2025-11-13T17:13:07.763Z",
+                "updatedAt": "2025-11-13T17:13:07.823Z",
+                "reasonCode": null,
+                "__v": 0
+            },
+            {
+                "depositInfo": {
+                    "amount": 200000,
+                    "paid": true,
+                    "paidAt": "2025-11-11T17:13:07.427Z"
+                },
+                "reschedulingInfo": {
+                    "customerAgreed": false
+                },
+                "cancelRequest": {
+                    "refundPercentage": 100
+                },
+                "staffConfirmation": {
+                    "modificationsRequired": []
+                },
+                "customerArrival": {
+                    "arrivedAt": "2025-11-13T16:43:07.427Z",
+                    "customerItems": []
+                },
+                "externalPartsInfo": {
+                    "requiresExternalOrder": false,
+                    "customerAgreedToLeaveVehicle": false
+                },
+                "_id": "691611a3becd7b3503a57a19",
+                "appointmentNumber": "APT251201002",
+                "customerId": {
+                    "_id": "691611a0becd7b3503a579b6",
+                    "email": "customer2@gmail.com",
+                    "firstName": "Trần Thị",
+                    "lastName": "Lan",
+                    "phone": "0908901234"
+                },
+                "vehicleId": {
+                    "_id": "691611a2becd7b3503a57a05",
+                    "vin": "LVVDB11B5NE456789",
+                    "make": "VinFast",
+                    "model": "VF e34",
+                    "year": 2023,
+                    "color": "Ocean Blue",
+                    "batteryType": "lithium-ion"
+                },
+                "services": [
+                    {
+                        "serviceId": {
+                            "_id": "6916119dbecd7b3503a57920",
+                            "name": "Battery Replacement",
+                            "category": "battery",
+                            "basePrice": 15000000,
+                            "estimatedDuration": 30
+                        },
+                        "quantity": 1,
+                        "price": 15000000,
+                        "estimatedDuration": 30,
+                        "_id": "691611a3becd7b3503a57a1a"
+                    }
+                ],
+                "bookingType": "full_service",
+                "scheduledDate": "2025-11-13T16:43:07.427Z",
+                "scheduledTime": "10:00",
+                "status": "reception_approved",
+                "coreStatus": "InService",
+                "priority": "normal",
+                "assignedTechnician": {
+                    "_id": "6916119fbecd7b3503a579a5",
+                    "firstName": "Lê Minh",
+                    "lastName": "An",
+                    "phone": "0904567890",
+                    "specializations": [
+                        "battery",
+                        "motor",
+                        "charging"
+                    ]
+                },
+                "customerNotes": "Motor making unusual noise during acceleration. Need diagnostic check.",
+                "totalAmount": 15000000,
+                "paymentStatus": "partial",
+                "transactions": [],
+                "remindersSent": 0,
+                "workflowHistory": [
+                    {
+                        "status": "confirmed",
+                        "changedBy": "691611a0becd7b3503a579b6",
+                        "changedAt": "2025-11-11T17:13:07.427Z",
+                        "reason": "payment_completed",
+                        "notes": "Deposit paid, appointment confirmed",
+                        "_id": "691611a3becd7b3503a57a1b"
+                    },
+                    {
+                        "status": "customer_arrived",
+                        "changedBy": "6916119fbecd7b3503a5799f",
+                        "changedAt": "2025-11-13T16:43:07.427Z",
+                        "reason": "customer_checkin",
+                        "notes": "Customer checked in at reception",
+                        "_id": "691611a3becd7b3503a57a1c"
+                    },
+                    {
+                        "status": "reception_created",
+                        "changedBy": "6916119fbecd7b3503a579a5",
+                        "changedAt": "2025-11-14T20:30:01.289Z",
+                        "notes": "Service reception created by technician",
+                        "_id": "69179149e9ff902c1e9292de"
+                    },
+                    {
+                        "status": "reception_created",
+                        "changedBy": "6916119fbecd7b3503a5799f",
+                        "changedAt": "2025-11-14T20:31:06.749Z",
+                        "reason": "All parts approved via conflict resolution",
+                        "notes": "oke ku",
+                        "_id": "6917918ae9ff902c1e92971f"
+                    }
+                ],
+                "hasExternalParts": false,
+                "serviceNotes": [],
+                "checklistItems": [
+                    {
+                        "item": "Kiểm tra % pin (SOC)",
+                        "category": "battery",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292c4"
+                    },
+                    {
+                        "item": "Tình trạng sức khỏe pin (SOH)",
+                        "category": "battery",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292c5"
+                    },
+                    {
+                        "item": "Điện áp các cell",
+                        "category": "battery",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292c6"
+                    },
+                    {
+                        "item": "Nhiệt độ pin",
+                        "category": "battery",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292c7"
+                    },
+                    {
+                        "item": "Hệ thống làm mát pin",
+                        "category": "battery",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292c8"
+                    },
+                    {
+                        "item": "Cân bằng cell",
+                        "category": "battery",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292c9"
+                    },
+                    {
+                        "item": "Tình trạng cổng sạc",
+                        "category": "charging",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292ca"
+                    },
+                    {
+                        "item": "Dây và đầu nối sạc",
+                        "category": "charging",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292cb"
+                    },
+                    {
+                        "item": "Bộ sạc tích hợp",
+                        "category": "charging",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292cc"
+                    },
+                    {
+                        "item": "Tốc độ sạc",
+                        "category": "charging",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292cd"
+                    },
+                    {
+                        "item": "Hiệu suất động cơ",
+                        "category": "motor",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292ce"
+                    },
+                    {
+                        "item": "Bộ biến tần (Inverter)",
+                        "category": "motor",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292cf"
+                    },
+                    {
+                        "item": "Phanh tái sinh",
+                        "category": "motor",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292d0"
+                    },
+                    {
+                        "item": "Mức độ rung động",
+                        "category": "motor",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292d1"
+                    },
+                    {
+                        "item": "Làm mát động cơ",
+                        "category": "motor",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292d2"
+                    },
+                    {
+                        "item": "Kiểm tra cách điện cao thế (≥500Ω/V)",
+                        "category": "safety",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292d3"
+                    },
+                    {
+                        "item": "Phát hiện lỗi tiếp đất",
+                        "category": "safety",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292d4"
+                    },
+                    {
+                        "item": "Hệ thống ngắt khẩn cấp",
+                        "category": "safety",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292d5"
+                    },
+                    {
+                        "item": "Bảo vệ quá nhiệt",
+                        "category": "safety",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292d6"
+                    },
+                    {
+                        "item": "Nhãn cảnh báo cao thế",
+                        "category": "safety",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292d7"
+                    },
+                    {
+                        "item": "Phanh và dầu phanh",
+                        "category": "general",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292d8"
+                    },
+                    {
+                        "item": "Lốp xe (áp suất, độ mòn)",
+                        "category": "general",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292d9"
+                    },
+                    {
+                        "item": "Chất làm mát",
+                        "category": "general",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292da"
+                    },
+                    {
+                        "item": "Pin 12V phụ trợ",
+                        "category": "general",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292db"
+                    },
+                    {
+                        "item": "Đèn chiếu sáng",
+                        "category": "general",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T20:30:01.163Z",
+                        "notes": "",
+                        "_id": "69179149e9ff902c1e9292dc"
+                    }
+                ],
+                "partsUsed": [],
+                "images": [],
+                "createdAt": "2025-11-13T17:13:07.537Z",
+                "updatedAt": "2025-11-14T20:31:06.753Z",
+                "reasonCode": null,
+                "__v": 3,
+                "followUpAppointments": [],
+                "isFollowUp": false,
+                "isPreBooked": false,
+                "serviceReceptionId": "69179148e9ff902c1e92928b"
+            },
+            {
+                "depositInfo": {
+                    "amount": 200000,
+                    "paid": true,
+                    "paidAt": "2025-11-14T04:10:39.925Z"
+                },
+                "reschedulingInfo": {
+                    "customerAgreed": false
+                },
+                "cancelRequest": {
+                    "refundPercentage": 100
+                },
+                "staffConfirmation": {
+                    "modificationsRequired": []
+                },
+                "customerArrival": {
+                    "arrivedAt": "2025-11-14T04:11:29.313Z",
+                    "receivedBy": "6916119fbecd7b3503a5799f",
+                    "customerItems": []
+                },
+                "externalPartsInfo": {
+                    "requiresExternalOrder": false,
+                    "customerAgreedToLeaveVehicle": false
+                },
+                "_id": "6916abc0aa4abd3ee9238434",
+                "appointmentNumber": "APT251114261",
+                "customerId": {
+                    "_id": "691611a0becd7b3503a579bc",
+                    "email": "customer4@gmail.com",
+                    "firstName": "Phạm Thị",
+                    "lastName": "Hoa",
+                    "phone": "0930123456"
+                },
+                "vehicleId": {
+                    "_id": "691611a3becd7b3503a57a0d",
+                    "vin": "WBY8P8C59KV567890",
+                    "make": "BMW",
+                    "model": "i4 eDrive40",
+                    "year": 2024,
+                    "color": "Storm Bay",
+                    "batteryType": "lithium-ion"
+                },
+                "services": [
+                    {
+                        "serviceId": {
+                            "_id": "6916119dbecd7b3503a57940",
+                            "name": "Charging Port Repair",
+                            "category": "charging",
+                            "basePrice": 800000,
+                            "estimatedDuration": 30
+                        },
+                        "quantity": 1,
+                        "price": 800000,
+                        "_id": "6916bd66aa4abd3ee92394cd"
+                    },
+                    {
+                        "serviceId": {
+                            "_id": "6916119ebecd7b3503a57983",
+                            "name": "DC Fast Charging Port Service",
+                            "category": "charging",
+                            "basePrice": 320000,
+                            "estimatedDuration": 30
+                        },
+                        "quantity": 1,
+                        "price": 320000,
+                        "_id": "6916bd66aa4abd3ee92394d2"
+                    },
+                    {
+                        "serviceId": {
+                            "_id": "6916119dbecd7b3503a57920",
+                            "name": "Battery Replacement",
+                            "category": "battery",
+                            "basePrice": 15000000,
+                            "estimatedDuration": 30
+                        },
+                        "quantity": 1,
+                        "price": 15000000,
+                        "_id": "6916bd66aa4abd3ee92394da"
+                    }
+                ],
+                "bookingType": "full_service",
+                "scheduledDate": "2025-11-15T06:00:00.000Z",
+                "scheduledTime": "13:00",
+                "status": "reception_approved",
+                "coreStatus": "InService",
+                "priority": "normal",
+                "assignedTechnician": {
+                    "_id": "6916119fbecd7b3503a579a5",
+                    "firstName": "Lê Minh",
+                    "lastName": "An",
+                    "phone": "0904567890",
+                    "specializations": [
+                        "battery",
+                        "motor",
+                        "charging"
+                    ]
+                },
+                "estimatedCompletion": "2025-11-15T07:00:00.000Z",
+                "customerNotes": "",
+                "serviceNotes": [],
+                "checklistItems": [
+                    {
+                        "item": "Kiểm tra % pin (SOC)",
+                        "category": "battery",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee9238732"
+                    },
+                    {
+                        "item": "Tình trạng sức khỏe pin (SOH)",
+                        "category": "battery",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee9238733"
+                    },
+                    {
+                        "item": "Điện áp các cell",
+                        "category": "battery",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee9238734"
+                    },
+                    {
+                        "item": "Nhiệt độ pin",
+                        "category": "battery",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee9238735"
+                    },
+                    {
+                        "item": "Hệ thống làm mát pin",
+                        "category": "battery",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee9238736"
+                    },
+                    {
+                        "item": "Cân bằng cell",
+                        "category": "battery",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee9238737"
+                    },
+                    {
+                        "item": "Tình trạng cổng sạc",
+                        "category": "charging",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee9238738"
+                    },
+                    {
+                        "item": "Dây và đầu nối sạc",
+                        "category": "charging",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee9238739"
+                    },
+                    {
+                        "item": "Bộ sạc tích hợp",
+                        "category": "charging",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee923873a"
+                    },
+                    {
+                        "item": "Tốc độ sạc",
+                        "category": "charging",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee923873b"
+                    },
+                    {
+                        "item": "Hiệu suất động cơ",
+                        "category": "motor",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee923873c"
+                    },
+                    {
+                        "item": "Bộ biến tần (Inverter)",
+                        "category": "motor",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee923873d"
+                    },
+                    {
+                        "item": "Phanh tái sinh",
+                        "category": "motor",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee923873e"
+                    },
+                    {
+                        "item": "Mức độ rung động",
+                        "category": "motor",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee923873f"
+                    },
+                    {
+                        "item": "Làm mát động cơ",
+                        "category": "motor",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee9238740"
+                    },
+                    {
+                        "item": "Kiểm tra cách điện cao thế (≥500Ω/V)",
+                        "category": "safety",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee9238741"
+                    },
+                    {
+                        "item": "Phát hiện lỗi tiếp đất",
+                        "category": "safety",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee9238742"
+                    },
+                    {
+                        "item": "Hệ thống ngắt khẩn cấp",
+                        "category": "safety",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee9238743"
+                    },
+                    {
+                        "item": "Bảo vệ quá nhiệt",
+                        "category": "safety",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee9238744"
+                    },
+                    {
+                        "item": "Nhãn cảnh báo cao thế",
+                        "category": "safety",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee9238745"
+                    },
+                    {
+                        "item": "Phanh và dầu phanh",
+                        "category": "general",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee9238746"
+                    },
+                    {
+                        "item": "Lốp xe (áp suất, độ mòn)",
+                        "category": "general",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee9238747"
+                    },
+                    {
+                        "item": "Chất làm mát",
+                        "category": "general",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee9238748"
+                    },
+                    {
+                        "item": "Pin 12V phụ trợ",
+                        "category": "general",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee9238749"
+                    },
+                    {
+                        "item": "Đèn chiếu sáng",
+                        "category": "general",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-14T04:12:44.308Z",
+                        "notes": "",
+                        "_id": "6916ac3caa4abd3ee923874a"
+                    }
+                ],
+                "partsUsed": [
+                    {
+                        "partId": "69167e411223360f28ba4e92",
+                        "quantity": 1,
+                        "unitPrice": 3200000,
+                        "totalPrice": 3200000,
+                        "_id": "6916bd66aa4abd3ee92394db"
+                    },
+                    {
+                        "partId": "6916119cbecd7b3503a57911",
+                        "quantity": 2,
+                        "unitPrice": 2500000,
+                        "totalPrice": 5000000,
+                        "_id": "6916bd66aa4abd3ee92394dc"
+                    },
+                    {
+                        "partId": "69167e411223360f28ba4e8e",
+                        "quantity": 1,
+                        "unitPrice": 5500000,
+                        "totalPrice": 5500000,
+                        "_id": "6916bd66aa4abd3ee92394dd"
+                    }
+                ],
+                "images": [],
+                "totalAmount": 32802000,
+                "paymentStatus": "partial",
+                "transactions": [],
+                "remindersSent": 0,
+                "slotId": "691611a1becd7b3503a579cd",
+                "workflowHistory": [
+                    {
+                        "status": "confirmed",
+                        "changedBy": "6916119fbecd7b3503a5799f",
+                        "changedAt": "2025-11-14T04:11:29.313Z",
+                        "reason": "Customer arrived at service center",
+                        "notes": "",
+                        "_id": "6916abf1aa4abd3ee9238544"
+                    },
+                    {
+                        "status": "reception_created",
+                        "changedBy": "6916119fbecd7b3503a579a5",
+                        "changedAt": "2025-11-14T04:12:44.406Z",
+                        "notes": "Service reception created by technician",
+                        "_id": "6916ac3caa4abd3ee923874c"
+                    },
+                    {
+                        "status": "reception_approved",
+                        "changedBy": "6916119fbecd7b3503a5799f",
+                        "changedAt": "2025-11-14T05:26:00.116Z",
+                        "notes": "Service reception approved by staff. Additional cost: 32802000 VND (Services: 16120000, Parts: 13700000, Labor: 0)",
+                        "_id": "6916bd68aa4abd3ee92394ff"
+                    }
+                ],
+                "hasExternalParts": false,
+                "createdAt": "2025-11-14T04:10:40.012Z",
+                "updatedAt": "2025-11-14T05:26:00.122Z",
+                "reasonCode": null,
+                "__v": 4,
+                "serviceReceptionId": "6916ac3caa4abd3ee92386f5"
+            },
+            {
+                "depositInfo": {
+                    "amount": 200000,
+                    "paid": true,
+                    "paidAt": "2025-11-13T16:13:07.427Z"
+                },
+                "reschedulingInfo": {
+                    "customerAgreed": false
+                },
+                "cancelRequest": {
+                    "refundPercentage": 100
+                },
+                "staffConfirmation": {
+                    "modificationsRequired": []
+                },
+                "customerArrival": {
+                    "arrivedAt": "2025-11-15T05:45:49.023Z",
+                    "receivedBy": "6916119fbecd7b3503a5799f",
+                    "customerItems": []
+                },
+                "externalPartsInfo": {
+                    "requiresExternalOrder": false,
+                    "customerAgreedToLeaveVehicle": false
+                },
+                "_id": "691611a3becd7b3503a57a14",
+                "appointmentNumber": "APT251201001",
+                "customerId": {
+                    "_id": "691611a0becd7b3503a579b3",
+                    "email": "customer1@gmail.com",
+                    "firstName": "Nguyễn Văn",
+                    "lastName": "Hùng",
+                    "phone": "0907890123"
+                },
+                "vehicleId": {
+                    "_id": "691611a2becd7b3503a579fa",
+                    "vin": "5YJ3E1EA4NF123456",
+                    "make": "Tesla",
+                    "model": "Model 3",
+                    "year": 2023,
+                    "color": "Pearl White",
+                    "batteryType": "lithium-ion"
+                },
+                "services": [
+                    {
+                        "serviceId": {
+                            "_id": "6916119dbecd7b3503a57918",
+                            "name": "Battery Health Check",
+                            "category": "battery",
+                            "basePrice": 200000,
+                            "estimatedDuration": 15
+                        },
+                        "quantity": 1,
+                        "price": 200000,
+                        "estimatedDuration": 15,
+                        "_id": "691611a3becd7b3503a57a15"
+                    }
+                ],
+                "bookingType": "deposit_booking",
+                "scheduledDate": "2025-11-15T17:13:07.427Z",
+                "scheduledTime": "08:00",
+                "status": "customer_arrived",
+                "coreStatus": "CheckedIn",
+                "priority": "normal",
+                "assignedTechnician": {
+                    "_id": "6916119fbecd7b3503a579a5",
+                    "firstName": "Lê Minh",
+                    "lastName": "An",
+                    "phone": "0904567890",
+                    "specializations": [
+                        "battery",
+                        "motor",
+                        "charging"
+                    ]
+                },
+                "estimatedCompletion": "2025-11-15T18:13:07.427Z",
+                "customerNotes": "Battery seems to be draining faster than usual. Please check charging efficiency.",
+                "totalAmount": 200000,
+                "paymentStatus": "partial",
+                "transactions": [],
+                "remindersSent": 0,
+                "workflowHistory": [
+                    {
+                        "status": "confirmed",
+                        "changedBy": "691611a0becd7b3503a579b3",
+                        "changedAt": "2025-11-13T16:13:07.427Z",
+                        "reason": "payment_completed",
+                        "notes": "Deposit paid via VNPay, appointment auto-confirmed",
+                        "_id": "691611a3becd7b3503a57a16"
+                    },
+                    {
+                        "status": "confirmed",
+                        "changedBy": "6916119fbecd7b3503a5799f",
+                        "changedAt": "2025-11-15T05:45:49.023Z",
+                        "reason": "Customer arrived at service center",
+                        "notes": "",
+                        "_id": "6918138d8ca2353e4411ce5b"
+                    }
+                ],
+                "hasExternalParts": false,
+                "serviceNotes": [],
+                "checklistItems": [],
+                "partsUsed": [],
+                "images": [],
+                "createdAt": "2025-11-13T17:13:07.429Z",
+                "updatedAt": "2025-11-15T05:45:49.025Z",
+                "reasonCode": null,
+                "__v": 1,
+                "followUpAppointments": [],
+                "isFollowUp": false,
+                "isPreBooked": false
+            },
+            {
+                "depositInfo": {
+                    "amount": 200000,
+                    "paid": true,
+                    "paidAt": "2025-11-15T05:44:45.434Z"
+                },
+                "reschedulingInfo": {
+                    "customerAgreed": false
+                },
+                "cancelRequest": {
+                    "refundPercentage": 100
+                },
+                "staffConfirmation": {
+                    "modificationsRequired": []
+                },
+                "customerArrival": {
+                    "arrivedAt": "2025-11-15T05:45:51.192Z",
+                    "receivedBy": "6916119fbecd7b3503a5799f",
+                    "customerItems": []
+                },
+                "externalPartsInfo": {
+                    "requiresExternalOrder": false,
+                    "customerAgreedToLeaveVehicle": false
+                },
+                "_id": "6918134d8ca2353e4411c988",
+                "appointmentNumber": "APT251115102",
+                "customerId": {
+                    "_id": "6917819e73c586961875c721",
+                    "email": "khoatqse184056@fpt.edu.vn",
+                    "firstName": "Tran Quang Khoa",
+                    "lastName": "(K18 HCM)"
+                },
+                "vehicleId": {
+                    "_id": "691781bc73c586961875c730",
+                    "vin": "5YJGDEE8MF7892344",
+                    "make": "BMW",
+                    "model": "Model Y",
+                    "year": 2025,
+                    "color": "Midnight Silver Metallic",
+                    "batteryType": "lithium-ion"
+                },
+                "services": [],
+                "bookingType": "full_service",
+                "scheduledDate": "2025-11-16T06:00:00.000Z",
+                "scheduledTime": "13:00",
+                "status": "reception_approved",
+                "coreStatus": "InService",
+                "priority": "normal",
+                "assignedTechnician": {
+                    "_id": "6916119fbecd7b3503a579a5",
+                    "firstName": "Lê Minh",
+                    "lastName": "An",
+                    "phone": "0904567890",
+                    "specializations": [
+                        "battery",
+                        "motor",
+                        "charging"
+                    ]
+                },
+                "estimatedCompletion": "2025-11-16T07:00:00.000Z",
+                "customerNotes": "",
+                "serviceNotes": [],
+                "checklistItems": [
+                    {
+                        "item": "Kiểm tra % pin (SOC)",
+                        "category": "battery",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d30d"
+                    },
+                    {
+                        "item": "Tình trạng sức khỏe pin (SOH)",
+                        "category": "battery",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d30e"
+                    },
+                    {
+                        "item": "Điện áp các cell",
+                        "category": "battery",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d30f"
+                    },
+                    {
+                        "item": "Nhiệt độ pin",
+                        "category": "battery",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d310"
+                    },
+                    {
+                        "item": "Hệ thống làm mát pin",
+                        "category": "battery",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d311"
+                    },
+                    {
+                        "item": "Cân bằng cell",
+                        "category": "battery",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d312"
+                    },
+                    {
+                        "item": "Tình trạng cổng sạc",
+                        "category": "charging",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d313"
+                    },
+                    {
+                        "item": "Dây và đầu nối sạc",
+                        "category": "charging",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d314"
+                    },
+                    {
+                        "item": "Bộ sạc tích hợp",
+                        "category": "charging",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d315"
+                    },
+                    {
+                        "item": "Tốc độ sạc",
+                        "category": "charging",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d316"
+                    },
+                    {
+                        "item": "Hiệu suất động cơ",
+                        "category": "motor",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d317"
+                    },
+                    {
+                        "item": "Bộ biến tần (Inverter)",
+                        "category": "motor",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d318"
+                    },
+                    {
+                        "item": "Phanh tái sinh",
+                        "category": "motor",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d319"
+                    },
+                    {
+                        "item": "Mức độ rung động",
+                        "category": "motor",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d31a"
+                    },
+                    {
+                        "item": "Làm mát động cơ",
+                        "category": "motor",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d31b"
+                    },
+                    {
+                        "item": "Kiểm tra cách điện cao thế (≥500Ω/V)",
+                        "category": "safety",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d31c"
+                    },
+                    {
+                        "item": "Phát hiện lỗi tiếp đất",
+                        "category": "safety",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d31d"
+                    },
+                    {
+                        "item": "Hệ thống ngắt khẩn cấp",
+                        "category": "safety",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d31e"
+                    },
+                    {
+                        "item": "Bảo vệ quá nhiệt",
+                        "category": "safety",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d31f"
+                    },
+                    {
+                        "item": "Nhãn cảnh báo cao thế",
+                        "category": "safety",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d320"
+                    },
+                    {
+                        "item": "Phanh và dầu phanh",
+                        "category": "general",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d321"
+                    },
+                    {
+                        "item": "Lốp xe (áp suất, độ mòn)",
+                        "category": "general",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d322"
+                    },
+                    {
+                        "item": "Chất làm mát",
+                        "category": "general",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d323"
+                    },
+                    {
+                        "item": "Pin 12V phụ trợ",
+                        "category": "general",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d324"
+                    },
+                    {
+                        "item": "Đèn chiếu sáng",
+                        "category": "general",
+                        "isCompleted": true,
+                        "completedBy": "6916119fbecd7b3503a579a5",
+                        "completedAt": "2025-11-15T05:53:43.586Z",
+                        "notes": "",
+                        "_id": "691815678ca2353e4411d325"
+                    }
+                ],
+                "partsUsed": [],
+                "images": [],
+                "totalAmount": 0,
+                "paymentStatus": "partial",
+                "transactions": [],
+                "remindersSent": 0,
+                "slotId": "691611a1becd7b3503a579d5",
+                "followUpAppointments": [],
+                "isFollowUp": false,
+                "isPreBooked": false,
+                "workflowHistory": [
+                    {
+                        "status": "confirmed",
+                        "changedBy": "6916119fbecd7b3503a5799f",
+                        "changedAt": "2025-11-15T05:45:51.192Z",
+                        "reason": "Customer arrived at service center",
+                        "notes": "",
+                        "_id": "6918138f8ca2353e4411cf5b"
+                    },
+                    {
+                        "status": "reception_created",
+                        "changedBy": "6916119fbecd7b3503a579a5",
+                        "changedAt": "2025-11-15T05:53:43.658Z",
+                        "notes": "Service reception created by technician",
+                        "_id": "691815678ca2353e4411d327"
+                    },
+                    {
+                        "status": "reception_created",
+                        "changedBy": "6916119fbecd7b3503a5799f",
+                        "changedAt": "2025-11-15T05:54:04.479Z",
+                        "reason": "All parts approved via conflict resolution",
+                        "notes": "Parts approved and reserved via conflict resolution",
+                        "_id": "6918157c8ca2353e4411d825"
+                    }
+                ],
+                "hasExternalParts": false,
+                "createdAt": "2025-11-15T05:44:45.498Z",
+                "updatedAt": "2025-11-15T05:54:04.483Z",
+                "reasonCode": null,
+                "__v": 4,
+                "serviceReceptionId": "691815678ca2353e4411d2d4"
+            }
+        ],
+        "statistics": {
+            "total": 5,
+            "pending": 0,
+            "confirmed": 0,
+            "inProgress": 0,
+            "unassigned": 0,
+            "urgent": 0,
+            "high": 0,
+            "overdue": 0
+        },
+        "pagination": {
+            "current": 1,
+            "pages": 1,
+            "total": 5,
+            "hasNext": false,
+            "hasPrev": false
+        }
+    }
+}

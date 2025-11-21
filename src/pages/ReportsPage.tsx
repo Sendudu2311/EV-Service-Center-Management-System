@@ -55,17 +55,31 @@ const ReportsPage: React.FC = () => {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [kpis, setKpis] = useState<KPIData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState<'1month' | '3months' | '6months' | '1year'>('1month');
+
+  // Date range state - default to last 30 days
+  const getDefaultDateRange = () => {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+    return {
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0]
+    };
+  };
+
+  const defaultRange = getDefaultDateRange();
+  const [startDate, setStartDate] = useState(defaultRange.startDate);
+  const [endDate, setEndDate] = useState(defaultRange.endDate);
 
   useEffect(() => {
     loadData();
-  }, [period]);
+  }, [startDate, endDate]);
 
   const loadData = async () => {
     try {
       setLoading(true);
       const [analyticsRes, kpisRes] = await Promise.all([
-        reportsAPI.getAnalytics({ period }),
+        reportsAPI.getAnalytics({ startDate, endDate }),
         reportsAPI.getKPI(),
       ]);
 
@@ -101,6 +115,24 @@ const ReportsPage: React.FC = () => {
     return new Intl.NumberFormat('en-US').format(value);
   };
 
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newStartDate = e.target.value;
+    if (newStartDate && endDate && newStartDate > endDate) {
+      toast.error('Ngày bắt đầu không được lớn hơn ngày kết thúc');
+      return;
+    }
+    setStartDate(newStartDate);
+  };
+
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEndDate = e.target.value;
+    if (newEndDate && startDate && newEndDate < startDate) {
+      toast.error('Ngày kết thúc không được nhỏ hơn ngày bắt đầu');
+      return;
+    }
+    setEndDate(newEndDate);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-dark-900">
@@ -119,24 +151,29 @@ const ReportsPage: React.FC = () => {
             <p className="mt-2 text-text-secondary">Comprehensive system statistics and performance metrics</p>
           </div>
 
-          {/* Period Selector */}
-          <div className="flex gap-2">
-            {(['1month', '3months', '6months', '1year'] as const).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                className={`px-4 py-2 rounded-lg text-text-muted transition-colors ${
-                  period === p
-                    ? 'bg-lime-200 text-dark-900'
-                    : 'bg-dark-300 text-text-secondary border border-dark-200'
-                }`}
-              >
-                {p === '1month' && '1 Month'}
-                {p === '3months' && '3 Months'}
-                {p === '6months' && '6 Months'}
-                {p === '1year' && '1 Year'}
-              </button>
-            ))}
+          {/* Date Range Selector */}
+          <div className="flex gap-4 items-center">
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-text-secondary font-medium">Từ ngày:</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={handleStartDateChange}
+                max={endDate}
+                className="px-3 py-2 bg-dark-300 text-white border border-dark-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-text-secondary font-medium">Đến ngày:</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={handleEndDateChange}
+                min={startDate}
+                max={new Date().toISOString().split('T')[0]}
+                className="px-3 py-2 bg-dark-300 text-white border border-dark-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent"
+              />
+            </div>
           </div>
         </div>
 

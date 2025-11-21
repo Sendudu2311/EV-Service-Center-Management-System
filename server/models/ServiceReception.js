@@ -504,6 +504,10 @@ const serviceReceptionSchema = new mongoose.Schema(
       },
       reviewedAt: Date,
       reviewNotes: String,
+      customerDeclinedService: {
+        type: Boolean,
+        default: false,
+      },
       approvalDecision: {
         servicesApproved: [
           {
@@ -585,6 +589,7 @@ const serviceReceptionSchema = new mongoose.Schema(
     // Workflow history tracking
     workflowHistory: [
       {
+        // Old workflow: status changes
         status: String,
         changedBy: {
           type: mongoose.Schema.Types.ObjectId,
@@ -595,11 +600,26 @@ const serviceReceptionSchema = new mongoose.Schema(
           default: Date.now,
         },
         reason: String,
-        notes: String,
         systemGenerated: {
           type: Boolean,
           default: false,
         },
+        // New workflow: staff modifications
+        action: String,
+        performedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        timestamp: Date,
+        changes: {
+          servicesAdded: [mongoose.Schema.Types.Mixed],
+          servicesRemoved: [mongoose.Schema.Types.Mixed],
+          servicesModified: [mongoose.Schema.Types.Mixed],
+          partsAdded: [mongoose.Schema.Types.Mixed],
+          partsRemoved: [mongoose.Schema.Types.Mixed],
+          partsModified: [mongoose.Schema.Types.Mixed],
+        },
+        notes: String,
       },
     ],
 

@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "serena": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "ide-assistant",
+        "--project",
+        "d:\\VSCode\\Project\\EV-Service-Center-Management-System"
+      ],
+      "description": "Serena MCP Server - Semantic code understanding and intelligent editing toolkit"
+    },
+    "mongodb": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@mongodb-js/mongodb-mcp-server",
+        "--connection-string",
+        "mongodb+srv://duytq:duy%40123@ev.xmouugg.mongodb.net/test?retryWrites=true&w=majority&appName=EV"
+      ],
+      "description": "MongoDB MCP Server - Connect to MongoDB Atlas cluster (database: test)"
+    }
+  }
+}

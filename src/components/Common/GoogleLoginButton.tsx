@@ -135,10 +135,10 @@ const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({
       console.log("📤 Sending credential to backend...");
 
       // Send credential to backend
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
-      console.log("🌐 API URL:", apiUrl);
-
-      const res = await fetch(`${apiUrl}/api/auth/google-auth`, {
+      const API_URL =
+        import.meta.env.VITE_API_URL ??
+        (import.meta.env.PROD ? "" : "http://localhost:3000");
+      const res = await fetch(`${API_URL}/api/auth/google-auth`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -13,8 +13,6 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { TechnicianStackParamList } from '../types/navigation.types';
 import { getAppointmentDetail } from '../services/technician.api';
-import { createAdditionalPartRequest } from '../services/partRequest.api';
-import AdditionalPartRequestModal from '../components/AdditionalPartRequestModal';
 import api from '../services/api';
 
 type Props = NativeStackScreenProps<TechnicianStackParamList, 'ViewReception'>;
@@ -105,6 +103,23 @@ interface ServiceReception {
     notes?: string;
   }>;
   estimatedServiceTime: number;
+  workflowHistory?: Array<{
+    action: string;
+    performedBy?: {
+      firstName: string;
+      lastName: string;
+    };
+    timestamp: string;
+    changes?: {
+      servicesAdded?: any[];
+      servicesRemoved?: any[];
+      servicesModified?: any[];
+      partsAdded?: any[];
+      partsRemoved?: any[];
+      partsModified?: any[];
+    };
+    notes?: string;
+  }>;
 }
 
 const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
@@ -113,25 +128,9 @@ const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
   const [loading, setLoading] = useState(true);
   const [reception, setReception] = useState<ServiceReception | null>(null);
 
-  // Part request states
-  const [availableParts, setAvailableParts] = useState<any[]>([]);
-  const [partPickerVisible, setPartPickerVisible] = useState(false);
-  const [partRequestModalVisible, setPartRequestModalVisible] = useState(false);
-  const [selectedPart, setSelectedPart] = useState<any>(null);
-
   useEffect(() => {
     loadReception();
-    loadParts();
   }, [appointmentId]);
-
-  const loadParts = async () => {
-    try {
-      const response = await api.get('/api/parts');
-      setAvailableParts(response.data.data || []);
-    } catch (error) {
-      console.error('Error loading parts:', error);
-    }
-  };
 
   const loadReception = async () => {
     try {
@@ -213,19 +212,6 @@ const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
     );
   };
 
-  const handlePartRequestSubmit = async (data: any) => {
-    if (!reception) return;
-
-    try {
-      await createAdditionalPartRequest(reception._id, data);
-      setPartRequestModalVisible(false);
-      setSelectedPart(null);
-      // Reload reception to show new part request
-      await loadReception();
-    } catch (error: any) {
-      throw error; // Let modal handle the error
-    }
-  };
 
   const formatVND = (amount: number): string => {
     return new Intl.NumberFormat('vi-VN', {
@@ -390,28 +376,15 @@ const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
             {reception.requestedParts.map((part) => (
               <View key={part._id} style={styles.partItem}>
                 <View style={styles.partHeader}>
-                  <Text style={styles.partName}>{part.partName}</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    {part.isApproved && (
-                      <View style={{ backgroundColor: '#d1fae5', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
-                        <Text style={{ fontSize: 10, fontWeight: '600', color: '#065f46' }}>✓ Đã duyệt</Text>
-                      </View>
-                    )}
-                    {part.isAvailable ? (
-                      <View style={{ backgroundColor: '#dbeafe', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
-                        <Text style={{ fontSize: 10, fontWeight: '600', color: '#1e40af' }}>
-                          ✓ Có sẵn ({part.availableQuantity || 0})
-                        </Text>
-                      </View>
-                    ) : (
-                      <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
-                        <Text style={{ fontSize: 10, fontWeight: '600', color: '#92400e' }}>
-                          ⚠ {part.shortfall ? `Thiếu ${part.shortfall}` : 'Chưa có'}
-                        </Text>
-                      </View>
-                    )}
-                    <Text style={styles.partQuantity}>x{part.quantity}</Text>
-                  </View>
+                  <Text style={styles.partName} numberOfLines={2}>{part.partName}</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                  {part.isApproved && (
+                    <View style={{ backgroundColor: '#d1fae5', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '600', color: '#065f46' }}>✓ Đã duyệt</Text>
+                    </View>
+                  )}
+                  <Text style={styles.partQuantity}>x{part.quantity}</Text>
                 </View>
                 <Text style={styles.partNumber}>Mã: {part.partNumber}</Text>
                 <Text style={styles.partReason}>Lý do: {part.reason}</Text>
@@ -494,7 +467,7 @@ const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
             {reception.specialInstructions.fromStaff && (
               <View style={{ marginBottom: 12 }}>
                 <Text style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 4 }}>
-                  Từ staff:
+                  Từ Technician:
                 </Text>
                 <Text style={styles.instructions}>{reception.specialInstructions.fromStaff}</Text>
               </View>
@@ -569,6 +542,117 @@ const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
           </View>
         </View>
 
+        {/* Workflow History - Staff Modifications */}
+        {reception.workflowHistory && reception.workflowHistory.length > 0 && (() => {
+          const staffModifications = reception.workflowHistory.filter(
+            (entry) => entry.action === 'staff_modified_services_parts'
+          );
+          console.log('WorkflowHistory exists:', reception.workflowHistory.length);
+          console.log('Staff modifications count:', staffModifications.length);
+
+          if (staffModifications.length === 0) return null;
+
+          return (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🕒 Lịch sử thay đổi</Text>
+            {staffModifications.map((entry, index) => (
+                <View key={index} style={styles.workflowEntry}>
+                  <View style={styles.workflowHeader}>
+                    <Text style={styles.workflowAction}>✏️ Staff đã chỉnh sửa Services/Parts</Text>
+                  </View>
+
+                  {/* Staff info and timestamp */}
+                  <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                    {entry.performedBy && (
+                      <Text style={styles.workflowInfo}>
+                        👤 {entry.performedBy.firstName} {entry.performedBy.lastName}
+                      </Text>
+                    )}
+                    <Text style={styles.workflowInfo}>
+                      🕐 {new Date(entry.timestamp).toLocaleString('vi-VN')}
+                    </Text>
+                  </View>
+
+                  {/* Changes Details */}
+                  {entry.changes && (
+                    <View style={{ marginTop: 12 }}>
+                      {/* Services Changes */}
+                      {((entry.changes.servicesAdded && entry.changes.servicesAdded.length > 0) ||
+                        (entry.changes.servicesRemoved && entry.changes.servicesRemoved.length > 0) ||
+                        (entry.changes.servicesModified && entry.changes.servicesModified.length > 0)) && (
+                        <View style={{ marginBottom: 12 }}>
+                          <Text style={styles.changesSubtitle}>Dịch vụ:</Text>
+                          {entry.changes.servicesAdded?.map((service: any, i: number) => (
+                            <View key={i} style={styles.changeItem}>
+                              <Text style={styles.changeIcon}>🟢</Text>
+                              <Text style={styles.changeText}>
+                                Đã thêm: {service.serviceName} (x{service.quantity})
+                              </Text>
+                            </View>
+                          ))}
+                          {entry.changes.servicesModified?.map((mod: any, i: number) => (
+                            <View key={i} style={styles.changeItem}>
+                              <Text style={styles.changeIcon}>🟡</Text>
+                              <Text style={styles.changeText}>
+                                Đã sửa: {mod.after.serviceName} ({mod.before.quantity} → {mod.after.quantity})
+                              </Text>
+                            </View>
+                          ))}
+                          {entry.changes.servicesRemoved?.map((service: any, i: number) => (
+                            <View key={i} style={styles.changeItem}>
+                              <Text style={styles.changeIcon}>🔴</Text>
+                              <Text style={styles.changeText}>Đã xóa: {service.serviceName}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+
+                      {/* Parts Changes */}
+                      {((entry.changes.partsAdded && entry.changes.partsAdded.length > 0) ||
+                        (entry.changes.partsRemoved && entry.changes.partsRemoved.length > 0) ||
+                        (entry.changes.partsModified && entry.changes.partsModified.length > 0)) && (
+                        <View>
+                          <Text style={styles.changesSubtitle}>Phụ tùng:</Text>
+                          {entry.changes.partsAdded?.map((part: any, i: number) => (
+                            <View key={i} style={styles.changeItem}>
+                              <Text style={styles.changeIcon}>🟢</Text>
+                              <Text style={styles.changeText}>
+                                Đã thêm: {part.partName} (x{part.quantity})
+                              </Text>
+                            </View>
+                          ))}
+                          {entry.changes.partsModified?.map((mod: any, i: number) => (
+                            <View key={i} style={styles.changeItem}>
+                              <Text style={styles.changeIcon}>🟡</Text>
+                              <Text style={styles.changeText}>
+                                Đã sửa: {mod.after.partName} ({mod.before.quantity} → {mod.after.quantity})
+                              </Text>
+                            </View>
+                          ))}
+                          {entry.changes.partsRemoved?.map((part: any, i: number) => (
+                            <View key={i} style={styles.changeItem}>
+                              <Text style={styles.changeIcon}>🔴</Text>
+                              <Text style={styles.changeText}>Đã xóa: {part.partName}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+                  )}
+
+                  {/* Reason */}
+                  {entry.notes && (
+                    <View style={styles.workflowReason}>
+                      <Text style={styles.workflowReasonLabel}>📝 Lý do:</Text>
+                      <Text style={styles.workflowReasonText}>{entry.notes}</Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          );
+        })()}
+
         <View style={{ height: 100 }} />
       </ScrollView>
 
@@ -592,77 +676,6 @@ const ServiceReceptionViewScreen: React.FC<Props> = ({ route, navigation }) => {
             <Text style={styles.editButtonText}>✏️ Sửa và gửi phiếu mới</Text>
           </TouchableOpacity>
         </View>
-      )}
-
-      {/* Request Additional Parts Button - Show when approved */}
-      {reception.submissionStatus.staffReviewStatus === 'approved' && (
-        <View style={styles.bottomBar}>
-          <TouchableOpacity
-            style={styles.requestPartButton}
-            onPress={() => setPartPickerVisible(true)}
-          >
-            <Text style={styles.requestPartButtonText}>🔩 Yêu cầu phụ tùng thêm</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Part Picker Modal */}
-      <Modal
-        visible={partPickerVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setPartPickerVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Chọn phụ tùng</Text>
-              <TouchableOpacity onPress={() => setPartPickerVisible(false)}>
-                <Text style={styles.modalCloseButton}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <FlatList
-              data={availableParts}
-              keyExtractor={(item) => item._id}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.modalItem}
-                  onPress={() => {
-                    setSelectedPart(item);
-                    setPartPickerVisible(false);
-                    setPartRequestModalVisible(true);
-                  }}
-                >
-                  <View>
-                    <Text style={styles.modalItemName}>{item.name}</Text>
-                    <Text style={styles.modalItemDetail}>
-                      Mã: {item.partNumber} • {item.pricing?.retail?.toLocaleString('vi-VN')} VND •
-                      Tồn kho: {item.inventory?.currentStock || 0}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              )}
-              ListEmptyComponent={
-                <Text style={styles.emptyText}>Không có phụ tùng nào</Text>
-              }
-            />
-          </View>
-        </View>
-      </Modal>
-
-      {/* Additional Part Request Modal */}
-      {selectedPart && (
-        <AdditionalPartRequestModal
-          visible={partRequestModalVisible}
-          onClose={() => {
-            setPartRequestModalVisible(false);
-            setSelectedPart(null);
-          }}
-          onSubmit={handlePartRequestSubmit}
-          part={selectedPart}
-          serviceReceptionId={reception._id}
-        />
       )}
     </View>
   );
@@ -976,68 +989,64 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#ffffff',
   },
-  requestPartButton: {
-    backgroundColor: '#10b981',
-    paddingVertical: 16,
+  workflowEntry: {
+    backgroundColor: '#fef3c7',
+    padding: 12,
     borderRadius: 8,
-    alignItems: 'center',
+    borderLeftWidth: 4,
+    borderLeftColor: '#f59e0b',
+    marginBottom: 12,
   },
-  requestPartButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContainer: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '80%',
-    paddingBottom: 20,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  modalCloseButton: {
-    fontSize: 24,
-    color: '#6B7280',
-    fontWeight: '300',
-  },
-  modalItem: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  modalItemName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#111827',
+  workflowHeader: {
     marginBottom: 4,
   },
-  modalItemDetail: {
+  workflowAction: {
     fontSize: 14,
-    color: '#6B7280',
+    fontWeight: '600',
+    color: '#92400e',
   },
-  emptyText: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    textAlign: 'center',
-    padding: 32,
+  workflowInfo: {
+    fontSize: 12,
+    color: '#78350f',
+  },
+  changesSubtitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  changeItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
+  changeIcon: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  changeText: {
+    fontSize: 13,
+    color: '#4b5563',
+    flex: 1,
+  },
+  workflowReason: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#fbbf24',
+    borderRadius: 6,
+    padding: 10,
+    marginTop: 12,
+  },
+  workflowReasonLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#92400e',
+    marginBottom: 4,
+  },
+  workflowReasonText: {
+    fontSize: 12,
+    color: '#78350f',
+    fontStyle: 'italic',
   },
 });
 
