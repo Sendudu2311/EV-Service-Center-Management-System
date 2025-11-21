@@ -172,15 +172,15 @@ export const getAnalytics = asyncHandler(async (req, res) => {
       monthlyAppointmentsTrend[monthKey] = {
         month: monthLabel,
         appointments: 0,
-        completed: 0,
+        completedAndInvoiced: 0,
         cancelled: 0,
       };
     }
 
     monthlyAppointmentsTrend[monthKey].appointments += 1;
 
-    if (appt.status === "completed") {
-      monthlyAppointmentsTrend[monthKey].completed += 1;
+    if (appt.status === "completed" || appt.status === "invoiced") {
+      monthlyAppointmentsTrend[monthKey].completedAndInvoiced += 1;
     } else if (appt.status === "cancelled") {
       monthlyAppointmentsTrend[monthKey].cancelled += 1;
     }

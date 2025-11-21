@@ -173,7 +173,7 @@ interface AnalyticsData {
     appointmentsTrend: Array<{
       month: string;
       appointments: number;
-      completed: number;
+      completedAndInvoiced: number;
       cancelled: number;
     }>;
     revenueTrend: Array<{ month: string; revenue: number; transactions: number }>;
@@ -823,7 +823,7 @@ const AnalyticsTab: React.FC<{
               <Tooltip contentStyle={{ backgroundColor: '#1F2937', border: '1px solid #374151' }} />
               <Legend />
               <Bar dataKey="appointments" fill="#3b82f6" name="Total" />
-              <Bar dataKey="completed" fill="#10b981" name="Completed" />
+              <Bar dataKey="completedAndInvoiced" fill="#10b981" name="Completed" />
               <Bar dataKey="cancelled" fill="#ef4444" name="Cancelled" />
             </BarChart>
           </ResponsiveContainer>
