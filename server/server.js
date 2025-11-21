@@ -63,14 +63,14 @@ const getAllowedOrigins = () => {
       process.env.CLIENT_URL,
       process.env.ADMIN_URL,
     ].filter(Boolean);
-    
+
     if (prodOrigins.length === 0) {
       console.warn("⚠️  WARNING: No production origins configured in .env");
     }
-    
+
     return prodOrigins;
   }
-  
+
   // Development origins
   return [
     "http://localhost:5173",

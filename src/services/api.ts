@@ -3,13 +3,19 @@ import toast from "react-hot-toast";
 
 // In production (Vercel), use empty string because API is on same domain via rewrites
 // In development, use localhost:3000
-const API_URL = import.meta.env.VITE_API_URL ??
+const API_URL =
+  import.meta.env.VITE_API_URL ??
   (import.meta.env.PROD ? "" : "http://localhost:3000");
+
+// Determine timeout based on environment
+// Production: longer timeout (30s) for slow servers
+// Development: shorter timeout (10s) for faster feedback
+const TIMEOUT_MS = import.meta.env.PROD ? 30000 : 10000;
 
 // Create axios instance
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 10000,
+  timeout: TIMEOUT_MS,
   headers: {
     "Content-Type": "application/json",
   },
@@ -33,6 +39,31 @@ api.interceptors.request.use(
 const errorThrottle = new Map<string, number>();
 const THROTTLE_DURATION = 5000; // 5 seconds
 
+// Retry configuration
+const MAX_RETRIES = 2;
+const RETRY_DELAY = 1000; // 1 second
+
+// Utility function to retry failed requests
+const retryRequest = async (config: any, attempt = 1): Promise<any> => {
+  try {
+    return await api.request(config);
+  } catch (error: any) {
+    // Retry only on timeout errors and max 2 times
+    if (
+      attempt < MAX_RETRIES &&
+      error?.code === "ECONNABORTED" &&
+      import.meta.env.PROD
+    ) {
+      console.warn(
+        `⏱️ Request timeout, retrying (${attempt}/${MAX_RETRIES})...`
+      );
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+      return retryRequest(config, attempt + 1);
+    }
+    throw error;
+  }
+};
+
 // Response interceptor with optimized error handling
 api.interceptors.response.use(
   (response: AxiosResponse) => {
@@ -42,9 +73,10 @@ api.interceptors.response.use(
     const status = error.response?.status;
     const errorData = error.response?.data as any;
     const url = error.config?.url || "";
+    const errorCode = (error as any).code;
 
     // Create throttle key
-    const throttleKey = `${status}-${errorData?.error || "generic"}`;
+    const throttleKey = `${status}-${errorData?.error || errorCode || "generic"}`;
     const now = Date.now();
     const lastShown = errorThrottle.get(throttleKey);
 
@@ -53,7 +85,27 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (status === 401) {
+    // Handle timeout errors
+    if (errorCode === "ECONNABORTED") {
+      console.error("⏱️ Request timeout:", {
+        url,
+        timeout: TIMEOUT_MS,
+        environment: import.meta.env.PROD ? "production" : "development",
+      });
+
+      // Only show error for critical operations in production
+      if (
+        import.meta.env.PROD &&
+        (url.includes("/login") ||
+          url.includes("/register") ||
+          url.includes("/profile"))
+      ) {
+        errorThrottle.set(throttleKey, now);
+        toast.error("Kết nối máy chủ chậm. Vui lòng thử lại.", {
+          duration: 4000,
+        });
+      }
+    } else if (status === 401) {
       // Check for specific auth error codes
       const authErrors: Record<string, string> = {
         TOKEN_EXPIRED: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
@@ -79,7 +131,7 @@ api.interceptors.response.use(
         "403 error (should not happen after removing role restrictions):",
         errorData
       );
-    } else if (status >= 500) {
+    } else if (status && status >= 500) {
       // Only show server errors for critical operations, not background requests
       const isCriticalOperation =
         url.includes("/login") ||
@@ -270,7 +322,9 @@ export const appointmentsAPI = {
   // NEW: Pre-booking management
   getPreBookings: (params?: any) =>
     api
-      .get<ApiResponse<any[]>>("/api/appointments/pre-bookings/list", { params })
+      .get<
+        ApiResponse<any[]>
+      >("/api/appointments/pre-bookings/list", { params })
       .catch(handleApiError),
 
   assignSlot: (id: string, data: { slotId: string }) =>

@@ -17,20 +17,16 @@ import { generateRefundNotificationTemplate } from "../utils/emailTemplates.js";
  * @returns {string} - Client URL for current environment
  */
 const getClientUrl = () => {
-  // Production: Use PRODUCTION_CLIENT_URL if available
-<<<<<<< HEAD
-  if (process.env.NODE_ENV === "production" && process.env.CLIENT_URL) {
-    return process.env.CLIENT_URL;
+  // Production: Use CLIENT_URL if available
+  if (process.env.NODE_ENV === "production") {
+    return (
+      process.env.CLIENT_URL ||
+      process.env.PRODUCTION_CLIENT_URL ||
+      "http://localhost:5173"
+    );
   }
   // Development/fallback: Use CLIENT_URL or localhost
   return process.env.CLIENT_URL || "http://localhost:5173";
-=======
-  if (process.env.NODE_ENV === 'production' && process.env.PRODUCTION_CLIENT_URL) {
-    return process.env.PRODUCTION_CLIENT_URL;
-  }
-  // Development/fallback: Use CLIENT_URL or localhost
-  return process.env.CLIENT_URL || 'http://localhost:5173';
->>>>>>> main
 };
 
 /**
@@ -39,14 +35,13 @@ const getClientUrl = () => {
  * @returns {string} - Server URL for current environment
  */
 const getServerUrl = (req) => {
-  // Production: Use PRODUCTION_SERVER_URL if available
-<<<<<<< HEAD
-  if (process.env.NODE_ENV === "production" && process.env.PUBLIC_BASE_URL) {
-    return process.env.PUBLIC_BASE_URL;
-=======
-  if (process.env.NODE_ENV === 'production' && process.env.PRODUCTION_SERVER_URL) {
-    return process.env.PRODUCTION_SERVER_URL;
->>>>>>> main
+  // Production: Use PUBLIC_BASE_URL if available
+  if (process.env.NODE_ENV === "production") {
+    return (
+      process.env.PUBLIC_BASE_URL ||
+      process.env.PRODUCTION_SERVER_URL ||
+      "http://localhost:3000"
+    );
   }
 
   // Use SERVER_URL from env if available
@@ -55,15 +50,15 @@ const getServerUrl = (req) => {
   }
 
   // Try to detect from request headers
-  const protocol = req.protocol || 'http';
-  const host = req.get('host') || req.get('x-forwarded-host');
+  const protocol = req.protocol || "http";
+  const host = req.get("host") || req.get("x-forwarded-host");
 
   if (host) {
     return `${protocol}://${host}`;
   }
 
   // Fallback to localhost for web, but this won't work for mobile
-  return 'http://localhost:3000';
+  return "http://localhost:3000";
 };
 
 /**
@@ -1258,8 +1253,7 @@ export const testConfig = async (req, res) => {
       vnp_OrderInfo: "Test payment",
       vnp_OrderType: "other",
       vnp_Amount: 100000,
-      vnp_ReturnUrl: `${getClientUrl()
-      }/payment/vnpay-return`,
+      vnp_ReturnUrl: `${getClientUrl()}/payment/vnpay-return`,
       vnp_IpAddr: "127.0.0.1",
       vnp_CreateDate: parseInt(
         new Date()
