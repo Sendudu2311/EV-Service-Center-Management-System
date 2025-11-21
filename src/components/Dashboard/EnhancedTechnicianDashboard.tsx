@@ -1407,18 +1407,37 @@ const EnhancedTechnicianDashboard: React.FC = () => {
                 {selectedReception.submissionStatus?.staffReviewStatus ===
                   "rejected" && (
                   <div className="text-sm">
-                    <p className="text-red-600 text-text-muted">
-                      Lý do từ chối:
-                    </p>
-                    <p className="text-text-secondary">
-                      {selectedReception.submissionStatus.reviewNotes ||
-                        "Không có lý do cụ thể"}
-                    </p>
+                    {selectedReception.submissionStatus.customerDeclinedService ? (
+                      <div className="p-3 bg-orange-900/20 border border-orange-500/30 rounded-lg">
+                        <p className="text-orange-500 font-semibold mb-1">
+                          ⚠️ Khách hàng không muốn thực hiện dịch vụ
+                        </p>
+                        <p className="text-text-secondary text-xs">
+                          Lịch hẹn đã bị hủy. Không thể tạo phiếu tiếp nhận mới.
+                        </p>
+                        {selectedReception.submissionStatus.reviewNotes && (
+                          <p className="text-text-muted text-xs mt-2 italic">
+                            Ghi chú: {selectedReception.submissionStatus.reviewNotes}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-red-600 text-text-muted">
+                          Lý do từ chối:
+                        </p>
+                        <p className="text-text-secondary">
+                          {selectedReception.submissionStatus.reviewNotes ||
+                            "Không có lý do cụ thể"}
+                        </p>
+                      </>
+                    )}
                   </div>
                 )}
                 <div className="flex space-x-2 ml-auto">
                   {selectedReception.submissionStatus?.staffReviewStatus ===
-                    "rejected" && (
+                    "rejected" &&
+                    !selectedReception.submissionStatus.customerDeclinedService && (
                     <button
                       onClick={() => {
                         // Open modal to create new reception for rejected appointment

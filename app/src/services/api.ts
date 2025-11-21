@@ -5,7 +5,7 @@ import { Alert } from "react-native";
 // Replace with your actual API URL
 // Use your computer's IP address for mobile testing
 // Get your IP with: ifconfig (Mac/Linux) or ipconfig (Windows)
-const API_URL = "http://172.31.99.220:3000"; // Update this for production
+const API_URL = "http://172.20.10.5:3000"; // Update this for production
 
 // Create axios instance
 const api = axios.create({

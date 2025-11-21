@@ -287,7 +287,8 @@ const StaffDashboard: React.FC = () => {
       modificationReason: string;
       modifiedServices: any[];
       modifiedParts: any[];
-    } | null
+    } | null,
+    customerDeclinedService?: boolean
   ) => {
     try {
       // receptionId is now the actual ServiceReception _id, not appointment ID
@@ -305,6 +306,7 @@ const StaffDashboard: React.FC = () => {
             externalParts: externalParts || [],
             extendedCompletionDate: extendedCompletionDate || null,
             modifications: modifications || null,
+            customerDeclinedService: customerDeclinedService || false,
           }),
         }
       );
