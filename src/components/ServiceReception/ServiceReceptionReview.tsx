@@ -777,9 +777,6 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
     setEditedParts([...editedParts, newPart]);
     setShowPartPicker(false);
     toast.success(`Đã thêm phụ tùng: ${part.name}`);
-
-    // ✅ FIX: Fetch real-time stock info for newly added part
-    fetchPartStockInfo([part._id]);
   };
 
   const handleReviewSubmit = async (decision: "approve" | "reject") => {
@@ -825,8 +822,8 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
         decision === "approve"
           ? "Đã duyệt phiếu tiếp nhận"
           : customerDeclinedService
-          ? "Đã từ chối phiếu và hủy lịch hẹn"
-          : "Đã từ chối phiếu tiếp nhận"
+            ? "Đã từ chối phiếu và hủy lịch hẹn"
+            : "Đã từ chối phiếu tiếp nhận"
       );
 
       setSelectedReception(null);
@@ -1289,9 +1286,9 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
                           const bgColorClass =
                             status === "added"
-                              ? "bg-green-100 dark:bg-green-900/30 border-green-500"
+                              ? "bg-dark-300 border-green-500"
                               : status === "modified"
-                                ? "bg-yellow-100 dark:bg-yellow-900/30 border-yellow-500"
+                                ? "bg-dark-300 border-yellow-500"
                                 : "bg-dark-300 border-dark-200";
 
                           return (
@@ -1304,20 +1301,16 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                               <div className="flex justify-between items-start mb-1">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2">
-                                    <span
-                                      className={`font-medium ${
-                                        status === "added"
-                                          ? "text-green-800 dark:text-green-200"
-                                          : status === "modified"
-                                            ? "text-yellow-800 dark:text-yellow-200"
-                                            : "text-gray-900 dark:text-gray-100"
-                                      }`}
-                                    >
+                                    <span className="text-white font-medium">
                                       {status === "added" && (
-                                        <span className="mr-1">🟢</span>
+                                        <span className="text-green-400 mr-1 font-bold">
+                                          ●
+                                        </span>
                                       )}
                                       {status === "modified" && (
-                                        <span className="mr-1">🟡</span>
+                                        <span className="text-yellow-400 mr-1 font-bold">
+                                          ●
+                                        </span>
                                       )}
                                       {service.serviceName}
                                     </span>
@@ -1342,7 +1335,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                     ) : null;
                                   })()}
                                   {service.estimatedCost && (
-                                    <div className="font-semibold text-lime-700 dark:text-lime-400">
+                                    <div className="text-lime-600">
                                       {(
                                         service.estimatedCost * service.quantity
                                       ).toLocaleString("vi-VN")}{" "}
@@ -1452,12 +1445,12 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                               )}
 
                               {status === "modified" && (
-                                <div className="text-yellow-600 text-xs mt-1 italic">
+                                <div className="text-yellow-400 text-xs mt-1 italic font-semibold">
                                   📝 Số lượng đã thay đổi
                                 </div>
                               )}
                               {status === "added" && (
-                                <div className="text-green-600 text-xs mt-1 italic">
+                                <div className="text-green-400 text-xs mt-1 italic font-semibold">
                                   ✨ Dịch vụ mới thêm
                                 </div>
                               )}
@@ -1534,10 +1527,10 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
                           const bgColorClass =
                             status === "added"
-                              ? "bg-green-50 dark:bg-green-900/30 border-green-500"
+                              ? "bg-dark-300 border-green-500"
                               : status === "modified"
-                                ? "bg-yellow-50 dark:bg-yellow-900/30 border-yellow-500"
-                                : "bg-gray-50 dark:bg-dark-300 border-gray-200 dark:border-dark-200";
+                                ? "bg-dark-300 border-yellow-500"
+                                : "bg-dark-300 border-dark-200";
 
                           return (
                             <div
@@ -1549,20 +1542,16 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                               <div className="flex justify-between items-start mb-1">
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2">
-                                    <span
-                                      className={`font-medium ${
-                                        status === "added"
-                                          ? "text-green-800 dark:text-green-200"
-                                          : status === "modified"
-                                            ? "text-yellow-800 dark:text-yellow-200"
-                                            : "text-gray-900 dark:text-gray-100"
-                                      }`}
-                                    >
+                                    <span className="text-white font-medium">
                                       {status === "added" && (
-                                        <span className="mr-1">🟢</span>
+                                        <span className="text-green-400 mr-1 font-bold">
+                                          ●
+                                        </span>
                                       )}
                                       {status === "modified" && (
-                                        <span className="mr-1">🟡</span>
+                                        <span className="text-yellow-400 mr-1 font-bold">
+                                          ●
+                                        </span>
                                       )}
                                       {part.partName}
                                     </span>
@@ -1589,7 +1578,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                   )}
                                 </div>
                                 <div className="text-right ml-4">
-                                  <div className="font-semibold text-purple-700 dark:text-purple-300">
+                                  <div className="text-purple-600 text-text-muted">
                                     {(
                                       (part.estimatedCost || 0) * part.quantity
                                     ).toLocaleString("vi-VN")}{" "}
@@ -1598,7 +1587,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                 </div>
                               </div>
 
-                              <div className="text-gray-600 dark:text-gray-300 flex items-center justify-between">
+                              <div className="text-text-secondary flex items-center justify-between">
                                 <div>
                                   {!isEditingParts && (
                                     <span>Số lượng: {part.quantity}</span>
@@ -1607,7 +1596,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
                                 {isEditingParts && (
                                   <div className="flex items-center gap-2 ml-auto">
-                                    <label className="text-xs text-gray-600 dark:text-gray-300">
+                                    <label className="text-xs text-text-muted">
                                       Số lượng:
                                     </label>
                                     <input
@@ -1638,12 +1627,12 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                               </div>
 
                               {status === "modified" && (
-                                <div className="text-yellow-600 text-xs mt-1 italic">
+                                <div className="text-yellow-400 text-xs mt-1 italic font-semibold">
                                   📝 Số lượng đã thay đổi
                                 </div>
                               )}
                               {status === "added" && (
-                                <div className="text-green-600 text-xs mt-1 italic">
+                                <div className="text-green-400 text-xs mt-1 italic font-semibold">
                                   ✨ Phụ tùng mới thêm
                                 </div>
                               )}
@@ -1910,7 +1899,9 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                   <input
                     type="checkbox"
                     checked={customerDeclinedService}
-                    onChange={(e) => setCustomerDeclinedService(e.target.checked)}
+                    onChange={(e) =>
+                      setCustomerDeclinedService(e.target.checked)
+                    }
                     className="w-5 h-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
                   />
                   <span className="text-white font-medium">
@@ -1919,7 +1910,8 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                 </label>
                 {customerDeclinedService && (
                   <p className="text-sm text-orange-400 mt-2 ml-8">
-                    Khi chọn mục này, phiếu sẽ bị từ chối và lịch hẹn sẽ chuyển sang trạng thái Đã hủy.
+                    Khi chọn mục này, phiếu sẽ bị từ chối và lịch hẹn sẽ chuyển
+                    sang trạng thái Đã hủy.
                   </p>
                 )}
               </div>
@@ -1954,7 +1946,11 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                     onClick={() => handleReviewSubmit("approve")}
                     disabled={isSubmitting || hasStockIssues()}
                     className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center relative group"
-                    title={hasStockIssues() ? "Không thể duyệt vì có phụ tùng thiếu hàng" : ""}
+                    title={
+                      hasStockIssues()
+                        ? "Không thể duyệt vì có phụ tùng thiếu hàng"
+                        : ""
+                    }
                   >
                     {isSubmitting ? (
                       <ClockIcon className="w-4 h-4 mr-2 animate-spin" />

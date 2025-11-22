@@ -67,7 +67,12 @@ const StaffDashboard: React.FC = () => {
   );
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<
-    "appointments" | "reception-review" | "customer-arrival" | "pending-payment" | "completed-approval" | "parts-insufficient"
+    | "appointments"
+    | "reception-review"
+    | "customer-arrival"
+    | "pending-payment"
+    | "completed-approval"
+    | "parts-insufficient"
   >("appointments");
   const [appointmentsNeedingArrival, setAppointmentsNeedingArrival] = useState<
     any[]
@@ -79,10 +84,15 @@ const StaffDashboard: React.FC = () => {
   const [conflictLoading, setConflictLoading] = useState(false);
 
   // NEW WORKFLOW: Reception Payment Modal
-  const [showReceptionPaymentModal, setShowReceptionPaymentModal] = useState(false);
-  const [selectedAppointmentForPayment, setSelectedAppointmentForPayment] = useState<any>(null);
-  const [selectedServiceReception, setSelectedServiceReception] = useState<any>(null);
-  const [pendingPaymentAppointments, setPendingPaymentAppointments] = useState<any[]>([]);
+  const [showReceptionPaymentModal, setShowReceptionPaymentModal] =
+    useState(false);
+  const [selectedAppointmentForPayment, setSelectedAppointmentForPayment] =
+    useState<any>(null);
+  const [selectedServiceReception, setSelectedServiceReception] =
+    useState<any>(null);
+  const [pendingPaymentAppointments, setPendingPaymentAppointments] = useState<
+    any[]
+  >([]);
   const [pendingPaymentLoading, setPendingPaymentLoading] = useState(false);
 
   // NEW: Completed appointments waiting for final staff approval
@@ -90,12 +100,16 @@ const StaffDashboard: React.FC = () => {
   const [completedLoading, setCompletedLoading] = useState(false);
 
   // Parts Insufficient appointments waiting for parts restock
-  const [partsInsufficientAppointments, setPartsInsufficientAppointments] = useState<any[]>([]);
-  const [partsInsufficientLoading, setPartsInsufficientLoading] = useState(false);
+  const [partsInsufficientAppointments, setPartsInsufficientAppointments] =
+    useState<any[]>([]);
+  const [partsInsufficientLoading, setPartsInsufficientLoading] =
+    useState(false);
 
   // Confirmation modal for final approval
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [appointmentToConfirm, setAppointmentToConfirm] = useState<string | null>(null);
+  const [appointmentToConfirm, setAppointmentToConfirm] = useState<
+    string | null
+  >(null);
 
   const debouncedFetchDashboard = () => {
     debouncedFetch(fetchDashboardData);
@@ -166,7 +180,9 @@ const StaffDashboard: React.FC = () => {
   const fetchPendingPaymentAppointments = async () => {
     try {
       setPendingPaymentLoading(true);
-      const response = await appointmentsAPI.getAll({ status: "reception_approved" });
+      const response = await appointmentsAPI.getAll({
+        status: "reception_approved",
+      });
       const appointments = response.data.data || response.data || [];
       setPendingPaymentAppointments(appointments);
     } catch (error: any) {
@@ -177,7 +193,6 @@ const StaffDashboard: React.FC = () => {
     }
   };
 
-
   // NEW: Fetch completed appointments waiting for staff final approval
   const fetchCompletedAppointments = async () => {
     try {
@@ -185,7 +200,7 @@ const StaffDashboard: React.FC = () => {
       const response = await appointmentsAPI.getAll({
         status: "completed",
         limit: 100, // Increase limit to show more completed appointments
-        dateRange: "all" // Get all dates, not just today
+        dateRange: "all", // Get all dates, not just today
       });
       const appointments = response.data.data || response.data || [];
       setCompletedAppointments(appointments);
@@ -203,7 +218,7 @@ const StaffDashboard: React.FC = () => {
       const response = await appointmentsAPI.getAll({
         status: "parts_insufficient",
         limit: 100,
-        dateRange: "all"
+        dateRange: "all",
       });
       const appointments = response.data.data || response.data || [];
       setPartsInsufficientAppointments(appointments);
@@ -251,22 +266,9 @@ const StaffDashboard: React.FC = () => {
   const fetchPendingReceptions = async () => {
     try {
       setReceptionLoading(true);
-      // Call the correct backend endpoint to get pending service receptions
-      const response = await fetch(
-        "/api/appointments/receptions/pending-approval",
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setPendingReceptions(data.data || []);
-      } else {
-        toast.error("Không thể tải danh sách phiếu tiếp nhận");
-      }
+      // Use API service instead of direct fetch
+      const response = await serviceReceptionAPI.getPendingApprovals();
+      setPendingReceptions(response.data.data || []);
     } catch (error) {
       console.error("Error fetching pending receptions:", error);
       toast.error("Không thể tải danh sách phiếu tiếp nhận");
@@ -321,7 +323,7 @@ const StaffDashboard: React.FC = () => {
       console.error("Error reviewing reception:", error);
       throw error;
     }
-  };;
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -402,7 +404,8 @@ const StaffDashboard: React.FC = () => {
       const appointment = appointmentResponse.data.data;
 
       // Fetch service reception by appointment ID
-      const receptionResponse = await serviceReceptionAPI.getByAppointment(appointmentId);
+      const receptionResponse =
+        await serviceReceptionAPI.getByAppointment(appointmentId);
       const serviceReception = receptionResponse.data.data;
 
       // Set state and open modal
@@ -411,7 +414,9 @@ const StaffDashboard: React.FC = () => {
       setShowReceptionPaymentModal(true);
     } catch (error: any) {
       console.error("Error fetching appointment/reception data:", error);
-      toast.error(error.response?.data?.message || "Không thể tải dữ liệu appointment");
+      toast.error(
+        error.response?.data?.message || "Không thể tải dữ liệu appointment"
+      );
     }
   };
 
@@ -445,15 +450,16 @@ const StaffDashboard: React.FC = () => {
   const handleApprovePartsAvailable = async (appointmentId: string) => {
     setActionLoading(appointmentId);
     try {
-      await appointmentsAPI.approvePartsAvailable(appointmentId, "Phụ tùng đã được nhập kho");
+      await appointmentsAPI.approvePartsAvailable(
+        appointmentId,
+        "Phụ tùng đã được nhập kho"
+      );
       toast.success("Đã duyệt phụ tùng có sẵn!");
       fetchPartsInsufficientAppointments(); // Refresh parts insufficient list
       immediateFetchDashboard(); // Refresh dashboard stats
     } catch (error: any) {
       console.error("Error approving parts available:", error);
-      toast.error(
-        error.response?.data?.message || "Không thể duyệt phụ tùng"
-      );
+      toast.error(error.response?.data?.message || "Không thể duyệt phụ tùng");
     } finally {
       setActionLoading(null);
     }
@@ -550,8 +556,18 @@ const StaffDashboard: React.FC = () => {
                 }`}
               >
                 <div className="flex items-center space-x-2">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                    />
                   </svg>
                   <span>Chờ thanh toán</span>
                   {pendingPaymentAppointments.length > 0 && (
@@ -1045,14 +1061,17 @@ const StaffDashboard: React.FC = () => {
                                     : "N/A"}
                                 </p>
                                 <p className="text-xs text-yellow-400 mt-1">
-                                  Phiếu tiếp nhận đã được duyệt - Chờ xác nhận thanh toán
+                                  Phiếu tiếp nhận đã được duyệt - Chờ xác nhận
+                                  thanh toán
                                 </p>
                               </div>
                             </div>
                           </div>
                           <div className="ml-4 flex-shrink-0">
                             <button
-                              onClick={() => handleConfirmPayment(appointment._id)}
+                              onClick={() =>
+                                handleConfirmPayment(appointment._id)
+                              }
                               disabled={actionLoading === appointment._id}
                               className="inline-flex items-center px-4 py-2 border border-transparent text-sm rounded text-dark-900 bg-lime-600 hover:bg-lime-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-500 disabled:opacity-50 transition-all duration-200 transform hover:scale-105"
                             >
@@ -1060,8 +1079,18 @@ const StaffDashboard: React.FC = () => {
                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-dark-900"></div>
                               ) : (
                                 <>
-                                  <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                  <svg
+                                    className="h-4 w-4 mr-2"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                                    />
                                   </svg>
                                   Xác nhận thanh toán
                                 </>
@@ -1158,7 +1187,9 @@ const StaffDashboard: React.FC = () => {
                           </div>
                           <div className="ml-4 flex-shrink-0">
                             <button
-                              onClick={() => handleStaffFinalConfirm(appointment._id)}
+                              onClick={() =>
+                                handleStaffFinalConfirm(appointment._id)
+                              }
                               disabled={actionLoading === appointment._id}
                               className="inline-flex items-center px-4 py-2 border border-transparent text-sm rounded text-dark-900 bg-lime-600 hover:bg-lime-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-900 focus:ring-lime-500 disabled:opacity-50 transition-all duration-200 transform hover:scale-105"
                             >
@@ -1204,8 +1235,9 @@ const StaffDashboard: React.FC = () => {
               Xác nhận dịch vụ đã hoàn thành?
             </h3>
             <p className="text-text-muted mb-6">
-              Bạn có chắc chắn muốn xác nhận dịch vụ đã hoàn thành? Sau khi xác nhận,
-              trạng thái sẽ chuyển sang "Đã xuất hóa đơn" và không thể hoàn tác.
+              Bạn có chắc chắn muốn xác nhận dịch vụ đã hoàn thành? Sau khi xác
+              nhận, trạng thái sẽ chuyển sang "Đã xuất hóa đơn" và không thể
+              hoàn tác.
             </p>
             <div className="flex gap-3 justify-end">
               <button
