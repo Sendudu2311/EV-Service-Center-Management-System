@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import { formatVND } from "../../utils/vietnamese";
-import { partConflictsAPI } from "../../services/api";
+import { partConflictsAPI, partsAPI, servicesAPI } from "../../services/api";
 import ExternalPartsManager from "./ExternalPartsManager";
 import WorkflowHistoryViewer from "./WorkflowHistoryViewer";
 
@@ -207,79 +207,72 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
       setPartStockInfo(loadingMap);
 
       // Fetch all parts data - include out of stock parts for accurate inventory check
-      const response = await fetch("/api/parts?limit=1000&inStock=false", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+      const response = await partsAPI.getAll({ limit: 1000, inStock: false });
+      const data = response.data;
+
+      console.log("🔍 [fetchPartStockInfo] API Response:", {
+        totalParts: data.data?.length || 0,
+        requestedPartIds: partIds,
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      // ✅ FIX: Use functional update to avoid stale closure
+      setPartStockInfo((prevMap) => {
+        const stockMap = new Map(prevMap);
 
-        console.log("🔍 [fetchPartStockInfo] API Response:", {
-          totalParts: data.data?.length || 0,
-          requestedPartIds: partIds,
+        // Update stock info for each part
+        partIds.forEach((partId) => {
+          const partData = data.data?.find((p: any) => p._id === partId);
+
+          if (!partData) {
+            console.error(
+              `❌ [fetchPartStockInfo] Part ${partId} NOT FOUND in API response!`
+            );
+            console.log(
+              "   Available part IDs in response:",
+              data.data?.map((p: any) => p._id).slice(0, 10)
+            );
+          } else {
+            console.log(`✅ [fetchPartStockInfo] Found part ${partId}:`, {
+              _id: partData._id,
+              name: partData.name,
+              inventory: partData.inventory,
+              currentStock: partData.inventory?.currentStock,
+            });
+          }
+
+          if (partData) {
+            stockMap.set(partId, {
+              currentStock: partData.inventory?.currentStock || 0,
+              loading: false,
+            });
+          } else {
+            console.warn(
+              `⚠️ [fetchPartStockInfo] Part ${partId} not found in API response!`
+            );
+            stockMap.set(partId, { currentStock: 0, loading: false });
+          }
         });
 
-        // ✅ FIX: Use functional update to avoid stale closure
-        setPartStockInfo((prevMap) => {
-          const stockMap = new Map(prevMap);
+        console.log(
+          "🔍 [fetchPartStockInfo] Final stockMap:",
+          Array.from(stockMap.entries()).map(([id, info]) => ({
+            id,
+            currentStock: info.currentStock,
+            loading: info.loading,
+          }))
+        );
+        console.log("🔍 [fetchPartStockInfo] Requested part IDs:", partIds);
+        console.log(
+          "🔍 [fetchPartStockInfo] Map size before update:",
+          prevMap.size
+        );
+        console.log(
+          "🔍 [fetchPartStockInfo] Map size after update:",
+          stockMap.size
+        );
 
-          // Update stock info for each part
-          partIds.forEach((partId) => {
-            const partData = data.data?.find((p: any) => p._id === partId);
-
-            if (!partData) {
-              console.error(
-                `❌ [fetchPartStockInfo] Part ${partId} NOT FOUND in API response!`
-              );
-              console.log(
-                "   Available part IDs in response:",
-                data.data?.map((p: any) => p._id).slice(0, 10)
-              );
-            } else {
-              console.log(`✅ [fetchPartStockInfo] Found part ${partId}:`, {
-                _id: partData._id,
-                name: partData.name,
-                inventory: partData.inventory,
-                currentStock: partData.inventory?.currentStock,
-              });
-            }
-
-            if (partData) {
-              stockMap.set(partId, {
-                currentStock: partData.inventory?.currentStock || 0,
-                loading: false,
-              });
-            } else {
-              console.warn(
-                `⚠️ [fetchPartStockInfo] Part ${partId} not found in API response!`
-              );
-              stockMap.set(partId, { currentStock: 0, loading: false });
-            }
-          });
-
-          console.log(
-            "🔍 [fetchPartStockInfo] Final stockMap:",
-            Array.from(stockMap.entries()).map(([id, info]) => ({
-              id,
-              currentStock: info.currentStock,
-              loading: info.loading,
-            }))
-          );
-          console.log("🔍 [fetchPartStockInfo] Requested part IDs:", partIds);
-          console.log(
-            "🔍 [fetchPartStockInfo] Map size before update:",
-            prevMap.size
-          );
-          console.log(
-            "🔍 [fetchPartStockInfo] Map size after update:",
-            stockMap.size
-          );
-
-          return stockMap;
-        });
-      }
+        return stockMap;
+      });
     } catch (error) {
       console.error("Error fetching part stock info:", error);
       // Mark as not loading even on error, merge with existing data
@@ -299,45 +292,38 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
     try {
       // Fetch services to get commonParts info
-      const response = await fetch("/api/services?limit=1000", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+      const response = await servicesAPI.getAll({ limit: 1000 });
+      const data = response.data;
+      const services = data.data || [];
+
+      // Store service details
+      const detailsMap = new Map(serviceDetails);
+      const partIdsFromServices: string[] = [];
+
+      serviceIds.forEach((serviceId) => {
+        const service = services.find((s: any) => s._id === serviceId);
+        if (service) {
+          detailsMap.set(serviceId, service);
+
+          // Collect part IDs from commonParts
+          if (service.commonParts) {
+            service.commonParts.forEach((cp: any) => {
+              if (cp.partId) {
+                // Normalize partId - could be string or populated object
+                const partId =
+                  typeof cp.partId === "object" ? cp.partId._id : cp.partId;
+                partIdsFromServices.push(partId);
+              }
+            });
+          }
+        }
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const services = data.data || [];
+      setServiceDetails(detailsMap);
 
-        // Store service details
-        const detailsMap = new Map(serviceDetails);
-        const partIdsFromServices: string[] = [];
-
-        serviceIds.forEach((serviceId) => {
-          const service = services.find((s: any) => s._id === serviceId);
-          if (service) {
-            detailsMap.set(serviceId, service);
-
-            // Collect part IDs from commonParts
-            if (service.commonParts) {
-              service.commonParts.forEach((cp: any) => {
-                if (cp.partId) {
-                  // Normalize partId - could be string or populated object
-                  const partId =
-                    typeof cp.partId === "object" ? cp.partId._id : cp.partId;
-                  partIdsFromServices.push(partId);
-                }
-              });
-            }
-          }
-        });
-
-        setServiceDetails(detailsMap);
-
-        // Fetch stock info for these parts
-        if (partIdsFromServices.length > 0) {
-          fetchPartStockInfo(partIdsFromServices);
-        }
+      // Fetch stock info for these parts
+      if (partIdsFromServices.length > 0) {
+        fetchPartStockInfo(partIdsFromServices);
       }
     } catch (error) {
       console.error("Error fetching service details:", error);
@@ -670,25 +656,19 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
   const fetchServicesCatalog = async () => {
     try {
       setLoadingCatalog(true);
-      const response = await fetch("/api/services", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const allServices = data.data || [];
+      const response = await servicesAPI.getAll();
+      const data = response.data;
+      const allServices = data.data || [];
 
-        // Filter out services already in the reception
-        const existingServiceIds = editedServices.map((s) =>
-          typeof s.serviceId === "string" ? s.serviceId : s.serviceId._id
-        );
-        const filtered = allServices.filter(
-          (service: any) => !existingServiceIds.includes(service._id)
-        );
+      // Filter out services already in the reception
+      const existingServiceIds = editedServices.map((s) =>
+        typeof s.serviceId === "string" ? s.serviceId : s.serviceId._id
+      );
+      const filtered = allServices.filter(
+        (service: any) => !existingServiceIds.includes(service._id)
+      );
 
-        setAvailableServices(filtered);
-      }
+      setAvailableServices(filtered);
     } catch (error) {
       console.error("Error fetching services:", error);
       toast.error("Không thể tải danh sách dịch vụ");
@@ -701,25 +681,19 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
   const fetchPartsCatalog = async () => {
     try {
       setLoadingCatalog(true);
-      const response = await fetch("/api/parts", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const allParts = data.data || [];
+      const response = await partsAPI.getAll();
+      const data = response.data;
+      const allParts = data.data || [];
 
-        // Filter out parts already in the reception
-        const existingPartIds = editedParts.map((p) =>
-          typeof p.partId === "string" ? p.partId : p.partId._id
-        );
-        const filtered = allParts.filter(
-          (part: any) => !existingPartIds.includes(part._id)
-        );
+      // Filter out parts already in the reception
+      const existingPartIds = editedParts.map((p) =>
+        typeof p.partId === "string" ? p.partId : p.partId._id
+      );
+      const filtered = allParts.filter(
+        (part: any) => !existingPartIds.includes(part._id)
+      );
 
-        setAvailableParts(filtered);
-      }
+      setAvailableParts(filtered);
     } catch (error) {
       console.error("Error fetching parts:", error);
       toast.error("Không thể tải danh sách phụ tùng");
@@ -777,6 +751,9 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
     setEditedParts([...editedParts, newPart]);
     setShowPartPicker(false);
     toast.success(`Đã thêm phụ tùng: ${part.name}`);
+
+    // ✅ FIX: Fetch real-time stock info for newly added part
+    fetchPartStockInfo([part._id]);
   };
 
   const handleReviewSubmit = async (decision: "approve" | "reject") => {
@@ -1335,7 +1312,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                     ) : null;
                                   })()}
                                   {service.estimatedCost && (
-                                    <div className="text-lime-600">
+                                    <div className="font-semibold text-lime-700 dark:text-lime-400">
                                       {(
                                         service.estimatedCost * service.quantity
                                       ).toLocaleString("vi-VN")}{" "}
@@ -1578,7 +1555,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                   )}
                                 </div>
                                 <div className="text-right ml-4">
-                                  <div className="text-purple-600 text-text-muted">
+                                  <div className="font-semibold text-purple-700 dark:text-purple-300">
                                     {(
                                       (part.estimatedCost || 0) * part.quantity
                                     ).toLocaleString("vi-VN")}{" "}
@@ -1587,7 +1564,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
                                 </div>
                               </div>
 
-                              <div className="text-text-secondary flex items-center justify-between">
+                              <div className="text-gray-600 dark:text-gray-300 flex items-center justify-between">
                                 <div>
                                   {!isEditingParts && (
                                     <span>Số lượng: {part.quantity}</span>
@@ -1596,7 +1573,7 @@ const ServiceReceptionReview: React.FC<ServiceReceptionReviewProps> = ({
 
                                 {isEditingParts && (
                                   <div className="flex items-center gap-2 ml-auto">
-                                    <label className="text-xs text-text-muted">
+                                    <label className="text-xs text-gray-600 dark:text-gray-300">
                                       Số lượng:
                                     </label>
                                     <input
